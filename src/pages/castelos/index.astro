@@ -1,0 +1,36 @@
+---
+import Base from "../../layouts/Base.astro";
+import Cabecalho from "../../components/Cabecalho.astro";
+import { todosMonumentos } from "../../lib/monumentos";
+import { REGIOES, TIPOLOGIAS, type Regiao } from "../../lib/tipologias";
+const lista = await todosMonumentos();
+const regioes = Object.keys(REGIOES) as Regiao[];
+const base = import.meta.env.BASE_URL;
+---
+<Base titulo="Todos os castelos e fortalezas" descricao={`${lista.length} fortificações históricas de Portugal no atlas 3D.`} classe="pagina-texto">
+  <Cabecalho />
+  <main class="texto">
+    <h1>Todos os castelos e fortalezas</h1>
+    <p class="entrada">{lista.length} fortificações no atlas, organizadas por região. As fichas históricas e as maquetas são publicadas à medida que ficam documentadas.</p>
+    <nav class="ancoras" aria-label="Regiões">
+      {regioes.map((r) => <a href={`#${r}`}>{REGIOES[r]}</a>)}
+    </nav>
+    {regioes.map((r) => {
+      const doGrupo = lista.filter((m) => m.data.regiao === r);
+      if (!doGrupo.length) return null;
+      return (
+        <section id={r}>
+          <h2>{REGIOES[r]} <span class="contagem">{doGrupo.length}</span></h2>
+          <ul class="lista-monumentos">
+            {doGrupo.map((m) => (
+              <li>
+                <a href={`${base}castelo/${m.id}/`}>{m.data.nome}</a>
+                <span>{m.data.localidade} · {TIPOLOGIAS[m.data.tipologia].nome}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      );
+    })}
+  </main>
+</Base>

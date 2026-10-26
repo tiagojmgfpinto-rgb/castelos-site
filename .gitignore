@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.astro/
+.cache/
+__pycache__/
+# Mosaicos de relevo: gerados pelo pipeline (localmente ou na publicação automática)
+public/terrain/
+.DS_Store
