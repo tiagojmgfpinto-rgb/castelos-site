@@ -5,24 +5,19 @@ Fontes:
 - OpenStreetMap (ODbL), lido através do Overture Maps (release fixada abaixo):
   traçado das muralhas (barrier=city_wall), torreões (defensive), portas,
   Igreja de São Miguel e torre sineira, edifícios da vila e caminhos.
-- Copernicus DEM GLO-30 (© DLR e Airbus, distribuído pela ESA): modelo digital
-  de superfície de 30 m. É o único MDT acessível neste ambiente; o LiDAR da DGT
-  (MDT de 50 cm) deve substituí-lo quando estiver disponível.
+O relevo, as cotas e as alturas vêm do LiDAR da DGT, preparado à parte pelo lidar.py.
 
-Uso (Python com pyarrow, shapely e rasterio):
+Uso (Python com pyarrow e shapely):
     python pipeline/maquetas/penela/recolher.py
 """
 import json
 import math
 from pathlib import Path
 
-import numpy as np
 import pyarrow.compute as pc
 import pyarrow.dataset as ds
 import pyarrow.fs as pfs
-import rasterio
 import shapely
-from rasterio.windows import from_bounds
 
 AQUI = Path(__file__).resolve().parent
 RELEASE = "2026-10-21.0"
@@ -62,20 +57,6 @@ def overture(tema: str, tipo: str):
     return out
 
 
-def mdt():
-    nome = "Copernicus_DSM_COG_10_N40_00_W009_00_DEM"
-    with rasterio.open(f"/vsicurl/https://copernicus-dem-30m.s3.amazonaws.com/{nome}/{nome}.tif") as src:
-        w, s, e, n = caixa()
-        janela = from_bounds(w - 0.001, s - 0.001, e + 0.001, n + 0.001, src.transform)
-        a = src.read(1, window=janela)
-        t = src.window_transform(janela)
-    return {
-        "fonte": f"Copernicus DEM GLO-30 ({nome})",
-        "lon0": t.c, "lat0": t.f, "dlon": t.a, "dlat": t.e,  # canto NO e passo do píxel
-        "alturas": np.round(a, 2).tolist(),
-    }
-
-
 def main():
     infra = [f for f in overture("base", "infrastructure") if f["subtipo"] in ("barrier", "tower")]
     dados = {
@@ -84,7 +65,6 @@ def main():
         "infraestrutura": infra,
         "edificios": overture("buildings", "building"),
         "caminhos": overture("transportation", "segment"),
-        "mdt": mdt(),
     }
     (AQUI / "dados").mkdir(exist_ok=True)
     (AQUI / "dados" / "fontes.json").write_text(json.dumps(dados, ensure_ascii=False, separators=(",", ":")))

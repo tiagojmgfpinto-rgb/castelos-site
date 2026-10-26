@@ -2,7 +2,7 @@
   "monumento": "penela",
   "titulo": "Castelo de Penela",
   "variante": "estado-atual",
-  "versao": "0.1 provisória",
+  "versao": "0.2 provisória",
   "data": "2026-10-26",
   "origem": {
     "lat": 40.031162,
@@ -34,40 +34,28 @@
       "titulo": "OpenStreetMap (ODbL), via Overture Maps 2026-10-21.0: traçado das muralhas, torreões, portas, igreja e edifícios",
       "url": "https://www.openstreetmap.org/#map=19/40.0311/-8.3902"
     },
-    "mdt": {
-      "titulo": "Copernicus DEM GLO-30 (© DLR e Airbus, ESA): relevo a 30 m",
-      "url": "https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM"
+    "lidar": {
+      "titulo": "DGT, LiDAR 2024: MDT e MDS de 50 cm e nuvem de pontos classificada, folhas 177341 e 178341 (CC BY 4.0). Relevo, cotas e alturas medidas.",
+      "url": "https://cdd.dgterritorio.gov.pt"
+    },
+    "orto": {
+      "titulo": "DGT, ORTOS 2025, ortofotomapa de 25 cm (CC BY 4.0). Conferência do traçado e cor do chão.",
+      "url": "https://cdd.dgterritorio.gov.pt"
     },
     "fotos": {
       "titulo": "Fotografias aéreas (3) e de pormenor (2) fornecidas pelo autor do projeto, outubro de 2026"
     }
   },
   "limitacoes": [
-    "Não foi encontrada planta arquitetónica cotada publicada. O traçado vem do OpenStreetMap, conferido com as fotografias aéreas, e tem erro esperado de 1 a 3 m.",
-    "Não há alturas publicadas por pano. Só se conhece o intervalo de 7 a 19 m (CM Penela). Todas as alturas da maqueta são estimativas lidas nas fotografias e estão assinaladas como tal.",
-    "A espessura das muralhas não está publicada. Usa-se 2,2 m (estimativa).",
-    "O relevo vem de um modelo de superfície de 30 m, que não resolve a escarpa rochosa. Junto às muralhas o terreno foi moldado até à base estimada de cada pano, com a escarpa de rocha lida nas fotografias. O MDT LiDAR da DGT (50 cm) deve substituí-lo.",
+    "Não foi encontrada planta arquitetónica cotada publicada. O traçado vem do OpenStreetMap, conferido com a ortofoto de 2025 e encostado à crista das muralhas no MDS do LiDAR, onde estava desviado até 4 m (troço sudoeste do pano poente e face nascente do castelejo). Erro esperado de 0,5 a 1 m.",
+    "Cotas e alturas medidas no LiDAR da DGT de 2024 (50 cm): o topo de cada pano é medido de 2 em 2 m, o das torres e edifícios dentro da sua planta, e o terreno é o MDT. Erro esperado de 0,3 a 0,5 m na vertical. Onde há copas de árvores sobre a muralha a medição é interpolada a partir dos troços vizinhos.",
+    "O LiDAR não distingue merlões e parapeito com 50 cm de resolução. O topo medido é o dos merlões, e o desenho das ameias (0,95 m de merlão, 0,65 m de intervalo) e o parapeito de 1 m são estimativas uniformes.",
+    "A espessura das muralhas não está publicada. Usa-se 2,2 m e 1,8 m no castelejo (estimativas).",
     "As seteiras e troneiras não estão representadas: as fotografias disponíveis não permitem situá-las uma a uma.",
     "A cisterna (planta quadrangular, escavada na rocha) não está representada porque a sua localização não foi confirmada.",
-    "O desnível entre o pátio inferior e o terreiro da igreja e o castelejo foi lido na fotografia aérea 1. As cotas são aproximadas.",
-    "Os edifícios da vila são volumes simplificados a partir das plantas do OpenStreetMap, com alturas tipo. A vegetação é esquemática."
+    "A Igreja de São Miguel tem as cumeeiras e beirados medidos. A altura do coruchéu (6,2 m), as sineiras, as janelas e a porta são lidas nas fotografias.",
+    "Os edifícios da vila são volumes simplificados a partir das plantas do OpenStreetMap, com o cume medido no LiDAR (26 de 28). As árvores estão nas posições e com as alturas e copas medidas na nuvem de pontos, com uma forma esquemática."
   ],
-  "niveis": {
-    "patio": {
-      "cota": 289.0,
-      "estimativa": true,
-      "nota": "Cota do MDT no centro do recinto."
-    },
-    "terreiro_igreja": {
-      "cota": 291.5,
-      "estimativa": true
-    },
-    "castelejo": {
-      "cota": 295.5,
-      "estimativa": true,
-      "nota": "Topo do rochedo do castelejo, c. 4 m acima do terreiro (fotografia aérea 1)."
-    }
-  },
   "muralha": {
     "espessura": 2.2,
     "parapeito": 1.0,
@@ -76,7 +64,8 @@
       "largura": 0.95,
       "intervalo": 0.65
     },
-    "estimativa": true
+    "estimativa": true,
+    "nota": "O topo dos merlões é medido no LiDAR; a espessura e o desenho das ameias são estimativas."
   },
   "elementos": [
     {
@@ -84,14 +73,16 @@
       "nome": "Castelejo",
       "grupo": "Castelejo",
       "estado": "estado-atual",
-      "confianca": "média",
+      "confianca": "alta",
       "descricao": "Núcleo defensivo primitivo, sobre o morro calcário talhado para dificultar o acesso. Foi castelo autónomo no século XI e depois torre de menagem, reedificado entre os séculos XV e XVI. Da torre de menagem de c. 1300 restam uma porta e duas bombardeiras. Recinto murado, adossado ao pano nascente, com adarve e ameias.",
-      "medidas": "Recinto c. 13 × 25 m (OSM). Rochedo c. 4 m acima do terreiro e muros c. 6 m acima do rochedo: estimativas a partir das fotografias aéreas 1 e 2 e da fotografia do interior.",
+      "medidas": "Recinto c. 13 × 25 m, traçado do OSM com a face nascente encostada à crista no MDS. Topo dos muros a 304–305 m, c. 10–14 m acima do chão interior (c. 291 m) e 10–16 m acima do pé exterior (LiDAR 2024).",
       "fontes": [
         "sipa",
         "pc",
         "cmp",
         "osm",
+        "lidar",
+        "orto",
         "fotos"
       ]
     },
@@ -102,11 +93,12 @@
       "estado": "estado-atual",
       "confianca": "média",
       "descricao": "Porta em arco pleno do século XV, a sudoeste, por onde se fazia a ligação à vila. No OpenStreetMap a porta do pano poente não tem nome. Identifica-se como Porta da Vila pela orientação dada no SIPA e pela fotografia aérea 1.",
-      "medidas": "Vão de c. 2,6 × 3,8 m (estimativa).",
+      "medidas": "Soleira à cota 279,0 m (MDT). Vão de c. 2,6 × 3,8 m (estimativa, fotografia aérea 1).",
       "fontes": [
         "sipa",
         "cmp",
         "osm",
+        "lidar",
         "fotos"
       ]
     },
@@ -117,11 +109,12 @@
       "estado": "estado-atual",
       "confianca": "média",
       "descricao": "Dá acesso aos campos. É uma entrada em cotovelo, com dupla abertura integrada numa torre quadrangular, dos séculos XIII e XIV. O SIPA situa-a a nordeste. O OpenStreetMap, que segue aqui, coloca-a no pano norte.",
-      "medidas": "Torre c. 4 × 4 m (OSM). A face exata de cada abertura do cotovelo está por confirmar.",
+      "medidas": "Torre c. 4 × 4 m (OSM). Topo a 292,2 m, 8,6 m acima do pé exterior (LiDAR 2024). A face exata de cada abertura do cotovelo está por confirmar.",
       "fontes": [
         "sipa",
         "cmp",
-        "osm"
+        "osm",
+        "lidar"
       ]
     },
     {
@@ -131,12 +124,13 @@
       "estado": "estado-atual",
       "confianca": "alta",
       "descricao": "Lugar da terceira porta, virada a sul, que ligava o arrabalde à igreja. Foi demolida em 1760 para aproveitar a pedra, depois de o terramoto de 1755 derrubar a torre do relógio. Hoje é a entrada mais franca do castelo e está representada como se encontra, sem reconstituir a porta.",
-      "medidas": "Abertura c. 4,5 m (OSM e fotografia de pormenor).",
+      "medidas": "Abertura de c. 5,5 m entre o pano sul e a torre quinária (OSM e MDS). Chão à cota 287,2 m.",
       "fontes": [
         "pc",
         "cmp",
         "visite",
         "osm",
+        "lidar",
         "fotos"
       ]
     },
@@ -147,11 +141,12 @@
       "estado": "estado-atual",
       "confianca": "média",
       "descricao": "Torre de planta pentagonal junto à Brecha. As fontes referem que a torre quinária guardava a terceira porta, virada a sul. A planta de cinco lados registada no OpenStreetMap e a posição junto à Brecha suportam a identificação.",
-      "medidas": "Planta c. 6,5 × 6,5 m (OSM). Altura exterior c. 14 m (estimativa, fotografia de pormenor).",
+      "medidas": "Planta c. 6,5 × 6,5 m (OSM). Topo a 300,7 m, 14,1 m acima do pé exterior (LiDAR 2024).",
       "fontes": [
         "cmp",
         "wiki",
         "osm",
+        "lidar",
         "fotos"
       ]
     },
@@ -162,10 +157,11 @@
       "estado": "estado-atual",
       "confianca": "alta",
       "descricao": "Torreão quadrangular conservado no pano poente, o mais alto e robusto da cerca segundo o SIPA.",
-      "medidas": "Planta c. 4 × 4 m (OSM). Altura c. 2,5 m acima do pano (estimativa).",
+      "medidas": "Planta c. 4 × 4 m (OSM). Topo a 287,8 m, 9,5 m acima do pé exterior (LiDAR 2024).",
       "fontes": [
         "sipa",
         "osm",
+        "lidar",
         "fotos"
       ]
     },
@@ -176,10 +172,11 @@
       "estado": "estado-atual",
       "confianca": "alta",
       "descricao": "Torreão quadrangular conservado no pano poente, a sul da Porta da Vila.",
-      "medidas": "Planta c. 4 × 6,5 m (OSM). Altura c. 2,5 m acima do pano (estimativa).",
+      "medidas": "Planta c. 4 × 6,5 m (OSM). Topo a 291,2 m, 13,6 m acima do pé exterior (LiDAR 2024).",
       "fontes": [
         "sipa",
         "osm",
+        "lidar",
         "fotos"
       ]
     },
@@ -190,10 +187,11 @@
       "estado": "estado-atual",
       "confianca": "alta",
       "descricao": "Torreão quadrangular conservado no pano poente, junto ao ângulo sudoeste.",
-      "medidas": "Planta c. 3,3 × 2,3 m (OSM). Altura c. 2,5 m acima do pano (estimativa).",
+      "medidas": "Planta c. 3,3 × 2,3 m (OSM). Topo a 291,0 m, 12,5 m acima do pé exterior (LiDAR 2024).",
       "fontes": [
         "sipa",
         "osm",
+        "lidar",
         "fotos"
       ]
     },
@@ -204,10 +202,11 @@
       "estado": "estado-atual",
       "confianca": "média",
       "descricao": "Torreão semicircular no ângulo noroeste, sobre a escarpa. A Património Cultural refere torreões ora quadrangulares, ora semicirculares. Este vê-se na fotografia aérea 2 e coincide com a inflexão do traçado no OpenStreetMap.",
-      "medidas": "Raio c. 2,8 m e altura c. 2 m acima do pano (estimativas a partir da fotografia).",
+      "medidas": "Topo a 287,6 m, 15,2 m acima do pé da escarpa (LiDAR 2024). Raio c. 2,8 m (estimativa a partir da fotografia).",
       "fontes": [
         "pc",
         "osm",
+        "lidar",
         "fotos"
       ]
     },
@@ -218,15 +217,14 @@
       "estado": "estado-atual",
       "confianca": "alta",
       "descricao": "Do castelejo à Porta da Traição, sobre o afloramento. As ameias e parte dos panos foram refeitas pela DGEMN entre 1941 e 1945 e em 1958, segundo os vestígios.",
-      "medidas": "Altura exterior c. 8 m, sobre escarpa rochosa de c. 6 m (estimativas, fotografias aéreas 2 e 3).",
-      "altura": 8,
+      "medidas": "Topo dos merlões a 291–297 m, subindo a 304 m junto ao castelejo. Altura exterior de 7 a 13 m e só 1 a 3,5 m acima do chão interior (LiDAR 2024).",
       "fontes": [
         "sipa",
         "osm",
+        "lidar",
+        "orto",
         "fotos"
-      ],
-      "adarve": 292.5,
-      "escarpa": 6
+      ]
     },
     {
       "id": "pano_noroeste",
@@ -235,14 +233,13 @@
       "estado": "estado-atual",
       "confianca": "alta",
       "descricao": "Da Porta da Traição ao cubelo do ângulo noroeste, assente na escarpa rochosa sobre o vale.",
-      "medidas": "Altura exterior c. 8 m, sobre escarpa de arenito de c. 10 m (estimativas, fotografia aérea 2).",
-      "altura": 8,
+      "medidas": "Topo a 285–292 m. Altura exterior de 7 a 15 m, sobre a escarpa (LiDAR 2024).",
       "fontes": [
         "osm",
+        "lidar",
+        "orto",
         "fotos"
-      ],
-      "adarve": 290.5,
-      "escarpa": 10
+      ]
     },
     {
       "id": "pano_poente",
@@ -251,16 +248,15 @@
       "estado": "estado-atual",
       "confianca": "alta",
       "descricao": "A frente virada à vila, a mais alta e robusta segundo o SIPA, com três torreões e a Porta da Vila.",
-      "medidas": "Altura exterior c. 12 m (estimativa, fotografia aérea 1). Publicado só o intervalo de 7 a 19 m.",
-      "altura": 12,
+      "medidas": "Topo a 287–293 m. Altura exterior de 7 a 14,5 m (LiDAR 2024), dentro do intervalo publicado de 7 a 19 m.",
       "fontes": [
         "sipa",
         "cmp",
         "osm",
+        "lidar",
+        "orto",
         "fotos"
-      ],
-      "adarve": 293.5,
-      "escarpa": 2
+      ]
     },
     {
       "id": "pano_sul",
@@ -269,14 +265,13 @@
       "estado": "estado-atual",
       "confianca": "alta",
       "descricao": "Do ângulo sudoeste até à Brecha das Desaparecidas.",
-      "medidas": "Altura exterior c. 9 m (estimativa, fotografia de pormenor).",
-      "altura": 9,
+      "medidas": "Topo a 291,5–294,7 m. Altura exterior de 8 a 13 m (LiDAR 2024).",
       "fontes": [
         "osm",
+        "lidar",
+        "orto",
         "fotos"
-      ],
-      "adarve": 291.0,
-      "escarpa": 0
+      ]
     },
     {
       "id": "pano_nascente",
@@ -285,14 +280,13 @@
       "estado": "estado-atual",
       "confianca": "alta",
       "descricao": "Da torre quinária até ao castelejo, sobre o rochedo da encosta nascente.",
-      "medidas": "Altura exterior c. 8 m, sobre rochedo de c. 6 m (estimativas).",
-      "altura": 8,
+      "medidas": "Topo a 295–303 m. Altura exterior de 7 a 11 m sobre o rochedo (LiDAR 2024).",
       "fontes": [
         "osm",
+        "lidar",
+        "orto",
         "fotos"
-      ],
-      "adarve": 292.5,
-      "escarpa": 6
+      ]
     },
     {
       "id": "igreja",
@@ -300,12 +294,13 @@
       "grupo": "Igreja de São Miguel",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "Matriz de Penela, no interior do recinto. Reedificada em 1420 por iniciativa do infante D. Pedro e reformada na segunda metade do século XVI. Tem três naves. Fachada branca virada a sudoeste e torre sineira no ângulo sul. O relógio passou para esta torre nas obras da DGEMN.",
-      "medidas": "Planta do OSM (c. 16 × 30 m). Alturas estimadas pelas fotografias: nave c. 11,5 m à cumeeira e torre c. 22 m ao topo do coruchéu.",
+      "descricao": "Matriz de Penela, no interior do recinto. Reedificada em 1420 por iniciativa do infante D. Pedro e reformada na segunda metade do século XVI. Tem três naves sob um só telhado. Fachada branca virada a sudoeste e torre sineira no ângulo sul. O relógio passou para esta torre nas obras da DGEMN.",
+      "medidas": "Planta do OSM (c. 16 × 25 m). Cumeeira a 301,6 m, 10,3 m acima do adro; beirados a 296,9 m (sul) e 298,3 m (norte); vértice do coruchéu a 311,3 m, 20 m acima do adro (LiDAR 2024). Coruchéu, vãos e relógio pelas fotografias.",
       "fontes": [
         "sipa",
         "wiki",
         "osm",
+        "lidar",
         "fotos"
       ]
     },
@@ -316,11 +311,12 @@
       "estado": "estado-atual",
       "confianca": "média",
       "descricao": "Edifício de dois pisos com telhado de quatro águas, a noroeste da igreja. Aloja o espaço museológico de arte sacra, aberto em 2006.",
-      "medidas": "Planta do OSM. Altura c. 7 m à cornija (estimativa).",
+      "medidas": "Planta do OSM. Cume a 294,4 m e cornija a c. 291,8 m, c. 6,4 m acima do chão (LiDAR 2024).",
       "fontes": [
         "sipa",
         "wiki",
         "osm",
+        "lidar",
         "fotos"
       ]
     },
@@ -329,10 +325,12 @@
       "nome": "Muro de suporte do terreiro da igreja",
       "grupo": "Recinto",
       "estado": "estado-atual",
-      "confianca": "baixa",
-      "descricao": "Muro que sustenta o terreiro da igreja e do castelejo acima do pátio inferior, visível na fotografia aérea 1. Traçado e altura aproximados.",
-      "medidas": "Desnível c. 2,5 m (estimativa).",
+      "confianca": "média",
+      "descricao": "Muro que sustenta o terreiro da igreja acima do pátio inferior, visível na fotografia aérea 1 e confirmado pelo degrau no MDT.",
+      "medidas": "Degrau medido no MDT em c. 38 m de comprimento, até 5,5 m de desnível. Onde o MDT não mostra degrau o muro não é desenhado.",
       "fontes": [
+        "lidar",
+        "orto",
         "fotos"
       ]
     },
@@ -341,11 +339,11 @@
       "nome": "Terreno",
       "grupo": "Envolvente",
       "estado": "estado-atual",
-      "confianca": "baixa",
-      "descricao": "Relevo do Copernicus DEM a 30 m, rebaixado junto às muralhas para representar a escarpa rochosa visível nas fotografias.",
+      "confianca": "alta",
+      "descricao": "Modelo digital do terreno LiDAR da DGT (2024, 50 cm), amostrado a 1 m. As escarpas são as medidas. As cores seguem a ortofoto de 2025 (relva, terra, calçada, mato debaixo das copas).",
       "fontes": [
-        "mdt",
-        "fotos"
+        "lidar",
+        "orto"
       ]
     },
     {
@@ -353,10 +351,11 @@
       "nome": "Vila de Penela",
       "grupo": "Envolvente",
       "estado": "estado-atual",
-      "confianca": "baixa",
-      "descricao": "Edifícios da vila em volumes simplificados, a partir das plantas do OpenStreetMap.",
+      "confianca": "média",
+      "descricao": "Edifícios da vila em volumes simplificados, a partir das plantas do OpenStreetMap, com o cume medido no LiDAR.",
       "fontes": [
-        "osm"
+        "osm",
+        "lidar"
       ]
     },
     {
@@ -367,7 +366,8 @@
       "confianca": "média",
       "descricao": "Ruas e caminhos de acesso do OpenStreetMap.",
       "fontes": [
-        "osm"
+        "osm",
+        "orto"
       ]
     },
     {
@@ -375,9 +375,10 @@
       "nome": "Vegetação",
       "grupo": "Envolvente",
       "estado": "estado-atual",
-      "confianca": "baixa",
-      "descricao": "Árvores esquemáticas: oliveiras no recinto, como nas fotografias, e arvoredo nas encostas.",
+      "confianca": "média",
+      "descricao": "639 árvores nas posições, alturas e raios de copa medidos na nuvem de pontos LiDAR. A forma é esquemática. As oliveiras do recinto têm a cor das fotografias.",
       "fontes": [
+        "lidar",
         "fotos"
       ]
     }
