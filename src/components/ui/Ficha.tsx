@@ -1,8 +1,11 @@
-import { useEffect, useRef } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
 import { BASE } from "../../lib/base";
 import { caminhoFicha } from "../../lib/rotas";
 import { REGIOES, TIPOLOGIAS } from "../../lib/tipologias";
 import { useAtlas, type MonumentoResumo } from "../atlas/store";
+import { dadosMaqueta } from "../maqueta/dados";
+
+const Maqueta = lazy(() => import("../maqueta/Maqueta"));
 
 const gms = (n: number, pos: string, neg: string) => {
   const a = Math.abs(n);
@@ -14,12 +17,13 @@ const gms = (n: number, pos: string, neg: string) => {
 export function Ficha({ m, monumentos, onFechar }: { m: MonumentoResumo; monumentos: MonumentoResumo[]; onFechar: () => void }) {
   const atual = m.maquetas.find((x) => x.tipo === "estado-atual");
   const reconst = m.maquetas.filter((x) => x.tipo === "reconstituicao");
+  const dados = dadosMaqueta(m.id);
   const vizinhos = monumentos.filter((x) => x.regiao === m.regiao && x.id !== m.id).slice(0, 8);
   const corpo = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     corpo.current?.scrollTo({ top: 0 });
-    const tecla = (e: KeyboardEvent) => e.key === "Escape" && onFechar();
+    const tecla = (e: KeyboardEvent) => e.key === "Escape" && !document.querySelector(".maqueta--ampliada, .maqueta-elemento") && onFechar();
     addEventListener("keydown", tecla);
     return () => removeEventListener("keydown", tecla);
   }, [m.id, onFechar]);
@@ -42,21 +46,25 @@ export function Ficha({ m, monumentos, onFechar }: { m: MonumentoResumo; monumen
         </ul>
 
         <figure className="ficha-maqueta">
-          <div className="ficha-maqueta-palco">
-            {atual ? (
-              <p>Maqueta 3D do estado atual</p>
-            ) : (
-              <p>
-                <strong>Maqueta 3D em preparação</strong>
-                Só aparece aqui depois de modelada à escala a partir de plantas, ortofotos e fotografias, e validada.
-              </p>
-            )}
-          </div>
-          <div className="ficha-maqueta-botoes" role="toolbar" aria-label="Maqueta">
-            {["Giro", "Rótulos", "Enquadrar", "Ampliar"].map((b) => (
-              <button key={b} disabled={!atual}>{b}</button>
-            ))}
-          </div>
+          {atual && dados ? (
+            <Suspense fallback={<div className="ficha-maqueta-palco"><p>A preparar a maqueta…</p></div>}>
+              <Maqueta url={`${BASE}${atual.ficheiro}`} capa={atual.capa} dados={dados} provisoria={atual.provisoria} onVoltarMapa={onFechar} />
+            </Suspense>
+          ) : (
+            <>
+              <div className="ficha-maqueta-palco">
+                <p>
+                  <strong>Maqueta 3D em preparação</strong>
+                  Só aparece aqui depois de modelada à escala a partir de plantas, ortofotos e fotografias.
+                </p>
+              </div>
+              <div className="ficha-maqueta-botoes" role="toolbar" aria-label="Maqueta">
+                {["Giro", "Rótulos", "Enquadrar", "Ampliar"].map((b) => (
+                  <button key={b} disabled>{b}</button>
+                ))}
+              </div>
+            </>
+          )}
           {reconst.length > 0 && (
             <figcaption>Reconstituições disponíveis: {reconst.map((r) => r.epoca ?? "sem época").join(", ")}</figcaption>
           )}

@@ -13,6 +13,9 @@ const maqueta = z.object({
   ficheiro: z.string(),
   epoca: z.string().optional(), // obrigatório na prática para reconstituições
   validada: z.boolean().default(false),
+  // Versão provisória: publicada com aviso, com as limitações e estimativas à vista.
+  provisoria: z.boolean().default(false),
+  capa: z.string().optional(),
   fontes: z.array(fonte).default([]),
 });
 

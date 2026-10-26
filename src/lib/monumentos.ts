@@ -28,7 +28,9 @@ export function resumo(m: Monumento): MonumentoResumo {
     coordenadasVerificadas: d.coordenadas.verificadas,
     estadoFicha: d.estadoFicha,
     seculoOrigem: d.seculoOrigem,
-    maquetas: d.maquetas.filter((x) => x.validada).map(({ tipo, ficheiro, epoca }) => ({ tipo, ficheiro, epoca })),
+    maquetas: d.maquetas
+      .filter((x) => x.validada || x.provisoria)
+      .map(({ tipo, ficheiro, epoca, provisoria, capa }) => ({ tipo, ficheiro, epoca, provisoria, capa })),
     notas: d.notas,
     fontes: d.fontes,
     html: m.rendered?.html ?? "",

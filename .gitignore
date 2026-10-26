@@ -6,3 +6,5 @@ __pycache__/
 # Mosaicos de relevo: gerados pelo pipeline (localmente ou na publicação automática)
 public/terrain/
 .DS_Store
+pipeline/maquetas/penela/saida/
+*.blend

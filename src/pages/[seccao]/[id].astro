@@ -5,6 +5,7 @@ import Cabecalho from "../../components/Cabecalho.astro";
 import { todosMonumentos, type Monumento } from "../../lib/monumentos";
 import { REGIOES, TIPOLOGIAS } from "../../lib/tipologias";
 import { caminhoFicha, seccaoDe } from "../../lib/rotas";
+import MaquetaPagina from "../../components/maqueta/MaquetaPagina";
 
 export async function getStaticPaths() {
   return (await todosMonumentos()).map((m) => ({ params: { seccao: seccaoDe(m.data.nome), id: m.id }, props: { m } }));
@@ -13,6 +14,7 @@ const { m } = Astro.props as { m: Monumento };
 const d = m.data;
 const { Content } = await render(m);
 const base = import.meta.env.BASE_URL;
+const maqueta = d.maquetas.find((x) => x.tipo === "estado-atual" && (x.validada || x.provisoria));
 const vizinhos = (await todosMonumentos()).filter((x) => x.data.regiao === d.regiao && x.id !== m.id).slice(0, 10);
 ---
 <Base titulo={d.nome} descricao={`${d.nome}, ${d.localidade}. ${TIPOLOGIAS[d.tipologia].nome} no atlas 3D de Portugal.`} classe="pagina-texto">
@@ -24,6 +26,12 @@ const vizinhos = (await todosMonumentos()).filter((x) => x.data.regiao === d.reg
     <h1>{d.nome}</h1>
     <p class="entrada">{d.localidade}, {d.concelho} · {TIPOLOGIAS[d.tipologia].nome}{d.seculoOrigem ? ` do ${d.seculoOrigem}` : ""}</p>
     <p><a class="botao" href={`${base}#${m.id}`}>Ver no mapa 3D</a></p>
+
+    {maqueta && (
+      <figure class="ficha-maqueta maqueta-pagina">
+        <MaquetaPagina client:visible id={m.id} ficheiro={maqueta.ficheiro} capa={maqueta.capa} provisoria={maqueta.provisoria} />
+      </figure>
+    )}
 
     {d.estadoFicha === "em-preparacao" && (
       <p class="nota">A ficha histórica deste monumento está em preparação. Só será publicada com fontes documentadas.</p>

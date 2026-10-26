@@ -220,3 +220,74 @@ button { font: inherit; color: inherit; }
   .escala { right: 16px; bottom: calc(22px + env(safe-area-inset-bottom)); }
   .escala .projecao { display: none; }
 }
+
+/* ---------- Maqueta 3D (visor da ficha e da página do monumento) ---------- */
+.maqueta {
+  --m-papel: #efe5cc; --m-tinta: #2a2016; --m-suave: #6b5a44; --m-vermelho: #8e2a1c; --m-filete: rgba(74, 58, 40, 0.3);
+  position: relative; color: var(--m-tinta); outline: none;
+}
+.maqueta-capa { aspect-ratio: 16 / 10; overflow: hidden; border: 1px solid rgba(74, 58, 40, 0.4); background: #d9cfbd; }
+.maqueta-capa img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.maqueta-explorar {
+  position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%);
+  padding: 11px 22px; border: 1px solid #2a2016; background: #2a2016; color: #f3ead4; cursor: pointer;
+  font-family: var(--sans); font-size: 14px; letter-spacing: 0.16em; text-transform: uppercase; box-shadow: 0 6px 18px rgba(30, 20, 10, 0.35);
+}
+.maqueta-explorar:hover { background: var(--m-vermelho); border-color: var(--m-vermelho); }
+.maqueta-selo {
+  position: absolute; top: 10px; left: 10px; z-index: 3; padding: 4px 9px; border: 1px solid var(--m-vermelho); background: rgba(239, 229, 204, 0.92);
+  color: var(--m-vermelho); font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
+}
+.maqueta-palco {
+  position: relative; aspect-ratio: 16 / 10; overflow: hidden; border: 1px solid rgba(74, 58, 40, 0.4); touch-action: none;
+  background: radial-gradient(ellipse at 50% 42%, #f1ebde 0%, #e2d9c6 55%, #cfc3aa 100%);
+}
+.maqueta--ampliada { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; padding: 14px; background: #e4dccb; }
+.maqueta--ampliada .maqueta-palco { flex: 1; aspect-ratio: auto; }
+.maqueta--ampliada .maqueta-botoes { max-width: 720px; }
+.maqueta-botoes { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; max-width: 640px !important; }
+.maqueta-botoes button[aria-pressed="true"] { background: var(--m-vermelho); border-color: var(--m-vermelho); }
+.maqueta-botoes button[aria-pressed="false"] { background: transparent; color: var(--m-tinta); border-color: #2a2016; }
+.maqueta-ajuda { margin: 6px 0 0; font-family: var(--sans); font-size: 12px; color: var(--m-suave); }
+.maqueta-carregar { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; margin: 0; font-family: var(--serifa-titulo); font-style: italic; font-size: 18px; color: var(--m-suave); white-space: nowrap; }
+.maqueta-norte {
+  position: absolute; right: 14px; top: 12px; width: 34px; height: 34px; border-radius: 50%; pointer-events: none;
+  border: 1px solid rgba(42, 32, 22, 0.55); background: rgba(239, 229, 204, 0.85); display: grid; place-items: center;
+}
+.maqueta-norte::before { content: ""; position: absolute; top: 3px; left: 50%; margin-left: -5px; border: 5px solid transparent; border-bottom: 9px solid var(--m-vermelho); border-top: 0; }
+.maqueta-norte span { margin-top: 9px; font-family: var(--sans); font-size: 10px; font-weight: 600; }
+.maqueta-escala { position: absolute; right: 14px; bottom: 12px; display: flex; align-items: center; gap: 6px; pointer-events: none; font-family: var(--sans); font-size: 11px; }
+.maqueta-escala div { height: 5px; border: 1px solid #2a2016; border-top: 0; }
+.maqueta-rotulo-ancora { pointer-events: none; }
+.maqueta-rotulo {
+  pointer-events: auto; padding: 2px 7px; border: 1px solid rgba(42, 32, 22, 0.6); background: rgba(246, 239, 222, 0.94); color: #2a2016; cursor: pointer;
+  font-family: var(--serifa-versalete); font-size: 13px; font-weight: 600; letter-spacing: 0.04em; white-space: nowrap; box-shadow: 0 2px 6px rgba(30, 20, 10, 0.25);
+}
+.maqueta-rotulo[data-ativo="1"] { background: var(--m-vermelho); border-color: var(--m-vermelho); color: #f6efde; }
+.maqueta-elemento, .maqueta-notas {
+  position: absolute; left: 10px; bottom: 10px; z-index: 30; width: min(360px, calc(100% - 20px)); max-height: calc(100% - 56px); overflow: auto;
+  padding: 12px 14px 10px; background: rgba(243, 234, 212, 0.97); border: 1px solid rgba(74, 58, 40, 0.5); box-shadow: 0 8px 24px rgba(30, 20, 10, 0.3);
+  font-size: 13.5px; line-height: 1.42;
+}
+.maqueta-notas { left: auto; right: 10px; top: 52px; bottom: auto; width: min(460px, calc(100% - 20px)); }
+.maqueta-elemento .fechar, .maqueta-notas .fechar { position: absolute; top: 6px; right: 8px; border: 0; background: none; font-size: 22px; line-height: 1; cursor: pointer; color: var(--m-tinta); }
+.maqueta-elemento h4, .maqueta-notas h4 { margin: 0 24px 6px 0; font-family: var(--serifa-titulo); font-size: 22px; line-height: 1.1; }
+.maqueta-elemento p, .maqueta-notas p { margin: 0 0 8px; }
+.maqueta-elemento-grupo { margin: 0 0 2px !important; font-family: var(--sans); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--m-vermelho); }
+.maqueta-elemento-estado { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; padding: 0; list-style: none; font-family: var(--sans); font-size: 11.5px; }
+.maqueta-elemento-estado li { padding: 1px 7px; border: 1px solid var(--m-filete); }
+.maqueta-elemento-medidas { font-style: italic; color: var(--m-suave); }
+.maqueta-notas ul { margin: 0 0 8px; padding-left: 18px; }
+.maqueta-notas li { margin-bottom: 4px; }
+.maqueta-fontes { margin: 6px 0 0 !important; padding-left: 16px !important; font-family: var(--sans); font-size: 12px; color: var(--m-suave); }
+.maqueta-fontes a { color: var(--m-vermelho); }
+.maqueta-voltar {
+  position: absolute; left: 10px; top: 44px; z-index: 3; padding: 6px 12px; border: 1px solid #2a2016; background: #2a2016; color: #f3ead4; cursor: pointer;
+  font-family: var(--sans); font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.maqueta-pagina { margin: 18px 0 28px; }
+.maqueta-pagina .maqueta-ajuda { color: var(--tinta-suave); }
+@media (max-width: 640px) {
+  .maqueta-botoes { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  .maqueta-elemento { max-height: 55%; }
+}

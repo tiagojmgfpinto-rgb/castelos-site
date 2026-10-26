@@ -1,0 +1,385 @@
+{
+  "monumento": "penela",
+  "titulo": "Castelo de Penela",
+  "variante": "estado-atual",
+  "versao": "0.1 provisória",
+  "data": "2026-10-26",
+  "origem": {
+    "lat": 40.031162,
+    "lon": -8.389862,
+    "nota": "Coordenadas oficiais. Eixos da maqueta: x para este, y para norte (no visor, -z é o norte), em metros à escala 1:1."
+  },
+  "fontes": {
+    "sipa": {
+      "titulo": "SIPA, ficha IPA.00001597 — Castelo de Penela",
+      "url": "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=1597"
+    },
+    "pc": {
+      "titulo": "Património Cultural, I.P. — Castelo de Penela (69810)",
+      "url": "https://imovel.patrimoniocultural.gov.pt/detalhes.php?code=69810"
+    },
+    "cmp": {
+      "titulo": "Câmara Municipal de Penela — Castelos Medievais",
+      "url": "https://www.cm-penela.pt/artigo-95-53"
+    },
+    "visite": {
+      "titulo": "Visite Penela — Património",
+      "url": "https://www.visitepenela.pt/patrimonio-3"
+    },
+    "wiki": {
+      "titulo": "Wikipédia — Castelo de Penela",
+      "url": "https://pt.wikipedia.org/wiki/Castelo_de_Penela"
+    },
+    "osm": {
+      "titulo": "OpenStreetMap (ODbL), via Overture Maps 2026-10-21.0: traçado das muralhas, torreões, portas, igreja e edifícios",
+      "url": "https://www.openstreetmap.org/#map=19/40.0311/-8.3902"
+    },
+    "mdt": {
+      "titulo": "Copernicus DEM GLO-30 (© DLR e Airbus, ESA): relevo a 30 m",
+      "url": "https://dataspace.copernicus.eu/explore-data/data-collections/copernicus-contributing-missions/collections-description/COP-DEM"
+    },
+    "fotos": {
+      "titulo": "Fotografias aéreas (3) e de pormenor (2) fornecidas pelo autor do projeto, outubro de 2026"
+    }
+  },
+  "limitacoes": [
+    "Não foi encontrada planta arquitetónica cotada publicada. O traçado vem do OpenStreetMap, conferido com as fotografias aéreas, e tem erro esperado de 1 a 3 m.",
+    "Não há alturas publicadas por pano. Só se conhece o intervalo de 7 a 19 m (CM Penela). Todas as alturas da maqueta são estimativas lidas nas fotografias e estão assinaladas como tal.",
+    "A espessura das muralhas não está publicada. Usa-se 2,2 m (estimativa).",
+    "O relevo vem de um modelo de superfície de 30 m, que não resolve a escarpa rochosa. Junto às muralhas o terreno foi moldado até à base estimada de cada pano, com a escarpa de rocha lida nas fotografias. O MDT LiDAR da DGT (50 cm) deve substituí-lo.",
+    "As seteiras e troneiras não estão representadas: as fotografias disponíveis não permitem situá-las uma a uma.",
+    "A cisterna (planta quadrangular, escavada na rocha) não está representada porque a sua localização não foi confirmada.",
+    "O desnível entre o pátio inferior e o terreiro da igreja e o castelejo foi lido na fotografia aérea 1. As cotas são aproximadas.",
+    "Os edifícios da vila são volumes simplificados a partir das plantas do OpenStreetMap, com alturas tipo. A vegetação é esquemática."
+  ],
+  "niveis": {
+    "patio": {
+      "cota": 289.0,
+      "estimativa": true,
+      "nota": "Cota do MDT no centro do recinto."
+    },
+    "terreiro_igreja": {
+      "cota": 291.5,
+      "estimativa": true
+    },
+    "castelejo": {
+      "cota": 295.5,
+      "estimativa": true,
+      "nota": "Topo do rochedo do castelejo, c. 4 m acima do terreiro (fotografia aérea 1)."
+    }
+  },
+  "muralha": {
+    "espessura": 2.2,
+    "parapeito": 1.0,
+    "merlao": {
+      "altura": 0.95,
+      "largura": 0.95,
+      "intervalo": 0.65
+    },
+    "estimativa": true
+  },
+  "elementos": [
+    {
+      "id": "castelejo",
+      "nome": "Castelejo",
+      "grupo": "Castelejo",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Núcleo defensivo primitivo, sobre o morro calcário talhado para dificultar o acesso. Foi castelo autónomo no século XI e depois torre de menagem, reedificado entre os séculos XV e XVI. Da torre de menagem de c. 1300 restam uma porta e duas bombardeiras. Recinto murado, adossado ao pano nascente, com adarve e ameias.",
+      "medidas": "Recinto c. 13 × 25 m (OSM). Rochedo c. 4 m acima do terreiro e muros c. 6 m acima do rochedo: estimativas a partir das fotografias aéreas 1 e 2 e da fotografia do interior.",
+      "fontes": [
+        "sipa",
+        "pc",
+        "cmp",
+        "osm",
+        "fotos"
+      ]
+    },
+    {
+      "id": "porta_vila",
+      "nome": "Porta da Vila (ou do Cruzeiro)",
+      "grupo": "Portas",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Porta em arco pleno do século XV, a sudoeste, por onde se fazia a ligação à vila. No OpenStreetMap a porta do pano poente não tem nome. Identifica-se como Porta da Vila pela orientação dada no SIPA e pela fotografia aérea 1.",
+      "medidas": "Vão de c. 2,6 × 3,8 m (estimativa).",
+      "fontes": [
+        "sipa",
+        "cmp",
+        "osm",
+        "fotos"
+      ]
+    },
+    {
+      "id": "porta_traicao",
+      "nome": "Porta da Traição (ou dos Campos)",
+      "grupo": "Portas",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Dá acesso aos campos. É uma entrada em cotovelo, com dupla abertura integrada numa torre quadrangular, dos séculos XIII e XIV. O SIPA situa-a a nordeste. O OpenStreetMap, que segue aqui, coloca-a no pano norte.",
+      "medidas": "Torre c. 4 × 4 m (OSM). A face exata de cada abertura do cotovelo está por confirmar.",
+      "fontes": [
+        "sipa",
+        "cmp",
+        "osm"
+      ]
+    },
+    {
+      "id": "brecha",
+      "nome": "Brecha das Desaparecidas (antiga Porta do Relógio)",
+      "grupo": "Portas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Lugar da terceira porta, virada a sul, que ligava o arrabalde à igreja. Foi demolida em 1760 para aproveitar a pedra, depois de o terramoto de 1755 derrubar a torre do relógio. Hoje é a entrada mais franca do castelo e está representada como se encontra, sem reconstituir a porta.",
+      "medidas": "Abertura c. 4,5 m (OSM e fotografia de pormenor).",
+      "fontes": [
+        "pc",
+        "cmp",
+        "visite",
+        "osm",
+        "fotos"
+      ]
+    },
+    {
+      "id": "torre_quinaria",
+      "nome": "Torre quinária",
+      "grupo": "Torreões",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Torre de planta pentagonal junto à Brecha. As fontes referem que a torre quinária guardava a terceira porta, virada a sul. A planta de cinco lados registada no OpenStreetMap e a posição junto à Brecha suportam a identificação.",
+      "medidas": "Planta c. 6,5 × 6,5 m (OSM). Altura exterior c. 14 m (estimativa, fotografia de pormenor).",
+      "fontes": [
+        "cmp",
+        "wiki",
+        "osm",
+        "fotos"
+      ]
+    },
+    {
+      "id": "torreao_poente_1",
+      "nome": "Torreão do pano poente (norte)",
+      "grupo": "Torreões",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Torreão quadrangular conservado no pano poente, o mais alto e robusto da cerca segundo o SIPA.",
+      "medidas": "Planta c. 4 × 4 m (OSM). Altura c. 2,5 m acima do pano (estimativa).",
+      "fontes": [
+        "sipa",
+        "osm",
+        "fotos"
+      ]
+    },
+    {
+      "id": "torreao_poente_2",
+      "nome": "Torreão do pano poente (centro)",
+      "grupo": "Torreões",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Torreão quadrangular conservado no pano poente, a sul da Porta da Vila.",
+      "medidas": "Planta c. 4 × 6,5 m (OSM). Altura c. 2,5 m acima do pano (estimativa).",
+      "fontes": [
+        "sipa",
+        "osm",
+        "fotos"
+      ]
+    },
+    {
+      "id": "torreao_poente_3",
+      "nome": "Torreão do pano poente (sul)",
+      "grupo": "Torreões",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Torreão quadrangular conservado no pano poente, junto ao ângulo sudoeste.",
+      "medidas": "Planta c. 3,3 × 2,3 m (OSM). Altura c. 2,5 m acima do pano (estimativa).",
+      "fontes": [
+        "sipa",
+        "osm",
+        "fotos"
+      ]
+    },
+    {
+      "id": "cubelo_noroeste",
+      "nome": "Cubelo do ângulo noroeste",
+      "grupo": "Torreões",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Torreão semicircular no ângulo noroeste, sobre a escarpa. A Património Cultural refere torreões ora quadrangulares, ora semicirculares. Este vê-se na fotografia aérea 2 e coincide com a inflexão do traçado no OpenStreetMap.",
+      "medidas": "Raio c. 2,8 m e altura c. 2 m acima do pano (estimativas a partir da fotografia).",
+      "fontes": [
+        "pc",
+        "osm",
+        "fotos"
+      ]
+    },
+    {
+      "id": "pano_norte",
+      "nome": "Pano norte",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Do castelejo à Porta da Traição, sobre o afloramento. As ameias e parte dos panos foram refeitas pela DGEMN entre 1941 e 1945 e em 1958, segundo os vestígios.",
+      "medidas": "Altura exterior c. 8 m, sobre escarpa rochosa de c. 6 m (estimativas, fotografias aéreas 2 e 3).",
+      "altura": 8,
+      "fontes": [
+        "sipa",
+        "osm",
+        "fotos"
+      ],
+      "adarve": 292.5,
+      "escarpa": 6
+    },
+    {
+      "id": "pano_noroeste",
+      "nome": "Pano noroeste",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Da Porta da Traição ao cubelo do ângulo noroeste, assente na escarpa rochosa sobre o vale.",
+      "medidas": "Altura exterior c. 8 m, sobre escarpa de arenito de c. 10 m (estimativas, fotografia aérea 2).",
+      "altura": 8,
+      "fontes": [
+        "osm",
+        "fotos"
+      ],
+      "adarve": 290.5,
+      "escarpa": 10
+    },
+    {
+      "id": "pano_poente",
+      "nome": "Pano poente",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "A frente virada à vila, a mais alta e robusta segundo o SIPA, com três torreões e a Porta da Vila.",
+      "medidas": "Altura exterior c. 12 m (estimativa, fotografia aérea 1). Publicado só o intervalo de 7 a 19 m.",
+      "altura": 12,
+      "fontes": [
+        "sipa",
+        "cmp",
+        "osm",
+        "fotos"
+      ],
+      "adarve": 293.5,
+      "escarpa": 2
+    },
+    {
+      "id": "pano_sul",
+      "nome": "Pano sul",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Do ângulo sudoeste até à Brecha das Desaparecidas.",
+      "medidas": "Altura exterior c. 9 m (estimativa, fotografia de pormenor).",
+      "altura": 9,
+      "fontes": [
+        "osm",
+        "fotos"
+      ],
+      "adarve": 291.0,
+      "escarpa": 0
+    },
+    {
+      "id": "pano_nascente",
+      "nome": "Pano nascente",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Da torre quinária até ao castelejo, sobre o rochedo da encosta nascente.",
+      "medidas": "Altura exterior c. 8 m, sobre rochedo de c. 6 m (estimativas).",
+      "altura": 8,
+      "fontes": [
+        "osm",
+        "fotos"
+      ],
+      "adarve": 292.5,
+      "escarpa": 6
+    },
+    {
+      "id": "igreja",
+      "nome": "Igreja de São Miguel",
+      "grupo": "Igreja de São Miguel",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Matriz de Penela, no interior do recinto. Reedificada em 1420 por iniciativa do infante D. Pedro e reformada na segunda metade do século XVI. Tem três naves. Fachada branca virada a sudoeste e torre sineira no ângulo sul. O relógio passou para esta torre nas obras da DGEMN.",
+      "medidas": "Planta do OSM (c. 16 × 30 m). Alturas estimadas pelas fotografias: nave c. 11,5 m à cumeeira e torre c. 22 m ao topo do coruchéu.",
+      "fontes": [
+        "sipa",
+        "wiki",
+        "osm",
+        "fotos"
+      ]
+    },
+    {
+      "id": "casa_paroquial",
+      "nome": "Casa paroquial e espaço museológico",
+      "grupo": "Recinto",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Edifício de dois pisos com telhado de quatro águas, a noroeste da igreja. Aloja o espaço museológico de arte sacra, aberto em 2006.",
+      "medidas": "Planta do OSM. Altura c. 7 m à cornija (estimativa).",
+      "fontes": [
+        "sipa",
+        "wiki",
+        "osm",
+        "fotos"
+      ]
+    },
+    {
+      "id": "muro_terreiro",
+      "nome": "Muro de suporte do terreiro da igreja",
+      "grupo": "Recinto",
+      "estado": "estado-atual",
+      "confianca": "baixa",
+      "descricao": "Muro que sustenta o terreiro da igreja e do castelejo acima do pátio inferior, visível na fotografia aérea 1. Traçado e altura aproximados.",
+      "medidas": "Desnível c. 2,5 m (estimativa).",
+      "fontes": [
+        "fotos"
+      ]
+    },
+    {
+      "id": "terreno",
+      "nome": "Terreno",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "baixa",
+      "descricao": "Relevo do Copernicus DEM a 30 m, rebaixado junto às muralhas para representar a escarpa rochosa visível nas fotografias.",
+      "fontes": [
+        "mdt",
+        "fotos"
+      ]
+    },
+    {
+      "id": "vila",
+      "nome": "Vila de Penela",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "baixa",
+      "descricao": "Edifícios da vila em volumes simplificados, a partir das plantas do OpenStreetMap.",
+      "fontes": [
+        "osm"
+      ]
+    },
+    {
+      "id": "caminhos",
+      "nome": "Caminhos e ruas",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Ruas e caminhos de acesso do OpenStreetMap.",
+      "fontes": [
+        "osm"
+      ]
+    },
+    {
+      "id": "vegetacao",
+      "nome": "Vegetação",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "baixa",
+      "descricao": "Árvores esquemáticas: oliveiras no recinto, como nas fotografias, e arvoredo nas encostas.",
+      "fontes": [
+        "fotos"
+      ]
+    }
+  ]
+}
