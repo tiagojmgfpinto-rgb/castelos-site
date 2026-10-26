@@ -582,6 +582,13 @@ def torre(m, base, pe, topo, mat=0):
     ameias_ao_longo(m, desvio(base, 0.3, True), terraco + PARAPEITO, True, mat)
 
 
+def piramide(m, c, r, z0, z1, mat):
+    """Pináculo: pirâmide de base quadrada."""
+    b = [c + np.array([math.cos(k * math.pi / 2 + math.pi / 4), math.sin(k * math.pi / 2 + math.pi / 4)]) * r for k in range(4)]
+    for k in range(4):
+        m.face([(*b[k], z0), (*b[(k + 1) % 4], z0), (*c, z1)], mat)
+
+
 def arco(m, centro, u, normal, largura, soleira, nascenca, prof, mat):
     """Vão em arco pleno, como reentrância escura na face (normal aponta para fora)."""
     r = largura / 2
@@ -747,54 +754,72 @@ def igreja():
     m.prisma(cab, z0, cab_topo - 1.0, 0, topo=False)
     telhado_generico(m, cab, cab_topo - 1.0, mat=1)
 
-    # porta principal no eixo da nave central e duas janelas (fotografias)
+    # Fachada (fotografia da fachada, out. 2026): porta de madeira retangular com aro de cantaria no
+    # eixo da nave, janela retangular por cima, friso a meia altura, cunhais e pináculos de cantaria
+    # e cruz no vértice do frontão.
     nf = -u
-    arco(m, fa + v * v_cume, v, nf, 2.0, adro, 2.6, 0.1, 2)
-    for vv in (v_cume - 2.5, v_cume + 2.5):
-        c = fa + v * vv + nf * 0.03
-        m.face([(*(c - v * 0.5), adro + 5.0), (*(c + v * 0.5), adro + 5.0),
-                (*(c + v * 0.5), adro + 6.6), (*(c - v * 0.5), adro + 6.6)], 2)
-    # cruz no vértice da empena
-    topo = fa + v * v_cume + nf * 0.1
+    pc = fa + v * v_cume
+
+    def ret(c, larg_, z0_, z1_, mat, sai=0.03):
+        q = c + nf * sai
+        m.face([(*(q - v * larg_ / 2), z0_), (*(q + v * larg_ / 2), z0_), (*(q + v * larg_ / 2), z1_), (*(q - v * larg_ / 2), z1_)], mat)
+
+    ret(pc, 2.0, adro, adro + 3.4, 3, 0.04)  # aro
+    ret(pc, 1.5, adro, adro + 3.0, 4, 0.06)  # porta
+    ret(pc + v * 0.0, 1.5, adro + 4.1, adro + 5.9, 3, 0.04)
+    ret(pc, 1.0, adro + 4.4, adro + 5.6, 2, 0.06)  # janela
+    m.caixa(fa + v * larg / 2 + nf * 0.12, v, larg + 0.3, 0.3, adro + 6.0, adro + 6.35, 3)  # friso
+    for vv, zz in ((0.0, beiral_s), (larg, beiral_n)):
+        cc_ = fa + v * vv + nf * 0.1 + v * (0.3 if vv == 0 else -0.3)
+        m.caixa(cc_, v, 0.6, 0.3, z0, zz + 0.2, 3)  # cunhal
+        m.caixa(cc_, v, 0.35, 0.35, zz + 0.2, zz + 0.5, 3)
+        m.prisma([cc_ + np.array([math.cos(k * math.pi / 2 + math.pi / 4), math.sin(k * math.pi / 2 + math.pi / 4)]) * 0.16 for k in range(4)],
+                 zz + 0.5, zz + 0.6, 3)
+        piramide(m, cc_, 0.15, zz + 0.6, zz + 1.5, 3)
+    # cruz no vértice do frontão
+    topo = pc + nf * 0.1
     m.caixa(topo, v, 0.18, 0.18, cume, cume + 1.3, 3)
     m.caixa(topo, v, 0.75, 0.18, cume + 0.75, cume + 0.93, 3)
 
-    # torre sineira (planta OSM): o topo do coruchéu é o ponto mais alto do MDS na planta;
-    # a altura do coruchéu (6,2 m), os pináculos e as sineiras são lidos nas fotografias 1, 2 e 4
+    # Torre sineira (planta OSM). No MDS o topo das paredes é um patamar e o vértice do coruchéu o
+    # ponto mais alto; sineiras, relógio, janela, pináculos e cata-vento pela fotografia da fachada.
     t = geom(osm("1d555fe5"))
     t = simplificar(t, 0.8)
     if area(t) < 0:
         t = t[::-1]
-    vertice = medir(t, q=100)
-    cornija = vertice - 6.2
+    vt = celulas(t)
+    vertice = float(vt.max())
+    cornija = float(np.percentile(vt, 30))
+    if not (vertice - 7 < cornija < vertice - 2):
+        cornija = vertice - 4.5
     m.prisma(t, z0, cornija, 0, topo=True)
     ct = t.mean(0)
-    for i in range(len(t)):
-        a, b = t[i], t[(i + 1) % len(t)]
-        mid = (a + b) / 2
-        out = unit(np.array([(b - a)[1], -(b - a)[0]]))
-        arco(m, mid, unit(b - a), out, 1.3, cornija - 4.2, 1.9, 0.1, 2)
-    # relógio no alçado da fachada
-    face_relogio = min(range(len(t)), key=lambda i: ((t[i] + t[(i + 1) % len(t)]) / 2 - ct) @ u)
-    a, b = t[face_relogio], t[(face_relogio + 1) % len(t)]
+    face_fr = min(range(len(t)), key=lambda i: ((t[i] + t[(i + 1) % len(t)]) / 2 - ct) @ u)
+    a, b = t[face_fr], t[(face_fr + 1) % len(t)]
+    ft = unit(b - a)
     out = unit(np.array([(b - a)[1], -(b - a)[0]]))
-    cc = (a + b) / 2 + out * 0.04
-    pts = [(*(cc + unit(b - a) * 0.8 * math.cos(k * math.pi / 8)), cornija - 6.6 + 0.8 * math.sin(k * math.pi / 8)) for k in range(16)]
-    m.face(pts, 3)
-    # coruchéu
-    m.prisma(t, cornija, cornija + 0.5, 3)
+    mid = (a + b) / 2
+    alt_t = cornija - adro
+    for dx in (-0.8, 0.8):  # duas sineiras lado a lado
+        arco(m, mid + ft * dx, ft, out, 0.9, adro + 0.48 * alt_t, 0.9, 0.1, 2)
+    arco(m, mid, ft, out, 0.5, adro + 0.66 * alt_t, 0.6, 0.1, 2)  # janela pequena
+    cc = mid + out * 0.04
+    zr = cornija - 0.06 * alt_t - 0.1
+    m.face([(*(cc + ft * 0.62 * math.cos(k * math.pi / 8)), zr + 0.62 * math.sin(k * math.pi / 8)) for k in range(16)], 3)  # relógio
+    # cornija, coruchéu caiado, pináculos nos cunhais e cata-vento
+    m.prisma(desvio(t, -0.15, True), cornija, cornija + 0.4, 3)
     ap = (*ct, vertice)
-    for i in range(len(t)):
-        a, b = t[i], t[(i + 1) % len(t)]
-        m.face([(*a, cornija + 0.5), (*b, cornija + 0.5), ap], 3)
-        pin = a + unit(ct - a) * 0.35
-        base = [pin + np.array([math.cos(k * 2 * math.pi / 4 + math.pi / 4), math.sin(k * 2 * math.pi / 4 + math.pi / 4)]) * 0.3 for k in range(4)]
-        for k in range(4):
-            m.face([(*base[k], cornija + 0.5), (*base[(k + 1) % 4], cornija + 0.5), (*pin, cornija + 1.9)], 3)
-    m.objeto("Igreja_Sao_Miguel", "igreja", ["cal", "telha", "sombra", "cantaria"], GRUPOS["Igreja_Sao_Miguel"], uv=2.0)
+    tt = desvio(t, 0.35, True)
+    for i in range(len(tt)):
+        m.face([(*tt[i], cornija + 0.4), (*tt[(i + 1) % len(tt)], cornija + 0.4), ap], 0)
+    for p_ in t:
+        piramide(m, p_ + unit(ct - p_) * 0.25, 0.18, cornija + 0.4, cornija + 1.6, 3)
+    m.caixa(ct, ft, 0.08, 0.08, vertice, vertice + 1.5, 3)
+    m.caixa(ct, ft, 0.6, 0.08, vertice + 1.0, vertice + 1.1, 3)
+    m.objeto("Igreja_Sao_Miguel", "igreja", ["cal", "telha", "sombra", "cantaria", "madeira"], GRUPOS["Igreja_Sao_Miguel"], uv=2.0)
     MEDIDAS["igreja"] = {"adro": adro + ZREF, "cumeeira": cume + ZREF, "beirado_sul": beiral_s + ZREF,
                          "beirado_norte": beiral_n + ZREF, "anexo_norte": [an_out + ZREF, an_in + ZREF],
-                         "cabeceira": cab_topo + ZREF, "torre_vertice": vertice + ZREF,
+                         "cabeceira": cab_topo + ZREF, "torre_cornija": cornija + ZREF, "torre_vertice": vertice + ZREF,
                          "cumeeira_acima_adro": cume - adro, "torre_acima_adro": vertice - adro}
 
 
@@ -908,6 +933,7 @@ material("base", (0.33, 0.26, 0.20), 0.95)
 material("caminho", (0.74, 0.72, 0.67), 0.95)
 material("arvore", (1, 1, 1), 0.9, None, vcor=True)
 material("apoio", (0.42, 0.33, 0.25), 0.9)
+material("madeira", (0.42, 0.25, 0.13), 0.8)
 
 print("terreno…")
 construir_terreno()
@@ -1029,10 +1055,13 @@ for pid in ("9ed07352", "dc7a9b83"):
 m.objeto("Apoio", None, ["apoio"], GRUPOS["Recinto"], uv=None)
 m = Malha()
 lin = densificar(MURO_TERREIRO, 2.0)
-dentro_ = cota(*desvio(lin, 1.2).T)  # terreiro (à esquerda da linha)
+dentro_ = mediana_movel(cota(*desvio(lin, 1.2).T), 5)  # terreiro (à esquerda da linha), sem picos nas esquinas
 fora = cota(*desvio(lin, -1.2).T)  # pátio
 # só onde o MDT mostra o degrau (> 0,6 m); no resto do traçado o terreiro e o pátio estão ao mesmo nível
 degrau = mediana_movel(dentro_ - fora, 3) > 0.6
+for i in range(1, len(degrau) - 2):  # fecha falhas de um ou dois vértices
+    if not degrau[i] and degrau[i - 1] and (degrau[i + 1] or degrau[i + 2]):
+        degrau[i] = True
 ini = None
 for i, k in enumerate(list(degrau) + [False]):
     if k and ini is None:
@@ -1065,8 +1094,24 @@ for f in F["edificios"]:
     h = f.get("altura") or ((f.get("pisos") or 2) * 3.0 + 0.6)
     n_med += casa(m, poly, h)[1]
     pegadas.append(poly)
+n_osm = len(pegadas)
+# Casas que o OSM não tem: plantas tiradas da nuvem de pontos (lidar.py -> dados/casas.json)
+muros = [principal, sueste, castelejo]
+for c_ in json.loads((AQUI / "dados" / "casas.json").read_text()):
+    poly = np.array(c_["planta"], float)
+    if area(poly) < 0:
+        poly = poly[::-1]
+    c = poly.mean(0)
+    if np.hypot(*poly.T).max() > RAIO - 1 or dentro(c[0], c[1], perimetro):
+        continue
+    if min(distancia(poly[:, 0], poly[:, 1], w_)[0].min() for w_ in muros) < 1.5:
+        continue  # o que encosta às muralhas é a própria muralha
+    if any(np.linalg.norm(c - t.mean(0)) < 5 for t in torres.values()):
+        continue
+    n_med += casa(m, poly, 6.0)[1]
+    pegadas.append(poly)
 m.objeto("Edificios_Vila", "vila", ["cal", "telha"], GRUPOS["Vila"], uv=None)
-MEDIDAS["vila"] = {"edificios": len(pegadas), "medidos": n_med}
+MEDIDAS["vila"] = {"edificios": len(pegadas), "do_osm": n_osm, "do_lidar": len(pegadas) - n_osm, "medidos": n_med}
 
 print("caminhos…")
 LARG = {"primary": 7, "secondary": 7, "tertiary": 6, "residential": 5, "unclassified": 4.5, "service": 3.5,
@@ -1250,9 +1295,9 @@ if "--vistas" in sys.argv:
     pasta = AQUI / "vistas"
     pasta.mkdir(exist_ok=True)
 
-    def vista(nome, azimute, elev, dist, lente=50, orto=None, res=(1200, 800), destino=None, alvo_z=None):
+    def vista(nome, azimute, elev, dist, lente=50, orto=None, res=(1200, 800), destino=None, alvo_z=None, alvo_xy=(0, 0)):
         a, e = math.radians(azimute), math.radians(elev)
-        al = alvo if alvo_z is None else Vector((0, 0, alvo_z))
+        al = Vector((alvo_xy[0], alvo_xy[1], alvo.z if alvo_z is None else alvo_z))
         pos = al + Vector((math.sin(a) * math.cos(e), math.cos(a) * math.cos(e), math.sin(e))) * dist
         co.location = pos
         co.rotation_euler = (al - pos).to_track_quat("-Z", "Y").to_euler()
@@ -1281,3 +1326,4 @@ if "--vistas" in sys.argv:
         vista("obliqua_foto1", 268, 38, 220, lente=50)
         vista("obliqua_foto2", 312, 32, 230, lente=50)
         vista("muro_poente", 262, 12, 120, lente=40)
+        vista("igreja_fachada", 228, 14, 48, lente=35, alvo_xy=tuple(P(-30, 10)), alvo_z=float(cota(*P(-30, 10))) + 8)

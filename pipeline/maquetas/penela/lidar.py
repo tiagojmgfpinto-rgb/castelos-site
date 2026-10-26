@@ -113,6 +113,74 @@ def arvores(mdt, mds, cls, xs):
     return out.astype(np.float32)
 
 
+def casas(mdt, mds, cls, xs, corte=1.2, area_min=12.0):
+    """Plantas dos edifícios que faltam no OSM, a partir das células de classe 6 (edifício) da nuvem
+    de pontos. As casas encostadas umas às outras separam-se pelos degraus do telhado (> `corte` m
+    entre células vizinhas); as que o OSM já tem ficam de fora. Devolve uma lista de
+    {planta, cume, chao} (cotas absolutas)."""
+    import shapely
+    from scipy import ndimage as ndi
+    # plantas do OSM (dados/fontes.json), na mesma grelha da cena
+    osm = None
+    fj = AQUI / "dados" / "fontes.json"
+    if fj.exists():
+        polys = []
+        for f in json.loads(fj.read_text())["edificios"]:
+            if f["geometria"]["type"] == "Polygon":
+                a = np.array(f["geometria"]["coordinates"][0])
+                polys.append(shapely.Polygon(np.stack([(a[:, 0] - LON0) * KX - CENTRO[0], (a[:, 1] - LAT0) * KY - CENTRO[1]], 1)).buffer(0))
+        osm = shapely.union_all(polys)
+    h = mds - mdt
+    b = (cls == 6) & (h > 2.0)
+    b = ndi.binary_opening(ndi.binary_closing(b, iterations=1), iterations=1)
+    d = np.zeros_like(b)
+    for ax in (0, 1):
+        g = np.abs(np.diff(mds, axis=ax)) > corte
+        if ax == 0:
+            d[:-1] |= g
+            d[1:] |= g
+        else:
+            d[:, :-1] |= g
+            d[:, 1:] |= g
+    lab, k = ndi.label(b & ~d)
+    # as células de fronteira voltam para a casa vizinha mais próxima
+    _, (ri, ci) = ndi.distance_transform_edt(lab == 0, return_indices=True)
+    lab = np.where(b, lab[ri, ci], 0)
+    out = []
+    for i, sl in enumerate(ndi.find_objects(lab), start=1):
+        if sl is None:
+            continue
+        m = lab[sl] == i
+        if m.sum() * PASSO * PASSO < area_min:
+            continue
+        r, c = np.nonzero(m)
+        r, c = r + sl[0].start, c + sl[1].start
+        pts = shapely.MultiPoint(np.stack([xs[c], xs[r]], 1))
+        ret = pts.minimum_rotated_rectangle.buffer(PASSO / 2, join_style="mitre")
+        area = m.sum() * PASSO * PASSO
+        if area / ret.area > 0.78:
+            g = ret
+        else:
+            g = shapely.concave_hull(pts, ratio=0.15).buffer(PASSO / 2, join_style="mitre").simplify(0.6)
+        if osm is not None and g.intersects(osm):
+            if g.intersection(osm).area > 0.3 * g.area:
+                continue  # já está no OSM, que tem plantas mais limpas
+            g = g.difference(osm.buffer(0.3))
+            if g.geom_type == "MultiPolygon":
+                g = max(g.geoms, key=lambda x: x.area)
+            g = g.simplify(0.6)
+        if g.geom_type != "Polygon" or g.area < area_min:
+            continue
+        mrr = np.array(g.minimum_rotated_rectangle.exterior.coords)
+        if min(np.linalg.norm(mrr[1] - mrr[0]), np.linalg.norm(mrr[2] - mrr[1])) < 3.0:
+            continue  # tiras estreitas: muros e muralhas, não casas
+        cx = np.array(g.exterior.coords)[:-1]
+        out.append({"planta": np.round(cx, 2).tolist(), "cume": round(float(np.percentile(mds[r, c], 95)), 2),
+                    "chao": round(float(np.percentile(mdt[r, c], 10)), 2)})
+    print("casas do LiDAR", len(out))
+    return out
+
+
 def ortofoto(pasta, tf):
     """Recorte RGB da ortofoto a 25 cm na mesma área, norte para cima, gravado em dados/orto.jpg."""
     from PIL import Image
@@ -160,6 +228,8 @@ def main():
         saida["classe"] = c
         # x, y (cena), topo da copa, chão (cotas absolutas) e raio da copa
         saida["arvores"] = arvores(saida["mdt"] / 100 + 200, saida["mds"] / 100 + 200, c, xs)
+        (AQUI / "dados" / "casas.json").write_text(json.dumps(
+            casas(saida["mdt"] / 100 + 200, saida["mds"] / 100 + 200, c, xs), separators=(",", ":")))
     ortofoto(pasta, tf)
     np.savez_compressed(AQUI / "dados" / "lidar.npz", passo=PASSO, meio=MEIO, base=200.0, **saida,
                         fonte="DGT, LiDAR 2024 (MDT, MDS 50 cm e nuvem de pontos), folhas 177341 e 178341")
