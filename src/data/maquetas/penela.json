@@ -2,7 +2,7 @@
   "monumento": "penela",
   "titulo": "Castelo de Penela",
   "variante": "estado-atual",
-  "versao": "0.2 provisória",
+  "versao": "0.3 provisória",
   "data": "2026-10-26",
   "origem": {
     "lat": 40.031162,
@@ -44,6 +44,9 @@
     },
     "fotos": {
       "titulo": "Fotografias aéreas (3) e de pormenor (2) fornecidas pelo autor do projeto, outubro de 2026"
+    },
+    "foto_fachada": {
+      "titulo": "Fotografia da fachada da Igreja de São Miguel fornecida pelo autor do projeto, outubro de 2026"
     }
   },
   "limitacoes": [
@@ -53,8 +56,8 @@
     "A espessura das muralhas não está publicada. Usa-se 2,2 m e 1,8 m no castelejo (estimativas).",
     "As seteiras e troneiras não estão representadas: as fotografias disponíveis não permitem situá-las uma a uma.",
     "A cisterna (planta quadrangular, escavada na rocha) não está representada porque a sua localização não foi confirmada.",
-    "A Igreja de São Miguel tem as cumeeiras e beirados medidos. A altura do coruchéu (6,2 m), as sineiras, as janelas e a porta são lidas nas fotografias.",
-    "Os edifícios da vila são volumes simplificados a partir das plantas do OpenStreetMap, com o cume medido no LiDAR (26 de 28). As árvores estão nas posições e com as alturas e copas medidas na nuvem de pontos, com uma forma esquemática."
+    "A Igreja de São Miguel tem as cumeeiras, os beirados, a cornija da torre (306,1 m) e o vértice do coruchéu (311,3 m) medidos. A porta, a janela, o friso, as sineiras, o relógio, os pináculos e o cata-vento seguem a fotografia da fachada, com medidas aproximadas.",
+    "Os edifícios da vila são volumes simplificados: 28 plantas do OpenStreetMap e 32 tiradas da nuvem de pontos LiDAR (classe edifício), onde o OpenStreetMap não tem casas. As casas geminadas separam-se pelos degraus dos telhados, por isso alguns quarteirões aparecem como um só volume. O cume de 58 das 60 casas é medido no LiDAR. As árvores estão nas posições e com as alturas e copas medidas na nuvem de pontos, com uma forma esquemática."
   ],
   "muralha": {
     "espessura": 2.2,
@@ -294,13 +297,14 @@
       "grupo": "Igreja de São Miguel",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "Matriz de Penela, no interior do recinto. Reedificada em 1420 por iniciativa do infante D. Pedro e reformada na segunda metade do século XVI. Tem três naves sob um só telhado. Fachada branca virada a sudoeste e torre sineira no ângulo sul. O relógio passou para esta torre nas obras da DGEMN.",
-      "medidas": "Planta do OSM (c. 16 × 25 m). Cumeeira a 301,6 m, 10,3 m acima do adro; beirados a 296,9 m (sul) e 298,3 m (norte); vértice do coruchéu a 311,3 m, 20 m acima do adro (LiDAR 2024). Coruchéu, vãos e relógio pelas fotografias.",
+      "descricao": "Matriz de Penela, no interior do recinto. Reedificada em 1420 por iniciativa do infante D. Pedro e reformada na segunda metade do século XVI. Tem três naves sob um só telhado. Fachada branca virada a sudoeste, com porta de madeira, frontão com cruz e pináculos. Torre sineira caiada no ângulo sul, com duas sineiras, relógio e coruchéu piramidal com cata-vento. O relógio passou para esta torre nas obras da DGEMN.",
+      "medidas": "Planta do OSM (c. 16 × 25 m). Cumeeira a 301,6 m, 10,3 m acima do adro; beirados a 296,9 m (sul) e 298,3 m (norte); torre com cornija a 306,1 m e vértice do coruchéu a 311,3 m, 20 m acima do adro (LiDAR 2024). Porta, janela, sineiras, relógio e pináculos pela fotografia da fachada.",
       "fontes": [
         "sipa",
         "wiki",
         "osm",
         "lidar",
+        "foto_fachada",
         "fotos"
       ]
     },
@@ -352,11 +356,12 @@
       "grupo": "Envolvente",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "Edifícios da vila em volumes simplificados, a partir das plantas do OpenStreetMap, com o cume medido no LiDAR.",
+      "descricao": "Casario de Penela à volta do castelo em volumes simplificados: plantas do OpenStreetMap completadas com as casas que a nuvem de pontos LiDAR mostra e o OpenStreetMap não tem, todas com o cume medido.",
       "fontes": [
         "osm",
         "lidar"
-      ]
+      ],
+      "medidas": "60 edifícios (28 do OSM, 32 da nuvem de pontos), cume medido em 58."
     },
     {
       "id": "caminhos",

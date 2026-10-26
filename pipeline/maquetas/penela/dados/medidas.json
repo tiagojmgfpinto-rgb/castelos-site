@@ -131,6 +131,7 @@
    297.6
   ],
   "cabeceira": 300.4,
+  "torre_cornija": 306.1,
   "torre_vertice": 311.3,
   "cumeeira_acima_adro": 10.3,
   "torre_acima_adro": 20.0
@@ -142,12 +143,14 @@
   "medido": true
  },
  "muro_terreiro": {
-  "desnivel_max": 5.5,
+  "desnivel_max": 5.6,
   "comprimento": 38.0
  },
  "vila": {
-  "edificios": 28,
-  "medidos": 26
+  "edificios": 60,
+  "do_osm": 28,
+  "do_lidar": 32,
+  "medidos": 58
  },
  "vegetacao": {
   "arvores": 639

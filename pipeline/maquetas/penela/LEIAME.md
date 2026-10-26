@@ -1,6 +1,6 @@
 # Maqueta 3D do Castelo de Penela (estado atual)
 
-Versão 0.2, **provisória**. Gerada por código, à escala 1:1 e georreferenciada (origem nas coordenadas oficiais 40.031162, −8.389862; x para este, y para norte; no visor, −z é o norte). Desde a 0.2 o relevo, as cotas e as alturas são medidos no LiDAR da DGT de 2024 e o traçado é conferido na ortofoto de 2025.
+Versão 0.3, **provisória**. Gerada por código, à escala 1:1 e georreferenciada (origem nas coordenadas oficiais 40.031162, −8.389862; x para este, y para norte; no visor, −z é o norte). Desde a 0.2 o relevo, as cotas e as alturas são medidos no LiDAR da DGT de 2024 e o traçado é conferido na ortofoto de 2025.
 
 ## Como reconstruir
 
@@ -9,7 +9,7 @@ Versão 0.2, **provisória**. Gerada por código, à escala 1:1 e georreferencia
 pip install pyarrow shapely
 python pipeline/maquetas/penela/recolher.py
 
-# 2. LiDAR e ortofoto da DGT -> dados/lidar.npz e dados/orto.jpg
+# 2. LiDAR e ortofoto da DGT -> dados/lidar.npz, dados/casas.json e dados/orto.jpg
 #    Descarregar do Centro de Dados da DGT (cdd.dgterritorio.gov.pt) para uma pasta:
 #    MDT-50cm e MDS-50cm das folhas 177341 e 178341 (2024), a nuvem de pontos LO-177341 e
 #    LO-178341 (2024) e a ortofoto ortos2025_cog_25cm_rgbi_jpg_251-4.
@@ -21,9 +21,9 @@ pip install bpy==5.2.3 numpy          # Python 3.13
 python pipeline/maquetas/penela/construir.py --vistas
 ```
 
-O `lidar.npz` e o `orto.jpg` estão no repositório (c. 1,7 MB), por isso o passo 2 só é preciso para refazer as medições com outras folhas.
+O `lidar.npz`, o `casas.json` e o `orto.jpg` estão no repositório (c. 1,7 MB), por isso o passo 2 só é preciso para refazer as medições com outras folhas.
 O `bpy` do PyPI não traz o Draco, por isso o script comprime o GLB com `npx @gltf-transform/cli draco` (é preciso Node).
-`--vistas` grava a capa e as vistas de verificação em `vistas/` (topo, norte, sul, nascente, poente, duas oblíquas como as fotografias aéreas 1 e 2 e o pano poente).
+`--vistas` grava a capa e as vistas de verificação em `vistas/` (topo, norte, sul, nascente, poente, duas oblíquas como as fotografias aéreas 1 e 2, o pano poente e a fachada da igreja).
 Cada construção grava em `dados/medidas.json` o que se mediu (cotas absolutas em metros), que é a base das medidas citadas no `penela.json`.
 
 ## O que se mede no LiDAR e o que é estimativa
@@ -32,7 +32,7 @@ Cada construção grava em `dados/medidas.json` o que se mediu (cotas absolutas 
 - **Traçado**: OSM densificado de 2 em 2 m e encostado à crista da muralha no MDS, até 4,5 m para cada lado, só onde a crista está claramente acima da linha.
 - **Muralhas e castelejo**: topo dos merlões medido em cada vértice (percentil 95 do MDS num raio de 1,6 m, sem células de vegetação, mediana móvel ao longo do pano). Pé exterior e chão interior no MDT.
 - **Torres e cubelo**: topo dentro da planta e pé no anel exterior.
-- **Igreja, casa paroquial e vila**: cumes e beirados medidos dentro da planta do OSM.
+- **Igreja, casa paroquial e vila**: cumes e beirados medidos dentro da planta. As casas que faltam no OSM saem da nuvem de pontos (`dados/casas.json`): células de classe edifício, separadas pelos degraus dos telhados, sem as que o OSM já tem.
 - **Árvores**: máximos locais da altura da vegetação (MDS − MDT, pontos de classe 3 a 5), com o raio da copa pela área de vegetação de cada máximo.
 - **Estimativas**: espessura das muralhas, desenho das ameias e parapeito, altura do coruchéu, vãos de portas e janelas, e a forma das árvores.
 
@@ -58,15 +58,15 @@ Tudo o que é interpretação está em `src/data/maquetas/penela.json`: estado (
 | Pano poente | estado-atual | alta | Topo a 287–293 m. Altura exterior de 7 a 14,5 m (LiDAR 2024), dentro do intervalo publicado de 7 a 19 m. | sipa, cmp, osm, lidar, orto, fotos |
 | Pano sul | estado-atual | alta | Topo a 291,5–294,7 m. Altura exterior de 8 a 13 m (LiDAR 2024). | osm, lidar, orto, fotos |
 | Pano nascente | estado-atual | alta | Topo a 295–303 m. Altura exterior de 7 a 11 m sobre o rochedo (LiDAR 2024). | osm, lidar, orto, fotos |
-| Igreja de São Miguel | estado-atual | média | Planta do OSM (c. 16 × 25 m). Cumeeira a 301,6 m, 10,3 m acima do adro; beirados a 296,9 m (sul) e 298,3 m (norte); vértice do coruchéu a 311,3 m, 20 m acima do adro (LiDAR 2024). Coruchéu, vãos e relógio pelas fotografias. | sipa, wiki, osm, lidar, fotos |
+| Igreja de São Miguel | estado-atual | média | Planta do OSM (c. 16 × 25 m). Cumeeira a 301,6 m, 10,3 m acima do adro; beirados a 296,9 m (sul) e 298,3 m (norte); torre com cornija a 306,1 m e vértice do coruchéu a 311,3 m, 20 m acima do adro (LiDAR 2024). Porta, janela, sineiras, relógio e pináculos pela fotografia da fachada. | sipa, wiki, osm, lidar, foto_fachada, fotos |
 | Casa paroquial e espaço museológico | estado-atual | média | Planta do OSM. Cume a 294,4 m e cornija a c. 291,8 m, c. 6,4 m acima do chão (LiDAR 2024). | sipa, wiki, osm, lidar, fotos |
 | Muro de suporte do terreiro da igreja | estado-atual | média | Degrau medido no MDT em c. 38 m de comprimento, até 5,5 m de desnível. Onde o MDT não mostra degrau o muro não é desenhado. | lidar, orto, fotos |
 | Terreno | estado-atual | alta | — | lidar, orto |
-| Vila de Penela | estado-atual | média | — | osm, lidar |
+| Vila de Penela | estado-atual | média | 60 edifícios (28 do OSM, 32 da nuvem de pontos), cume medido em 58. | osm, lidar |
 | Caminhos e ruas | estado-atual | média | — | osm, orto |
 | Vegetação | estado-atual | média | — | lidar, fotos |
 
-Fontes: `sipa` SIPA IPA.00001597 · `pc` Património Cultural 69810 · `cmp` CM Penela · `visite` Visite Penela · `wiki` Wikipédia · `osm` OpenStreetMap via Overture 2026-10-21.0 · `lidar` DGT LiDAR 2024 (CC BY 4.0) · `orto` DGT ORTOS 2025 (CC BY 4.0) · `fotos` fotografias aéreas e de pormenor fornecidas.
+Fontes: `sipa` SIPA IPA.00001597 · `pc` Património Cultural 69810 · `cmp` CM Penela · `visite` Visite Penela · `wiki` Wikipédia · `osm` OpenStreetMap via Overture 2026-10-21.0 · `lidar` DGT LiDAR 2024 (CC BY 4.0) · `orto` DGT ORTOS 2025 (CC BY 4.0) · `foto_fachada` fotografia da fachada da igreja · `fotos` fotografias aéreas e de pormenor fornecidas.
 
 ## O que falta para passar de provisória a validada
 
