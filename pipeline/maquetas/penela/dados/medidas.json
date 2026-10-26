@@ -1,0 +1,155 @@
+{
+ "pano_norte": {
+  "topo": [
+   291.5,
+   304.4
+  ],
+  "altura_exterior": [
+   7.0,
+   12.7
+  ],
+  "acima_do_chao_interior": [
+   1.2,
+   3.4
+  ]
+ },
+ "pano_noroeste": {
+  "topo": [
+   284.9,
+   292.4
+  ],
+  "altura_exterior": [
+   7.2,
+   15.3
+  ],
+  "acima_do_chao_interior": [
+   1.4,
+   7.3
+  ]
+ },
+ "pano_poente": {
+  "topo": [
+   286.8,
+   292.7
+  ],
+  "altura_exterior": [
+   7.3,
+   14.5
+  ],
+  "acima_do_chao_interior": [
+   3.8,
+   13.1
+  ]
+ },
+ "pano_sul": {
+  "topo": [
+   291.5,
+   294.7
+  ],
+  "altura_exterior": [
+   7.9,
+   12.8
+  ],
+  "acima_do_chao_interior": [
+   5.7,
+   8.0
+  ]
+ },
+ "pano_nascente": {
+  "topo": [
+   295.2,
+   302.6
+  ],
+  "altura_exterior": [
+   7.4,
+   11.4
+  ],
+  "acima_do_chao_interior": [
+   1.6,
+   9.2
+  ]
+ },
+ "castelejo": {
+  "topo": [
+   304.1,
+   305.0
+  ],
+  "chao_interior": 291.1,
+  "altura_exterior": [
+   9.9,
+   15.9
+  ],
+  "acima_do_chao_interior": [
+   9.6,
+   14.4
+  ]
+ },
+ "torreao_poente_1": {
+  "topo": 287.8,
+  "pe": 278.2,
+  "altura_exterior": 9.5
+ },
+ "torreao_poente_2": {
+  "topo": 291.2,
+  "pe": 277.6,
+  "altura_exterior": 13.6
+ },
+ "torreao_poente_3": {
+  "topo": 291.0,
+  "pe": 278.5,
+  "altura_exterior": 12.5
+ },
+ "porta_traicao": {
+  "topo": 292.2,
+  "pe": 283.6,
+  "altura_exterior": 8.6
+ },
+ "torre_quinaria": {
+  "topo": 300.7,
+  "pe": 286.6,
+  "altura_exterior": 14.1
+ },
+ "cubelo_noroeste": {
+  "topo": 287.6,
+  "pe": 272.4,
+  "altura_exterior": 15.2
+ },
+ "porta_vila": {
+  "soleira": 279.0
+ },
+ "brecha": {
+  "chao": 287.2,
+  "abertura": 5.5
+ },
+ "igreja": {
+  "adro": 291.3,
+  "cumeeira": 301.6,
+  "beirado_sul": 296.9,
+  "beirado_norte": 298.3,
+  "anexo_norte": [
+   296.4,
+   297.6
+  ],
+  "cabeceira": 300.4,
+  "torre_vertice": 311.3,
+  "cumeeira_acima_adro": 10.3,
+  "torre_acima_adro": 20.0
+ },
+ "casa_paroquial": {
+  "cornija": 291.8,
+  "cume": 294.4,
+  "chao": 285.4,
+  "medido": true
+ },
+ "muro_terreiro": {
+  "desnivel_max": 5.5,
+  "comprimento": 38.0
+ },
+ "vila": {
+  "edificios": 28,
+  "medidos": 26
+ },
+ "vegetacao": {
+  "arvores": 639
+ }
+}

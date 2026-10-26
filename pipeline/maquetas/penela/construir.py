@@ -6,8 +6,10 @@ Corre com o módulo bpy (Blender 5.2) instalado em Python 3.13:
     python pipeline/maquetas/penela/construir.py            # GLB
     python pipeline/maquetas/penela/construir.py --vistas   # GLB + capa + vistas de verificação
 
-Dados: dados/fontes.json (recolher.py) e src/data/maquetas/penela.json, que tem a
-leitura das fontes, as cotas e alturas estimadas e o estado de cada elemento.
+Dados: dados/fontes.json (recolher.py: traçado do OSM), dados/lidar.npz (lidar.py: MDT, MDS,
+classes da nuvem de pontos e copas, do LiDAR 2024 da DGT) e src/data/maquetas/penela.json, que tem
+a leitura das fontes e o estado de cada elemento. As cotas e alturas medem-se no LiDAR; o que
+o LiDAR não mede (espessura, ameias, coruchéu, vãos) vem do JSON e das fotografias.
 Coordenadas da cena: x para este, y para norte, z para cima, em metros (1:1).
 O glTF converte para y para cima (-z é o norte no visor).
 """
@@ -36,7 +38,6 @@ RAIO = 150.0
 ZREF = 250.0  # cota que fica em z = 0
 rng = np.random.default_rng(1064)
 
-NIV = {k: v["cota"] - ZREF for k, v in CFG["niveis"].items()}
 MUR = CFG["muralha"]
 PARAPEITO, MERLAO = MUR["parapeito"], MUR["merlao"]
 
@@ -67,29 +68,52 @@ def osm(prefixo, lista="infraestrutura"):
     return next(f for f in F[lista] if f["id"].startswith(prefixo))
 
 
-M = F["mdt"]
-A = np.array(M["alturas"], dtype=float)
+# LiDAR da DGT reamostrado para a grelha da cena (lidar.py): linha 0 = sul, coluna 0 = oeste
+LID = np.load(AQUI / "dados" / "lidar.npz")
+LPASSO, LMEIO = float(LID["passo"]), float(LID["meio"])
+MDT = LID["mdt"] / 100.0 + float(LID["base"]) - ZREF
+MDS = LID["mds"] / 100.0 + float(LID["base"]) - ZREF
+CLS = LID["classe"]
+VEG = (CLS >= 3) & (CLS <= 5)
+LXS = np.linspace(-LMEIO, LMEIO, MDT.shape[0])
 
 
-def mdt(x, y):
-    """Copernicus GLO-30 interpolado (Catmull-Rom), em z da cena."""
-    lon = LON0 + (x + CENTRO[0]) / KX
-    lat = LAT0 + (y + CENTRO[1]) / KY
-    c = (lon - M["lon0"]) / M["dlon"] - 0.5
-    r = (lat - M["lat0"]) / M["dlat"] - 0.5
-    c0, r0 = np.floor(c).astype(int), np.floor(r).astype(int)
+def amostra(G, x, y):
+    """Interpolação bilinear numa grelha do LiDAR, em z da cena."""
+    c = (np.asarray(x, float) + LMEIO) / LPASSO
+    r = (np.asarray(y, float) + LMEIO) / LPASSO
+    c0 = np.clip(np.floor(c).astype(int), 0, G.shape[1] - 2)
+    r0 = np.clip(np.floor(r).astype(int), 0, G.shape[0] - 2)
+    fc, fr = np.clip(c - c0, 0, 1), np.clip(r - r0, 0, 1)
+    return (G[r0, c0] * (1 - fc) * (1 - fr) + G[r0, c0 + 1] * fc * (1 - fr)
+            + G[r0 + 1, c0] * (1 - fc) * fr + G[r0 + 1, c0 + 1] * fc * fr)
 
-    def w(t):
-        return [((-t + 2) * t - 1) * t / 2, ((3 * t - 5) * t * t + 2) / 2, ((-3 * t + 4) * t + 1) * t / 2, (t - 1) * t * t / 2]
 
-    wc, wr = w(c - c0), w(r - r0)
-    out = 0.0
-    for i in range(4):
-        rr = np.clip(r0 - 1 + i, 0, A.shape[0] - 1)
-        for j in range(4):
-            cc = np.clip(c0 - 1 + j, 0, A.shape[1] - 1)
-            out = out + wr[i] * wc[j] * A[rr, cc]
-    return out - ZREF
+def cota(x, y):
+    """Terreno: MDT LiDAR de 50 cm (solo sem edifícios nem vegetação)."""
+    return amostra(MDT, x, y)
+
+
+def celulas(poly=None, centro=None, raio=None, sem_veg=True):
+    """Valores do MDS nas células dentro de um polígono ou de um círculo (sem copas de árvores)."""
+    if poly is not None:
+        x0, y0 = poly.min(0) - 1
+        x1, y1 = poly.max(0) + 1
+    else:
+        x0, y0 = centro - raio - 1
+        x1, y1 = centro + raio + 1
+    c0, c1 = np.searchsorted(LXS, [x0, x1])
+    r0, r1 = np.searchsorted(LXS, [y0, y1])
+    X, Y = np.meshgrid(LXS[c0:c1], LXS[r0:r1])
+    ok = dentro(X, Y, poly) if poly is not None else np.hypot(X - centro[0], Y - centro[1]) <= raio
+    if sem_veg:
+        ok &= ~VEG[r0:r1, c0:c1]
+    return MDS[r0:r1, c0:c1][ok]
+
+
+def medir(poly=None, centro=None, raio=None, q=95):
+    v = celulas(poly, centro, raio)
+    return float(np.percentile(v, q)) if len(v) >= 3 else float("nan")
 
 
 def dentro(px, py, poly):
@@ -179,15 +203,8 @@ PORTA_VILA = geom(osm("1e35ebc6"))
 BRECHA = geom(osm("28537527"))
 CUBELO = P(-84.0, 31.4)
 
-# Terreiro da igreja e do castelejo (fotografia aérea 1); o muro de suporte segue a 1.ª parte.
+# Muro de suporte do terreiro da igreja (fotografia aérea 1; o degrau confere-se no MDT)
 MURO_TERREIRO = np.array([P(-47, 46), P(-47, 24), P(-43, 8), P(-34, 0), P(-20, -3), P(-10.6, -1)])
-TERREIRO = np.vstack([MURO_TERREIRO, [P(-10, 20), P(5, 30), P(5, 40), P(-30, 52), P(-47, 52)]])
-
-TOPO = {s: EL[s]["adarve"] - ZREF + PARAPEITO + MERLAO["altura"] for s in SECTORES}
-PE = {s: TOPO[s] - EL[s]["altura"] for s in SECTORES}
-CAST_ADARVE = NIV["castelejo"] + 4.0
-CAST_PE = CAST_ADARVE + PARAPEITO + MERLAO["altura"] - 6.0
-CAST_ESCARPA = 8.0  # rochedo do castelejo sobre a encosta nascente (estimativa)
 
 
 # ---------------------------------------------------------------- terreno
@@ -213,63 +230,31 @@ def fbm(x, y, escala, semente, oit=4):
     return s / tot
 
 
-def cota_interior(x, y):
-    z = np.where(dentro(x, y, TERREIRO), NIV["terreiro_igreja"], NIV["patio"])
-    dc, _, _ = distancia(x, y, castelejo, True)
-    no_cast = dentro(x, y, castelejo)
-    # rochedo do castelejo: desce em escarpa para o recinto
-    z = np.maximum(z, np.where(no_cast, NIV["castelejo"], NIV["castelejo"] - 1.4 * dc))
-    return z
+_ORTO = []
 
 
-def cota(x, y):
-    """Terreno final: MDT, recinto em plataformas, base das muralhas e escarpas."""
-    x, y = np.asarray(x, float), np.asarray(y, float)
-    z0 = mdt(x, y)
-    dentro_c = dentro(x, y, perimetro)
-    melhor = np.full(x.shape, np.inf)
-    pe = np.zeros(x.shape)
-    esc = np.zeros(x.shape)
-    zq = np.zeros(x.shape)
-    linhas = list(SECTORES.items()) + [("castelejo", castelejo_ext)]
-    for s, linha in linhas:
-        d, qx, qy = distancia(x, y, linha)
-        m = d < melhor
-        melhor[m] = d[m]
-        pe[m] = PE[s] if s in PE else CAST_PE
-        esc[m] = EL[s]["escarpa"] if s in SECTORES else CAST_ESCARPA
-        zq[m] = mdt(qx[m], qy[m])
-    # A Brecha abre-se ao nível do pátio; na Brecha e na Porta da Vila não há escarpa
-    for ponto, nivel in ((BRECHA, NIV["patio"] - 0.15), (PORTA_VILA, None)):
-        dp = np.hypot(x - ponto[0], y - ponto[1])
-        wp = np.clip(1 - (dp - 5) / 10, 0, 1)
-        wp = wp * wp * (3 - 2 * wp)
-        if nivel is not None:
-            pe = pe * (1 - wp) + nivel * wp
-        esc = esc * (1 - wp)
-    s1 = np.clip((melhor - 1.0) / 5.0, 0, 1)
-    zc = pe - esc * s1 * s1 * (3 - 2 * s1)  # pé da muralha e escarpa de rocha
-    t = np.clip((melhor - 6.0) / 16.0, 0, 1)
-    w = 1 - t * t * (3 - 2 * t)
-    fora = z0 + (zc - zq) * w
-    # sob a espessura da muralha o terreno já é o de fora (evita degraus à vista)
-    recinto = dentro_c & (np.minimum(melhor, distancia(x, y, perimetro, True)[0]) > MUR["espessura"] / 2 + 0.3)
-    return np.where(recinto, cota_interior(x, y), fora)
+def ortofoto(x, y):
+    """Cor (sRGB 0-1) da ortofoto DGT 2025 recortada em dados/orto.jpg (norte em cima)."""
+    if not _ORTO:
+        img = bpy.data.images.load(str(AQUI / "dados" / "orto.jpg"))
+        w, h = img.size
+        px = np.empty(w * h * 4, np.float32)
+        img.pixels.foreach_get(px)
+        _ORTO.append(px.reshape(h, w, 4)[..., :3])  # o Blender guarda a linha 0 em baixo (sul)
+        bpy.data.images.remove(img)
+    a = _ORTO[0]
+    k = a.shape[0]
+    c = np.clip(np.round((np.asarray(x) + LMEIO) / (2 * LMEIO) * (k - 1)).astype(int), 0, k - 1)
+    r = np.clip(np.round((np.asarray(y) + LMEIO) / (2 * LMEIO) * (k - 1)).astype(int), 0, k - 1)
+    return a[r, c].astype(float)
 
 
 def construir_terreno():
-    passo = 1.25
+    passo = 1.0
     n = int(2 * RAIO / passo) + 1
     xs = np.linspace(-RAIO, RAIO, n)
     X, Y = np.meshgrid(xs, xs)
     Z = cota(X, Y)
-    # rugosidade da rocha nas encostas íngremes
-    gy, gx = np.gradient(Z, passo)
-    decl = np.degrees(np.arctan(np.hypot(gx, gy)))
-    fora = ~dentro(X, Y, perimetro)
-    rocha = np.clip((decl - 32) / 12, 0, 1) * fora
-    rocha *= np.clip((distancia(X, Y, perimetro, True)[0] - 2.5) / 3.0, 0, 1)
-    Z = Z + rocha * (fbm(X + 500, Y + 500, 7.0, 7) - 0.5) * 2.2
     gy, gx = np.gradient(Z, passo)
     decl = np.degrees(np.arctan(np.hypot(gx, gy)))
 
@@ -285,28 +270,33 @@ def construir_terreno():
     I, J = np.nonzero(centro_in)
     faces = np.stack([idx[I, J], idx[I, J + 1], idx[I + 1, J + 1], idx[I + 1, J]], 1)
 
-    # cores por vértice (sRGB)
+    # cores por vértice (sRGB): paleta de maqueta guiada pela ortofoto de 2025 (relva, terra,
+    # calçada e rocha onde de facto estão), com as sombras e o ruído da fotografia atenuados
     xv, yv = V[:, 0], V[:, 1]
     dv = decl[usados]
-    nz = fbm(xv, yv, 22.0, 3)
-    erva = np.array([0.50, 0.53, 0.33]) * (0.85 + 0.3 * nz[:, None])
-    seco = np.array([0.66, 0.62, 0.44])
-    mix = np.clip((fbm(xv + 90, yv, 35.0, 11) - 0.55) * 3, 0, 1)[:, None] * 0.7
-    cor = erva * (1 - mix) + seco * mix
-    roc = np.array([0.76, 0.68, 0.52]) * (0.9 + 0.2 * fbm(xv, yv, 4.0, 5)[:, None])
-    tr = np.clip((dv - 34) / 10, 0, 1)[:, None]
+    orto = ortofoto(xv, yv)
+    lum = orto.mean(1)
+    sat = orto.max(1) - orto.min(1)
+    verde = np.clip((orto[:, 1] - (orto[:, 0] + orto[:, 2]) / 2) * 8 + 0.3, 0, 1)
+    # debaixo das copas (nuvem de pontos) a ortofoto só mostra a árvore e a sombra: chão de mato
+    ci = np.clip(np.round((xv + LMEIO) / LPASSO).astype(int), 0, VEG.shape[1] - 1)
+    ri = np.clip(np.round((yv + LMEIO) / LPASSO).astype(int), 0, VEG.shape[0] - 1)
+    sob = np.zeros(len(xv))
+    for dr in (-2, 0, 2):
+        for dc in (-2, 0, 2):
+            sob += VEG[np.clip(ri + dr, 0, VEG.shape[0] - 1), np.clip(ci + dc, 0, VEG.shape[1] - 1)]
+    sob = np.clip(sob / 9 * 1.5, 0, 1)
+    verde = np.maximum(verde, sob * 0.85)
+    erva = np.array([0.52, 0.55, 0.35])
+    terra = np.array([0.76, 0.70, 0.57])
+    calcada = np.array([0.80, 0.78, 0.73])
+    cor = erva * verde[:, None] + terra * (1 - verde[:, None])
+    claro = np.clip((lum - 0.55) * 6, 0, 1) * np.clip((0.12 - sat) * 12, 0, 1) * (1 - sob)
+    cor = cor * (1 - claro[:, None]) + calcada * claro[:, None]
+    cor = cor * (0.94 + 0.12 * fbm(xv, yv, 6.0, 3))[:, None]
+    roc = np.array([0.76, 0.69, 0.55]) * (0.9 + 0.2 * fbm(xv, yv, 4.0, 5)[:, None])
+    tr = np.clip((dv - 38) / 12, 0, 1)[:, None]
     cor = cor * (1 - tr) + roc * tr
-    din = dentro(xv, yv, perimetro)
-    dter = dentro(xv, yv, TERREIRO) & din
-    dcas = dentro(xv, yv, castelejo)
-    terra = np.array([0.74, 0.68, 0.55]) * (0.9 + 0.14 * nz[:, None])
-    relva = np.clip((fbm(xv + 7, yv - 3, 9.0, 13) - 0.5) * 3, 0, 1)[:, None] * 0.6
-    patio = terra * (1 - relva) + np.array([0.55, 0.56, 0.36]) * relva
-    cor[din] = patio[din]
-    cor[dter] = np.array([0.78, 0.75, 0.68])
-    roc_in = din & (dv > 30)
-    cor[roc_in] = roc[roc_in]
-    cor[dcas] = np.array([0.72, 0.66, 0.55])
 
     me = bpy.data.meshes.new("terreno")
     me.from_pydata(V.tolist(), [], faces.tolist())
@@ -470,46 +460,113 @@ def desvio(linha, d, fechada=False):
     return np.array(out)
 
 
-def muralha(m, linha, esp, adarve, pe, interior_z, fechada=False, ameias=True, mat=0):
-    """Pano de muralha ao longo da linha central (o exterior fica à direita)."""
+def densificar(linha, passo=2.0, fechada=False):
+    pts = np.vstack([linha, linha[:1]]) if fechada else linha
+    out = [pts[0]]
+    for a, b in zip(pts[:-1], pts[1:]):
+        k = max(1, int(math.ceil(np.linalg.norm(b - a) / passo)))
+        out += [a + (b - a) * t for t in np.linspace(0, 1, k + 1)[1:]]
+    out = np.array(out)
+    return out[:-1] if fechada else out
+
+
+def mediana_movel(v, k=5, fechada=False):
+    h = k // 2
+    vv = np.concatenate([v[-h:], v, v[:h]]) if fechada else np.concatenate([np.repeat(v[:1], h), v, np.repeat(v[-1:], h)])
+    return np.array([np.median(vv[i:i + k]) for i in range(len(v))])
+
+
+def perfil(linha, esp, fechada=False, raio=1.6):
+    """Mede uma muralha no LiDAR, vértice a vértice: topo das ameias no MDS (percentil 95 das células
+    sem vegetação num raio de 1,6 m da linha, filtrado ao longo do pano), pé exterior e chão interior
+    no MDT. Devolve a linha densificada, topo, pé exterior e chão interior (z da cena)."""
+    linha, desl = ajustar(linha, fechada)
+    if np.abs(desl).max() > 0.5:
+        print(f"  linha ajustada ao MDS: deslocamento máx. {np.abs(desl).max():.1f} m, mediano {np.median(np.abs(desl)):.1f} m")
+    topo = np.array([medir(centro=p, raio=raio) for p in linha])
+    ok = ~np.isnan(topo)
+    idx = np.arange(len(linha))
+    topo = np.interp(idx, idx[ok], topo[ok], period=len(linha) if fechada else None)
+    topo = mediana_movel(topo, 5, fechada)
+    fora = np.min([cota(*desvio(linha, -(esp / 2 + d), fechada).T) for d in (0.5, 1.0, 1.5)], axis=0)
+    dentro_ = cota(*desvio(linha, esp / 2 + 1.0, fechada).T)
+    return linha, topo, fora, dentro_
+
+
+def ajustar(linha, fechada=False, maximo=4.5):
+    """Encosta a linha do OSM à crista da muralha no MDS. Em cada vértice procura, na normal e até
+    `maximo` metros, o ponto mais alto (sem vegetação); só desloca quando a crista está claramente
+    acima (> 1 m) do que está sob a linha. Os deslocamentos são filtrados ao longo do pano."""
+    linha = densificar(linha, 2.0, fechada)
+    nrm = desvio(linha, 1.0, fechada) - linha
+    ds = np.arange(-maximo, maximo + 0.01, 0.25)
+    xy = linha[:, None, :] + nrm[:, None, :] * ds[None, :, None]
+    z = amostra(MDS, xy[..., 0], xy[..., 1])
+    ci = np.clip(np.round((xy[..., 0] + LMEIO) / LPASSO).astype(int), 0, VEG.shape[1] - 1)
+    ri = np.clip(np.round((xy[..., 1] + LMEIO) / LPASSO).astype(int), 0, VEG.shape[0] - 1)
+    z = np.where(VEG[ri, ci], -1e3, z) - 0.15 * np.abs(ds)[None, :]
+    k = np.argmax(z, axis=1)
+    z0 = z[:, len(ds) // 2]
+    d = np.where(z[np.arange(len(linha)), k] - z0 > 1.0, ds[k], 0.0)
+    if not fechada:
+        d[0] = d[-1] = 0.0  # as pontas ligam a torres e a outros panos: ficam onde estão
+    d = mediana_movel(d, 5, fechada)
+    d = np.convolve(np.pad(d, 2, mode="wrap" if fechada else "edge"), np.ones(5) / 5, mode="valid")
+    return linha + nrm * d[:, None], d
+
+
+def muralha(m, linha, esp, topo, fora, dentro_, fechada=False, ameias=True, mat=0):
+    """Pano de muralha ao longo da linha central (o exterior fica à direita), com o topo
+    medido vértice a vértice. Os panos descem 1,5 m abaixo do terreno para não ficarem no ar."""
+    adarve = topo - (PARAPEITO + MERLAO["altura"] if ameias else PARAPEITO)
+    adarve = np.maximum(adarve, dentro_)  # onde o chão de dentro chega ao adarve, o pano é só parapeito
     ext = desvio(linha, -esp / 2, fechada)
     inn = desvio(linha, esp / 2, fechada)
     n = len(linha)
-    zi = np.minimum(np.minimum(interior_z, adarve), pe) - 1.5
-    ze = np.full(n, pe - 1.5)
+    ze = np.minimum(fora, adarve) - 1.5
+    zi = np.minimum(dentro_, adarve) - 1.5
+    a = adarve
     seg = range(n) if fechada else range(n - 1)
     for i in seg:
         j = (i + 1) % n
-        m.face([(*ext[i], ze[i]), (*ext[j], ze[j]), (*ext[j], adarve), (*ext[i], adarve)], mat)
-        m.face([(*inn[j], zi[j]), (*inn[i], zi[i]), (*inn[i], adarve), (*inn[j], adarve)], mat)
-        m.face([(*ext[i], adarve), (*ext[j], adarve), (*inn[j], adarve), (*inn[i], adarve)], mat)
+        m.face([(*ext[i], ze[i]), (*ext[j], ze[j]), (*ext[j], a[j]), (*ext[i], a[i])], mat)
+        m.face([(*inn[j], zi[j]), (*inn[i], zi[i]), (*inn[i], a[i]), (*inn[j], a[j])], mat)
+        m.face([(*ext[i], a[i]), (*ext[j], a[j]), (*inn[j], a[j]), (*inn[i], a[i])], mat)
         m.face([(*ext[j], ze[j]), (*ext[i], ze[i]), (*inn[i], zi[i]), (*inn[j], zi[j])], mat)
     if not fechada:
         for i in (0, n - 1):
-            m.face([(*ext[i], ze[i]), (*inn[i], zi[i]), (*inn[i], adarve), (*ext[i], adarve)], mat)
+            m.face([(*ext[i], ze[i]), (*inn[i], zi[i]), (*inn[i], a[i]), (*ext[i], a[i])], mat)
     # parapeito do lado exterior e ameias por cima
     par_int = desvio(linha, -esp / 2 + 0.6, fechada)
     for i in seg:
         j = (i + 1) % n
         q = [ext[i], ext[j], par_int[j], par_int[i]]
-        m.prisma(q, adarve, adarve + PARAPEITO, mat)
+        m.prisma(q, [a[i], a[j], a[j], a[i]], [a[i] + PARAPEITO, a[j] + PARAPEITO, a[j] + PARAPEITO, a[i] + PARAPEITO], mat)
     if ameias:
-        ameias_ao_longo(m, desvio(linha, -esp / 2 + 0.3, fechada), adarve + PARAPEITO, fechada, mat)
+        ameias_ao_longo(m, desvio(linha, -esp / 2 + 0.3, fechada), a + PARAPEITO, fechada, mat)
+    return adarve
 
 
 def ameias_ao_longo(m, linha, z, fechada=False, mat=0, prof=0.6):
+    """Merlões ao longo de uma polilinha; z é a cota do parapeito (escalar ou por vértice).
+    O ritmo segue o pano todo, não cada segmento, para a linha densificada não mudar o desenho."""
     pts = np.vstack([linha, linha[:1]]) if fechada else linha
+    zs = np.full(len(pts), z) if np.ndim(z) == 0 else (np.append(z, z[:1]) if fechada else np.asarray(z))
     passo = MERLAO["largura"] + MERLAO["intervalo"]
-    for a, b in zip(pts[:-1], pts[1:]):
-        L = np.linalg.norm(b - a)
-        if L < MERLAO["largura"]:
-            continue
-        u = (b - a) / L
-        k = max(1, int((L + MERLAO["intervalo"]) // passo))
-        sobra = L - (k * passo - MERLAO["intervalo"])
-        for i in range(k):
-            s = sobra / 2 + i * passo + MERLAO["largura"] / 2
-            m.caixa(a + u * s, u, MERLAO["largura"], prof, z, z + MERLAO["altura"], mat)
+    seg = np.linalg.norm(np.diff(pts, axis=0), axis=1)
+    acum = np.concatenate([[0], np.cumsum(seg)])
+    L = acum[-1]
+    k = max(1, int((L + MERLAO["intervalo"]) // passo))
+    sobra = L - (k * passo - MERLAO["intervalo"])
+    for i in range(k):
+        s = sobra / 2 + i * passo + MERLAO["largura"] / 2
+        j = min(int(np.searchsorted(acum, s)) - 1, len(seg) - 1)
+        j = max(j, 0)
+        t = (s - acum[j]) / max(seg[j], 1e-9)
+        c = pts[j] + (pts[j + 1] - pts[j]) * t
+        zc = zs[j] + (zs[j + 1] - zs[j]) * t
+        u = unit(pts[j + 1] - pts[j])
+        m.caixa(c, u, MERLAO["largura"], prof, zc, zc + MERLAO["altura"], mat)
 
 
 def torre(m, base, pe, topo, mat=0):
@@ -540,8 +597,7 @@ def arco(m, centro, u, normal, largura, soleira, nascenca, prof, mat):
 # ---------------------------------------------------------------- edifícios
 
 
-def telhado_4aguas(m, base, z, inclinacao=24, mat=1):
-    """Telhado de quatro águas sobre um polígono quase retangular de 4 vértices."""
+def _retangulo(base):
     b = np.array(base)
     if area(b) < 0:
         b = b[::-1]
@@ -550,6 +606,19 @@ def telhado_4aguas(m, base, z, inclinacao=24, mat=1):
     b = np.roll(b, -k, axis=0)
     L = (np.linalg.norm(b[1] - b[0]) + np.linalg.norm(b[2] - b[3])) / 2
     W = (np.linalg.norm(b[3] - b[0]) + np.linalg.norm(b[2] - b[1])) / 2
+    return b, L, W
+
+
+def altura_telhado(poly, inclinacao=24):
+    s = simplificar(poly)
+    if len(s) == 4 and abs(area(s)) > 0.85 * abs(area(poly)):
+        return _retangulo(s)[2] / 2 * math.tan(math.radians(inclinacao))
+    return min(2.2, 0.25 * math.sqrt(abs(area(poly))))
+
+
+def telhado_4aguas(m, base, z, inclinacao=24, mat=1):
+    """Telhado de quatro águas sobre um polígono quase retangular de 4 vértices."""
+    b, L, W = _retangulo(base)
     h = W / 2 * math.tan(math.radians(inclinacao))
     mid_a = (b[0] + b[3]) / 2
     mid_b = (b[1] + b[2]) / 2
@@ -595,21 +664,32 @@ def simplificar(poly, tol=0.6):
 
 
 def casa(m, poly, altura, mat_par=0, mat_tel=1):
+    """Volume simplificado com o cume à cota medida no MDS (percentil 95 do telhado dentro da planta).
+    Sem medição (planta sem eco de edifício no LiDAR), usa a altura dada acima do terreno.
+    Devolve a cota da cornija e se foi medida."""
     if area(poly) < 0:
         poly = poly[::-1]
     zt = cota(poly[:, 0], poly[:, 1])
-    z0, z1 = float(zt.min()) - 1.0, float(np.median(zt)) + altura
+    z0 = float(zt.min()) - 1.0
+    cume = medir(desvio(poly, 0.4, True) if abs(area(poly)) > 12 else poly)
+    medido = not math.isnan(cume) and cume > float(np.median(zt)) + 2.0
+    z1 = max(cume - altura_telhado(poly), float(np.median(zt)) + 2.0) if medido else float(np.median(zt)) + altura
     m.prisma(poly, z0, z1, mat_par, topo=False)
     s = simplificar(poly)
     if len(s) == 4 and abs(area(s)) > 0.85 * abs(area(poly)):
         telhado_4aguas(m, s, z1, mat=mat_tel)
     else:
         telhado_generico(m, poly, z1, mat=mat_tel)
-    return z1
+    return z1, medido
+
+
+MEDIDAS = {}  # o que se mediu no LiDAR, para conferir e citar no penela.json
+PERFIS = {}  # perfis das muralhas (saida/perfis.npz), para conferência
 
 
 def igreja():
-    """Igreja de São Miguel: planta do OSM; volumes e alturas das fotografias."""
+    """Igreja de São Miguel: planta do OSM; cumeeiras e torre medidas no MDS; vãos e coruchéu
+    pelas fotografias."""
     m = Malha()  # 0 cal, 1 telha, 2 sombra, 3 cantaria
     poly = geom(osm("3904babc", "edificios"))
     if area(poly) < 0:
@@ -620,54 +700,74 @@ def igreja():
     u = np.array([v[1], -v[0]])  # eixo da igreja, da fachada para a cabeceira
     if u @ (P(-11, 22) - fa) < 0:
         u = -u
-    comp = float(max((p - fa) @ u for p in poly))
-    nave_c = 23.3
-    z0 = float(cota(*np.array([fa, fb]).T).min()) - 0.5
-    # corpo baixo de toda a planta (capelas, sacristia)
-    m.prisma(poly, z0, NIV["terreiro_igreja"] + 6.0, 0, topo=False)
-    telhado_generico(m, poly, NIV["terreiro_igreja"] + 6.0, mat=1)
+    adro = float(cota(*np.array([fa, fb, (fa + fb) / 2]).T).mean())  # chão diante da fachada
+    z0 = float(cota(*poly.T).min()) - 0.5
+    uv = np.stack([(poly - fa) @ u, (poly - fa) @ v], 1)
+    comp = 23.2  # corpo principal: u de 0 a 23,2 m e v de 0 à largura da fachada (planta OSM)
 
-    def bloco(v0, v1, u0, u1, beiral, cume):
-        c = [fa + v * v0 + u * u0, fa + v * v0 + u * u1, fa + v * v1 + u * u1, fa + v * v1 + u * u0]
-        c = np.array(c)
-        if area(c) < 0:
-            c = c[::-1]
-        m.prisma(c, z0, NIV["terreiro_igreja"] + beiral, 0, topo=False)
-        zb = NIV["terreiro_igreja"] + beiral
-        zc = NIV["terreiro_igreja"] + cume
-        vm = (v0 + v1) / 2
-        p = lambda vv, uu, z: (*(fa + v * vv + u * uu), z)
-        m.face([p(v0, u0, zb), p(v0, u1, zb), p(vm, u1, zc), p(vm, u0, zc)], 1)
-        m.face([p(vm, u0, zc), p(vm, u1, zc), p(v1, u1, zb), p(v1, u0, zb)], 1)
-        m.face([p(v0, u0, zb), p(vm, u0, zc), p(v1, u0, zb)], 0)  # empena da fachada
-        m.face([p(v1, u1, zb), p(vm, u1, zc), p(v0, u1, zb)], 0)
-        return p
+    def quad(v0, v1, u0, u1):
+        c = np.array([fa + v * v0 + u * u0, fa + v * v0 + u * u1, fa + v * v1 + u * u1, fa + v * v1 + u * u0])
+        return c if area(c) > 0 else c[::-1]
 
-    # nave central e colateral sul sob o telhado alto; colateral norte mais baixa
-    p = bloco(0.0, 10.2, 0.0, nave_c, 8.6, 11.6)
-    bloco(10.2, larg, 0.0, nave_c - 1.0, 6.2, 8.0)
-    # porta principal e janelas da fachada
+    def faixa(v0, v1, u0=1.0, u1=comp - 1.0, q=50):
+        return medir(quad(v0, v1, u0, u1), q=q)
+
+    # Telhado do corpo principal (três naves sob um só telhado, como mostra o MDS): cumeeira onde a
+    # faixa ao longo do eixo é mais alta; beirados sul e norte medidos junto às paredes.
+    vs = np.arange(2.0, larg - 1.5, 0.5)
+    perfil_v = np.array([faixa(x - 0.25, x + 0.25, q=50) for x in vs])
+    v_cume = float(vs[int(np.nanargmax(perfil_v))])
+    cume = faixa(v_cume - 0.75, v_cume + 0.75, q=90)
+    beiral_s = faixa(0.5, 1.5)
+    beiral_n = faixa(larg - 1.5, larg - 0.5)
+    p = lambda vv, uu, z: (*(fa + v * vv + u * uu), z)
+    m.face([p(0, 0, beiral_s), p(0, comp, beiral_s), p(v_cume, comp, cume), p(v_cume, 0, cume)], 1)
+    m.face([p(v_cume, 0, cume), p(v_cume, comp, cume), p(larg, comp, beiral_n), p(larg, 0, beiral_n)], 1)
+    m.face([p(0, 0, beiral_s), p(v_cume, 0, cume), p(larg, 0, beiral_n)], 0)  # empena da fachada
+    m.face([p(larg, comp, beiral_n), p(v_cume, comp, cume), p(0, comp, beiral_s)], 0)
+    for vv, zz in ((0, beiral_s), (larg, beiral_n)):  # paredes laterais até ao beirado
+        m.face([p(vv, 0, z0), p(vv, comp, z0), p(vv, comp, zz), p(vv, 0, zz)], 0)
+    for uu in (0, comp):
+        m.face([p(0, uu, z0), p(larg, uu, z0), p(larg, uu, beiral_n), p(0, uu, beiral_s)], 0)
+
+    # anexo norte (u de 11 a 23,2 m, v até 20,7 m na planta OSM): telhado de uma água, medido
+    v_max = float(uv[:, 1].max())
+    an_in, an_out = faixa(larg + 0.3, larg + 1.3, 11.5, comp - 0.5), faixa(v_max - 1.2, v_max - 0.4, 11.5, comp - 0.5)
+    an_in = min(an_in, beiral_n)
+    m.face([p(larg, 11, z0), p(v_max, 11, z0), p(v_max, 11, an_out), p(larg, 11, an_in)], 0)
+    m.face([p(v_max, comp, z0), p(larg, comp, z0), p(larg, comp, an_in), p(v_max, comp, an_out)], 0)
+    m.face([p(v_max, 11, z0), p(v_max, comp, z0), p(v_max, comp, an_out), p(v_max, 11, an_out)], 0)
+    m.face([p(larg, 11, an_in), p(v_max, 11, an_out), p(v_max, comp, an_out), p(larg, comp, an_in)], 1)
+
+    # cabeceira (u de 23,2 a 25,5 m, v de 3,2 a 11,3 m): volume baixo com telhado medido
+    cab = quad(3.2, 11.3, comp, float(uv[:, 0].max()))
+    cab_topo = medir(desvio(cab, 0.3, True), q=90)
+    if math.isnan(cab_topo) or cab_topo < adro + 2.5:
+        cab_topo = adro + 4.0
+    m.prisma(cab, z0, cab_topo - 1.0, 0, topo=False)
+    telhado_generico(m, cab, cab_topo - 1.0, mat=1)
+
+    # porta principal no eixo da nave central e duas janelas (fotografias)
     nf = -u
-    arco(m, fa + v * 5.1, v, nf, 2.0, NIV["terreiro_igreja"], 2.6, 0.1, 2)
-    for vv in (2.6, 7.6):
+    arco(m, fa + v * v_cume, v, nf, 2.0, adro, 2.6, 0.1, 2)
+    for vv in (v_cume - 2.5, v_cume + 2.5):
         c = fa + v * vv + nf * 0.03
-        m.face([(*(c - v * 0.5), NIV["terreiro_igreja"] + 5.0), (*(c + v * 0.5), NIV["terreiro_igreja"] + 5.0),
-                (*(c + v * 0.5), NIV["terreiro_igreja"] + 6.6), (*(c - v * 0.5), NIV["terreiro_igreja"] + 6.6)], 2)
-    arco(m, fa + v * 13.2, v, nf, 1.4, NIV["terreiro_igreja"], 1.9, 0.1, 2)
+        m.face([(*(c - v * 0.5), adro + 5.0), (*(c + v * 0.5), adro + 5.0),
+                (*(c + v * 0.5), adro + 6.6), (*(c - v * 0.5), adro + 6.6)], 2)
     # cruz no vértice da empena
-    topo = fa + v * 5.1 + nf * 0.1
-    zc = NIV["terreiro_igreja"] + 11.6
-    m.caixa(topo, v, 0.18, 0.18, zc, zc + 1.3, 3)
-    m.caixa(topo, v, 0.75, 0.18, zc + 0.75, zc + 0.93, 3)
+    topo = fa + v * v_cume + nf * 0.1
+    m.caixa(topo, v, 0.18, 0.18, cume, cume + 1.3, 3)
+    m.caixa(topo, v, 0.75, 0.18, cume + 0.75, cume + 0.93, 3)
 
-    # torre sineira (planta OSM), coruchéu piramidal e pináculos (fotografias 1, 2 e 4)
+    # torre sineira (planta OSM): o topo do coruchéu é o ponto mais alto do MDS na planta;
+    # a altura do coruchéu (6,2 m), os pináculos e as sineiras são lidos nas fotografias 1, 2 e 4
     t = geom(osm("1d555fe5"))
     t = simplificar(t, 0.8)
     if area(t) < 0:
         t = t[::-1]
-    zt0 = z0
-    cornija = NIV["terreiro_igreja"] + 16.5
-    m.prisma(t, zt0, cornija, 0, topo=True)
+    vertice = medir(t, q=100)
+    cornija = vertice - 6.2
+    m.prisma(t, z0, cornija, 0, topo=True)
     ct = t.mean(0)
     for i in range(len(t)):
         a, b = t[i], t[(i + 1) % len(t)]
@@ -683,7 +783,7 @@ def igreja():
     m.face(pts, 3)
     # coruchéu
     m.prisma(t, cornija, cornija + 0.5, 3)
-    ap = (*ct, cornija + 6.2)
+    ap = (*ct, vertice)
     for i in range(len(t)):
         a, b = t[i], t[(i + 1) % len(t)]
         m.face([(*a, cornija + 0.5), (*b, cornija + 0.5), ap], 3)
@@ -692,6 +792,10 @@ def igreja():
         for k in range(4):
             m.face([(*base[k], cornija + 0.5), (*base[(k + 1) % 4], cornija + 0.5), (*pin, cornija + 1.9)], 3)
     m.objeto("Igreja_Sao_Miguel", "igreja", ["cal", "telha", "sombra", "cantaria"], GRUPOS["Igreja_Sao_Miguel"], uv=2.0)
+    MEDIDAS["igreja"] = {"adro": adro + ZREF, "cumeeira": cume + ZREF, "beirado_sul": beiral_s + ZREF,
+                         "beirado_norte": beiral_n + ZREF, "anexo_norte": [an_out + ZREF, an_in + ZREF],
+                         "cabeceira": cab_topo + ZREF, "torre_vertice": vertice + ZREF,
+                         "cumeeira_acima_adro": cume - adro, "torre_acima_adro": vertice - adro}
 
 
 # ---------------------------------------------------------------- materiais e texturas
@@ -812,43 +916,55 @@ for ob in bpy.data.objects:
         ob.parent = GRUPOS["Terreno"]
 
 print("muralhas…")
-interior = lambda l: cota_interior(l[:, 0], l[:, 1])
-for s, linha in SECTORES.items():
+for s_, linha in SECTORES.items():
     m = Malha()
-    ad = EL[s]["adarve"] - ZREF
-    muralha(m, linha, MUR["espessura"], ad, PE[s], interior(linha))
-    if s == "pano_poente":
+    lin, topo, fora, dentro_ = perfil(linha, MUR["espessura"])
+    adarve = muralha(m, lin, MUR["espessura"], topo, fora, dentro_)
+    PERFIS[s_] = np.stack([lin[:, 0], lin[:, 1], topo, fora, dentro_], 1)
+    if s_ == "pano_poente":
         i = perto_de(linha, PORTA_VILA)
         a, b = linha[max(i - 1, 0)], linha[min(i + 1, len(linha) - 1)]
         u = unit(b - a)
         out = np.array([u[1], -u[0]])
         g = PORTA_VILA + out * MUR["espessura"] / 2
-        arco(m, g, u, out, 2.6, PE[s], 2.6, 0.1, 1)
-    ob = m.objeto(s, s, ["pedra", "sombra"], GRUPOS["Muralhas"])
+        SOLEIRA_VILA = float(cota(*(g + out * 1.0)))
+        arco(m, g, u, out, 2.6, SOLEIRA_VILA, 2.6, 0.1, 1)
+    m.objeto(s_, s_, ["pedra", "sombra"], GRUPOS["Muralhas"])
+    alt = topo - fora
+    MEDIDAS[s_] = {"topo": [float(topo.min() + ZREF), float(topo.max() + ZREF)],
+                   "altura_exterior": [float(np.percentile(alt, 10)), float(np.percentile(alt, 90))],
+                   "acima_do_chao_interior": [float(np.percentile(topo - dentro_, 10)), float(np.percentile(topo - dentro_, 90))]}
 
 print("castelejo…")
 m = Malha()
-muralha(m, castelejo, 1.8, CAST_ADARVE, CAST_PE, np.full(len(castelejo), NIV["castelejo"]), fechada=True)
+lin, topo, fora, dentro_ = perfil(castelejo, 1.8, fechada=True)
+muralha(m, lin, 1.8, topo, fora, dentro_, fechada=True)
+PERFIS["castelejo"] = np.stack([lin[:, 0], lin[:, 1], topo, fora, dentro_], 1)
 m.objeto("Castelejo", "castelejo", ["pedra", "sombra"], GRUPOS["Castelejo"])
+MEDIDAS["castelejo"] = {"topo": [float(topo.min() + ZREF), float(topo.max() + ZREF)],
+                        "chao_interior": float(np.median(cota(*densificar(desvio(castelejo, 3.0, True), 2, True).T)) + ZREF),
+                        "altura_exterior": [float(np.percentile(topo - fora, 10)), float(np.percentile(topo - fora, 90))],
+                        "acima_do_chao_interior": [float(np.percentile(topo - dentro_, 10)), float(np.percentile(topo - dentro_, 90))]}
 
 print("torres…")
 for tid, base in torres.items():
     m = Malha()
-    perto = min(SECTORES, key=lambda s: distancia(*base.mean(0)[:, None], SECTORES[s])[0][0])
-    pe = PE[perto]
-    extra = {"torre_quinaria": None, "porta_traicao": 3.0}.get(tid, 2.5)
-    topo = (pe + 14.0) if tid == "torre_quinaria" else TOPO[perto] + extra
-    torre(m, base, pe, topo)
+    b = base if area(base) > 0 else base[::-1]
+    topo = medir(desvio(b, 0.3, True) if abs(area(b)) > 6 else b, q=95)
+    pe = float(np.min(cota(*densificar(desvio(b, -1.0, True), 1.0, True).T)))
+    torre(m, b, pe, topo)
+    PERFIS["torre_" + tid] = b
+    MEDIDAS[tid] = {"topo": topo + ZREF, "pe": pe + ZREF, "altura_exterior": topo - pe}
     if tid == "porta_traicao":
-        b = base if area(base) > 0 else base[::-1]
         # porta em cotovelo: abertura exterior na face virada a nordeste e interior na face virada a sueste
         faces = [(b[i], b[(i + 1) % len(b)]) for i in range(len(b))]
         def face_para(direcao):
             return max(faces, key=lambda f: unit(np.array([(f[1] - f[0])[1], -(f[1] - f[0])[0]])) @ direcao * min(1, np.linalg.norm(f[1] - f[0]) / 2))
-        for dirc, sole in ((np.array([0.7, 0.7]), pe), (np.array([0.7, -0.7]), NIV["terreiro_igreja"])):
+        for dirc in (np.array([0.7, 0.7]), np.array([0.7, -0.7])):
             a, c = face_para(dirc)
             u = unit(c - a)
             out = np.array([u[1], -u[0]])
+            sole = float(cota(*((a + c) / 2 + out * 0.8)))
             arco(m, (a + c) / 2, u, out, 1.8, sole, 2.0, 0.1, 1)
         nome, grupo = "Porta_Traicao", GRUPOS["Porta_Traicao"]
     elif tid == "torre_quinaria":
@@ -859,7 +975,10 @@ for tid, base in torres.items():
 
 m = Malha()
 circ = np.array([CUBELO + 2.8 * np.array([math.cos(a), math.sin(a)]) for a in np.linspace(0, 2 * math.pi, 18, endpoint=False)])
-torre(m, circ, PE["pano_noroeste"], TOPO["pano_noroeste"] + 2.0)
+topo = medir(centro=CUBELO, raio=2.4)
+pe = float(np.min(cota(*desvio(circ, -1.0, True).T)))
+torre(m, circ, pe, topo)
+MEDIDAS["cubelo_noroeste"] = {"topo": topo + ZREF, "pe": pe + ZREF, "altura_exterior": topo - pe}
 m.objeto("Cubelo_Noroeste", "cubelo_noroeste", ["pedra"], GRUPOS["Torreoes"])
 
 # Porta da Vila: aro de cantaria em volta do vão (o vão faz parte do pano poente)
@@ -871,9 +990,10 @@ u = unit(b - a)
 out = np.array([u[1], -u[0]])
 g = PORTA_VILA + out * (MUR["espessura"] / 2 + 0.12)
 for sx in (-1.55, 1.55):
-    m.caixa(g + u * sx, u, 0.5, 0.25, PE["pano_poente"] - 0.2, PE["pano_poente"] + 4.3)
-m.caixa(g, u, 3.6, 0.25, PE["pano_poente"] + 4.3, PE["pano_poente"] + 4.8)
+    m.caixa(g + u * sx, u, 0.5, 0.25, SOLEIRA_VILA - 0.2, SOLEIRA_VILA + 4.3)
+m.caixa(g, u, 3.6, 0.25, SOLEIRA_VILA + 4.3, SOLEIRA_VILA + 4.8)
 m.objeto("Porta_Vila", "porta_vila", ["cantaria"], GRUPOS["Porta_Vila"])
+MEDIDAS["porta_vila"] = {"soleira": SOLEIRA_VILA + ZREF}
 
 # Brecha: chão do acesso atual entre o pano sul e a torre quinária
 m = Malha()
@@ -887,28 +1007,50 @@ q = [c - u * L / 2 - w * 5, c + u * L / 2 - w * 5, c + u * L / 2 + w * 5, c - u 
 zq = cota(np.array([p[0] for p in q]), np.array([p[1] for p in q]))
 m.prisma(q, zq - 0.5, zq + 0.08, 0)
 m.objeto("Brecha_Desaparecidas", "brecha", ["caminho"], GRUPOS["Brecha_Desaparecidas"], uv=None)
+MEDIDAS["brecha"] = {"chao": float(cota(*c)) + ZREF, "abertura": float(L)}
 
 print("igreja e recinto…")
 igreja()
 m = Malha()
-casa(m, geom(osm("69a1ea12", "edificios")), 7.0)
+pc_ = geom(osm("69a1ea12", "edificios"))
+z1, med = casa(m, pc_, 7.0)
 m.objeto("Casa_Paroquial", "casa_paroquial", ["cal", "telha"], GRUPOS["Recinto"], uv=None)
+MEDIDAS["casa_paroquial"] = {"cornija": z1 + ZREF, "cume": medir(desvio(pc_ if area(pc_) > 0 else pc_[::-1], 0.4, True)) + ZREF,
+                             "chao": float(np.median(cota(*pc_.T))) + ZREF, "medido": med}
 m = Malha()
 for pid in ("9ed07352", "dc7a9b83"):
     poly = geom(osm(pid, "edificios"))
     if area(poly) < 0:
         poly = poly[::-1]
     z = cota(poly[:, 0], poly[:, 1])
-    m.prisma(poly, float(z.min()) - 0.5, float(z.max()) + 3.0, 0)
+    tp = medir(poly)
+    tp = tp if not math.isnan(tp) and tp > float(z.max()) + 1.5 else float(z.max()) + 3.0
+    m.prisma(poly, float(z.min()) - 0.5, tp, 0)
 m.objeto("Apoio", None, ["apoio"], GRUPOS["Recinto"], uv=None)
 m = Malha()
-muralha(m, MURO_TERREIRO, 0.9, NIV["terreiro_igreja"] + 0.9 - PARAPEITO, NIV["patio"], np.full(len(MURO_TERREIRO), NIV["terreiro_igreja"]), ameias=False)
+lin = densificar(MURO_TERREIRO, 2.0)
+dentro_ = cota(*desvio(lin, 1.2).T)  # terreiro (à esquerda da linha)
+fora = cota(*desvio(lin, -1.2).T)  # pátio
+# só onde o MDT mostra o degrau (> 0,6 m); no resto do traçado o terreiro e o pátio estão ao mesmo nível
+degrau = mediana_movel(dentro_ - fora, 3) > 0.6
+ini = None
+for i, k in enumerate(list(degrau) + [False]):
+    if k and ini is None:
+        ini = i
+    if not k and ini is not None:
+        if i - ini >= 2:
+            sl = slice(ini, i)
+            muralha(m, lin[sl], 0.9, dentro_[sl] + 0.9, fora[sl], dentro_[sl], ameias=False)
+        ini = None
 m.objeto("Muro_Terreiro", "muro_terreiro", ["pedra"], GRUPOS["Recinto"])
+PERFIS["muro_terreiro"] = np.stack([lin[:, 0], lin[:, 1], dentro_ - fora], 1)
+MEDIDAS["muro_terreiro"] = {"desnivel_max": float((dentro_ - fora).max()), "comprimento": float(degrau.sum() * 2.0)}
 
 print("vila…")
 proprios = {"3904babc", "69a1ea12", "9ed07352", "dc7a9b83", "0de35856"}
 m = Malha()
 pegadas = []
+n_med = 0
 for f in F["edificios"]:
     if f["id"][:8] in proprios or f["geometria"]["type"] != "Polygon":
         continue
@@ -921,9 +1063,10 @@ for f in F["edificios"]:
     if distancia(np.array([c[0]]), np.array([c[1]]), principal)[0][0] < 2.0:
         continue
     h = f.get("altura") or ((f.get("pisos") or 2) * 3.0 + 0.6)
-    casa(m, poly, h)
+    n_med += casa(m, poly, h)[1]
     pegadas.append(poly)
 m.objeto("Edificios_Vila", "vila", ["cal", "telha"], GRUPOS["Vila"], uv=None)
+MEDIDAS["vila"] = {"edificios": len(pegadas), "medidos": n_med}
 
 print("caminhos…")
 LARG = {"primary": 7, "secondary": 7, "tertiary": 6, "residential": 5, "unclassified": 4.5, "service": 3.5,
@@ -964,8 +1107,6 @@ for f in F["caminhos"]:
 m.objeto("Caminhos", "caminhos", ["caminho"], GRUPOS["Caminhos"], uv=None, liso=True)
 
 print("vegetação…")
-caminhos_ob = bpy.data.objects["Caminhos"]
-cam_xy = np.array([v.co[:2] for v in caminhos_ob.data.vertices]) if caminhos_ob.data.vertices else np.zeros((0, 2))
 
 
 def arvore_modelo(subdiv):
@@ -1001,63 +1142,26 @@ def plantar(x, y, z, raio, alt, copa_cor, tronco=1.0):
     mc.extend([tuple(np.clip(np.array(copa_cor) * sh, 0, 1))] * len(pts))
 
 
-pedacos = [p for p in pegadas]
-cand = []
-passo = 6.5
-for gx in np.arange(-RAIO, RAIO, passo):
-    for gy in np.arange(-RAIO, RAIO, passo):
-        cand.append((gx + rng.uniform(0, passo), gy + rng.uniform(0, passo)))
-cand = np.array(cand)
-cx, cy = cand[:, 0], cand[:, 1]
-cz = cota(cx, cy)
-ok = np.hypot(cx, cy) < RAIO - 3
-ok &= ~dentro(cx, cy, perimetro)
-ok &= distancia(cx, cy, perimetro, True)[0] > 6
-dens = fbm(cx, cy, 30.0, 41)
-ok &= dens > 0.42
-# declive local
-e = 1.5
-gx_ = (cota(cx + e, cy) - cota(cx - e, cy)) / (2 * e)
-gy_ = (cota(cx, cy + e) - cota(cx, cy - e)) / (2 * e)
-ok &= np.degrees(np.arctan(np.hypot(gx_, gy_))) < 36
-if len(cam_xy):
-    for i in np.nonzero(ok)[0]:
-        if np.min(np.hypot(*(cam_xy - cand[i]).T)) < 4.0:
-            ok[i] = False
-for poly in pegadas:
-    c = poly.mean(0)
-    rmax = np.hypot(*(poly - c).T).max() + 3
-    near = np.hypot(cx - c[0], cy - c[1]) < rmax
-    ok &= ~near
-for i in np.nonzero(ok)[0]:
-    escuro = rng.random() < 0.65
-    r = rng.uniform(2.0, 3.4)
-    cor = (0.30, 0.38, 0.22) if escuro else (0.42, 0.47, 0.30)
-    plantar(cx[i], cy[i], cz[i], r, r * rng.uniform(1.3, 1.9), cor, tronco=rng.uniform(1.0, 2.2))
-
-# oliveiras do recinto (fotografia aérea 2): pátio inferior, longe dos muros e edifícios
-olv = []
-for gx in np.arange(-60, 50, 5.5):
-    for gy in np.arange(-70, 70, 5.5):
-        olv.append((gx + rng.uniform(0, 2.5), gy + rng.uniform(0, 2.5)))
-olv = np.array(olv)
-ox, oy = olv[:, 0], olv[:, 1]
-ok = dentro(ox, oy, perimetro) & ~dentro(ox, oy, castelejo)
-ok &= distancia(ox, oy, perimetro, True)[0] > 3.5
-ok &= distancia(ox, oy, MURO_TERREIRO)[0] > 2.5
-ok &= distancia(ox, oy, castelejo, True)[0] > 7
-ok &= np.hypot(ox - BRECHA[0], oy - BRECHA[1]) > 14
-for pid in ("3904babc", "69a1ea12", "9ed07352", "dc7a9b83"):
-    poly = geom(osm(pid, "edificios"))
-    ok &= distancia(ox, oy, poly, True)[0] > 3.5
-    ok &= ~dentro(ox, oy, poly)
-fa_ = P(-35, 16)
-ok &= np.hypot(ox - fa_[0], oy - fa_[1]) > 12  # adro da igreja livre
-for i in np.nonzero(ok)[0]:
-    if rng.random() < 0.35 and (oy[i] > P(0, -12)[1] or ox[i] < P(-58, 0)[0]):
-        z = cota_interior(np.array([ox[i]]), np.array([oy[i]]))[0]
-        r = rng.uniform(1.6, 2.2)
-        plantar(ox[i], oy[i], z, r, r * 1.1, (0.48, 0.52, 0.38), tronco=1.2)
+# Copas medidas no LiDAR (lidar.py): posição, topo e raio de cada árvore; a forma é esquemática.
+ARV = LID["arvores"]
+n_arv = 0
+for x, y, topo, _, r in ARV:
+    if np.hypot(x, y) > RAIO - 2:
+        continue
+    z = float(cota(x, y))
+    h = float(topo) - ZREF - z
+    if h < 2.0:
+        continue
+    r = float(np.clip(r, 1.0, 6.0))
+    alt = float(np.clip(h * 0.62, 1.4, 2.6 * r))
+    no_recinto = bool(dentro(x, y, perimetro))
+    if no_recinto and h < 8:
+        cor = (0.48, 0.52, 0.38)  # oliveiras (fotografias aéreas 1 e 2)
+    else:
+        cor = (0.30, 0.38, 0.22) if rng.random() < 0.65 else (0.42, 0.47, 0.30)
+    plantar(float(x), float(y), z, r, alt, cor, tronco=max(h - alt, 0.6))
+    n_arv += 1
+MEDIDAS["vegetacao"] = {"arvores": n_arv}
 
 me = bpy.data.meshes.new("vegetacao")
 me.from_pydata(mv, [], mf)
@@ -1067,6 +1171,22 @@ ca = me.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
 ca.data.foreach_set("color", np.hstack([cl, np.ones((len(cl), 1))]).astype(np.float32).ravel())
 me.color_attributes.active_color = ca
 novo_objeto("Vegetacao", me, "vegetacao", mat="arvore", pai=GRUPOS["Vegetacao"])
+
+
+def _arred(v):
+    if isinstance(v, float):
+        return round(v, 1)
+    if isinstance(v, list):
+        return [_arred(x) for x in v]
+    if isinstance(v, dict):
+        return {k: _arred(x) for k, x in v.items()}
+    return v
+
+
+(AQUI / "saida").mkdir(exist_ok=True)
+np.savez(AQUI / "saida" / "perfis.npz", **PERFIS)
+(AQUI / "dados" / "medidas.json").write_text(json.dumps(_arred(MEDIDAS), ensure_ascii=False, indent=1))
+print(json.dumps(_arred(MEDIDAS), ensure_ascii=False))
 
 # ---------------------------------------------------------------- exportação
 
@@ -1118,7 +1238,8 @@ if "--vistas" in sys.argv:
     sc.collection.objects.link(so)
     # sol a noroeste, como no relevo do atlas (azimute 315°, 50° de altura)
     from mathutils import Euler, Vector
-    alvo = Vector((0, 0, NIV["patio"] + 4))
+    ALVO = float(cota(0, 0))
+    alvo = Vector((0, 0, ALVO + 4))
     d = Vector((-math.sin(math.radians(45)), math.cos(math.radians(45)), 0)) * math.cos(math.radians(50))
     d.z = math.sin(math.radians(50))
     so.rotation_euler = d.to_track_quat("Z", "Y").to_euler()
@@ -1150,7 +1271,7 @@ if "--vistas" in sys.argv:
     so_capa = "--capa" in sys.argv
     sc.render.image_settings.file_format = "JPEG"
     sc.render.image_settings.quality = 84
-    vista("capa", 225, 33, 540, lente=50, res=(1280, 800), destino=SAIDA / "capa.jpg", alvo_z=NIV["patio"] - 34)
+    vista("capa", 225, 33, 540, lente=50, res=(1280, 800), destino=SAIDA / "capa.jpg", alvo_z=ALVO - 34)
     if not so_capa:
         vista("topo", 180, 89.9, 400, orto=200, res=(1000, 1000))
         vista("norte", 0, 30, 330)
