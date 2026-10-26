@@ -1,4 +1,5 @@
 import { BASE } from "../../lib/base";
+import { caminhoFicha } from "../../lib/rotas";
 import { REGIOES, TIPOLOGIAS } from "../../lib/tipologias";
 import type { MonumentoResumo } from "../atlas/store";
 
@@ -42,7 +43,7 @@ export function Ficha({ m, onFechar }: { m: MonumentoResumo; onFechar: () => voi
         <p key={n} className="ficha-nota aviso">{n}</p>
       ))}
 
-      <a className="ficha-ligacao" href={`${BASE}castelo/${m.id}/`}>Abrir a ficha completa →</a>
+      <a className="ficha-ligacao" href={`${BASE}${caminhoFicha(m)}`}>Abrir a ficha completa →</a>
     </aside>
   );
 }

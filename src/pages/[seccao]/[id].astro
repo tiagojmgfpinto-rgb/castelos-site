@@ -4,9 +4,10 @@ import Base from "../../layouts/Base.astro";
 import Cabecalho from "../../components/Cabecalho.astro";
 import { todosMonumentos, type Monumento } from "../../lib/monumentos";
 import { REGIOES, TIPOLOGIAS } from "../../lib/tipologias";
+import { caminhoFicha, seccaoDe } from "../../lib/rotas";
 
 export async function getStaticPaths() {
-  return (await todosMonumentos()).map((m) => ({ params: { id: m.id }, props: { m } }));
+  return (await todosMonumentos()).map((m) => ({ params: { seccao: seccaoDe(m.data.nome), id: m.id }, props: { m } }));
 }
 const { m } = Astro.props as { m: Monumento };
 const d = m.data;
@@ -49,7 +50,7 @@ const vizinhos = (await todosMonumentos()).filter((x) => x.data.regiao === d.reg
     {vizinhos.length > 0 && (
       <>
         <h2>Mais em {REGIOES[d.regiao]}</h2>
-        <ul class="lista-monumentos curta">{vizinhos.map((x) => <li><a href={`${base}castelo/${x.id}/`}>{x.data.nome}</a></li>)}</ul>
+        <ul class="lista-monumentos curta">{vizinhos.map((x) => <li><a href={`${base}${caminhoFicha({ id: x.id, nome: x.data.nome })}`}>{x.data.nome}</a></li>)}</ul>
       </>
     )}
   </main>
