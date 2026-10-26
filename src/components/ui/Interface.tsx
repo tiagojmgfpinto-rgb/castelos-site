@@ -4,15 +4,12 @@ import { paraCena, projectar, TERRITORIOS, type TerritorioId } from "../../lib/t
 import { REGIOES, TIPOLOGIAS, type Regiao, type Tipologia } from "../../lib/tipologias";
 import { camaraApi } from "../atlas/Camara";
 import { useAtlas, visivel, type MonumentoResumo } from "../atlas/store";
-import { Ficha } from "./Ficha";
 
 const normalizar = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 export function Interface({ monumentos, vistaInicial }: { monumentos: MonumentoResumo[]; vistaInicial: () => void }) {
   const territorio = useAtlas((s) => s.territorio);
   const carregamento = useAtlas((s) => s.carregamento);
-  const selecionado = useAtlas((s) => s.selecionado);
-  const m = monumentos.find((x) => x.id === selecionado) ?? null;
 
   return (
     <div className="interface">
@@ -34,8 +31,6 @@ export function Interface({ monumentos, vistaInicial }: { monumentos: MonumentoR
 
       <Controlos vistaInicial={vistaInicial} />
       <Escala />
-
-      {m && <Ficha m={m} onFechar={() => useAtlas.getState().selecionar(null)} />}
 
       <div className="carregamento" data-visivel={carregamento < 1 ? "1" : "0"} aria-live="polite">
         <span>A erguer o relevo…</span>

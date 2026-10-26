@@ -32,12 +32,13 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .cache
-          key: relevo-${{ hashFiles('pipeline/terrain/fetch_dem.py') }}
+          key: relevo-${{ hashFiles('pipeline/terrain/fetch_*.py') }}
 
       - name: Relevo Copernicus GLO-30
         run: |
           for r in continente acores madeira; do
             [ -f .cache/dem_${r}_3s.tif ] || python pipeline/terrain/fetch_dem.py --region $r --arcsec 3
+            [ -f .cache/bathy_${r}_z9.tif ] || python pipeline/terrain/fetch_bathy.py --region $r --zoom 9
           done
           bash pipeline/terrain/naturalearth.sh
           python -W ignore pipeline/terrain/build_tiles.py

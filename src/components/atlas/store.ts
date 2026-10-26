@@ -18,6 +18,8 @@ export interface MonumentoResumo {
   seculoOrigem?: string;
   maquetas: { tipo: "estado-atual" | "reconstituicao"; ficheiro: string; epoca?: string }[];
   notas: string[];
+  fontes: { titulo: string; url?: string }[];
+  html: string; // texto da ficha (Markdown já convertido no build)
 }
 
 /** Pedido de voo de câmara: alvo na cena (km) e enquadramento final. */

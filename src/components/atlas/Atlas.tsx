@@ -7,9 +7,11 @@ import { Linhas } from "./Linhas";
 import { Marcadores } from "./Marcadores";
 import { useAtlas, type MonumentoResumo } from "./store";
 import { Terreno } from "./Terrain";
+import { Ficha } from "../ui/Ficha";
 import { Interface } from "../ui/Interface";
 
-const COR_FUNDO = "#1b1914";
+// fundo e mar fora do quadrado de mosaicos: o azul do mar profundo depois de iluminado
+const COR_FUNDO = "#3d6f86";
 
 /** Sol baixo de noroeste, como no relevo sombreado clássico; a sombra acompanha a câmara. */
 function Luz() {
@@ -41,8 +43,8 @@ function Luz() {
   });
   return (
     <>
-      <hemisphereLight args={["#f3ead6", "#4a4436", 0.85]} />
-      <directionalLight ref={sol} color="#fff1da" intensity={2.4} castShadow shadow-mapSize={[4096, 4096]} />
+      <hemisphereLight args={["#fffaf0", "#8a8170", 1.25]} />
+      <directionalLight ref={sol} color="#fff1da" intensity={2.1} castShadow shadow-mapSize={[4096, 4096]} />
     </>
   );
 }
@@ -91,34 +93,43 @@ function useVooSelecao(monumentos: MonumentoResumo[]) {
     const [x, y] = projectar(t, m.lon, m.lat);
     const [sx, sz] = paraCena(t, x, y);
     // pequeno atraso para o terreno do novo território existir antes do voo
-    const id = setTimeout(() => useAtlas.getState().voar({ x: sx, z: sz, distancia: 7, inclinacao: 58 }), 60);
+    const id = setTimeout(() => useAtlas.getState().voar({ x: sx, z: sz, distancia: 45, inclinacao: 38 }), 60);
     return () => clearTimeout(id);
   }, [selecionado, territorio, monumentos]);
 }
 
 export default function Atlas({ monumentos }: { monumentos: MonumentoResumo[] }) {
   const territorio = useAtlas((s) => s.territorio);
+  const selecionado = useAtlas((s) => s.selecionado);
+  const m = monumentos.find((x) => x.id === selecionado) ?? null;
   useHash(monumentos);
   useVooSelecao(monumentos);
 
+  // com a ficha aberta, o mapa encolhe para a metade esquerda e o monumento fica ao centro dela
   return (
-    <div className="atlas">
-      <Canvas
-        shadows="percentage"
-        dpr={[1, 2]}
-        camera={{ fov: 32, near: 0.5, far: 6000, position: [0, 500, 400] }}
-        gl={{ antialias: true, powerPreference: "high-performance" }}
-        onCreated={({ gl, scene }) => {
-          gl.toneMapping = THREE.ACESFilmicToneMapping;
-          gl.toneMappingExposure = 1.05;
-          scene.background = new THREE.Color(COR_FUNDO);
-          scene.fog = new THREE.Fog(COR_FUNDO, 900, 2600);
-        }}
-        onPointerMissed={() => useAtlas.getState().setSobre(null)}
-      >
-        <Cena territorio={territorio} monumentos={monumentos} />
-      </Canvas>
-      <Interface monumentos={monumentos} vistaInicial={() => useAtlas.getState().voar(vistaInicial(useAtlas.getState().territorio))} />
+    <div className="atlas" data-ficha={m ? "1" : "0"}>
+      <div className="atlas-mapa">
+        <Canvas
+          shadows="percentage"
+          dpr={[1, 2]}
+          camera={{ fov: 32, near: 0.5, far: 6000, position: [0, 500, 400] }}
+          gl={{ antialias: true, powerPreference: "high-performance" }}
+          onCreated={({ gl, scene }) => {
+            gl.toneMapping = THREE.NoToneMapping;
+            scene.background = new THREE.Color(COR_FUNDO);
+            scene.fog = new THREE.Fog(COR_FUNDO, 1400, 3200);
+          }}
+          onPointerMissed={() => {
+            // o marcador sob o rato é escolhido por proximidade no ecrã, mesmo sem tocar na malha
+            const s = useAtlas.getState();
+            if (s.sobre) s.selecionar(s.sobre);
+          }}
+        >
+          <Cena territorio={territorio} monumentos={monumentos} />
+        </Canvas>
+        <Interface monumentos={monumentos} vistaInicial={() => useAtlas.getState().voar(vistaInicial(useAtlas.getState().territorio))} />
+      </div>
+      {m && <Ficha key={m.id} m={m} monumentos={monumentos} onFechar={() => useAtlas.getState().selecionar(null)} />}
     </div>
   );
 }

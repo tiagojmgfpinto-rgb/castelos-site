@@ -1,39 +1,53 @@
 import * as THREE from "three";
 
-// Paleta de maqueta: areia nas planícies, verde-azeitona nas encostas, castanho nas serras,
-// pedra clara nos cumes. Espanha surge apagada para destacar o território português.
-const RAMPA: [number, string][] = [
-  [0, "#cdbf98"],
-  [120, "#c4b98e"],
-  [300, "#aaa57a"],
-  [550, "#8f9066"],
-  [850, "#86795a"],
-  [1200, "#7b624a"],
-  [1600, "#8a7766"],
-  [2000, "#b9ad9c"],
-];
-const CORES = RAMPA.map(([h, c]) => [h, new THREE.Color(c)] as const);
-// albedo escuro: depois de iluminado, o mar coincide com o fundo da página
-export const COR_MAR = new THREE.Color("#0d0c0a");
-const COR_ESPANHA = new THREE.Color("#47443c");
+// Paleta de maqueta cartográfica: tintas hipsométricas claras (verde nas planícies, ocre nas
+// zonas médias, castanho nas serras, pedra nos cumes), mar azul com profundidade, e Espanha
+// em cinzento-areia apagado para destacar o território português.
+const rampa = (pares: [number, string][]) => pares.map(([h, c]) => [h, new THREE.Color(c)] as const);
+
+const TERRA = rampa([
+  [0, "#a9b98a"],
+  [100, "#b8c290"],
+  [250, "#d2cd98"],
+  [450, "#ddc98f"],
+  [700, "#cfae78"],
+  [1000, "#b98d5f"],
+  [1400, "#9d7553"],
+  [1800, "#a08d7c"],
+  [2300, "#d9d2c6"],
+]);
+const VIZINHO = rampa([
+  [0, "#d6d0c2"],
+  [600, "#cbc3b3"],
+  [1500, "#b9b0a0"],
+  [2500, "#e2ddd3"],
+]);
+const MAR = rampa([
+  [-6000, "#2e5d77"],
+  [-3000, "#3b6e88"],
+  [-1000, "#4f86a0"],
+  [-200, "#6fa3b8"],
+  [-40, "#8dbac7"],
+  [0, "#a6cad1"],
+]);
 const tmp = new THREE.Color();
 
+function amostrar(out: THREE.Color, r: readonly (readonly [number, THREE.Color])[], h: number) {
+  if (h <= r[0][0]) return out.copy(r[0][1]);
+  for (let i = 0; i < r.length - 1; i++) {
+    const [h0, c0] = r[i];
+    const [h1, c1] = r[i + 1];
+    if (h <= h1) return out.copy(c0).lerp(c1, (h - h0) / (h1 - h0));
+  }
+  return out.copy(r[r.length - 1][1]);
+}
+
 export function corDoTerreno(out: THREE.Color, h: number, cls: number, ny: number) {
-  if (cls === 0) {
-    out.copy(COR_MAR);
-    return out;
-  }
-  let i = 0;
-  while (i < CORES.length - 1 && h > CORES[i + 1][0]) i++;
-  if (i === CORES.length - 1) out.copy(CORES[i][1]);
-  else {
-    const [h0, c0] = CORES[i];
-    const [h1, c1] = CORES[i + 1];
-    out.copy(c0).lerp(c1, Math.min(1, Math.max(0, (h - h0) / (h1 - h0))));
-  }
+  if (cls === 0) return amostrar(out, MAR, Math.min(h, 0));
+  if (cls === 2) return amostrar(out, VIZINHO, h);
+  amostrar(out, TERRA, h);
   // encostas íngremes ficam mais terrosas
   const declive = 1 - ny;
-  if (declive > 0.05) out.lerp(tmp.set("#6f5a44"), Math.min(0.45, declive * 1.6));
-  if (cls === 2) out.lerp(COR_ESPANHA, 0.82);
+  if (declive > 0.08) out.lerp(tmp.set("#8a6a4a"), Math.min(0.35, (declive - 0.08) * 1.4));
   return out;
 }

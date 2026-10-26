@@ -1,6 +1,6 @@
 import { Html } from "@react-three/drei";
-import { useFrame, type ThreeEvent } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { CIDADES } from "../../data/cidades";
 import { paraCena, projectar, TERRITORIOS, type TerritorioId } from "../../lib/territorios";
@@ -26,6 +26,121 @@ const baluarte = (() => {
 })();
 const base = new THREE.CylinderGeometry(0.16, 0.16, 0.02, 20);
 
+// ——— Gestão dos rótulos ———
+// Com o mapa afastado, os nomes não aparecem todos (atropelar-se-iam). Ao passar o rato
+// sobre um monumento, mostra-se o nome dele e dos vizinhos próximos no ecrã, em etiquetas
+// de papel dispostas de modo a não se sobreporem. Perto do chão, mostram-se todos os que couberem.
+type Registo = { m: MonumentoResumo; grupo: THREE.Group; el: HTMLDivElement };
+const registos = new Map<string, Registo>();
+const RAIO_VIZINHOS = 110; // px à volta do monumento sob o rato
+const DIST_TODOS = 140; // km da câmara abaixo dos quais se tentam mostrar todos os nomes
+const ALTURA_ROTULO = 24;
+const DESLOCAMENTOS = [0, -ALTURA_ROTULO, ALTURA_ROTULO, -2 * ALTURA_ROTULO, 2 * ALTURA_ROTULO];
+const RAIO_TOQUE = 18; // px: com o mapa afastado os marcadores são pequenos, por isso o rato "apanha" o mais próximo
+
+function GestorRotulos() {
+  const v = useMemo(() => new THREE.Vector3(), []);
+  const gl = useThree((s) => s.gl);
+  const rato = useRef({ x: 0, y: 0, dentro: false, mexeu: false, botao: false });
+
+  useEffect(() => {
+    const el = gl.domElement;
+    const mover = (e: PointerEvent) => {
+      const r = el.getBoundingClientRect();
+      Object.assign(rato.current, { x: e.clientX - r.left, y: e.clientY - r.top, dentro: true, mexeu: true, botao: e.buttons !== 0 });
+    };
+    const sair = () => Object.assign(rato.current, { dentro: false, mexeu: true });
+    el.addEventListener("pointermove", mover);
+    el.addEventListener("pointerleave", sair);
+    return () => {
+      el.removeEventListener("pointermove", mover);
+      el.removeEventListener("pointerleave", sair);
+    };
+  }, [gl]);
+
+  // corre depois dos marcadores (subscreve-se depois deles); prioridade > 0 desligaria o desenho automático
+  useFrame(({ camera, size }) => {
+    const s = useAtlas.getState();
+    const cand: { r: Registo; x: number; y: number; w: number; prio: number }[] = [];
+    let foco: { x: number; y: number } | null = null;
+    const proj = (r: Registo) => {
+      v.set(0, 1.9, 0);
+      r.grupo.localToWorld(v);
+      const d = camera.position.distanceTo(v);
+      v.project(camera);
+      return { x: (v.x * 0.5 + 0.5) * size.width, y: (-v.y * 0.5 + 0.5) * size.height, d, frente: v.z < 1 };
+    };
+    // monumento sob o rato: o marcador mais próximo do cursor no ecrã, dentro de RAIO_TOQUE
+    const r0 = rato.current;
+    if (r0.mexeu && !r0.botao) {
+      r0.mexeu = false;
+      let melhor: string | null = null, dmin = RAIO_TOQUE;
+      if (r0.dentro)
+        for (const r of registos.values()) {
+          if (!r.grupo.visible) continue;
+          v.set(0, 0.8, 0);
+          r.grupo.localToWorld(v).project(camera);
+          if (v.z > 1) continue;
+          const dd = Math.hypot((v.x * 0.5 + 0.5) * size.width - r0.x, (-v.y * 0.5 + 0.5) * size.height - r0.y);
+          if (dd < dmin) [dmin, melhor] = [dd, r.m.id];
+        }
+      if (melhor !== s.sobre) {
+        s.setSobre(melhor);
+        gl.domElement.style.cursor = melhor ? "pointer" : "";
+      }
+    }
+    const destaque = useAtlas.getState().sobre ?? s.selecionado;
+    if (destaque && registos.has(destaque)) {
+      const p = proj(registos.get(destaque)!);
+      foco = { x: p.x, y: p.y };
+    }
+    const sobre = useAtlas.getState().sobre;
+    for (const r of registos.values()) {
+      const ativo = r.m.id === sobre || r.m.id === s.selecionado;
+      if (!r.grupo.visible) {
+        r.el.dataset.visivel = "0";
+        continue;
+      }
+      const p = proj(r);
+      if (!p.frente) {
+        r.el.dataset.visivel = "0";
+        continue;
+      }
+      const vizinho = foco && Math.hypot(p.x - foco.x, p.y - foco.y) < RAIO_VIZINHOS;
+      const perto = p.d < DIST_TODOS;
+      if (!ativo && !vizinho && !perto) {
+        r.el.dataset.visivel = "0";
+        continue;
+      }
+      const w = r.m.nome.length * (ativo ? 8.6 : 7.4) + 22;
+      const prio = r.m.id === sobre ? 0 : r.m.id === s.selecionado ? 1 : vizinho ? 2 + Math.hypot(p.x - foco!.x, p.y - foco!.y) / 1000 : 3 + p.d / 1e4;
+      cand.push({ r, x: p.x, y: p.y, w, prio });
+    }
+    cand.sort((a, b) => a.prio - b.prio);
+    const ocupados: [number, number, number, number][] = [];
+    const livre = (x0: number, y0: number, x1: number, y1: number) =>
+      ocupados.every(([a, b, c, d]) => x1 < a || x0 > c || y1 < b || y0 > d);
+    for (const c of cand) {
+      const ativo = c.prio < 2;
+      const tentativas = c.prio < 3 ? DESLOCAMENTOS : [0];
+      let colocado = false;
+      for (const dy of tentativas) {
+        const x0 = c.x - c.w / 2, y0 = c.y + dy - ALTURA_ROTULO / 2;
+        const x1 = x0 + c.w, y1 = y0 + ALTURA_ROTULO;
+        if (ativo || livre(x0, y0, x1, y1)) {
+          ocupados.push([x0 - 2, y0 - 1, x1 + 2, y1 + 1]);
+          c.r.el.style.setProperty("--dy", `${dy}px`);
+          colocado = true;
+          break;
+        }
+      }
+      c.r.el.dataset.visivel = colocado ? "1" : "0";
+      c.r.el.dataset.ativo = ativo ? "1" : "0";
+    }
+  });
+  return null;
+}
+
 export function Marcadores({ monumentos, territorio }: { monumentos: MonumentoResumo[]; territorio: TerritorioId }) {
   const t = TERRITORIOS[territorio];
   const lista = useMemo(
@@ -45,6 +160,7 @@ export function Marcadores({ monumentos, territorio }: { monumentos: MonumentoRe
         <Marcador key={m.id} m={m} x={sx} z={sz} />
       ))}
       <Cidades territorio={territorio} />
+      <GestorRotulos />
     </group>
   );
 }
@@ -71,29 +187,22 @@ function Marcador({ m, x, z }: { m: MonumentoResumo; x: number; z: number }) {
     const escala = Math.min(d * 0.022, 6) * (ativo ? 1.35 : 1);
     g.scale.setScalar(escala);
     mat.color.copy(ativo ? COR_ATIVA : COR_PEDRA);
-    if (rotulo.current) {
-      const perto = d < 140;
-      rotulo.current.dataset.visivel = show && (ativo || perto) ? "1" : "0";
-      rotulo.current.dataset.ativo = ativo ? "1" : "0";
-    }
   });
 
-  const over = (e: ThreeEvent<PointerEvent>) => {
-    e.stopPropagation();
-    useAtlas.getState().setSobre(m.id);
-    document.body.style.cursor = "pointer";
-  };
-  const out = () => {
-    if (useAtlas.getState().sobre === m.id) useAtlas.getState().setSobre(null);
-    document.body.style.cursor = "";
-  };
+  // o <Html> monta o rótulo noutra raiz React, por isso o registo só é possível quando ele já existe
+  useFrame(() => {
+    if (ref.current && rotulo.current && registos.get(m.id)?.el !== rotulo.current)
+      registos.set(m.id, { m, grupo: ref.current, el: rotulo.current });
+  });
+  useEffect(() => () => void registos.delete(m.id), [m.id]);
+
   const click = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
     useAtlas.getState().selecionar(m.id);
   };
 
   return (
-    <group ref={ref} onPointerOver={over} onPointerOut={out} onClick={click}>
+    <group ref={ref} onClick={click}>
       <mesh geometry={haste} material={mat} />
       <mesh geometry={forma === "torre" ? torre : baluarte} material={mat} />
       <mesh geometry={base} material={mat} />

@@ -30,5 +30,7 @@ export function resumo(m: Monumento): MonumentoResumo {
     seculoOrigem: d.seculoOrigem,
     maquetas: d.maquetas.filter((x) => x.validada).map(({ tipo, ficheiro, epoca }) => ({ tipo, ficheiro, epoca })),
     notas: d.notas,
+    fontes: d.fontes,
+    html: m.rendered?.html ?? "",
   };
 }
