@@ -2,6 +2,14 @@ import { create } from "zustand";
 import type { TerritorioId } from "../../lib/territorios";
 import type { Regiao, Tipologia } from "../../lib/tipologias";
 
+export interface Maqueta {
+  tipo: "estado-atual" | "reconstituicao";
+  ficheiro: string; // relativo à raiz pública do site
+  epoca?: string;
+  provisoria: boolean;
+  capa?: string;
+}
+
 export interface MonumentoResumo {
   id: string;
   nome: string;
@@ -16,7 +24,7 @@ export interface MonumentoResumo {
   coordenadasVerificadas: boolean;
   estadoFicha: "em-preparacao" | "publicada";
   seculoOrigem?: string;
-  maquetas: { tipo: "estado-atual" | "reconstituicao"; ficheiro: string; epoca?: string }[];
+  maquetas: Maqueta[];
   notas: string[];
   fontes: { titulo: string; url?: string }[];
   html: string; // texto da ficha (Markdown já convertido no build)
