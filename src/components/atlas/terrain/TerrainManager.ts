@@ -28,6 +28,8 @@ const N = 257;
 const SEGMENTS = 128;
 const SPLIT = 2.1; // dividir um nó quando a câmara está a menos de SPLIT x o seu lado
 const MAX_CACHE_GEOM = 220;
+const FUNDO_MAR = 0.12; // relevo submarino suavizado no sombreado
+const REFORCO_SOMBRA = 1.6; // o sombreado acentua o relevo mais do que a geometria, como num mapa de relevo
 
 const k = (z: number, x: number, y: number) => `${z}/${x}/${y}`;
 const parse = (key: string) => key.split("/").map(Number) as [number, number, number];
@@ -46,7 +48,7 @@ export async function decodeTile(url: string): Promise<TileData> {
   const heights = new Float32Array(n);
   const cls = new Uint8Array(n);
   for (let i = 0; i < n; i++) {
-    heights[i] = (px[i * 4] * 256 + px[i * 4 + 1]) / 10 - 1000;
+    heights[i] = (px[i * 4] * 256 + px[i * 4 + 1]) / 5 - 8000;
     cls[i] = px[i * 4 + 2];
   }
   bmp.close();
@@ -90,7 +92,7 @@ export class TerrainManager {
       vertexColors: true,
       roughness: 0.93,
       metalness: 0,
-      side: THREE.DoubleSide,
+      side: THREE.FrontSide,
     });
   }
 
@@ -253,7 +255,8 @@ export class TerrainManager {
         const hm = bilinear(t.heights, u, v);
         const cl = nearest(t.cls, u, v);
         const idx = j * (seg + 1) + i;
-        const h = cl === 0 ? Math.min(hm, 0) - 30 : hm; // o mar fica ligeiramente abaixo da costa
+        // o mar é uma superfície plana logo abaixo da costa; a batimetria só entra no sombreado e na cor
+        const h = cl === 0 ? -40 / this.exagero : hm;
         pos[idx * 3] = minX + (i / seg) * s;
         pos[idx * 3 + 1] = h * ex;
         pos[idx * 3 + 2] = minZ + (j / seg) * s;
@@ -262,8 +265,9 @@ export class TerrainManager {
         // nas bordas do mosaico a diferença é unilateral, com o passo real (evita costuras de luz)
         const ul = Math.max(u - step, 0), ur = Math.min(u + step, N - 1);
         const vu = Math.max(v - step, 0), vd = Math.min(v + step, N - 1);
-        const gx = ((bilinear(t.heights, ur, v) - bilinear(t.heights, ul, v)) * ex) / ((ur - ul) * sampleKm);
-        const gz = ((bilinear(t.heights, u, vd) - bilinear(t.heights, u, vu)) * ex) / ((vd - vu) * sampleKm);
+        const fx = cl === 0 ? ex * FUNDO_MAR : ex * REFORCO_SOMBRA;
+        const gx = ((bilinear(t.heights, ur, v) - bilinear(t.heights, ul, v)) * fx) / ((ur - ul) * sampleKm);
+        const gz = ((bilinear(t.heights, u, vd) - bilinear(t.heights, u, vu)) * fx) / ((vd - vu) * sampleKm);
         nrm.set(-gx, 1, -gz).normalize();
         nor.set([nrm.x, nrm.y, nrm.z], idx * 3);
         corDoTerreno(c, hm, cl, nrm.y);
@@ -295,17 +299,18 @@ export class TerrainManager {
         index.push(a, cc, b, b, cc, d);
       }
     }
-    const strip = (base: number, along: (i: number) => number, flip: boolean) => {
+    const strip = (base: number, along: (i: number) => number) => {
       for (let i = 0; i < seg; i++) {
         const a = along(i), b = along(i + 1), sa = nv + base + i, sb = nv + base + i + 1;
-        if (flip) index.push(a, b, sa, b, sb, sa);
-        else index.push(a, sa, b, b, sa, sb);
+        // as duas faces, com a mesma normal: com DoubleSide, a face de trás teria a normal invertida
+        // e apareceria como uma linha escura nas fendas entre níveis de detalhe
+        index.push(a, b, sa, b, sb, sa, a, sa, b, b, sa, sb);
       }
     };
-    strip(0, (i) => vi(i, 0), true);
-    strip(seg + 1, (i) => vi(i, seg), false);
-    strip(2 * (seg + 1), (j) => vi(0, j), false);
-    strip(3 * (seg + 1), (j) => vi(seg, j), true);
+    strip(0, (i) => vi(i, 0));
+    strip(seg + 1, (i) => vi(i, seg));
+    strip(2 * (seg + 1), (j) => vi(0, j));
+    strip(3 * (seg + 1), (j) => vi(seg, j));
 
     const g = new THREE.BufferGeometry();
     g.setAttribute("position", new THREE.BufferAttribute(pos, 3));

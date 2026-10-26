@@ -9,7 +9,8 @@ import { useAtlas, type MonumentoResumo } from "./store";
 import { Terreno } from "./Terrain";
 import { Interface } from "../ui/Interface";
 
-const COR_FUNDO = "#1b1914";
+// fundo e mar fora do quadrado de mosaicos: o azul do mar profundo depois de iluminado
+const COR_FUNDO = "#3d6f86";
 
 /** Sol baixo de noroeste, como no relevo sombreado clássico; a sombra acompanha a câmara. */
 function Luz() {
@@ -41,8 +42,8 @@ function Luz() {
   });
   return (
     <>
-      <hemisphereLight args={["#f3ead6", "#4a4436", 0.85]} />
-      <directionalLight ref={sol} color="#fff1da" intensity={2.4} castShadow shadow-mapSize={[4096, 4096]} />
+      <hemisphereLight args={["#fffaf0", "#8a8170", 1.25]} />
+      <directionalLight ref={sol} color="#fff1da" intensity={2.1} castShadow shadow-mapSize={[4096, 4096]} />
     </>
   );
 }
@@ -109,12 +110,15 @@ export default function Atlas({ monumentos }: { monumentos: MonumentoResumo[] })
         camera={{ fov: 32, near: 0.5, far: 6000, position: [0, 500, 400] }}
         gl={{ antialias: true, powerPreference: "high-performance" }}
         onCreated={({ gl, scene }) => {
-          gl.toneMapping = THREE.ACESFilmicToneMapping;
-          gl.toneMappingExposure = 1.05;
+          gl.toneMapping = THREE.NoToneMapping;
           scene.background = new THREE.Color(COR_FUNDO);
-          scene.fog = new THREE.Fog(COR_FUNDO, 900, 2600);
+          scene.fog = new THREE.Fog(COR_FUNDO, 1400, 3200);
         }}
-        onPointerMissed={() => useAtlas.getState().setSobre(null)}
+        onPointerMissed={() => {
+          // o marcador sob o rato é escolhido por proximidade no ecrã, mesmo sem tocar na malha
+          const s = useAtlas.getState();
+          if (s.sobre) s.selecionar(s.sobre);
+        }}
       >
         <Cena territorio={territorio} monumentos={monumentos} />
       </Canvas>

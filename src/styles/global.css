@@ -114,11 +114,13 @@ button { font: inherit; color: inherit; }
 
 /* Rótulos no mapa */
 .rotulo-monumento {
-  white-space: nowrap; font-family: var(--serifa-titulo); font-weight: 600; font-size: 15px; color: #fbf6ea; letter-spacing: 0.01em;
-  text-shadow: 0 0 4px rgba(20, 17, 12, 0.95), 0 1px 10px rgba(20, 17, 12, 0.8); transform: translateY(-10px); transition: opacity 0.25s;
+  white-space: nowrap; font-family: var(--serifa-titulo); font-weight: 600; font-size: 13.5px; line-height: 1; color: #2b2116;
+  padding: 4px 9px 5px; background: #f1e7cf; border: 1px solid rgba(74, 58, 40, 0.35); border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(40, 28, 14, 0.35), inset 0 0 6px rgba(150, 120, 70, 0.18);
+  transform: translateY(calc(-6px + var(--dy, 0px))); transition: opacity 0.2s, transform 0.2s;
 }
 .rotulo-monumento[data-visivel="0"] { opacity: 0; }
-.rotulo-monumento[data-ativo="1"] { font-size: 18px; }
+.rotulo-monumento[data-ativo="1"] { font-size: 15px; background: #f8f0dc; border-color: rgba(122, 40, 28, 0.6); }
 .rotulo-cidade { white-space: nowrap; font-family: var(--sans); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #2b261c; text-shadow: 0 0 3px rgba(225, 214, 185, 0.9); transition: opacity 0.25s; display: flex; align-items: center; gap: 5px; }
 .rotulo-cidade.nivel-1 { font-size: 12.5px; font-weight: 600; }
 .rotulo-cidade .ponto { width: 4px; height: 4px; border-radius: 50%; background: #2b261c; }

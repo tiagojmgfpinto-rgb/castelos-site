@@ -24,17 +24,17 @@ export const TERRITORIOS: Record<TerritorioId, Territorio> = {
   continente: {
     id: "continente", nome: "Portugal Continental", crs: "EPSG:3763", rotuloProjecao: "PT-TM06 · ETRS89",
     x0: -260000, y0: 300000, size: 614400,
-    vista: { x: 10000, y: -25000, distancia: 1000, inclinacao: 34, rumo: 0 },
+    vista: { x: 20000, y: -5000, distancia: 1150, inclinacao: 14, rumo: 0 },
   },
   acores: {
     id: "acores", nome: "Açores", crs: "EPSG:5015", rotuloProjecao: "PTRA08 · UTM 26N",
     x0: 100000, y0: 4560000, size: 614400,
-    vista: { x: 390000, y: 4250000, distancia: 470, inclinacao: 36, rumo: 0 },
+    vista: { x: 390000, y: 4250000, distancia: 560, inclinacao: 14, rumo: 0 },
   },
   madeira: {
     id: "madeira", nome: "Madeira", crs: "EPSG:5016", rotuloProjecao: "PTRA08 · UTM 28N",
     x0: 260000, y0: 3700000, size: 153600,
-    vista: { x: 335000, y: 3640000, distancia: 120, inclinacao: 42, rumo: 0 },
+    vista: { x: 335000, y: 3645000, distancia: 150, inclinacao: 16, rumo: 0 },
   },
 };
 

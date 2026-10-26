@@ -1,11 +1,12 @@
 """Gera os mosaicos de relevo (quadtree) e as linhas cartográficas de cada território.
 
-Entrada: mosaico WGS84 criado por fetch_dem.py e Natural Earth 10m (GeoJSON).
+Entrada: mosaico WGS84 criado por fetch_dem.py (terra), batimetria de fetch_bathy.py (mar)
+         e Natural Earth 10m (GeoJSON).
 Saída:   public/terrain/<territorio>/<z>/<x>_<y>.png + manifest.json
          public/data/<territorio>/linhas.json
 
 Codificação de cada píxel PNG (RGB, sem perdas):
-    R*256 + G = (altitude_m + 1000) * 10      -> precisão de 0,1 m
+    R*256 + G = (altitude_m + 8000) * 5       -> de -8000 a +5107 m, precisão de 0,2 m
     B         = classe (0 mar, 1 Portugal, 2 Espanha)
 
 Cada mosaico tem 257x257 amostras: a última linha e coluna repetem a primeira
@@ -34,12 +35,13 @@ TILE = 256
 TERRITORIES = {
     # crs, canto superior esquerdo (m), lado do quadrado (m), nível máximo,
     # nível a partir do qual só se gera onde há Portugal
-    "continente": dict(crs="EPSG:3763", x0=-260000, y0=300000, size=614400, max_level=5, pt_only_from=4,
-                       dem="dem_continente_3s.tif", name="Portugal Continental"),
-    "acores": dict(crs="EPSG:5015", x0=100000, y0=4560000, size=614400, max_level=6, pt_only_from=0,
-                   dem="dem_acores_3s.tif", name="Açores"),
-    "madeira": dict(crs="EPSG:5016", x0=260000, y0=3700000, size=153600, max_level=4, pt_only_from=0,
-                    dem="dem_madeira_3s.tif", name="Madeira"),
+    # sea_max: até este nível geram-se também os mosaicos só de mar (batimetria)
+    "continente": dict(crs="EPSG:3763", x0=-260000, y0=300000, size=614400, max_level=5, pt_only_from=4, sea_max=3,
+                       dem="dem_continente_3s.tif", bathy="bathy_continente_z9.tif", name="Portugal Continental"),
+    "acores": dict(crs="EPSG:5015", x0=100000, y0=4560000, size=614400, max_level=6, pt_only_from=0, sea_max=3,
+                   dem="dem_acores_3s.tif", bathy="bathy_acores_z9.tif", name="Açores"),
+    "madeira": dict(crs="EPSG:5016", x0=260000, y0=3700000, size=153600, max_level=4, pt_only_from=0, sea_max=2,
+                    dem="dem_madeira_3s.tif", bathy="bathy_madeira_z9.tif", name="Madeira"),
 }
 
 
@@ -69,7 +71,7 @@ def grid_transform(cfg, level):
     return res, rasterio.transform.from_origin(cfg["x0"] - res / 2, cfg["y0"] + res / 2, res, res)
 
 
-def build_level(cfg, level, src, cmap):
+def build_level(cfg, level, src, bathy, cmap):
     res, tr = grid_transform(cfg, level)
     n = TILE * 2**level + 1
     h = np.zeros((n, n), dtype=np.float32)
@@ -86,12 +88,17 @@ def build_level(cfg, level, src, cmap):
     # Terra que o Natural Earth não apanha (ilhéus, costa recortada) fica com a classe vizinha mais comum.
     land_missing = (cls == 0) & (h > 2)
     cls[land_missing] = 1 if "ESP" not in cmap else 0
-    h[cls == 0] = np.minimum(h[cls == 0], 0)
+    # no mar, a profundidade vem da batimetria
+    b = np.zeros((n, n), dtype=np.float32)
+    reproject(source=rasterio.band(bathy, 1), destination=b, dst_transform=tr, dst_crs=cfg["crs"],
+              resampling=Resampling.bilinear, dst_nodata=0)
+    sea = cls == 0
+    h[sea] = np.minimum(np.minimum(h[sea], 0), np.minimum(b[sea], -1))
     return res, h, cls
 
 
 def encode(h, cls):
-    v = np.clip(np.round((h + 1000.0) * 10.0), 0, 65535).astype(np.uint16)
+    v = np.clip(np.round((h + 8000.0) * 5.0), 0, 65535).astype(np.uint16)
     rgb = np.stack([(v >> 8).astype(np.uint8), (v & 255).astype(np.uint8), cls], axis=-1)
     return Image.fromarray(rgb, "RGB")
 
@@ -103,20 +110,20 @@ def build_tiles(key, cfg):
         cmap.pop("ESP", None)
     manifest = dict(
         id=key, name=cfg["name"], crs=cfg["crs"], x0=cfg["x0"], y0=cfg["y0"], size=cfg["size"],
-        tileSize=TILE, maxLevel=cfg["max_level"], encoding="rg16_dm_plus1000_b_class", levels={},
+        tileSize=TILE, maxLevel=cfg["max_level"], encoding="rg16_5x_plus8000_b_class", levels={},
     )
     hmin, hmax = 1e9, -1e9
-    with rasterio.open(CACHE / cfg["dem"]) as src:
+    with rasterio.open(CACHE / cfg["dem"]) as src, rasterio.open(CACHE / cfg["bathy"]) as bathy:
         for level in range(cfg["max_level"] + 1):
-            res, h, cls = build_level(cfg, level, src, cmap)
+            res, h, cls = build_level(cfg, level, src, bathy, cmap)
             tiles = []
             for ty in range(2**level):
                 for tx in range(2**level):
                     sl = (slice(ty * TILE, ty * TILE + TILE + 1), slice(tx * TILE, tx * TILE + TILE + 1))
                     c = cls[sl]
-                    if not c.any():
+                    if not c.any() and level > cfg["sea_max"]:
                         continue
-                    if level >= cfg["pt_only_from"] and not (c == 1).any():
+                    if level > cfg["sea_max"] and level >= cfg["pt_only_from"] and not (c == 1).any():
                         continue
                     hh = h[sl]
                     hmin, hmax = min(hmin, float(hh.min())), max(hmax, float(hh.max()))
