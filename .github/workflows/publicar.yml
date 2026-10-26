@@ -1,0 +1,71 @@
+name: Compilar e publicar
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compilar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+      - run: pip install -r pipeline/requirements.txt
+
+      - name: Cache do relevo e do Natural Earth
+        uses: actions/cache@v4
+        with:
+          path: .cache
+          key: relevo-${{ hashFiles('pipeline/terrain/fetch_dem.py') }}
+
+      - name: Relevo Copernicus GLO-30
+        run: |
+          for r in continente acores madeira; do
+            [ -f .cache/dem_${r}_3s.tif ] || python pipeline/terrain/fetch_dem.py --region $r --arcsec 3
+          done
+          bash pipeline/terrain/naturalearth.sh
+          python -W ignore pipeline/terrain/build_tiles.py
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Compilar o site
+        run: npm run build
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
+          SITE_URL: https://${{ github.repository_owner }}.github.io
+
+      - uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main'
+        with:
+          path: dist
+
+  publicar:
+    if: github.ref == 'refs/heads/main'
+    needs: compilar
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

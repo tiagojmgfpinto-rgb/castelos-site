@@ -1,0 +1,16 @@
+---
+import Base from "../layouts/Base.astro";
+import Atlas from "../components/atlas/Atlas";
+import { todosMonumentos, resumo } from "../lib/monumentos";
+const monumentos = (await todosMonumentos()).map(resumo);
+---
+<Base classe="pagina-atlas">
+  <h1 class="sr-only">Castelos.site · Atlas 3D dos Castelos e Fortalezas de Portugal</h1>
+  <Atlas client:only="react" monumentos={monumentos} />
+  <noscript>
+    <div class="sem-webgl">
+      <p>Este atlas precisa de JavaScript e WebGL.</p>
+      <a href={`${import.meta.env.BASE_URL}castelos/`}>Ver a lista de castelos e fortalezas</a>
+    </div>
+  </noscript>
+</Base>
