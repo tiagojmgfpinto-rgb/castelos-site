@@ -264,14 +264,7 @@ button { font: inherit; color: inherit; }
   --m-papel: #efe5cc; --m-tinta: #2a2016; --m-suave: #6b5a44; --m-vermelho: #8e2a1c; --m-filete: rgba(74, 58, 40, 0.3);
   position: relative; color: var(--m-tinta); outline: none;
 }
-.maqueta-capa { aspect-ratio: 16 / 10; overflow: hidden; border: 1px solid rgba(74, 58, 40, 0.4); background: #d9cfbd; }
-.maqueta-capa img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.maqueta-explorar {
-  position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%);
-  padding: 11px 22px; border: 1px solid #2a2016; background: #2a2016; color: #f3ead4; cursor: pointer;
-  font-family: var(--sans); font-size: 14px; letter-spacing: 0.16em; text-transform: uppercase; box-shadow: 0 6px 18px rgba(30, 20, 10, 0.35);
-}
-.maqueta-explorar:hover { background: var(--m-vermelho); border-color: var(--m-vermelho); }
+.maqueta-capa-fundo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.55; filter: blur(1px); }
 .maqueta-selo {
   position: absolute; top: 10px; left: 10px; z-index: 3; padding: 4px 9px; border: 1px solid var(--m-vermelho); background: rgba(239, 229, 204, 0.92);
   color: var(--m-vermelho); font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
@@ -306,16 +299,16 @@ button { font: inherit; color: inherit; }
   content: ""; position: absolute; left: -2px; bottom: -2.5px; width: 5px; height: 5px; border-radius: 50%; background: rgba(42, 32, 22, 0.7);
 }
 .maqueta-placa-cartao {
-  position: absolute; left: 0; bottom: 0; transform: translateX(calc(-50% + var(--dx, 0px))); width: max-content; max-width: 250px; pointer-events: auto; cursor: pointer;
-  display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 4px 12px 5px; text-align: center;
+  position: absolute; left: 0; bottom: 0; transform: translateX(calc(-50% + var(--dx, 0px))); width: max-content; max-width: 196px; pointer-events: auto; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 0; padding: 2px 8px 3px; text-align: center;
   border: 1px solid rgba(42, 32, 22, 0.16); background: rgba(250, 247, 240, 0.84); color: var(--m-tinta);
   box-shadow: 0 2px 8px rgba(30, 20, 10, 0.12); backdrop-filter: blur(2px);
   transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
-.maqueta-placa-cartao strong { font-family: var(--serifa-versalete); font-size: 14px; font-weight: 600; letter-spacing: 0.1em; line-height: 1.15; white-space: nowrap; }
+.maqueta-placa-cartao strong { font-family: var(--serifa-versalete); font-size: 12px; font-weight: 600; letter-spacing: 0.08em; line-height: 1.15; white-space: nowrap; }
 .maqueta-placa-cartao em {
-  max-width: 226px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  font-family: var(--serifa-titulo); font-size: 12.5px; line-height: 1.2; color: var(--m-suave);
+  max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-family: var(--serifa-titulo); font-size: 11px; line-height: 1.2; color: var(--m-suave);
 }
 .maqueta-placa-cartao:hover, .maqueta-placa-cartao:focus-visible {
   transform: translate(calc(-50% + var(--dx, 0px)), -2px); background: rgba(252, 249, 243, 0.97); border-color: rgba(42, 32, 22, 0.45); box-shadow: 0 5px 14px rgba(30, 20, 10, 0.22); outline: none;
@@ -349,8 +342,8 @@ button { font: inherit; color: inherit; }
 @media (max-width: 640px) {
   .maqueta-botoes { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
   .maqueta-elemento { max-height: 55%; }
-  .maqueta-placa-cartao { max-width: 170px; padding: 2px 8px 3px; }
-  .maqueta-placa-cartao strong { font-size: 12.5px; letter-spacing: 0.06em; }
-  .maqueta--ampliada .maqueta-placa-cartao em { max-width: 154px; font-size: 11.5px; }
+  .maqueta-placa-cartao { max-width: 150px; padding: 1px 6px 2px; }
+  .maqueta-placa-cartao strong { font-size: 11px; letter-spacing: 0.05em; }
+  .maqueta--ampliada .maqueta-placa-cartao em { max-width: 138px; font-size: 10.5px; }
   .maqueta:not(.maqueta--ampliada) .maqueta-placa-cartao em { display: none; } /* no visor pequeno, só o nome */
 }

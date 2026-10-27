@@ -1163,28 +1163,56 @@ def arvore_modelo(subdiv):
     return v, f
 
 
-ico0, ico0f = arvore_modelo(1)
+ico1, ico1f = arvore_modelo(1)
+ico2, ico2f = arvore_modelo(2)
 mv, mf, mc = [], [], []
 
 
-def plantar(x, y, z, raio, alt, copa_cor, tronco=1.0):
+def _lobo(cx, cy, cz, rx, rz, cor, base, topo, grande, irregular):
+    """Um lobo da copa: esfera achatada e deformada, com a cor a escurecer para baixo (sombra própria)."""
+    v0, f0 = (ico2, ico2f) if grande else (ico1, ico1f)
     b = len(mv)
-    # tronco: prisma de 5 lados
-    for k in range(5):
-        a = 2 * math.pi * k / 5
-        mv.append((x + 0.18 * math.cos(a), y + 0.18 * math.sin(a), z - 0.3))
-        mv.append((x + 0.14 * math.cos(a), y + 0.14 * math.sin(a), z + tronco + 0.3))
-    for k in range(5):
-        j = (k + 1) % 5
-        mf.append([b + 2 * k, b + 2 * j, b + 2 * j + 1, b + 2 * k + 1])
-    mc.extend([(0.33, 0.26, 0.18)] * 10)
-    b = len(mv)
-    jit = rng.normal(0, 0.08, ico0.shape)
-    pts = (ico0 + jit) * np.array([raio, raio, alt / 2]) + np.array([x, y, z + tronco + alt / 2])
+    jit = rng.normal(0, irregular, v0.shape)
+    pts = (v0 + jit) * np.array([rx, rx, rz]) + np.array([cx, cy, cz])
     mv.extend(map(tuple, pts))
-    mf.extend([[b + i for i in fa] for fa in ico0f])
-    sh = 0.9 + 0.2 * rng.random()
-    mc.extend([tuple(np.clip(np.array(copa_cor) * sh, 0, 1))] * len(pts))
+    mf.extend([[b + i for i in fa] for fa in f0])
+    t = np.clip((pts[:, 2] - base) / max(topo - base, 0.1), 0, 1)
+    luz = 0.62 + 0.5 * t ** 0.8
+    mc.extend(map(tuple, np.clip(np.array(cor)[None, :] * luz[:, None], 0, 1)))
+
+
+def plantar(x, y, z, raio, alt, copa_cor, tronco=1.0, oliveira=False):
+    """Árvore com a posição, o topo e o raio de copa medidos; a forma da copa é esquemática:
+    um lobo principal e, nas maiores, dois a quatro lobos à volta, como nas maquetas de referência."""
+    b = len(mv)
+    rt = 0.12 + 0.035 * raio
+    # tronco: prisma de 6 lados, a afinar para cima
+    for k in range(6):
+        a = 2 * math.pi * k / 6
+        mv.append((x + rt * math.cos(a), y + rt * math.sin(a), z - 0.3))
+        mv.append((x + 0.7 * rt * math.cos(a), y + 0.7 * rt * math.sin(a), z + tronco + alt * 0.4))
+    for k in range(6):
+        j = (k + 1) % 6
+        mf.append([b + 2 * k, b + 2 * j, b + 2 * j + 1, b + 2 * k + 1])
+    mc.extend([(0.36, 0.28, 0.2)] * 12)
+    base, topo = z + tronco, z + tronco + alt
+    sh = 0.88 + 0.24 * rng.random()
+    cor = tuple(np.clip(np.array(copa_cor) * sh, 0, 1))
+    irregular = 0.11 if oliveira else 0.06
+    n = 1 if raio < 1.8 else (3 if raio < 3.2 else 4)
+    if n == 1:
+        _lobo(x, y, base + alt / 2, raio, alt / 2, cor, base, topo, False, irregular)
+        return
+    # lobo principal, um pouco abaixo do topo medido, e lobos menores à volta sem passar do raio medido
+    _lobo(x, y, topo - alt * 0.42, raio * 0.68, alt * 0.42, cor, base, topo, raio > 3, irregular)
+    a0 = rng.random() * 2 * math.pi
+    for k in range(n):
+        a = a0 + 2 * math.pi * k / n + rng.normal(0, 0.3)
+        d = raio * (0.4 + 0.08 * rng.random())
+        rl = raio * (0.5 + 0.08 * rng.random())
+        zl = base + alt * (0.36 + 0.12 * rng.random())
+        c2 = tuple(np.clip(np.array(cor) * (0.92 + 0.14 * rng.random()), 0, 1))
+        _lobo(x + d * math.cos(a), y + d * math.sin(a), zl, rl, min(rl, alt * 0.36), c2, base, topo, False, irregular)
 
 
 # Copas medidas no LiDAR (lidar.py): posição, topo e raio de cada árvore; a forma é esquemática.
@@ -1204,13 +1232,14 @@ for x, y, topo, _, r in ARV:
         cor = (0.48, 0.52, 0.38)  # oliveiras (fotografias aéreas 1 e 2)
     else:
         cor = (0.30, 0.38, 0.22) if rng.random() < 0.65 else (0.42, 0.47, 0.30)
-    plantar(float(x), float(y), z, r, alt, cor, tronco=max(h - alt, 0.6))
+    plantar(float(x), float(y), z, r, alt, cor, tronco=max(h - alt, 0.6), oliveira=no_recinto and h < 8)
     n_arv += 1
 MEDIDAS["vegetacao"] = {"arvores": n_arv}
 
 me = bpy.data.meshes.new("vegetacao")
 me.from_pydata(mv, [], mf)
 me.update()
+me.shade_smooth()  # copas redondas, sem facetas
 cl = np.array(mc) ** 2.2
 ca = me.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
 ca.data.foreach_set("color", np.hstack([cl, np.ones((len(cl), 1))]).astype(np.float32).ravel())
