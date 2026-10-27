@@ -8,6 +8,10 @@ export interface ElementoMaqueta {
   descricao: string;
   medidas?: string;
   fontes: string[];
+  /** Linha curta para a placa flutuante (tirada da descrição, sem acrescentar factos). */
+  resumo?: string;
+  /** Ponto da placa em coordenadas do visor (x este, y cota, z sul). Sem ele, usa-se o topo do elemento. */
+  ancora?: [number, number, number];
 }
 
 export interface DadosMaqueta {
@@ -19,6 +23,8 @@ export interface DadosMaqueta {
   origem: { lat: number; lon: number; nota: string };
   fontes: Record<string, { titulo: string; url?: string }>;
   limitacoes: string[];
+  /** Elementos com placa flutuante, por ordem de prioridade quando não cabem todas. */
+  placas?: string[];
   elementos: ElementoMaqueta[];
 }
 
@@ -34,8 +40,15 @@ export const ESTADOS: Record<ElementoMaqueta["estado"], string> = {
   hipotese: "Hipótese",
 };
 
-/** Elementos com rótulo permanente quando os rótulos estão ligados. */
-export const ROTULADOS = ["castelejo", "igreja", "porta_vila", "porta_traicao", "brecha", "torre_quinaria", "cubelo_noroeste", "casa_paroquial"];
+/**
+ * Elementos com placa: os indicados em "placas" ou, numa maqueta sem essa lista, todos os que
+ * não são envolvente. Só entram elementos que existem e estão documentados no ficheiro.
+ */
+export function elementosComPlaca(d: DadosMaqueta): ElementoMaqueta[] {
+  const porId = new Map(d.elementos.map((e) => [e.id, e]));
+  const ids = d.placas ?? d.elementos.filter((e) => e.grupo !== "Envolvente").map((e) => e.id);
+  return ids.map((id) => porId.get(id)).filter((e): e is ElementoMaqueta => !!e);
+}
 
 /** Camadas que se escondem com o terreno (ficariam a flutuar sem ele). */
 export const CAMADAS_TERRENO = ["Terreno_grupo", "Vegetacao_grupo", "Vila_grupo", "Caminhos_grupo"];

@@ -258,12 +258,33 @@ button { font: inherit; color: inherit; }
 .maqueta-norte span { margin-top: 9px; font-family: var(--sans); font-size: 10px; font-weight: 600; }
 .maqueta-escala { position: absolute; right: 14px; bottom: 12px; display: flex; align-items: center; gap: 6px; pointer-events: none; font-family: var(--sans); font-size: 11px; }
 .maqueta-escala div { height: 5px; border: 1px solid #2a2016; border-top: 0; }
-.maqueta-rotulo-ancora { pointer-events: none; }
-.maqueta-rotulo {
-  pointer-events: auto; padding: 2px 7px; border: 1px solid rgba(42, 32, 22, 0.6); background: rgba(246, 239, 222, 0.94); color: #2a2016; cursor: pointer;
-  font-family: var(--serifa-versalete); font-size: 13px; font-weight: 600; letter-spacing: 0.04em; white-space: nowrap; box-shadow: 0 2px 6px rgba(30, 20, 10, 0.25);
+/* Placas flutuantes: posição, linha e opacidade escritas a cada fotograma em Maqueta.tsx */
+.maqueta-placas { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+.maqueta-placa { position: absolute; left: 0; top: 0; width: 0; height: 0; opacity: 0; visibility: hidden; will-change: transform, opacity; }
+.maqueta-placa-linha {
+  position: absolute; left: -0.5px; bottom: 0; width: 1px; height: 0; background: rgba(42, 32, 22, 0.55);
 }
-.maqueta-rotulo[data-ativo="1"] { background: var(--m-vermelho); border-color: var(--m-vermelho); color: #f6efde; }
+.maqueta-placa-linha::after {
+  content: ""; position: absolute; left: -2px; bottom: -2.5px; width: 5px; height: 5px; border-radius: 50%; background: rgba(42, 32, 22, 0.7);
+}
+.maqueta-placa-cartao {
+  position: absolute; left: 0; bottom: 0; transform: translateX(calc(-50% + var(--dx, 0px))); width: max-content; max-width: 250px; pointer-events: auto; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 4px 12px 5px; text-align: center;
+  border: 1px solid rgba(42, 32, 22, 0.16); background: rgba(250, 247, 240, 0.84); color: var(--m-tinta);
+  box-shadow: 0 2px 8px rgba(30, 20, 10, 0.12); backdrop-filter: blur(2px);
+  transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+.maqueta-placa-cartao strong { font-family: var(--serifa-versalete); font-size: 14px; font-weight: 600; letter-spacing: 0.1em; line-height: 1.15; white-space: nowrap; }
+.maqueta-placa-cartao em {
+  max-width: 226px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-family: var(--serifa-titulo); font-size: 12.5px; line-height: 1.2; color: var(--m-suave);
+}
+.maqueta-placa-cartao:hover, .maqueta-placa-cartao:focus-visible {
+  transform: translate(calc(-50% + var(--dx, 0px)), -2px); background: rgba(252, 249, 243, 0.97); border-color: rgba(42, 32, 22, 0.45); box-shadow: 0 5px 14px rgba(30, 20, 10, 0.22); outline: none;
+}
+.maqueta-placa:hover { z-index: 50 !important; }
+.maqueta-placa[data-ativo="1"] .maqueta-placa-cartao { border-color: var(--m-vermelho); box-shadow: inset 0 -2px 0 var(--m-vermelho), 0 4px 12px rgba(30, 20, 10, 0.2); }
+.maqueta-placa[data-ativo="1"] .maqueta-placa-linha { background: var(--m-vermelho); }
 .maqueta-elemento, .maqueta-notas {
   position: absolute; left: 10px; bottom: 10px; z-index: 30; width: min(360px, calc(100% - 20px)); max-height: calc(100% - 56px); overflow: auto;
   padding: 12px 14px 10px; background: rgba(243, 234, 212, 0.97); border: 1px solid rgba(74, 58, 40, 0.5); box-shadow: 0 8px 24px rgba(30, 20, 10, 0.3);
@@ -290,4 +311,8 @@ button { font: inherit; color: inherit; }
 @media (max-width: 640px) {
   .maqueta-botoes { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
   .maqueta-elemento { max-height: 55%; }
+  .maqueta-placa-cartao { max-width: 170px; padding: 2px 8px 3px; }
+  .maqueta-placa-cartao strong { font-size: 12.5px; letter-spacing: 0.06em; }
+  .maqueta--ampliada .maqueta-placa-cartao em { max-width: 154px; font-size: 11.5px; }
+  .maqueta:not(.maqueta--ampliada) .maqueta-placa-cartao em { display: none; } /* no visor pequeno, só o nome */
 }
