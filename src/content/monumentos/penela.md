@@ -109,6 +109,17 @@ visita:
     titulo: "Visite Penela — Património"
     url: "https://www.visitepenela.pt/patrimonio-3"
     consultado: "2026-10-27"
+imagens:
+  - ficheiro: "imagens/penela/ortofoto-2025.jpg"
+    legenda: "O castelo e a vila vistos na vertical, numa área de 320 × 320 m com o norte para cima. A cerca, o castelejo a nascente, a Igreja de São Miguel e a casa paroquial."
+    autor: "Direção-Geral do Território, ORTOS 2025 (25 cm)"
+    licenca: "CC BY 4.0"
+    url: "https://cdd.dgterritorio.gov.pt"
+  - ficheiro: "imagens/penela/relevo-lidar.jpg"
+    legenda: "Relevo sombreado do modelo digital de superfície LiDAR, com luz de noroeste, na mesma área. Vêem-se o traçado das muralhas, os torreões e a escarpa sobre o vale."
+    autor: "Direção-Geral do Território, LiDAR 2024 (MDS 50 cm); sombreado de castelos.site"
+    licenca: "CC BY 4.0"
+    url: "https://cdd.dgterritorio.gov.pt"
 verificadoEm: "2026-10-27"
 notas:
   - "As alturas medidas no LiDAR da DGT (até c. 15 m acima do pé exterior das muralhas) ficam abaixo do máximo de 19 m publicado pela Câmara Municipal. A diferença pode vir de medir a partir do pé da escarpa ou do fundo do vale; mostram-se os dois valores."

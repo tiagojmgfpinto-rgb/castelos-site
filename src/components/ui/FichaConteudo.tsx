@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { BASE } from "../../lib/base";
 import type { Fonte, MonumentoResumo } from "../atlas/store";
 
 const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
@@ -124,7 +125,9 @@ export function FichaConteudo({ m, nivel = 3 }: { m: MonumentoResumo; nivel?: 2 
           <div className="ficha-imagens">
             {c.imagens.map((x) => (
               <figure key={x.ficheiro}>
-                <img src={`${import.meta.env.BASE_URL}${x.ficheiro}`} alt={x.legenda} loading="lazy" />
+                <a href={`${BASE}${x.ficheiro}`} target="_blank" rel="noopener">
+                  <img src={`${BASE}${x.ficheiro}`} alt={x.legenda} loading="lazy" />
+                </a>
                 <figcaption>{x.legenda} <em>{x.url ? <a href={x.url} rel="noopener" target="_blank">{x.autor}</a> : x.autor}, {x.licenca}</em></figcaption>
               </figure>
             ))}
