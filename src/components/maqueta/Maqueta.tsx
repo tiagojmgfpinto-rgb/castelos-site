@@ -47,8 +47,8 @@ interface Placa {
 const reduzMovimento = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /**
- * Visor da maqueta 3D: capa com "Explorar em 3D" e, ao abrir, a cena navegável com
- * Giro, Rótulos, Enquadrar, Ampliar, Terreno e seleção de cada elemento com a sua ficha.
+ * Visor da maqueta 3D: abre logo com o giro e as placas (a capa fica por trás enquanto carrega),
+ * com Giro, Placas, Enquadrar, Ampliar, Terreno e seleção de cada elemento com a sua ficha.
  */
 export default function Maqueta({ url, capa, dados, provisoria, onVoltarMapa }: {
   url: string;
@@ -57,7 +57,6 @@ export default function Maqueta({ url, capa, dados, provisoria, onVoltarMapa }: 
   provisoria: boolean;
   onVoltarMapa?: () => void;
 }) {
-  const [aberta, setAberta] = useState(false);
   const [ampliada, setAmpliada] = useState(false);
   const [giro, setGiro] = useState(() => !reduzMovimento());
   const [rotulos, setRotulos] = useState(true);
@@ -105,16 +104,6 @@ export default function Maqueta({ url, capa, dados, provisoria, onVoltarMapa }: 
     };
   }, [sel]);
 
-  if (!aberta) {
-    return (
-      <div className="maqueta maqueta-capa">
-        {capa && <img src={`${BASE}${capa}`} alt={`Maqueta 3D de ${dados.titulo}, vista de sudoeste`} loading="lazy" />}
-        {provisoria && <span className="maqueta-selo">Versão provisória</span>}
-        <button className="maqueta-explorar" onClick={() => setAberta(true)}>Explorar em 3D</button>
-      </div>
-    );
-  }
-
   const botoes: [string, boolean | undefined, () => void][] = [
     ["Giro", giro, () => setGiro((v) => !v)],
     ["Placas", rotulos, () => setRotulos((v) => !v)],
@@ -126,6 +115,7 @@ export default function Maqueta({ url, capa, dados, provisoria, onVoltarMapa }: 
   return (
     <div className={`maqueta${ampliada ? " maqueta--ampliada" : ""}`} ref={caixa} tabIndex={-1}>
       <div className="maqueta-palco">
+        {capa && !carregada && <img className="maqueta-capa-fundo" src={`${BASE}${capa}`} alt={`Maqueta 3D de ${dados.titulo}, vista de sudoeste`} />}
         <Canvas shadows={{ type: THREE.PCFShadowMap }} dpr={[1, 2]} camera={{ fov: 32, near: 1, far: 4000, position: [-300, 300, 250] }} gl={{ antialias: true, alpha: true }}>
           <Suspense fallback={null}>
             <Cena
