@@ -70,6 +70,17 @@
     "estimativa": true,
     "nota": "O topo dos merlões é medido no LiDAR; a espessura e o desenho das ameias são estimativas."
   },
+  "placas": [
+    "castelejo",
+    "igreja",
+    "porta_vila",
+    "pano_poente",
+    "porta_traicao",
+    "torre_quinaria",
+    "brecha",
+    "cubelo_noroeste",
+    "casa_paroquial"
+  ],
   "elementos": [
     {
       "id": "castelejo",
@@ -87,7 +98,8 @@
         "lidar",
         "orto",
         "fotos"
-      ]
+      ],
+      "resumo": "Núcleo primitivo do século XI, depois torre de menagem"
     },
     {
       "id": "porta_vila",
@@ -103,7 +115,8 @@
         "osm",
         "lidar",
         "fotos"
-      ]
+      ],
+      "resumo": "Porta em arco pleno do século XV, ligação à vila"
     },
     {
       "id": "porta_traicao",
@@ -118,7 +131,8 @@
         "cmp",
         "osm",
         "lidar"
-      ]
+      ],
+      "resumo": "Entrada em cotovelo numa torre quadrangular, séculos XIII–XIV"
     },
     {
       "id": "brecha",
@@ -135,7 +149,8 @@
         "osm",
         "lidar",
         "fotos"
-      ]
+      ],
+      "resumo": "Lugar da porta virada a sul, demolida em 1760"
     },
     {
       "id": "torre_quinaria",
@@ -151,7 +166,8 @@
         "osm",
         "lidar",
         "fotos"
-      ]
+      ],
+      "resumo": "Torre de planta pentagonal que guardava a porta sul"
     },
     {
       "id": "torreao_poente_1",
@@ -211,7 +227,8 @@
         "osm",
         "lidar",
         "fotos"
-      ]
+      ],
+      "resumo": "Torreão semicircular sobre a escarpa"
     },
     {
       "id": "pano_norte",
@@ -259,6 +276,12 @@
         "lidar",
         "orto",
         "fotos"
+      ],
+      "resumo": "Frente virada à vila, a mais alta e robusta da cerca",
+      "ancora": [
+        -31.0,
+        43.3,
+        -2.5
       ]
     },
     {
@@ -306,7 +329,8 @@
         "lidar",
         "foto_fachada",
         "fotos"
-      ]
+      ],
+      "resumo": "Matriz reedificada em 1420, com três naves sob um só telhado"
     },
     {
       "id": "casa_paroquial",
@@ -322,7 +346,8 @@
         "osm",
         "lidar",
         "fotos"
-      ]
+      ],
+      "resumo": "Espaço museológico de arte sacra, aberto em 2006"
     },
     {
       "id": "muro_terreiro",

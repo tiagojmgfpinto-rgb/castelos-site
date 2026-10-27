@@ -1,13 +1,14 @@
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
-import { Html, OrbitControls, useGLTF } from "@react-three/drei";
+import { OrbitControls, useGLTF } from "@react-three/drei";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import { MeshBVH, acceleratedRaycast } from "three-mesh-bvh";
 import { BASE } from "../../lib/base";
-import { CAMADAS_TERRENO, ESTADOS, ROTULADOS, type DadosMaqueta, type ElementoMaqueta } from "./dados";
+import { CAMADAS_TERRENO, ESTADOS, elementosComPlaca, type DadosMaqueta, type ElementoMaqueta } from "./dados";
+import { alturaLinha, disporPlacas, type OpcoesDisposicao } from "./placas";
 
 interface Controlos {
   target: THREE.Vector3;
-  autoRotate: boolean;
   getAzimuthalAngle(): number;
   addEventListener(t: string, f: () => void): void;
   removeEventListener(t: string, f: () => void): void;
@@ -22,6 +23,28 @@ interface Alvo {
 
 const DIRECAO_INICIAL = new THREE.Vector3(-0.62, 0.6, 0.5).normalize(); // de sudoeste, como as fotografias aéreas
 const DESTAQUE = new THREE.Color("#c0602f");
+const EIXO_Y = new THREE.Vector3(0, 1, 0);
+const VEL_GIRO = (2 * Math.PI) / 90; // uma volta em 90 s
+const RETOMA_GIRO = 5; // segundos sem interação até o giro recomeçar
+const SEM_PLACA_OCULTA = ["vegetacao"]; // as copas não escondem placas (pisca-pisca entre folhas)
+
+/** Estado de cada placa flutuante, atualizado a cada fotograma sem passar pelo React. */
+interface Placa {
+  id: string;
+  ancora: THREE.Vector3;
+  el: HTMLElement;
+  cartao: HTMLElement;
+  linha: HTMLElement;
+  w: number;
+  h: number;
+  op: number;
+  dy: number;
+  dx: number;
+  inicio: number;
+  tapada: boolean;
+}
+
+const reduzMovimento = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /**
  * Visor da maqueta 3D: capa com "Explorar em 3D" e, ao abrir, a cena navegável com
@@ -36,7 +59,7 @@ export default function Maqueta({ url, capa, dados, provisoria, onVoltarMapa }: 
 }) {
   const [aberta, setAberta] = useState(false);
   const [ampliada, setAmpliada] = useState(false);
-  const [giro, setGiro] = useState(false);
+  const [giro, setGiro] = useState(() => !reduzMovimento());
   const [rotulos, setRotulos] = useState(true);
   const [terreno, setTerreno] = useState(true);
   const [sel, setSel] = useState<string | null>(null);
@@ -46,10 +69,13 @@ export default function Maqueta({ url, capa, dados, provisoria, onVoltarMapa }: 
   const bussola = useRef<HTMLDivElement>(null);
   const escala = useRef<HTMLDivElement>(null);
   const escalaTexto = useRef<HTMLSpanElement>(null);
+  const camadaPlacas = useRef<HTMLDivElement>(null);
+  const pausa = useRef(false);
   const [carregada, setCarregada] = useState(false);
   const marcarCarregada = useCallback(() => setCarregada(true), []);
   const elementos = useMemo(() => new Map(dados.elementos.map((e) => [e.id, e])), [dados]);
   const elemento = sel ? elementos.get(sel) : undefined;
+  const placas = useMemo(() => elementosComPlaca(dados), [dados]);
 
   const ampliar = useCallback(() => {
     const el = caixa.current;
@@ -91,7 +117,7 @@ export default function Maqueta({ url, capa, dados, provisoria, onVoltarMapa }: 
 
   const botoes: [string, boolean | undefined, () => void][] = [
     ["Giro", giro, () => setGiro((v) => !v)],
-    ["Rótulos", rotulos, () => setRotulos((v) => !v)],
+    ["Placas", rotulos, () => setRotulos((v) => !v)],
     ["Enquadrar", undefined, () => { setSel(null); setPedidoEnquadrar((n) => n + 1); }],
     [ampliada ? "Reduzir" : "Ampliar", undefined, ampliar],
     ["Terreno", terreno, () => setTerreno((v) => !v)],
@@ -109,6 +135,9 @@ export default function Maqueta({ url, capa, dados, provisoria, onVoltarMapa }: 
               setSel={setSel}
               giro={giro}
               rotulos={rotulos}
+              placas={placas}
+              camadaPlacas={camadaPlacas}
+              pausa={pausa}
               terreno={terreno}
               pedidoEnquadrar={pedidoEnquadrar}
               bussola={bussola}
@@ -118,6 +147,24 @@ export default function Maqueta({ url, capa, dados, provisoria, onVoltarMapa }: 
             />
           </Suspense>
         </Canvas>
+        <div className="maqueta-placas" ref={camadaPlacas} aria-hidden={!rotulos}>
+          {placas.map((e, i) => (
+            <div key={e.id} className="maqueta-placa" data-placa={e.id} data-ativo={sel === e.id ? "1" : "0"} style={{ zIndex: placas.length - i }}>
+              <span className="maqueta-placa-linha" />
+              <button
+                className="maqueta-placa-cartao"
+                tabIndex={rotulos ? 0 : -1}
+                aria-label={`${e.nome}: ver descrição`}
+                onPointerEnter={() => (pausa.current = true)}
+                onPointerLeave={() => (pausa.current = false)}
+                onClick={() => setSel(sel === e.id ? null : e.id)}
+              >
+                <strong>{e.nome.replace(/ \(.*\)$/, "")}</strong>
+                {e.resumo && <em>{e.resumo}</em>}
+              </button>
+            </div>
+          ))}
+        </div>
         <div className="maqueta-norte" ref={bussola} aria-hidden="true"><span>N</span></div>
         {!carregada && <p className="maqueta-carregar">A carregar a maqueta…</p>}
         <div className="maqueta-escala" aria-hidden="true"><div ref={escala} /><span ref={escalaTexto}>10 m</span></div>
@@ -150,7 +197,7 @@ export default function Maqueta({ url, capa, dados, provisoria, onVoltarMapa }: 
           <button key={nome} aria-pressed={ativo} onClick={f}>{nome}</button>
         ))}
       </div>
-      <p className="maqueta-ajuda">Arraste para rodar · roda ou dois dedos para aproximar · botão direito para deslocar · clique num elemento para o identificar.</p>
+      <p className="maqueta-ajuda">Arraste para rodar · roda ou dois dedos para aproximar · botão direito para deslocar · clique numa placa ou num elemento para o identificar.</p>
     </div>
   );
 }
@@ -178,13 +225,16 @@ function FichaElemento({ e, dados, onFechar }: { e: ElementoMaqueta; dados: Dado
   );
 }
 
-function Cena({ url, elementos, sel, setSel, giro, rotulos, terreno, pedidoEnquadrar, bussola, escala, escalaTexto, onCarregada }: {
+function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, camadaPlacas, pausa, terreno, pedidoEnquadrar, bussola, escala, escalaTexto, onCarregada }: {
   url: string;
   elementos: Map<string, ElementoMaqueta>;
   sel: string | null;
   setSel: (id: string | null) => void;
   giro: boolean;
   rotulos: boolean;
+  placas: ElementoMaqueta[];
+  camadaPlacas: React.RefObject<HTMLDivElement | null>;
+  pausa: React.RefObject<boolean>;
   terreno: boolean;
   pedidoEnquadrar: number;
   bussola: React.RefObject<HTMLDivElement | null>;
@@ -196,13 +246,22 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, terreno, pedidoEnqua
   const { camera, size } = useThree();
   const controlos = useRef<Controlos>(null);
   const objetivo = useRef<{ alvo: THREE.Vector3; pos: THREE.Vector3 } | null>(null);
+  const rodar = useRef({ v: 0, agarrada: false, ultima: -Infinity });
+  const estados = useRef<Placa[]>([]);
+  const entrada = useRef<{ atraso: number; passo: number } | null>({ atraso: 0.6, passo: 0.35 });
+  const oclusores = useRef<THREE.Object3D[]>([]);
+  const aux = useMemo(() => ({ v: new THREE.Vector3(), dir: new THREE.Vector3(), raio: Object.assign(new THREE.Raycaster(), { firstHitOnly: true }) }), []);
 
   // Preparação: sombras, materiais próprios por elemento (para o destaque) e caixas de cada elemento.
-  const { alvos, centro, porElemento } = useMemo(() => {
+  const { alvos, centro, porElemento, malhas, idDe } = useMemo(() => {
     const porElemento = new Map<string, THREE.Mesh[]>();
+    const malhas: THREE.Mesh[] = [];
+    const idDe = new Map<THREE.Object3D, string>();
+    scene.updateMatrixWorld(true);
     scene.traverse((o) => {
       const m = o as THREE.Mesh;
       if (!m.isMesh) return;
+      malhas.push(m);
       const terrenoBase = /terreno|base/i.test(m.name) || /^(Terreno|Base)$/.test(m.parent?.name ?? "");
       m.castShadow = !terrenoBase;
       m.receiveShadow = true;
@@ -210,6 +269,7 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, terreno, pedidoEnqua
       while (p && !p.userData.elemento) p = p.parent;
       const id = p?.userData.elemento as string | undefined;
       if (!id) return;
+      idDe.set(m, id);
       m.material = Array.isArray(m.material) ? m.material.map((x) => x.clone()) : m.material.clone();
       porElemento.set(id, [...(porElemento.get(id) ?? []), m]);
     });
@@ -224,8 +284,65 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, terreno, pedidoEnqua
     const muralhas = scene.getObjectByName("Muralhas_grupo");
     const bm = new THREE.Box3().setFromObject(muralhas ?? scene);
     const centro = bm.getCenter(new THREE.Vector3());
-    return { alvos, centro, porElemento };
+    // Índice espacial para os raios de oclusão das placas (e dos cliques): o terreno tem 140 mil triângulos
+    for (const m of malhas) {
+      if (SEM_PLACA_OCULTA.includes(idDe.get(m) ?? "")) continue;
+      const g = m.geometry as THREE.BufferGeometry & { boundsTree?: MeshBVH };
+      g.boundsTree ??= new MeshBVH(g);
+      m.raycast = acceleratedRaycast;
+    }
+    return { alvos, centro, porElemento, malhas, idDe };
   }, [scene]);
+
+  // Ponto de cada placa: o indicado nos dados ou o topo do elemento junto ao centro da sua planta
+  const ancoras = useMemo(() => {
+    const r = new Map<string, THREE.Vector3>();
+    for (const e of placas) {
+      if (e.ancora) { r.set(e.id, new THREE.Vector3(...e.ancora)); continue; }
+      const a = alvos.get(e.id);
+      const meshes = porElemento.get(e.id);
+      if (!a || !meshes) continue;
+      const pts: THREE.Vector3[] = [];
+      for (const m of meshes) {
+        const pos = m.geometry.getAttribute("position");
+        for (let i = 0; i < pos.count; i++) pts.push(new THREE.Vector3().fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld));
+      }
+      const dh = (p: THREE.Vector3, q: THREE.Vector3) => Math.hypot(p.x - q.x, p.z - q.z);
+      const perto = pts.reduce((b, p) => (dh(p, a.centro) < dh(b, a.centro) ? p : b), pts[0]);
+      const topo = pts.filter((p) => dh(p, perto) < 2.5).reduce((y, p) => Math.max(y, p.y), perto.y);
+      r.set(e.id, new THREE.Vector3(perto.x, topo + 0.6, perto.z));
+    }
+    return r;
+  }, [placas, alvos, porElemento]);
+
+  useEffect(() => {
+    const camada = camadaPlacas.current;
+    if (!camada) return;
+    estados.current = placas.flatMap((e) => {
+      const el = camada.querySelector<HTMLElement>(`[data-placa="${e.id}"]`);
+      const ancora = ancoras.get(e.id);
+      if (!el || !ancora) return [];
+      return [{ id: e.id, ancora, el, cartao: el.querySelector<HTMLElement>(".maqueta-placa-cartao")!, linha: el.querySelector<HTMLElement>(".maqueta-placa-linha")!, w: 0, h: 0, op: 0, dy: 0, dx: 0, inicio: Infinity, tapada: false }];
+    });
+    entrada.current = { atraso: 0.6, passo: 0.35 };
+  }, [placas, ancoras, camadaPlacas]);
+
+  // Ao voltar a ligar as placas, entram de novo em sequência, mais depressa
+  const primeira = useRef(true);
+  useEffect(() => {
+    if (primeira.current) { primeira.current = false; return; }
+    if (rotulos) entrada.current = { atraso: 0, passo: 0.08 };
+  }, [rotulos]);
+
+  // Remedir os cartões quando o visor muda de tamanho
+  useEffect(() => {
+    estados.current.forEach((p) => (p.w = 0));
+  }, [size.width, size.height]);
+
+  // Depois de fechar a ficha de um elemento, o giro espera como depois de uma interação
+  useEffect(() => {
+    if (!sel) rodar.current.ultima = performance.now() / 1000;
+  }, [sel]);
 
   const enquadrar = useCallback((instantaneo = false) => {
     const pos = centro.clone().addScaledVector(DIRECAO_INICIAL, 300);
@@ -270,19 +387,43 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, terreno, pedidoEnqua
     });
     const base = scene.getObjectByName("Base");
     if (base) base.visible = terreno;
-  }, [terreno, scene]);
+    const visivel = (o: THREE.Object3D | null): boolean => !o || (o.visible && visivel(o.parent));
+    oclusores.current = malhas.filter((m) => visivel(m) && !SEM_PLACA_OCULTA.includes(idDe.get(m) ?? ""));
+  }, [terreno, scene, malhas, idDe]);
 
   useEffect(() => {
     const c = controlos.current;
     if (!c) return;
-    const parar = () => (objetivo.current = null);
-    c.addEventListener("start", parar);
-    return () => c.removeEventListener("start", parar);
+    const agarrar = () => {
+      objetivo.current = null;
+      rodar.current.agarrada = true;
+      rodar.current.v = 0;
+    };
+    const largar = () => {
+      rodar.current.agarrada = false;
+      rodar.current.ultima = performance.now() / 1000;
+    };
+    c.addEventListener("start", agarrar);
+    c.addEventListener("end", largar);
+    return () => {
+      c.removeEventListener("start", agarrar);
+      c.removeEventListener("end", largar);
+    };
   }, []);
 
-  useFrame((_, dt) => {
+  useFrame((estado, dtBruto) => {
     const c = controlos.current;
     if (!c) return;
+    const dt = Math.min(dtBruto, 0.1);
+    // Giro automático: arranca devagar, para ao agarrar a maqueta e retoma após uns segundos parada
+    const g = rodar.current;
+    const agora = performance.now() / 1000;
+    const quer = giro && !g.agarrada && !pausa.current && !sel && !objetivo.current && agora - g.ultima > RETOMA_GIRO;
+    g.v += ((quer ? VEL_GIRO : 0) - g.v) * (1 - Math.exp(-dt * (quer ? 0.7 : 4)));
+    if (g.v > 1e-5) {
+      aux.v.copy(camera.position).sub(c.target).applyAxisAngle(EIXO_Y, g.v * dt);
+      camera.position.copy(c.target).add(aux.v);
+    }
     const o = objetivo.current;
     if (o) {
       const k = 1 - Math.exp(-dt * 4);
@@ -302,7 +443,57 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, terreno, pedidoEnqua
       escala.current.style.width = `${m * pxPorM}px`;
       if (escalaTexto.current) escalaTexto.current.textContent = `${m} m`;
     }
+    atualizarPlacas(estado.clock.elapsedTime, dt);
   });
+
+  function atualizarPlacas(t: number, dt: number) {
+    const ps = estados.current;
+    if (!ps.length) return;
+    const e = entrada.current;
+    if (e) {
+      ps.forEach((p, i) => (p.inicio = t + e.atraso + i * e.passo));
+      entrada.current = null;
+    }
+    const o: OpcoesDisposicao = { linha: size.width < 560 ? 26 : 42, folga: 6, niveis: 2, topo: 44 };
+    const { v, dir, raio } = aux;
+    const noEcra = ps.map((p) => {
+      if (!p.w) { p.w = p.cartao.offsetWidth; p.h = p.cartao.offsetHeight; }
+      v.copy(p.ancora).project(camera);
+      const x = (v.x + 1) / 2 * size.width;
+      const y = (1 - v.y) / 2 * size.height;
+      const dentro = v.z < 1 && x > -p.w / 2 && x < size.width + p.w / 2 && y > 0 && y < size.height + 20;
+      // Oclusão: um raio da câmara ao ponto da placa; se bater antes noutro elemento, a placa esconde-se
+      if (dentro && rotulos) {
+        dir.copy(p.ancora).sub(camera.position);
+        const dist = dir.length();
+        raio.set(camera.position, dir.divideScalar(dist));
+        raio.far = dist - 0.8;
+        const hit = raio.intersectObjects(oclusores.current, false)[0];
+        p.tapada = !!hit && idDe.get(hit.object) !== p.id;
+      }
+      return { x, y, w: p.w, h: p.h, candidata: rotulos && dentro && !p.tapada && t >= p.inicio };
+    });
+    const lugares = disporPlacas(noEcra, o);
+    const kOp = 1 - Math.exp(-dt * 5);
+    const kDy = 1 - Math.exp(-dt * 7);
+    ps.forEach((p, i) => {
+      const { nivel, lado } = lugares[i];
+      const { x, y } = noEcra[i];
+      p.op += ((nivel >= 0 ? 1 : 0) - p.op) * kOp;
+      if (nivel >= 0) {
+        p.dy += (alturaLinha(nivel, p.h, o) - p.dy) * kDy;
+        p.dx += (lado * p.w - p.dx) * kDy;
+      } else if (p.op < 0.02) {
+        p.dy = o.linha * 0.4; // ao reaparecer, a linha cresce de novo
+      }
+      p.el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
+      p.el.style.opacity = p.op.toFixed(3);
+      p.el.style.visibility = p.op < 0.02 ? "hidden" : "visible";
+      p.linha.style.height = `${p.dy.toFixed(1)}px`;
+      p.cartao.style.bottom = `${p.dy.toFixed(1)}px`;
+      p.cartao.style.setProperty("--dx", `${p.dx.toFixed(1)}px`);
+    });
+  }
 
   const clicar = (e: ThreeEvent<MouseEvent>) => {
     if (e.delta > 5) return;
@@ -334,26 +525,11 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, terreno, pedidoEnqua
       </directionalLight>
       <directionalLight position={[centro.x + 200, centro.y + 120, centro.z + 160]} intensity={0.35} />
       <primitive object={scene} onClick={clicar} onPointerMissed={() => setSel(null)} />
-      {rotulos &&
-        ROTULADOS.filter((id) => alvos.has(id)).map((id) => (
-          <Html key={id} position={alvos.get(id)!.topo} center zIndexRange={[20, 0]} className="maqueta-rotulo-ancora">
-            <button
-              className="maqueta-rotulo"
-              data-ativo={sel === id ? "1" : "0"}
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={(e) => { e.stopPropagation(); setSel(id); }}
-            >
-              {elementos.get(id)?.nome.replace(/ \(.*\)$/, "")}
-            </button>
-          </Html>
-        ))}
       <OrbitControls
         ref={controlos as never}
         makeDefault
         enableDamping
         dampingFactor={0.08}
-        autoRotate={giro}
-        autoRotateSpeed={0.6}
         minDistance={22}
         maxDistance={560}
         minPolarAngle={0.08}
