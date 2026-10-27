@@ -8,7 +8,7 @@ const chaves = <T extends Record<string, unknown>>(o: T) => Object.keys(o) as [k
 const data = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "data no formato AAAA-MM-DD");
 
 // "Organização — Título". `consultado` é a data em que a fonte foi lida para a ficha.
-const fonte = z.object({ titulo: z.string(), url: z.string().url().optional(), consultado: data.optional() });
+const fonte = z.object({ titulo: z.string(), url: z.url().optional(), consultado: data.optional() });
 
 // Estrutura da ficha, pela ordem das fichas do castillos.site: entrada, ficha técnica, história (corpo do
 // Markdown), o que ver, cronologia, medidas, sabia que, imagens, onde está, visita e fontes.
@@ -43,7 +43,7 @@ const imagem = z.object({
   legenda: z.string(),
   autor: z.string(),
   licenca: z.string(),
-  url: z.string().url().optional(),
+  url: z.url().optional(),
 });
 
 // Uma maqueta só entra no atlas depois de validada. Cada variante declara o que representa.
