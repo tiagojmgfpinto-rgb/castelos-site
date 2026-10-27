@@ -2,7 +2,7 @@
   "monumento": "guimaraes",
   "titulo": "Castelo de Guimarães",
   "variante": "estado-atual",
-  "versao": "0.1 provisória",
+  "versao": "0.2 provisória",
   "data": "2026-10-27",
   "origem": {
     "lat": 41.447926,
@@ -51,10 +51,10 @@
     "Cotas e alturas medidas no LiDAR da DGT de 2025 (50 cm): o topo de cada pano de 2 em 2 m, o das torres e edifícios dentro da sua planta, e o terreno no MDT. Erro esperado de 0,3 a 0,5 m na vertical.",
     "O LiDAR não distingue merlões e parapeito. O topo medido é o dos merlões; o desenho das ameias chanfradas, o parapeito de 1 m e a espessura das muralhas (2,6 m, 2 m na alcáçova) são estimativas a partir das fotografias.",
     "As frestas das torres, as janelas da alcáçova e os arcos das portas estão em posição e tamanho esquemáticos. O percurso do passadiço de madeira da torre de menagem é estimado (SIPA: vem do caminho de ronda a oeste).",
-    "O Paço dos Duques tem a planta do OpenStreetMap, as alturas das fachadas e as cumeeiras medidas, e os telhados separados por corpos a partir do MDS (17 corpos). As 36 chaminés estão nas posições medidas, com forma esquemática. As janelas, as arcarias do pátio e a porta são esquemáticas, e os torreões de cobertura cónica não estão representados.",
-    "A Igreja de São Miguel tem as cumeeiras e beirados da nave e da capela-mor medidos; portal, porta lateral e cruz seguem as fotografias, com medidas aproximadas.",
-    "A estátua de D. Afonso Henriques tem a posição e a altura total medidas (4,9 m com o pedestal); a figura é esquemática.",
-    "Os edifícios da envolvente são volumes simplificados (plantas do OpenStreetMap e da nuvem de pontos, cume medido). As árvores estão nas posições e com as alturas medidas na nuvem de pontos, com forma esquemática."
+    "O Paço dos Duques tem a planta do OpenStreetMap e as alturas das fachadas medidas. Os dez corpos de telhado e as paredes ameadas entre eles foram lidos no MDS (com o cume de cada um medido), e a galeria do pátio tem o beirado e o encontro com as alas medidos. As 36 chaminés estão nas posições medidas, com forma esquemática. As janelas, as arcarias, o portal da capela e a armação de madeira do alpendre seguem as fotografias, com medidas aproximadas; as quatro guaritas dos cunhais são estimativas.",
+    "A Igreja de São Miguel tem as cumeeiras e beirados da nave e da capela-mor medidos. O portal de três arquivoltas, a cachorrada, as frestas, os contrafortes, as cruzes e a escadaria seguem as fotografias, com medidas aproximadas.",
+    "A estátua de D. Afonso Henriques tem a posição e a altura total medidas (4,9 m com o pedestal). A divisão entre pedestal e figura e a figura (elmo, cota de malha, manto, escudo e espada) seguem as fotografias, de forma simplificada.",
+    "Os edifícios da envolvente são volumes simplificados (plantas do OpenStreetMap e da nuvem de pontos, cume medido). As árvores estão nas posições e com as alturas medidas na nuvem de pontos, com forma esquemática. O OpenStreetMap não indica o pavimento: as ruas de automóveis estão em asfalto com lancis e os passeios, escadas e caminhos em lajeado de granito."
   ],
   "muralha": {
     "espessura": 2.6,
@@ -298,7 +298,7 @@
       "grupo": "Igreja de São Miguel",
       "estado": "estado-atual",
       "confianca": "alta",
-      "descricao": "Pequena igreja românica de granito, de nave única e capela-mor mais baixa, entre o castelo e o Paço. Primeira referência documental em 1216, sagrada por volta de 1239. A tradição liga-lhe o batismo de D. Afonso Henriques.",
+      "descricao": "Pequena igreja românica de granito, de nave única e capela-mor mais baixa, entre o castelo e o Paço, com portal de arquivoltas sobre colunelos, cachorrada sob os beirados e frestas estreitas. Primeira referência documental em 1216, sagrada por volta de 1239. A tradição liga-lhe o batismo de D. Afonso Henriques.",
       "medidas": "Nave c. 16,6 × 9,4 m, cumeeira a 239,4 m; capela-mor c. 6,1 × 6,9 m, cumeeira a 237,7 m (LiDAR).",
       "fontes": [
         "sipa",
@@ -315,8 +315,8 @@
       "grupo": "Paço dos Duques",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "Paço senhorial mandado construir por D. Afonso, primeiro duque de Bragança, a partir de c. 1420, à volta de um pátio com arcarias, com telhados íngremes e chaminés altas de tijolo. Arruinado durante séculos, foi reconstruído entre 1937 e 1959 e é hoje museu. Planta do OpenStreetMap; fachadas, cumeeiras e chaminés medidas no LiDAR; janelas e arcarias esquemáticas.",
-      "medidas": "Fachadas de 15 a 21 m acima do pé, cumeeiras a c. 247 m; 17 corpos de telhado e 36 chaminés medidos (LiDAR).",
+      "descricao": "Paço senhorial mandado construir por D. Afonso, primeiro duque de Bragança, a partir de c. 1420, à volta de um pátio com arcarias, com telhados íngremes por corpos, cercados de ameias, e chaminés altas de tijolo. Na ala nascente fica a capela, com um alpendre de madeira em arco quebrado virado ao pátio. Arruinado durante séculos, foi reconstruído entre 1937 e 1959 e é hoje museu. Planta do OpenStreetMap; fachadas, corpos de telhado, galeria e chaminés medidos no LiDAR; janelas, arcarias e capela pelas fotografias.",
+      "medidas": "Fachadas de 15 a 21 m acima do pé; 10 corpos de telhado com cumes a 244,2–246,4 m e a capela a 248,8 m; galeria do pátio com beirado a c. 232 m; 36 chaminés (LiDAR).",
       "fontes": [
         "paco",
         "osm",
@@ -332,7 +332,7 @@
       "grupo": "Estátua",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "Bronze de António Soares dos Reis, inaugurado por D. Luís a 20 de setembro de 1887, hoje junto ao Paço dos Duques. Posição do OpenStreetMap conferida no LiDAR; figura esquemática.",
+      "descricao": "Bronze de António Soares dos Reis, inaugurado por D. Luís a 20 de setembro de 1887, hoje junto ao Paço dos Duques: o rei de pé, de elmo e cota de malha, com o escudo e a espada, sobre um pedestal de granito. Posição do OpenStreetMap conferida no LiDAR; figura simplificada a partir das fotografias.",
       "medidas": "4,9 m do chão ao topo da figura, com o pedestal (LiDAR).",
       "fontes": [
         "wiki",
@@ -373,10 +373,11 @@
       "grupo": "Envolvente",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "Ruas e caminhos do OpenStreetMap.",
+      "descricao": "Ruas e caminhos do OpenStreetMap: ruas de automóveis em asfalto com lancis, passeios, escadas e caminhos do monte em lajeado de granito (o pavimento não vem no OpenStreetMap).",
       "fontes": [
         "osm",
-        "orto"
+        "orto",
+        "fotos"
       ]
     },
     {
@@ -385,7 +386,7 @@
       "grupo": "Envolvente",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "593 árvores nas posições, alturas e raios de copa medidos na nuvem de pontos LiDAR, com forma esquemática.",
+      "descricao": "592 árvores nas posições, alturas e raios de copa medidos na nuvem de pontos LiDAR, com forma esquemática.",
       "fontes": [
         "lidar"
       ]

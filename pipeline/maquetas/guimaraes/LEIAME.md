@@ -1,6 +1,6 @@
 # Maqueta 3D do Castelo de Guimarães (estado atual)
 
-Versão 0.1, **provisória**. Gerada por código, à escala 1:1 e georreferenciada (origem no centro da torre de menagem, 41.447926, −8.290429; x para este, y para norte; no visor, −z é o norte). Inclui o castelo, a Igreja de São Miguel do Castelo, o Paço dos Duques de Bragança e a estátua de D. Afonso Henriques. O relevo, as plantas das torres, as cotas e as alturas são medidos no LiDAR da DGT de 2025.
+Versão 0.2, **provisória**. Gerada por código, à escala 1:1 e georreferenciada (origem no centro da torre de menagem, 41.447926, −8.290429; x para este, y para norte; no visor, −z é o norte). Inclui o castelo, a Igreja de São Miguel do Castelo, o Paço dos Duques de Bragança e a estátua de D. Afonso Henriques. O relevo, as plantas das torres, as cotas e as alturas são medidos no LiDAR da DGT de 2025.
 
 ## Como reconstruir
 
@@ -32,10 +32,11 @@ O `bpy` do PyPI não traz o Draco, por isso o script comprime o GLB com `npx @gl
 - **Torres de canto e torre de menagem**: planta tirada do MDS (retângulo mínimo das células acima do topo da muralha, à volta de um ponto escolhido), topo dentro da planta, pé no anel exterior. O OSM só tem o contorno exterior, desviado c. 1 m para oeste (corrigido com `DESVIO_OSM`).
 - **Torres das portas e eixo dos panos**: desenhados à mão sobre o MDS e a ortoimagem (`PANOS`, `torres` no `construir.py`).
 - **Muralhas**: topo dos merlões medido ao longo do eixo de 2 em 2 m; pé exterior e chão interior no MDT.
-- **Paço**: planta do OSM (anel exterior e pátio); altura das fachadas medida em três profundidades; telhados separados por corpos com uma bacia hidrográfica (watershed) do MDS, cada corpo com telhado de quatro águas quando é retangular ou com telhado pela distância ao bordo quando não é; chaminés nos picos do MDS mais de 1,2 m acima da vizinhança.
+- **Paço**: planta do OSM (anel exterior e pátio); altura das fachadas medida em três profundidades. Os corpos de telhado e as paredes ameadas entre eles foram lidos no MDS rodado para o referencial do edifício (`PACO_CORPOS`, `PACO_PAREDES`), e cada corpo tem um telhado de quatro águas com o cume medido. A galeria do pátio tem telhado de uma água entre o beirado e a parede das alas, ambos medidos. Chaminés nos picos do MDS mais de 1,2 m acima da vizinhança. A capela tem o alpendre de madeira em arco quebrado e o portal, pela fotografia do pátio.
+- **Ruas**: o OSM não traz o pavimento; as ruas de automóveis vão em asfalto com lancis e os passeios, escadas e caminhos em lajeado de granito.
 - **Igreja**: nave e capela-mor tiradas das células de classe edifício, com cumeeiras e beirados medidos.
 - **Estátua**: posição do OSM, altura total medida na nuvem de pontos.
-- **Estimativas**: espessura das muralhas, desenho das ameias chanfradas e parapeito, frestas, janelas da alcáçova, arcos das portas, percurso do passadiço, janelas e arcarias do Paço, figura da estátua e a forma das árvores.
+- **Estimativas**: espessura das muralhas, desenho das ameias chanfradas e parapeito, frestas, janelas da alcáçova, arcos das portas, percurso do passadiço, janelas e arcarias do Paço, figura da estátua, portal e cachorrada da igreja, guaritas do Paço e a forma das árvores.
 
 ## Onde está a leitura das fontes
 
@@ -60,11 +61,11 @@ Tudo o que é interpretação está em `src/data/maquetas/guimaraes.json`: estad
 | Torre sudoeste | estado-atual | alta | 19,6 m acima do pé; topo a 257,6 m (LiDAR). | sipa, lidar, orto, fotos |
 | Torre noroeste | estado-atual | alta | 21,1 m acima do pé; topo a 255,7 m (LiDAR). | sipa, lidar, orto, fotos |
 | Igreja de São Miguel do Castelo | estado-atual | alta | Nave c. 16,6 × 9,4 m, cumeeira a 239,4 m; capela-mor c. 6,1 × 6,9 m, cumeeira a 237,7 m (LiDAR). | sipa, wiki, lidar, osm, fotos |
-| Paço dos Duques de Bragança | estado-atual | média | Fachadas de 15 a 21 m acima do pé, cumeeiras a c. 247 m; 17 corpos de telhado e 36 chaminés medidos (LiDAR). | paco, osm, lidar, orto, fotos |
+| Paço dos Duques de Bragança | estado-atual | média | Fachadas de 15 a 21 m acima do pé; 10 corpos de telhado com cumes a 244,2–246,4 m e a capela a 248,8 m; galeria do pátio com beirado a c. 232 m; 36 chaminés (LiDAR). | paco, osm, lidar, orto, fotos |
 | Estátua de D. Afonso Henriques | estado-atual | média | 4,9 m do chão ao topo da figura, com o pedestal (LiDAR). | wiki, osm, lidar, fotos |
 | Terreno | estado-atual | alta | — | lidar, orto |
 | Casario | estado-atual | média | 12 edifícios (8 do OSM, 4 da nuvem de pontos), cume medido em todos. | osm, lidar |
-| Caminhos e ruas | estado-atual | média | — | osm, orto |
+| Caminhos e ruas | estado-atual | média | — | osm, orto, fotos |
 | Vegetação | estado-atual | média | — | lidar |
 
 Fontes: `sipa` SIPA IPA.00001060 · `mm` Museus e Monumentos de Portugal · `paco` Paço dos Duques · `cmg` CM Guimarães · `wiki` Wikipédia · `osm` OpenStreetMap via Overture 2026-10-21.0 · `lidar` DGT LiDAR 2025 (CC BY 4.0) · `orto` ortoimagem da cor dos pontos LiDAR · `fotos` fotografias fornecidas.
@@ -73,4 +74,4 @@ Fontes: `sipa` SIPA IPA.00001060 · `mm` Museus e Monumentos de Portugal · `pac
 
 - Planta cotada (levantamento DGEMN ou da Museus e Monumentos) para confirmar a espessura das muralhas, a planta das torres das portas e o interior da praça de armas (escadas, vestígios escavados).
 - Posição das frestas e seteiras, da antiga porta entaipada da torre sul e do medalhão.
-- Torreões cónicos, janelas e arcarias do Paço a partir de alçados ou fotografias de cada fachada.
+- Guaritas, janelas e arcarias do Paço a partir de alçados ou fotografias de cada fachada.
