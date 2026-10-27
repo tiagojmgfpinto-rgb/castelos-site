@@ -193,6 +193,44 @@ button { font: inherit; color: inherit; }
 .ficha-vizinhos button { width: 100%; text-align: left; border: 0; background: none; padding: 5px 0; cursor: pointer; font-family: var(--serifa-titulo); font-size: 19px; font-weight: 600; color: var(--tinta-ficha); }
 .ficha-vizinhos button:hover { color: var(--vermelho); }
 .ficha-vizinhos span { display: block; font-family: var(--sans); font-size: 12px; font-weight: 400; color: var(--tinta-ficha-suave); }
+.ficha-subtitulo { margin: 6px 0 0; font-family: var(--serifa-titulo); font-style: italic; font-size: 18px; color: var(--tinta-ficha-suave); }
+.ficha-etiquetas li[data-estado="conservacao"] { border-color: var(--vermelho); color: var(--vermelho); }
+.ficha-entrada { font-size: 19px; }
+.ficha-designacoes { font-size: 16px; color: var(--tinta-ficha-suave); }
+.ficha-historia { font-size: 17px; }
+.ficha-historia p { margin: 0 0 14px; line-height: 1.6; }
+.ficha-dados-linha { display: contents; }
+.ficha-lista { margin: 0; padding-left: 20px; font-size: 16px; line-height: 1.55; }
+.ficha-lista li { margin-bottom: 7px; }
+.ficha-cronologia { list-style: none; margin: 0; padding: 0; font-size: 16px; line-height: 1.45; }
+.ficha-cronologia li { display: grid; grid-template-columns: 6.5em 1fr; gap: 14px; padding: 5px 0; border-bottom: 1px dotted var(--filete-ficha); }
+.ficha-cronologia strong { font-family: var(--serifa-titulo); font-size: 17px; color: var(--vermelho); }
+.ficha-medidas { width: 100%; border-collapse: collapse; font-size: 16px; }
+.ficha-medidas th, .ficha-medidas td { text-align: left; vertical-align: top; padding: 6px 12px 6px 0; border-bottom: 1px dotted var(--filete-ficha); }
+.ficha-medidas th { width: 40%; font-family: var(--serifa-versalete); font-weight: 600; letter-spacing: 0.04em; color: var(--tinta-ficha-suave); }
+.ficha-imagens { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.ficha-imagens figure { margin: 0; }
+.ficha-imagens img { width: 100%; display: block; }
+.ficha-imagens figcaption { font-size: 13.5px; color: var(--tinta-ficha-suave); margin-top: 4px; }
+.ficha-consulta { color: var(--tinta-ficha-suave); font-size: 14px; }
+.ficha-nota-pequena { margin: 10px 0 0; font-size: 13.5px; font-style: italic; color: var(--tinta-ficha-suave); }
+
+/* A página permanente reutiliza o corpo da ficha, com as cores da página de texto. */
+.ficha-pagina-corpo { --tinta-ficha: #2a251c; --tinta-ficha-suave: #6b604c; --vermelho: #8e2a1c; --filete-ficha: rgba(74, 58, 40, 0.22); }
+.ficha-pagina-corpo .ficha-texto p { margin: 0 0 14px; }
+.ficha-pagina-corpo .ficha-dados { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; font-size: 16px; }
+.ficha-pagina-corpo .ficha-dados dt { font-family: var(--sans); font-size: 12.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #7a705d; padding-top: 3px; }
+.ficha-pagina-corpo .ficha-dados dd { margin: 0; }
+.ficha-pagina-corpo .ficha-aviso { padding: 10px 14px; border-left: 3px solid var(--vermelho); background: rgba(142, 42, 28, 0.06); font-size: 16px; }
+.ficha-pagina-corpo .ficha-fontes { padding-left: 20px; font-size: 16px; }
+.ficha-pagina-corpo .ficha-pendente { color: var(--vermelho); font-style: italic; }
+.ficha-pagina-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.ficha-pagina-estado { padding: 4px 10px; border: 1px solid #8e2a1c; color: #8e2a1c; font-family: var(--serifa-versalete); font-size: 14px; letter-spacing: 0.06em; }
+@media (max-width: 560px) {
+  .ficha-cronologia li { grid-template-columns: 1fr; gap: 0; }
+  .ficha-dados, .ficha-pagina-corpo .ficha-dados { grid-template-columns: 1fr; gap: 0 0; }
+  .ficha-dados dd { margin-bottom: 8px; }
+}
 .ficha-permanente { margin-top: 30px; font-family: var(--sans); font-size: 13px; letter-spacing: 0.06em; }
 .ficha-permanente a { color: var(--tinta-ficha-suave); }
 

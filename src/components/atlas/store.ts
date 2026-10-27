@@ -26,8 +26,32 @@ export interface MonumentoResumo {
   seculoOrigem?: string;
   maquetas: Maqueta[];
   notas: string[];
-  fontes: { titulo: string; url?: string }[];
-  html: string; // texto da ficha (Markdown já convertido no build)
+  fontes: Fonte[];
+  html: string; // história (corpo do Markdown já convertido no build)
+  conteudo: ConteudoFicha;
+}
+
+export interface Fonte {
+  titulo: string;
+  url?: string;
+  consultado?: string;
+}
+
+/** Secções da ficha, pela ordem do castillos.site. Tudo opcional: o que não tem fonte fica de fora. */
+export interface ConteudoFicha {
+  outrasDesignacoes: string[];
+  subtitulo?: string;
+  estado?: string;
+  resumo?: string;
+  fichaTecnica: Partial<Record<"epoca" | "tipologia" | "estilo" | "conservacao" | "materiais" | "protecao" | "propriedade" | "usoAtual", string>>;
+  oQueVer: { nome: string; texto: string }[];
+  cronologia: { ano: string; texto: string }[];
+  medidas: { conceito: string; valor: string }[];
+  curiosidades: string[];
+  imagens: { ficheiro: string; legenda: string; autor: string; licenca: string; url?: string }[];
+  altitude?: number;
+  visita?: Partial<Record<"resumo" | "horario" | "entrada" | "acessibilidade" | "visitasGuiadas" | "contactos", string>> & { site?: Fonte };
+  verificadoEm?: string;
 }
 
 /** Pedido de voo de câmara: alvo na cena (km) e enquadramento final. */

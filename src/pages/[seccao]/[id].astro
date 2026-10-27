@@ -1,8 +1,8 @@
 ---
-import { render } from "astro:content";
 import Base from "../../layouts/Base.astro";
 import Cabecalho from "../../components/Cabecalho.astro";
-import { todosMonumentos, type Monumento } from "../../lib/monumentos";
+import { resumo, todosMonumentos, type Monumento } from "../../lib/monumentos";
+import { FichaConteudo } from "../../components/ui/FichaConteudo";
 import { REGIOES, TIPOLOGIAS } from "../../lib/tipologias";
 import { caminhoFicha, seccaoDe } from "../../lib/rotas";
 import MaquetaPagina from "../../components/maqueta/MaquetaPagina";
@@ -12,20 +12,23 @@ export async function getStaticPaths() {
 }
 const { m } = Astro.props as { m: Monumento };
 const d = m.data;
-const { Content } = await render(m);
+const r = resumo(m);
 const base = import.meta.env.BASE_URL;
 const maqueta = d.maquetas.find((x) => x.tipo === "estado-atual" && (x.validada || x.provisoria));
 const vizinhos = (await todosMonumentos()).filter((x) => x.data.regiao === d.regiao && x.id !== m.id).slice(0, 10);
 ---
-<Base titulo={d.nome} descricao={`${d.nome}, ${d.localidade}. ${TIPOLOGIAS[d.tipologia].nome} no atlas 3D de Portugal.`} classe="pagina-texto">
+<Base titulo={d.nome} descricao={d.resumo ?? `${d.nome}, ${d.localidade}. ${TIPOLOGIAS[d.tipologia].nome} no atlas 3D de Portugal.`} classe="pagina-texto">
   <Cabecalho />
   <main class="texto ficha-pagina">
     <nav class="migalhas" aria-label="Localização">
       <a href={`${base}castelos/`}>Castelos</a> › <a href={`${base}castelos/#${d.regiao}`}>{REGIOES[d.regiao]}</a> › {d.distrito}
     </nav>
     <h1>{d.nome}</h1>
-    <p class="entrada">{d.localidade}, {d.concelho} · {TIPOLOGIAS[d.tipologia].nome}{d.seculoOrigem ? ` do ${d.seculoOrigem}` : ""}</p>
-    <p><a class="botao" href={`${base}#${m.id}`}>Ver no mapa 3D</a></p>
+    <p class="entrada">{d.localidade}, {d.distrito}, {REGIOES[d.regiao]} · {d.subtitulo ?? `${TIPOLOGIAS[d.tipologia].nome}${d.seculoOrigem ? ` do ${d.seculoOrigem}` : ""}`}</p>
+    <p class="ficha-pagina-acoes">
+      {d.estado && <span class="ficha-pagina-estado">{d.estado}</span>}
+      <a class="botao" href={`${base}#${m.id}`}>Ver no mapa 3D</a>
+    </p>
 
     {maqueta && (
       <figure class="ficha-maqueta maqueta-pagina">
@@ -33,31 +36,13 @@ const vizinhos = (await todosMonumentos()).filter((x) => x.data.regiao === d.reg
       </figure>
     )}
 
-    {d.estadoFicha === "em-preparacao" && (
-      <p class="nota">A ficha histórica deste monumento está em preparação. Só será publicada com fontes documentadas.</p>
-    )}
-    {d.notas.map((n) => <p class="nota aviso">{n}</p>)}
-
-    <Content />
-
-    <h2>Onde está</h2>
-    <dl class="dados">
-      <dt>Coordenadas</dt>
-      <dd>{d.coordenadas.lat.toFixed(5)}, {d.coordenadas.lon.toFixed(5)} {!d.coordenadas.verificadas && <em>(por verificar)</em>}</dd>
-      <dt>Concelho</dt><dd>{d.concelho}</dd>
-      <dt>Distrito</dt><dd>{d.distrito}</dd>
-    </dl>
-
-    {d.fontes.length > 0 && (
-      <>
-        <h2>Fontes</h2>
-        <ul>{d.fontes.map((f) => <li>{f.url ? <a href={f.url}>{f.titulo}</a> : f.titulo}</li>)}</ul>
-      </>
-    )}
+    <div class="ficha-pagina-corpo">
+      <FichaConteudo m={r} nivel={2} />
+    </div>
 
     {vizinhos.length > 0 && (
       <>
-        <h2>Mais em {REGIOES[d.regiao]}</h2>
+        <h2>Mais castelos em {REGIOES[d.regiao]}</h2>
         <ul class="lista-monumentos curta">{vizinhos.map((x) => <li><a href={`${base}${caminhoFicha({ id: x.id, nome: x.data.nome })}`}>{x.data.nome}</a></li>)}</ul>
       </>
     )}
