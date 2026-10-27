@@ -186,20 +186,27 @@
     21.3
    ]
   },
-  "patio": {
-   "topo": [
-    232.6,
-    239.9
-   ],
-   "altura": [
-    9.9,
-    17.0
-   ]
+  "corpos_telhado": 10,
+  "cumes": {
+   "cunhal_sudoeste": 246.1,
+   "ala_sul": 244.8,
+   "cunhal_sueste": 246.4,
+   "ala_poente": 245.0,
+   "cunhal_noroeste": 246.0,
+   "ala_norte": 244.2,
+   "cunhal_nordeste": 246.2,
+   "nascente_sul": 245.4,
+   "capela": 248.8,
+   "nascente_norte": 245.1
   },
-  "corpos_telhado": 17,
   "chamines": 36,
-  "torreoes": 0,
-  "cumeeiras": 246.7,
+  "guaritas": 4,
+  "cumeeiras": 248.8,
+  "galeria": {
+   "beirado": 231.9,
+   "encontro": 236.2,
+   "chao_patio": 222.7
+  },
   "porta_principal_soleira": 222.8
  },
  "igreja": {
@@ -229,6 +236,6 @@
   "medidos": 12
  },
  "vegetacao": {
-  "arvores": 593
+  "arvores": 592
  }
 }
