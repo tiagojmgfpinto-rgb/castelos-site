@@ -59,7 +59,7 @@ export function Ficha({ m, monumentos, onFechar }: { m: MonumentoResumo; monumen
                 </p>
               </div>
               <div className="ficha-maqueta-botoes" role="toolbar" aria-label="Maqueta">
-                {["Giro", "Rótulos", "Enquadrar", "Ampliar"].map((b) => (
+                {["Giro", "Placas", "Enquadrar", "Ampliar"].map((b) => (
                   <button key={b} disabled>{b}</button>
                 ))}
               </div>
