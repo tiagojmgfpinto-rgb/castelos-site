@@ -126,6 +126,7 @@ export default function Maqueta({ url, capa, dados, provisoria, onVoltarMapa }: 
               giro={giro}
               rotulos={rotulos}
               placas={placas}
+              distancia={dados.distancia ?? 300}
               camadaPlacas={camadaPlacas}
               pausa={pausa}
               terreno={terreno}
@@ -215,7 +216,7 @@ function FichaElemento({ e, dados, onFechar }: { e: ElementoMaqueta; dados: Dado
   );
 }
 
-function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, camadaPlacas, pausa, terreno, pedidoEnquadrar, bussola, escala, escalaTexto, onCarregada }: {
+function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, camadaPlacas, pausa, terreno, pedidoEnquadrar, bussola, escala, escalaTexto, onCarregada }: {
   url: string;
   elementos: Map<string, ElementoMaqueta>;
   sel: string | null;
@@ -223,6 +224,7 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, camadaPlacas
   giro: boolean;
   rotulos: boolean;
   placas: ElementoMaqueta[];
+  distancia: number;
   camadaPlacas: React.RefObject<HTMLDivElement | null>;
   pausa: React.RefObject<boolean>;
   terreno: boolean;
@@ -243,7 +245,7 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, camadaPlacas
   const aux = useMemo(() => ({ v: new THREE.Vector3(), dir: new THREE.Vector3(), raio: Object.assign(new THREE.Raycaster(), { firstHitOnly: true }) }), []);
 
   // Preparação: sombras, materiais próprios por elemento (para o destaque) e caixas de cada elemento.
-  const { alvos, centro, porElemento, malhas, idDe } = useMemo(() => {
+  const { alvos, centro, terreno: area, porElemento, malhas, idDe } = useMemo(() => {
     const porElemento = new Map<string, THREE.Mesh[]>();
     const malhas: THREE.Mesh[] = [];
     const idDe = new Map<THREE.Object3D, string>();
@@ -271,9 +273,13 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, camadaPlacas
       const s = b.getSize(new THREE.Vector3());
       alvos.set(id, { centro: c, topo: new THREE.Vector3(c.x, b.max.y + 1.5, c.z), raio: Math.max(s.x, s.z, s.y) / 2 });
     }
+    // O enquadramento inicial abrange as muralhas e os elementos com placa (em Guimarães, também o Paço)
     const muralhas = scene.getObjectByName("Muralhas_grupo");
     const bm = new THREE.Box3().setFromObject(muralhas ?? scene);
+    for (const e of placas) porElemento.get(e.id)?.forEach((m) => bm.expandByObject(m));
     const centro = bm.getCenter(new THREE.Vector3());
+    // A área da maqueta (terreno) limita o alvo da câmara e a caixa das sombras
+    const terreno = new THREE.Box3().setFromObject(scene.getObjectByName("Terreno") ?? scene);
     // Índice espacial para os raios de oclusão das placas (e dos cliques): o terreno tem 140 mil triângulos
     for (const m of malhas) {
       if (SEM_PLACA_OCULTA.includes(idDe.get(m) ?? "")) continue;
@@ -281,8 +287,8 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, camadaPlacas
       g.boundsTree ??= new MeshBVH(g);
       m.raycast = acceleratedRaycast;
     }
-    return { alvos, centro, porElemento, malhas, idDe };
-  }, [scene]);
+    return { alvos, centro, terreno, porElemento, malhas, idDe };
+  }, [scene, placas]);
 
   // Ponto de cada placa: o indicado nos dados ou o topo do elemento junto ao centro da sua planta
   const ancoras = useMemo(() => {
@@ -335,7 +341,7 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, camadaPlacas
   }, [sel]);
 
   const enquadrar = useCallback((instantaneo = false) => {
-    const pos = centro.clone().addScaledVector(DIRECAO_INICIAL, 300);
+    const pos = centro.clone().addScaledVector(DIRECAO_INICIAL, distancia);
     if (instantaneo && controlos.current) {
       camera.position.copy(pos);
       controlos.current.target.copy(centro);
@@ -343,7 +349,7 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, camadaPlacas
     } else {
       objetivo.current = { alvo: centro.clone(), pos };
     }
-  }, [camera, centro]);
+  }, [camera, centro, distancia]);
 
   useEffect(() => {
     enquadrar(true);
@@ -422,8 +428,8 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, camadaPlacas
       if (camera.position.distanceTo(o.pos) < 0.3 && c.target.distanceTo(o.alvo) < 0.1) objetivo.current = null;
     }
     // manter o alvo dentro da maqueta
-    c.target.x = THREE.MathUtils.clamp(c.target.x, -120, 120);
-    c.target.z = THREE.MathUtils.clamp(c.target.z, -120, 120);
+    c.target.x = THREE.MathUtils.clamp(c.target.x, area.min.x + 40, area.max.x - 40);
+    c.target.z = THREE.MathUtils.clamp(c.target.z, area.min.z + 40, area.max.z - 40);
     c.target.y = THREE.MathUtils.clamp(c.target.y, centro.y - 40, centro.y + 40);
     if (bussola.current) bussola.current.style.transform = `rotate(${THREE.MathUtils.radToDeg(c.getAzimuthalAngle())}deg)`;
     if (escala.current) {
@@ -494,24 +500,28 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, camadaPlacas
     setSel(id && elementos.has(id) && !["terreno", "vegetacao", "caminhos"].includes(id) ? id : null);
   };
 
+  // A caixa das sombras cobre a área toda da maqueta
+  const sol = area.getCenter(new THREE.Vector3());
+  const meiaSombra = Math.max(area.max.x - area.min.x, area.max.z - area.min.z) / 2 + 5;
+
   return (
     <>
       <hemisphereLight args={["#f6f0e2", "#7d6b50", 1.25]} />
       <directionalLight
-        position={[centro.x - 160, centro.y + 220, centro.z - 140]}
+        position={[sol.x - 160, centro.y + 220, sol.z - 140]}
         intensity={2.4}
         castShadow
         shadow-mapSize={[2048, 2048]}
-        shadow-camera-left={-170}
-        shadow-camera-right={170}
-        shadow-camera-top={170}
-        shadow-camera-bottom={-170}
+        shadow-camera-left={-meiaSombra}
+        shadow-camera-right={meiaSombra}
+        shadow-camera-top={meiaSombra}
+        shadow-camera-bottom={-meiaSombra}
         shadow-camera-near={10}
         shadow-camera-far={700}
         shadow-bias={-0.0004}
         shadow-normalBias={0.6}
       >
-        <object3D attach="target" position={[centro.x, centro.y, centro.z]} />
+        <object3D attach="target" position={[sol.x, centro.y, sol.z]} />
       </directionalLight>
       <directionalLight position={[centro.x + 200, centro.y + 120, centro.z + 160]} intensity={0.35} />
       <primitive object={scene} onClick={clicar} onPointerMissed={() => setSel(null)} />

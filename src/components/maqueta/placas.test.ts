@@ -28,9 +28,9 @@ describe("disposição das placas", () => {
   });
 });
 
-describe("placas da maqueta de Penela", () => {
+describe.each(["penela", "guimaraes"])("placas da maqueta de %s", (monumento) => {
   it("só nomeiam elementos documentados no ficheiro, cada um com resumo", () => {
-    const d = dadosMaqueta("penela")!;
+    const d = dadosMaqueta(monumento)!;
     const placas = elementosComPlaca(d);
     expect(placas.map((e) => e.id)).toEqual(d.placas);
     for (const e of placas) expect(e.resumo, e.id).toBeTruthy();

@@ -1,0 +1,394 @@
+{
+  "monumento": "guimaraes",
+  "titulo": "Castelo de Guimarães",
+  "variante": "estado-atual",
+  "versao": "0.1 provisória",
+  "data": "2026-10-27",
+  "origem": {
+    "lat": 41.447926,
+    "lon": -8.290429,
+    "nota": "Centro da torre de menagem (OSM, conferido no LiDAR). Eixos da maqueta: x para este, y para norte (no visor, -z é o norte), em metros à escala 1:1."
+  },
+  "fontes": {
+    "sipa": {
+      "titulo": "SIPA, ficha IPA.00001060 — Castelo de Guimarães",
+      "url": "http://www.monumentos.gov.pt/site/app_pagesuser/sipa.aspx?id=1060"
+    },
+    "mm": {
+      "titulo": "Museus e Monumentos de Portugal — Castelo de Guimarães",
+      "url": "https://www.museusemonumentos.pt/pt/museus-e-monumentos/castelo-de-guimaraes"
+    },
+    "paco": {
+      "titulo": "Paço dos Duques de Bragança — sítio oficial",
+      "url": "https://pacodosduques.gov.pt"
+    },
+    "cmg": {
+      "titulo": "Câmara Municipal de Guimarães — Monumentos Nacionais",
+      "url": "https://www.cm-guimaraes.pt/areas-de-intervencao/ambiente-e-sustentabilidade/urbanismo/patrimonio-e-bens-classificados/monumentos-nacionais"
+    },
+    "wiki": {
+      "titulo": "Wikipédia — Castelo de Guimarães",
+      "url": "https://pt.wikipedia.org/wiki/Castelo_de_Guimar%C3%A3es"
+    },
+    "osm": {
+      "titulo": "OpenStreetMap (ODbL), via Overture Maps 2026-10-21.0: contorno do castelo, plantas do Paço, da igreja e do casario, ruas e posição da estátua",
+      "url": "https://www.openstreetmap.org/#map=19/41.4479/-8.2904"
+    },
+    "lidar": {
+      "titulo": "DGT, LiDAR 2025: MDT e MDS de 50 cm e nuvem de pontos classificada com cor, folhas 186498 e 187498 (CC BY 4.0). Planta das torres, relevo, cotas e alturas medidas.",
+      "url": "https://cdd.dgterritorio.gov.pt"
+    },
+    "orto": {
+      "titulo": "Ortoimagem de 50 cm feita com a cor dos pontos do LiDAR 2025 da DGT (CC BY 4.0). Conferência das plantas e cor do chão.",
+      "url": "https://cdd.dgterritorio.gov.pt"
+    },
+    "fotos": {
+      "titulo": "Fotografias do castelo, do Paço, da Igreja de São Miguel e da estátua fornecidas pelo autor do projeto, outubro de 2026"
+    }
+  },
+  "limitacoes": [
+    "Não foi encontrada planta arquitetónica cotada publicada. A planta das quatro torres de canto e da torre de menagem foi tirada do MDS do LiDAR (retângulo das células acima do topo da muralha); as quatro torres das portas e o eixo dos panos foram desenhados sobre o MDS e a ortoimagem, com erro esperado de 0,5 a 1 m. O OpenStreetMap estava desviado c. 1 m para oeste e foi corrigido.",
+    "Cotas e alturas medidas no LiDAR da DGT de 2025 (50 cm): o topo de cada pano de 2 em 2 m, o das torres e edifícios dentro da sua planta, e o terreno no MDT. Erro esperado de 0,3 a 0,5 m na vertical.",
+    "O LiDAR não distingue merlões e parapeito. O topo medido é o dos merlões; o desenho das ameias chanfradas, o parapeito de 1 m e a espessura das muralhas (2,6 m, 2 m na alcáçova) são estimativas a partir das fotografias.",
+    "As frestas das torres, as janelas da alcáçova e os arcos das portas estão em posição e tamanho esquemáticos. O percurso do passadiço de madeira da torre de menagem é estimado (SIPA: vem do caminho de ronda a oeste).",
+    "O Paço dos Duques tem a planta do OpenStreetMap, as alturas das fachadas e as cumeeiras medidas, e os telhados separados por corpos a partir do MDS (17 corpos). As 36 chaminés estão nas posições medidas, com forma esquemática. As janelas, as arcarias do pátio e a porta são esquemáticas, e os torreões de cobertura cónica não estão representados.",
+    "A Igreja de São Miguel tem as cumeeiras e beirados da nave e da capela-mor medidos; portal, porta lateral e cruz seguem as fotografias, com medidas aproximadas.",
+    "A estátua de D. Afonso Henriques tem a posição e a altura total medidas (4,9 m com o pedestal); a figura é esquemática.",
+    "Os edifícios da envolvente são volumes simplificados (plantas do OpenStreetMap e da nuvem de pontos, cume medido). As árvores estão nas posições e com as alturas medidas na nuvem de pontos, com forma esquemática."
+  ],
+  "muralha": {
+    "espessura": 2.6,
+    "parapeito": 1.0,
+    "merlao": {
+      "altura": 1.1,
+      "largura": 1.0,
+      "intervalo": 0.75,
+      "ponta": 0.55
+    },
+    "estimativa": true,
+    "nota": "O topo dos merlões é medido no LiDAR; a espessura, o parapeito e o desenho das ameias chanfradas são estimativas a partir das fotografias."
+  },
+  "distancia": 340,
+  "placas": [
+    "torre_menagem",
+    "porta_principal",
+    "paco",
+    "igreja",
+    "porta_traicao",
+    "alcacova",
+    "estatua",
+    "torre_sul",
+    "torre_nordeste"
+  ],
+  "elementos": [
+    {
+      "id": "torre_menagem",
+      "nome": "Torre de menagem",
+      "grupo": "Torre de menagem",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Torre quadrangular isolada no centro da praça de armas, das obras de D. Dinis. Paramentos em três registos rasgados por frestas, remate de merlões chanfrados e cobertura de telha. A entrada faz-se ao nível do segundo registo, por um passadiço de madeira que vem do caminho de ronda.",
+      "medidas": "Planta c. 13 × 15 m (LiDAR). Topo dos merlões a 268,3 m, 27,1 m acima do pé e c. 26 m acima da praça de armas (SIPA: c. 27 m).",
+      "fontes": [
+        "sipa",
+        "mm",
+        "lidar",
+        "fotos"
+      ],
+      "resumo": "Torre de D. Dinis, c. 27 m, ao centro da praça de armas"
+    },
+    {
+      "id": "passadico",
+      "nome": "Passadiço da torre de menagem",
+      "grupo": "Torre de menagem",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Ponte de madeira entre o caminho de ronda a oeste e a porta da torre de menagem (SIPA). Percurso e escoras estimados.",
+      "fontes": [
+        "sipa",
+        "fotos"
+      ]
+    },
+    {
+      "id": "porta_principal",
+      "nome": "Porta principal",
+      "grupo": "Portas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "No centro do pano leste, entre duas torres: portal em arco quebrado inscrito num vão de volta perfeita, precedido por uma escadaria semicircular (SIPA). As torres das portas são de D. João I.",
+      "medidas": "Soleira a 241,5 m, c. 2 m acima do largo exterior; torres de 12 a 13 m acima do pé (LiDAR).",
+      "fontes": [
+        "sipa",
+        "lidar",
+        "orto",
+        "fotos"
+      ],
+      "resumo": "Entrada a leste, com escadaria semicircular"
+    },
+    {
+      "id": "porta_traicao",
+      "nome": "Porta da Traição",
+      "grupo": "Portas",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Porta falsa em arco quebrado no extremo norte do pano oeste, protegida por duas torres (SIPA). A Wikipédia troca as portas; segue-se o SIPA, que bate com o LiDAR.",
+      "medidas": "Soleira a c. 238,5 m; torres de 14 a 15 m acima do pé (LiDAR).",
+      "fontes": [
+        "sipa",
+        "lidar",
+        "orto"
+      ],
+      "resumo": "Porta falsa em arco quebrado, a oeste"
+    },
+    {
+      "id": "alcacova",
+      "nome": "Alcáçova",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Restos da residência adossada à muralha do lado norte, com paredes rasgadas por grandes janelas e chaminés em dois registos (SIPA). É o pano mais alto do recinto. Os vãos do lado do pátio são esquemáticos.",
+      "medidas": "Topo a 255,3–257,1 m, 17 a 18 m acima do pé exterior e 13 a 15 m acima da praça (LiDAR).",
+      "fontes": [
+        "sipa",
+        "lidar",
+        "fotos"
+      ],
+      "resumo": "Restos da residência, a norte"
+    },
+    {
+      "id": "muralha_nascente",
+      "nome": "Pano leste (sul da porta)",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Pano leste entre a porta principal e a torre sul, com adarve e merlões chanfrados.",
+      "medidas": "Topo a 249,3–256,8 m, 10,5 a 15,5 m acima do pé exterior (LiDAR).",
+      "fontes": [
+        "sipa",
+        "lidar",
+        "orto",
+        "fotos"
+      ]
+    },
+    {
+      "id": "muralha_nascente_norte",
+      "nome": "Pano leste (norte da porta)",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Pano leste entre a porta principal e a torre nordeste.",
+      "medidas": "Topo a 250,3–255,8 m, 10,4 a 13,7 m acima do pé exterior (LiDAR).",
+      "fontes": [
+        "sipa",
+        "lidar",
+        "orto",
+        "fotos"
+      ]
+    },
+    {
+      "id": "muralha_noroeste",
+      "nome": "Pano oeste (norte)",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Pano oeste entre a alcáçova e a Porta da Traição, sobre o afloramento mais alto do lado exterior.",
+      "medidas": "Topo a 251,1–255,7 m, 15,4 a 20,9 m acima do pé exterior (LiDAR).",
+      "fontes": [
+        "sipa",
+        "lidar",
+        "orto",
+        "fotos"
+      ]
+    },
+    {
+      "id": "muralha_sudoeste",
+      "nome": "Pano oeste (sul)",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Pano oeste entre a Porta da Traição e a torre sudoeste.",
+      "medidas": "Topo a 250,8–257,8 m, 11,2 a 17,4 m acima do pé exterior (LiDAR).",
+      "fontes": [
+        "sipa",
+        "lidar",
+        "orto",
+        "fotos"
+      ]
+    },
+    {
+      "id": "muralha_sul",
+      "nome": "Pano sul",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Pano sul, que fecha a ponta do escudo entre a torre sudoeste e a torre sul.",
+      "medidas": "Topo a 250,3–256,9 m, 11,4 a 18,1 m acima do pé exterior (LiDAR).",
+      "fontes": [
+        "sipa",
+        "lidar",
+        "orto",
+        "fotos"
+      ]
+    },
+    {
+      "id": "torre_nordeste",
+      "nome": "Torre nordeste",
+      "grupo": "Torres",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Torre de canto quadrangular com telhado de quatro águas (SIPA, ortoimagem).",
+      "medidas": "19,1 m acima do pé; topo a 256,2 m (LiDAR).",
+      "fontes": [
+        "sipa",
+        "lidar",
+        "orto",
+        "fotos"
+      ],
+      "resumo": "Torre de canto com telhado"
+    },
+    {
+      "id": "torre_sul",
+      "nome": "Torre sul",
+      "grupo": "Torres",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Torre de canto com telhado de quatro águas, rasgada pela antiga porta da muralha, hoje entaipada, em arco de volta perfeita (não representada). Junto a ela há um medalhão de bronze de D. Afonso Henriques num penedo (SIPA). Na maqueta fica a sueste do recinto.",
+      "medidas": "19,2 m acima do pé; topo a 256,9 m (LiDAR).",
+      "fontes": [
+        "sipa",
+        "lidar",
+        "orto",
+        "fotos"
+      ],
+      "resumo": "Torre com telhado e a antiga porta entaipada"
+    },
+    {
+      "id": "torre_sudoeste",
+      "nome": "Torre sudoeste",
+      "grupo": "Torres",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Torre de canto quadrangular, de terraço com merlões.",
+      "medidas": "19,6 m acima do pé; topo a 257,6 m (LiDAR).",
+      "fontes": [
+        "sipa",
+        "lidar",
+        "orto",
+        "fotos"
+      ]
+    },
+    {
+      "id": "torre_noroeste",
+      "nome": "Torre noroeste",
+      "grupo": "Torres",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Torre de canto quadrangular no encontro da alcáçova com o pano oeste.",
+      "medidas": "21,1 m acima do pé; topo a 255,7 m (LiDAR).",
+      "fontes": [
+        "sipa",
+        "lidar",
+        "orto",
+        "fotos"
+      ]
+    },
+    {
+      "id": "igreja",
+      "nome": "Igreja de São Miguel do Castelo",
+      "grupo": "Igreja de São Miguel",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Pequena igreja românica de granito, de nave única e capela-mor mais baixa, entre o castelo e o Paço. Primeira referência documental em 1216, sagrada por volta de 1239. A tradição liga-lhe o batismo de D. Afonso Henriques.",
+      "medidas": "Nave c. 16,6 × 9,4 m, cumeeira a 239,4 m; capela-mor c. 6,1 × 6,9 m, cumeeira a 237,7 m (LiDAR).",
+      "fontes": [
+        "sipa",
+        "wiki",
+        "lidar",
+        "osm",
+        "fotos"
+      ],
+      "resumo": "Igreja românica do séc. XIII"
+    },
+    {
+      "id": "paco",
+      "nome": "Paço dos Duques de Bragança",
+      "grupo": "Paço dos Duques",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Paço senhorial mandado construir por D. Afonso, primeiro duque de Bragança, a partir de c. 1420, à volta de um pátio com arcarias, com telhados íngremes e chaminés altas de tijolo. Arruinado durante séculos, foi reconstruído entre 1937 e 1959 e é hoje museu. Planta do OpenStreetMap; fachadas, cumeeiras e chaminés medidas no LiDAR; janelas e arcarias esquemáticas.",
+      "medidas": "Fachadas de 15 a 21 m acima do pé, cumeeiras a c. 247 m; 17 corpos de telhado e 36 chaminés medidos (LiDAR).",
+      "fontes": [
+        "paco",
+        "osm",
+        "lidar",
+        "orto",
+        "fotos"
+      ],
+      "resumo": "Paço do séc. XV, reconstruído em 1937–1959"
+    },
+    {
+      "id": "estatua",
+      "nome": "Estátua de D. Afonso Henriques",
+      "grupo": "Estátua",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Bronze de António Soares dos Reis, inaugurado por D. Luís a 20 de setembro de 1887, hoje junto ao Paço dos Duques. Posição do OpenStreetMap conferida no LiDAR; figura esquemática.",
+      "medidas": "4,9 m do chão ao topo da figura, com o pedestal (LiDAR).",
+      "fontes": [
+        "wiki",
+        "osm",
+        "lidar",
+        "fotos"
+      ],
+      "resumo": "Bronze de Soares dos Reis, 1887"
+    },
+    {
+      "id": "terreno",
+      "nome": "Terreno",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Modelo digital do terreno LiDAR da DGT (2025, 50 cm), amostrado a 1 m. O afloramento granítico do castelo e a encosta até ao Paço são os medidos. As cores seguem a ortoimagem feita com a cor dos pontos.",
+      "fontes": [
+        "lidar",
+        "orto"
+      ]
+    },
+    {
+      "id": "vila",
+      "nome": "Casario",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Edifícios à volta do monte do castelo em volumes simplificados: plantas do OpenStreetMap completadas com as casas que a nuvem de pontos mostra, todas com o cume medido.",
+      "medidas": "12 edifícios (8 do OSM, 4 da nuvem de pontos), cume medido em todos.",
+      "fontes": [
+        "osm",
+        "lidar"
+      ]
+    },
+    {
+      "id": "caminhos",
+      "nome": "Caminhos e ruas",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Ruas e caminhos do OpenStreetMap.",
+      "fontes": [
+        "osm",
+        "orto"
+      ]
+    },
+    {
+      "id": "vegetacao",
+      "nome": "Vegetação",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "593 árvores nas posições, alturas e raios de copa medidos na nuvem de pontos LiDAR, com forma esquemática.",
+      "fontes": [
+        "lidar"
+      ]
+    }
+  ]
+}

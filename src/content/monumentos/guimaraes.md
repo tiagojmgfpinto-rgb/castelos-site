@@ -7,9 +7,165 @@ distrito: "Braga"
 concelho: "Guimarães"
 localidade: "Guimarães"
 coordenadas:
-  lat: 41.4482
-  lon: -8.2903
-  verificadas: false
-estadoFicha: em-preparacao
+  lat: 41.447926
+  lon: -8.290429
+  verificadas: true
+  fonte: "Centro da torre de menagem: planta do OpenStreetMap conferida no LiDAR da DGT de 2025"
+seculoOrigem: "século X"
+classificacao:
+  categoria: "Monumento Nacional (Decretos de 27-08-1908 e de 16-06-1910)"
+  sipa: "IPA.00001060"
+estadoFicha: publicada
 prioritario: true
+
+subtitulo: "Castelo medieval dos séculos X a XIV"
+estado: "Restaurado"
+resumo: "Castelo roqueiro sobre um afloramento granítico no limite norte do centro histórico de Guimarães. A condessa Mumadona Dias mandou construí-lo no século X para defender o mosteiro que fundara; o conde D. Henrique remodelou-o no fim do século XI, e o que hoje se vê resulta sobretudo das obras de D. Dinis, que lhe acrescentou a torre de menagem e a alcáçova. Tem planta pentagonal em forma de escudo, com oito torres quadrangulares e a torre de menagem ao centro da praça de armas. Foi restaurado pela DGEMN entre 1936 e 1940. Ao lado ficam a Igreja de São Miguel do Castelo e o Paço dos Duques de Bragança."
+outrasDesignacoes: ["Castelo de São Mamede, nome no documento de 968", "Berço da nacionalidade, designação popular"]
+fichaTecnica:
+  epoca: "Séculos X, XI, XIII e XIV, com restauro no século XX"
+  tipologia: "Castelo roqueiro de planta pentagonal, com oito torres quadrangulares e torre de menagem isolada ao centro"
+  estilo: "Arquitetura militar românica, com remodelações góticas"
+  conservacao: "Restaurado. A DGEMN reconstruiu entre 1936 e 1940 troços de muralha, torres, adarves, parapeitos, merlões e seteiras, e demoliu os anexos que encobriam a alcáçova"
+  materiais: "Cantaria de granito; portas, pavimentos, escadas e passadiço da torre de menagem em madeira; telha de canudo nas torres sul, nordeste e de menagem"
+  protecao: "Monumento Nacional (Decreto de 27-08-1908, DG n.º 199, de 05-09-1908, e Decreto de 16-06-1910, DG n.º 136, de 23-06-1910). Zona Especial de Proteção conjunta com a igreja e o Paço (Portaria de 15-04-1955, DG II Série n.º 170, de 23-07-1955)"
+  propriedade: "Pública, do Estado"
+  usoAtual: "Cultural; gerido pela Museus e Monumentos de Portugal, com o Paço dos Duques e a Igreja de São Miguel"
+oQueVer:
+  - nome: "Torre de menagem"
+    texto: "Torre quadrangular com cerca de 27 m, ao centro da praça de armas. Os paramentos têm três registos rasgados por frestas e a entrada faz-se ao nível do segundo, por um passadiço de madeira que vem do caminho de ronda a oeste. Por dentro tem três pisos com pavimentos e tetos de madeira. Reabriu em 2016 com uma exposição nos três pisos."
+  - nome: "Porta principal"
+    texto: "No centro do pano leste, entre duas torres: um portal em arco quebrado inscrito num vão de volta perfeita, que só se vê do lado de dentro, precedido por uma escadaria semicircular."
+  - nome: "Porta da Traição"
+    texto: "Porta falsa em arco quebrado, no extremo norte do pano oeste, também protegida por duas torres."
+  - nome: "Alcáçova"
+    texto: "Restos da residência adossados à muralha do lado norte, com paredes rasgadas por grandes janelas e chaminés em dois registos."
+  - nome: "Muralha e caminho de ronda"
+    texto: "A muralha remata em merlões chanfrados, alguns com seteiras. O caminho de ronda percorre-a por dentro e sobe-se por duas escadas estreitas junto ao portal principal."
+  - nome: "Torre sul"
+    texto: "Foi rasgada pela antiga porta da muralha, hoje entaipada, em arco de volta perfeita. Junto a ela há um medalhão de bronze de D. Afonso Henriques, num penedo."
+  - nome: "Igreja de São Miguel do Castelo"
+    texto: "Pequena igreja românica de nave única e capela-mor mais baixa, de granito, entre o castelo e o Paço. A primeira referência documental é de 1216 e foi sagrada por volta de 1239. A tradição liga-lhe o batismo de D. Afonso Henriques."
+  - nome: "Paço dos Duques de Bragança"
+    texto: "Paço senhorial mandado construir por D. Afonso, primeiro duque de Bragança, a partir de c. 1420, à volta de um pátio com arcarias, com telhados íngremes e chaminés altas de tijolo. Arruinado durante séculos, foi reconstruído entre 1937 e 1959 e é hoje museu."
+  - nome: "Estátua de D. Afonso Henriques"
+    texto: "Bronze de António Soares dos Reis, inaugurado por D. Luís a 20 de setembro de 1887, hoje junto ao Paço dos Duques."
+cronologia:
+  - ano: "Séc. X"
+    texto: "A condessa Mumadona Dias manda construir um mosteiro e o castelo, para defesa dos religiosos. Dessa primeira fase não restam vestígios à vista."
+  - ano: "968"
+    texto: "Documento de 4 de dezembro em que a condessa refere o castelo, então chamado de São Mamede, e o doa ao mosteiro."
+  - ano: "Fim do séc. XI"
+    texto: "O conde D. Henrique remodela e amplia o castelo para sua residência. Os vestígios desta fase estão na zona da entrada."
+  - ano: "1128"
+    texto: "Batalha de São Mamede, entre as forças de D. Afonso Henriques e as de D. Teresa."
+  - ano: "Fim do séc. XIII–XIV"
+    texto: "Obras de D. Dinis, de que resulta o edifício atual, com a torre de menagem e a alcáçova."
+  - ano: "1369"
+    texto: "Henrique II de Castela cerca o castelo e é derrotado pela população e pelo alcaide Gonçalo Pais de Meira."
+  - ano: "1385"
+    texto: "D. João I cerca o castelo, cujo alcaide era partidário de D. Beatriz."
+  - ano: "1383–1433"
+    texto: "Construção das torres que protegem as portas, a mando de D. João I."
+  - ano: "1836"
+    texto: "Um vereador propõe demolir o castelo para aproveitar a pedra. Chegam a ser retiradas algumas pedras antes de a ideia ser abandonada."
+  - ano: "1881"
+    texto: "Classificado Monumento Histórico de 1.ª classe."
+  - ano: "1908 e 1910"
+    texto: "Classificado Monumento Nacional."
+  - ano: "1936–1940"
+    texto: "Restauro da DGEMN, inaugurado a 4 de junho de 1940, nas comemorações dos Centenários."
+  - ano: "2003–2004"
+    texto: "Escavações no interior revelam estruturas do século X."
+  - ano: "2016"
+    texto: "Reabre a torre de menagem, a 24 de junho, depois de obras de acessibilidade e segurança."
+medidas:
+  - conceito: "Torre de menagem"
+    valor: "Cerca de 27 m de altura (SIPA). Medida: 27,1 m do pé ao topo dos merlões e c. 26 m acima da praça de armas, com planta de c. 13 × 15 m (LiDAR DGT 2025)"
+  - conceito: "Torres"
+    valor: "8 quadrangulares (SIPA). As quatro dos ângulos sobem 19 a 21 m acima do pé exterior (LiDAR DGT 2025)"
+  - conceito: "Muralhas"
+    valor: "10,5 a 19 m acima do pé exterior e 6,5 a 16 m acima da praça de armas; a alcáçova, a norte, é o pano mais alto (LiDAR DGT 2025)"
+  - conceito: "Portas"
+    valor: "2: a principal, a leste, e a da Traição, a oeste (SIPA)"
+  - conceito: "Ponto mais alto"
+    valor: "c. 268 m de altitude, no topo dos merlões da torre de menagem (LiDAR DGT 2025)"
+curiosidades:
+  - "A Câmara chegou a votar a demolição do castelo em 1836, para vender a pedra. Segundo a Wikipédia, a proposta caiu por um único voto."
+  - "Em 2007 foi eleito, numa votação popular, uma das Sete Maravilhas de Portugal."
+  - "A tradição diz que D. Afonso Henriques nasceu no castelo, em 1111, e foi batizado na Igreja de São Miguel. A pia batismal está hoje na Igreja de São Miguel da Oliveira (Wikipédia)."
+  - "A estátua de D. Afonso Henriques ficou sem espada depois de um ato de vandalismo; a espada foi recolocada a 20 de abril de 2026."
+visita:
+  resumo: "Todos os dias, das 10h00 às 18h00; bilhete de 5 €"
+  horario: "Todos os dias, das 10h00 às 18h00 (última entrada às 17h30). Encerra a 1 de janeiro, no domingo de Páscoa, a 1 de maio, a 24 de junho e a 25 de dezembro. A torre de menagem está temporariamente encerrada."
+  entrada: "Castelo 5 €; circuito Paço dos Duques e Castelo 8 €; com o Museu Alberto Sampaio 13 €. Gratuito até aos 12 anos e noutras situações indicadas pelo Paço dos Duques; 50 % de desconto a maiores de 65, jovens dos 13 aos 24 e famílias"
+  contactos: "Paço dos Duques de Bragança, Rua Conde Dom Henrique, 4800-412 Guimarães. +351 253 412 273, geral@pacoduques.pt"
+  site:
+    titulo: "Paço dos Duques — Bilhética e horários"
+    url: "https://pacodosduques.gov.pt/planear-visita/bilhetica-horarios/?lang=en"
+    consultado: "2026-10-27"
+imagens:
+  - ficheiro: "imagens/guimaraes/ortoimagem-lidar-2025.jpg"
+    legenda: "O castelo, a Igreja de São Miguel e o Paço dos Duques vistos na vertical, numa área de 350 × 350 m com o norte para cima, a partir da cor dos pontos do LiDAR."
+    autor: "Direção-Geral do Território, LiDAR 2025 (nuvem de pontos com cor); imagem de castelos.site"
+    licenca: "CC BY 4.0"
+    url: "https://cdd.dgterritorio.gov.pt"
+  - ficheiro: "imagens/guimaraes/relevo-lidar.jpg"
+    legenda: "Relevo sombreado do modelo digital de superfície LiDAR, com luz de noroeste, na mesma área. Vêem-se o escudo do castelo com as torres, a torre de menagem, a igreja e o Paço com o pátio e as chaminés."
+    autor: "Direção-Geral do Território, LiDAR 2025 (MDS 50 cm); sombreado de castelos.site"
+    licenca: "CC BY 4.0"
+    url: "https://cdd.dgterritorio.gov.pt"
+verificadoEm: "2026-10-27"
+notas:
+  - "A ficha do SIPA chama torre sul e torre nordeste às duas torres de canto com telhado. Na maqueta, por estar o castelo rodado, a torre sul fica a sueste do recinto."
+  - "A Wikipédia descreve as portas ao contrário do SIPA (principal a oeste, da Traição a leste) e fala em quatro torres. Segue-se o SIPA, que bate com o LiDAR e com as fotografias: oito torres e a porta principal a leste, com a escadaria."
+maquetas:
+  - tipo: estado-atual
+    ficheiro: "maquetas/guimaraes/guimaraes.glb"
+    capa: "maquetas/guimaraes/capa.jpg"
+    validada: false
+    provisoria: true
+    fontes:
+      - titulo: "SIPA, ficha IPA.00001060"
+        url: "http://www.monumentos.gov.pt/site/app_pagesuser/sipa.aspx?id=1060"
+      - titulo: "DGT — LiDAR 2025 (MDT, MDS 50 cm e nuvem de pontos com cor, folhas 186498 e 187498)"
+        url: "https://cdd.dgterritorio.gov.pt"
+      - titulo: "OpenStreetMap (ODbL), via Overture Maps"
+fontes:
+  - titulo: "SIPA — Castelo de Guimarães, ficha IPA.00001060 (I. Sereno e P. Dordio 1994; atual. J. Gonçalves 2003)"
+    url: "http://www.monumentos.gov.pt/site/app_pagesuser/sipa.aspx?id=1060"
+    consultado: "2026-10-27"
+  - titulo: "Museus e Monumentos de Portugal — Castelo de Guimarães"
+    url: "https://www.museusemonumentos.pt/pt/museus-e-monumentos/castelo-de-guimaraes"
+    consultado: "2026-10-27"
+  - titulo: "Paço dos Duques de Bragança — Bilhética e horários"
+    url: "https://pacodosduques.gov.pt/planear-visita/bilhetica-horarios/?lang=en"
+    consultado: "2026-10-27"
+  - titulo: "Câmara Municipal de Guimarães — Monumentos Nacionais (diplomas de classificação e ZEP)"
+    url: "https://www.cm-guimaraes.pt/areas-de-intervencao/ambiente-e-sustentabilidade/urbanismo/patrimonio-e-bens-classificados/monumentos-nacionais"
+    consultado: "2026-10-27"
+  - titulo: "Visit Guimarães — Paço dos Duques de Bragança"
+    url: "https://www.visitguimaraes.travel/descobrir/museus-e-sitios-arqueologicos/geo_artigo/paco-dos-duques-de-braganca"
+    consultado: "2026-10-27"
+  - titulo: "Wikipédia — Castelo de Guimarães"
+    url: "https://pt.wikipedia.org/wiki/Castelo_de_Guimar%C3%A3es"
+    consultado: "2026-10-27"
+  - titulo: "Wikipedia — Church of São Miguel do Castelo"
+    url: "https://en.wikipedia.org/wiki/Church_of_S%C3%A3o_Miguel_do_Castelo"
+    consultado: "2026-10-27"
+  - titulo: "Observador — Recolocada espada na estátua de D. Afonso Henriques em Guimarães (20-04-2026)"
+    url: "https://observador.pt/2026/04/20/recolocada-espada-na-estatua-de-d-afonso-henriques-em-guimaraes/"
+    consultado: "2026-10-27"
+  - titulo: "DGT — LiDAR 2025 (MDT e MDS 50 cm e nuvem de pontos, folhas 186498 e 187498), CC BY 4.0. Alturas e cotas medidas para a maqueta"
+    url: "https://cdd.dgterritorio.gov.pt"
+  - titulo: "OpenStreetMap (ODbL) — plantas do Paço, da igreja e do casario, via Overture Maps 2026-10-21.0"
+    url: "https://www.openstreetmap.org/#map=19/41.4479/-8.2904"
 ---
+
+O castelo nasceu com o mosteiro. Na segunda metade do século X, a condessa Mumadona Dias, que herdara a propriedade de Vimaranes, mandou construir um mosteiro e, para defesa dos religiosos, um castelo. Num documento de 4 de dezembro de 968 refere-o já edificado, com o nome de São Mamede, e doa-o ao mosteiro. Dessa primeira construção não restam vestígios à vista, mas as escavações de 2003 e 2004 encontraram no interior estruturas do século X.
+
+No fim do século XI o conde D. Henrique remodelou e ampliou o castelo para fazer dele a sua residência; os vestígios dessa fase estão na zona da entrada. D. Afonso Henriques terá passado aqui a infância, e a 24 de junho de 1128 deu-se perto a batalha de São Mamede, contra as forças de D. Teresa.
+
+O castelo que hoje se vê é sobretudo das obras de D. Dinis, no fim do século XIII e no século XIV, que lhe deram a torre de menagem ao centro e a alcáçova encostada à muralha norte. Resistiu ao cerco de Henrique II de Castela em 1369 e foi cercado por D. João I em 1385, que mandou depois construir as torres que guardam as portas.
+
+Perdida a função militar, o castelo foi-se arruinando. Em 1653 já se pediam reparações nas Cortes, e em 1836 um vereador propôs demoli-lo para aproveitar a pedra. Na segunda metade do século XIX expropriaram-se as casas que o cercavam, e em 1881 foi classificado Monumento Histórico. Entre 1936 e 1940 a Direção-Geral dos Edifícios e Monumentos Nacionais consolidou e reconstruiu muralhas, torres, adarves e merlões, rebaixou a praça de armas e refez os pavimentos de madeira da torre de menagem. Foi reinaugurado a 4 de junho de 1940, nas comemorações dos Centenários. Em 2015 e 2016 a Direção Regional de Cultura do Norte melhorou os acessos e a segurança e abriu uma exposição nos três pisos da torre de menagem.
