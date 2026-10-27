@@ -4,14 +4,9 @@ import { caminhoFicha } from "../../lib/rotas";
 import { REGIOES, TIPOLOGIAS } from "../../lib/tipologias";
 import { useAtlas, type MonumentoResumo } from "../atlas/store";
 import { dadosMaqueta } from "../maqueta/dados";
+import { FichaConteudo } from "./FichaConteudo";
 
 const Maqueta = lazy(() => import("../maqueta/Maqueta"));
-
-const gms = (n: number, pos: string, neg: string) => {
-  const a = Math.abs(n);
-  const g = Math.floor(a), mm = Math.floor((a - g) * 60), s = Math.round(((a - g) * 60 - mm) * 60);
-  return `${g}° ${String(mm).padStart(2, "0")}′ ${String(s).padStart(2, "0")}″ ${n >= 0 ? pos : neg}`;
-};
 
 /** Ficha completa num painel lateral: o mapa continua visível (e navegável) à esquerda. */
 export function Ficha({ m, monumentos, onFechar }: { m: MonumentoResumo; monumentos: MonumentoResumo[]; onFechar: () => void }) {
@@ -35,11 +30,13 @@ export function Ficha({ m, monumentos, onFechar }: { m: MonumentoResumo; monumen
       <header className="ficha-cabeca">
         <p className="ficha-local">{local}</p>
         <h2>{m.nome}</h2>
+        {m.conteudo.subtitulo && <p className="ficha-subtitulo">{m.conteudo.subtitulo}</p>}
         <button className="fechar" aria-label="Fechar ficha" title="Fechar (Esc)" onClick={onFechar}>×</button>
       </header>
 
       <div className="ficha-corpo" ref={corpo}>
         <ul className="ficha-etiquetas">
+          {m.conteudo.estado && <li data-estado="conservacao">{m.conteudo.estado}</li>}
           <li>{TIPOLOGIAS[m.tipologia].nome}</li>
           {m.seculoOrigem && <li>{m.seculoOrigem}</li>}
           <li data-estado={m.estadoFicha}>{m.estadoFicha === "publicada" ? "Ficha publicada" : "Ficha em preparação"}</li>
@@ -70,47 +67,11 @@ export function Ficha({ m, monumentos, onFechar }: { m: MonumentoResumo; monumen
           )}
         </figure>
 
-        <div className="ficha-texto">
-          {m.html ? (
-            <div dangerouslySetInnerHTML={{ __html: m.html }} />
-          ) : (
-            <p>
-              A ficha histórica deste monumento está a ser preparada. Só será publicada com fontes documentadas, indicadas no fim desta página, e com a data de verificação.
-            </p>
-          )}
-          {m.notas.map((n) => (
-            <p key={n} className="ficha-aviso">{n}</p>
-          ))}
-        </div>
-
-        <section>
-          <h3>Localização</h3>
-          <dl className="ficha-dados">
-            <dt>Localidade</dt><dd>{m.localidade}</dd>
-            <dt>Concelho</dt><dd>{m.concelho}</dd>
-            <dt>Distrito</dt><dd>{m.distrito}</dd>
-            <dt>Coordenadas</dt>
-            <dd>
-              {gms(m.lat, "N", "S")} · {gms(m.lon, "E", "O")}
-              {!m.coordenadasVerificadas && <span className="ficha-pendente"> por verificar</span>}
-            </dd>
-          </dl>
-        </section>
-
-        <section>
-          <h3>Fontes</h3>
-          {m.fontes.length ? (
-            <ul className="ficha-fontes">
-              {m.fontes.map((f) => <li key={f.titulo}>{f.url ? <a href={f.url} rel="noopener" target="_blank">{f.titulo}</a> : f.titulo}</li>)}
-            </ul>
-          ) : (
-            <p className="ficha-vazio">Ainda sem fontes registadas.</p>
-          )}
-        </section>
+        <FichaConteudo m={m} />
 
         {vizinhos.length > 0 && (
           <section>
-            <h3>Mais em {REGIOES[m.regiao]}</h3>
+            <h3>Mais castelos em {REGIOES[m.regiao]}</h3>
             <ul className="ficha-vizinhos">
               {vizinhos.map((x) => (
                 <li key={x.id}>

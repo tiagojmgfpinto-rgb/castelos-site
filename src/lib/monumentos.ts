@@ -34,5 +34,20 @@ export function resumo(m: Monumento): MonumentoResumo {
     notas: d.notas,
     fontes: d.fontes,
     html: m.rendered?.html ?? "",
+    conteudo: {
+      outrasDesignacoes: d.outrasDesignacoes,
+      subtitulo: d.subtitulo,
+      estado: d.estado,
+      resumo: d.resumo,
+      fichaTecnica: { protecao: d.classificacao?.categoria, ...d.fichaTecnica },
+      oQueVer: d.oQueVer,
+      cronologia: d.cronologia,
+      medidas: d.medidas,
+      curiosidades: d.curiosidades,
+      imagens: d.imagens,
+      altitude: d.altitude,
+      visita: d.visita,
+      verificadoEm: d.verificadoEm,
+    },
   };
 }
