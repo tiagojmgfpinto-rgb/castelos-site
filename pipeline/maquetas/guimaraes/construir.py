@@ -503,14 +503,15 @@ def muralha(m, linha, esp, topo, fora, dentro_, fechada=False, ameias=True, mat=
         q = [ext[i], ext[j], par_int[j], par_int[i]]
         m.prisma(q, [a[i], a[j], a[j], a[i]], [a[i] + PARAPEITO, a[j] + PARAPEITO, a[j] + PARAPEITO, a[i] + PARAPEITO], mat)
     if ameias:
-        ameias_ao_longo(m, desvio(linha, -esp / 2 + 0.3, fechada), a + PARAPEITO, fechada, mat)
+        ameias_ao_longo(m, desvio(linha, -esp / 2 + 0.3, fechada), a + PARAPEITO, fechada, mat, seteira=1)
     return adarve
 
 
-def ameias_ao_longo(m, linha, z, fechada=False, mat=0, prof=0.6, dims=None):
+def ameias_ao_longo(m, linha, z, fechada=False, mat=0, prof=0.6, dims=None, seteira=None):
     """Merlões ao longo de uma polilinha; z é a cota do parapeito (escalar ou por vértice).
     O ritmo segue o pano todo, não cada segmento, para a linha densificada não mudar o desenho.
-    Com "ponta" nas medidas, cada merlão remata numa pirâmide (merlão chanfrado)."""
+    Com "ponta" nas medidas, cada merlão remata numa pirâmide (merlão chanfrado). Com seteira (o
+    índice do material escuro), um merlão em cada três tem uma seteira na face de fora (SIPA)."""
     MERLAO = dims or globals()["MERLAO"]
     pts = np.vstack([linha, linha[:1]]) if fechada else linha
     zs = np.full(len(pts), z) if np.ndim(z) == 0 else (np.append(z, z[:1]) if fechada else np.asarray(z))
@@ -529,6 +530,11 @@ def ameias_ao_longo(m, linha, z, fechada=False, mat=0, prof=0.6, dims=None):
         zc = zs[j] + (zs[j + 1] - zs[j]) * t
         u = unit(pts[j + 1] - pts[j])
         m.caixa(c, u, MERLAO["largura"], prof, zc, zc + MERLAO["altura"], mat)
+        if seteira is not None and i % 3 == 1:
+            n_ = np.array([u[1], -u[0]])  # o exterior fica à direita da linha
+            q = c + n_ * (prof / 2 + 0.02)
+            m.face([(*(q - u * 0.07), zc + 0.12), (*(q + u * 0.07), zc + 0.12),
+                    (*(q + u * 0.07), zc + MERLAO["altura"] - 0.1), (*(q - u * 0.07), zc + MERLAO["altura"] - 0.1)], seteira)
         if MERLAO.get("ponta"):
             w = np.array([-u[1], u[0]])
             hl, hp = MERLAO["largura"] / 2, prof / 2
@@ -548,7 +554,7 @@ def torre(m, base, pe, topo, mat=0):
     for i in range(len(base)):
         j = (i + 1) % len(base)
         m.prisma([base[i], base[j], interior[j], interior[i]], terraco, terraco + PARAPEITO, mat)
-    ameias_ao_longo(m, desvio(base, 0.3, True), terraco + PARAPEITO, True, mat)
+    ameias_ao_longo(m, desvio(base, 0.3, True), terraco + PARAPEITO, True, mat, seteira=1)
 
 
 def piramide(m, c, r, z0, z1, mat):
@@ -687,18 +693,24 @@ def textura_pedra(n=512):
         x = -int(r.uniform(0, 0.6) * m_px)
         while x < n:
             wf = int(r.uniform(0.60, 1.20) * m_px)
-            base = np.array([0.70, 0.68, 0.64]) * r.uniform(0.92, 1.06) + r.normal(0, 0.006, 3)
+            # granito de tons variados, do cinzento ao ocre (fotografias do castelo)
+            tom = r.choice(3, p=[0.55, 0.3, 0.15])
+            base = np.array([(0.68, 0.66, 0.62), (0.70, 0.66, 0.60), (0.63, 0.61, 0.58)][tom]) * r.uniform(0.93, 1.05) + r.normal(0, 0.005, 3)
             x0, x1 = max(x, 0), min(x + wf, n)
             y1 = min(y + hf, n)
             if x1 > x0:
                 tex[y:y1, x0:x1] = base
-                tex[y:y1, x0:min(x0 + 2, x1)] *= 0.88
+                tex[y:y1, x0:min(x0 + 3, x1)] *= 0.84
             x += wf
-        tex[y:min(y + 2, n)] *= 0.86
+        tex[y:min(y + 3, n)] *= 0.82
         y += hf
     yy, xx = np.mgrid[0:n, 0:n] / n
     grao = fbm(xx * 40, yy * 40, 1.5, 21)[..., None]
-    tex = tex * (0.92 + 0.12 * grao)
+    # escorrências e líquenes, mais escuros: senos de frequência inteira, para a textura repetir sem costura
+    fase = r.uniform(0, 2 * math.pi, 6)
+    manchas = sum(np.sin(2 * math.pi * (fx * xx + fy * yy) + ph) for (fx, fy), ph in zip(((3, 1), (5, 2), (2, 3), (7, 1), (4, 5), (1, 2)), fase))
+    manchas = (0.5 + manchas / 6)[..., None]
+    tex = tex * (0.92 + 0.12 * grao) * (0.92 + 0.09 * manchas)
     return np.clip(tex, 0, 1)
 
 
@@ -824,6 +836,41 @@ def telhado_ate(m, base, z, cume, mat=1):
     b, L, W = _retangulo(base)
     h = max(cume - z, 0.6)
     telhado_4aguas(m, b, z, math.degrees(math.atan(h / (W / 2))), mat)
+
+
+def aduelas(m, centro, u, normal, largura, soleira, nascenca, mat, quebrado=False, esp=0.5, saliencia=0.06):
+    """Moldura de cantaria de um vão: aduelas do arco (pleno ou quebrado) e ombreiras em fiadas
+    alternadas, um pouco salientes da face (normal para fora)."""
+    w = largura / 2
+    zn = soleira + nascenca
+    k = 11
+
+    def ponto(r_extra, t):  # t de 0 (arranque direito) a 1 (arranque esquerdo)
+        if quebrado:  # dois arcos de raio igual à largura, centrados nos arranques opostos
+            r = largura + r_extra
+            am = math.acos(w / r)  # os dois arcos encontram-se no eixo do vão
+            if t <= 0.5:
+                a = am * (t / 0.5)
+                return (w - r * math.cos(a), zn + r * math.sin(a))
+            a = am * ((1 - t) / 0.5)
+            return (-w + r * math.cos(a), zn + r * math.sin(a))
+        a = math.pi * (1 - t)
+        return ((w + r_extra) * math.cos(a), zn + (w + r_extra) * math.sin(a))
+    d = normal * saliencia
+    for i in range(k):
+        t0, t1 = i / k + 0.004, (i + 1) / k - 0.004  # junta fina entre aduelas
+        a0, a1 = ponto(0, t0), ponto(0, t1)
+        b0, b1 = ponto(esp, t0), ponto(esp, t1)
+        P_ = lambda q: (*(centro + u * q[0] + d), q[1])
+        m.face([P_(a0), P_(a1), P_(b1), P_(b0)][::-1], mat)
+        for (q0, q1) in ((a0, a1), (b1, b0)):  # espessura da saliência
+            m.face([(*(centro + u * q0[0]), q0[1]), (*(centro + u * q1[0]), q1[1]), P_(q1), P_(q0)], mat)
+    zs = np.linspace(soleira, zn, max(2, int(round(nascenca / 0.45))) + 1)
+    for j in range(len(zs) - 1):  # ombreiras: silhares alternadamente compridos e curtos
+        e_ = esp if j % 2 == 0 else esp * 0.6
+        for sg in (-1, 1):
+            cc = centro + u * sg * (w + e_ / 2) + normal * (saliencia / 2)
+            m.caixa(cc, u, e_, saliencia, zs[j] + 0.02, zs[j + 1] - 0.02, mat)
 
 
 def arco_quebrado(m, centro, u, normal, largura, soleira, nascenca, mat):
@@ -1169,6 +1216,10 @@ def paco():
                         (*(q + t * (lj / 2 + 0.18) + n_ * 0.03), zz + hj + 0.18), (*(q - t * (lj / 2 + 0.18) + n_ * 0.03), zz + hj + 0.18)], 3)
                 m.face([(*(q - t * lj / 2 + n_ * 0.05), zz), (*(q + t * lj / 2 + n_ * 0.05), zz),
                         (*(q + t * lj / 2 + n_ * 0.05), zz + hj), (*(q - t * lj / 2 + n_ * 0.05), zz + hj)], 2)
+                if lj > 1.0:  # mainel e travessa de cantaria (janela de cruz)
+                    m.caixa(q + n_ * 0.08, t, 0.14, 0.06, zz, zz + hj, 3)
+                    m.caixa(q + n_ * 0.08, t, lj, 0.06, zz + hj * 0.62, zz + hj * 0.62 + 0.14, 3)
+                    m.caixa(q + n_ * 0.12, t, lj + 0.5, 0.14, zz - 0.3, zz - 0.18, 3)  # peitoril saliente
     # Porta principal: a meio da fachada poente, entre os dois cunhais (fotografias)
     pm = puv(PACO_CORPOS["ala_poente"][0], (PACO_CORPOS["ala_poente"][2] + PACO_CORPOS["ala_poente"][3]) / 2)
     n_ = -PACO_U
@@ -1272,7 +1323,12 @@ def igreja():
             m.prisma([cc + 0.11 * np.array([math.cos(a_), math.sin(a_)]) for a_ in np.linspace(0, 2 * math.pi, 8, endpoint=False)], chao, zn - 0.25, 3)
             m.caixa(cc, v, 0.32, 0.3, zn - 0.25, zn, 3)
     arco(m, fc, v, nf, 2 * vao, chao, zn - chao, 0.1, 2)  # fundo do vão
-    arco(m, fc + nf * 0.02, v, nf, 2 * vao - 0.1, chao, zn - chao - 0.1, 0.1, 4)  # porta verde
+    arco(m, fc + nf * 0.02, v, nf, 2 * vao - 0.06, chao, zn - chao - 0.03, 0.1, 3)  # tímpano liso, de cantaria
+    m.caixa(fc + nf * 0.05, v, 2 * vao - 0.12, 0.04, chao, zn - 0.05, 4)  # porta verde, retangular, sob o tímpano
+    m.caixa(fc + nf * 0.07, v, 0.04, 0.03, chao + 0.05, zn - 0.15, 3)  # junta das duas folhas
+    for sgn in (-1, 1):  # duas mísulas em bola de cada lado do portal, à altura das impostas
+        cc = fc + v * sgn * (vao + 1.45) + nf * 0.2
+        m.prisma([cc + 0.17 * np.array([math.cos(a_), math.sin(a_)]) for a_ in np.linspace(0, 2 * math.pi, 10, endpoint=False)], zn + 0.15, zn + 0.5, 3)
     m.caixa(fc + nf * 0.04, v, 0.18, 0.05, chao + 5.0, chao + 6.0, 2)  # fresta da empena
     ct = res["nave"]["cumeeira"] - ZREF
     for (pc_, zc_) in ((fc + nf * 0.1, ct), (a0 + u * 0.2 + v * (W / 2) - nf * 0.1, res["capela_mor"]["cumeeira"] - ZREF)):
@@ -1281,8 +1337,11 @@ def igreja():
     bn = res["nave"]["beirado"] - ZREF
     for vv in (0.35, W - 0.35):  # contrafortes nos cunhais da fachada
         m.caixa(a0 + u * (L - 0.6) + v * (vv + (0.1 if vv < 1 else -0.1)), u, 0.9, 0.8, chao - 0.5, bn - 1.2, 0)
-    for k in range(3):  # escadaria do adro
-        m.caixa(fc + nf * (1.35 + 0.45 * (2 - k)), v, W - 1.0 + 0.6 * (2 - k), 0.5 + 0.9 * k, chao - 1.0, chao - 0.17 * (2 - k) - 0.01, 0)
+    for k in range(5):  # escadaria do adro: degraus largos e fundos, mais largos que a fachada (fotografia)
+        zt = chao - 0.16 * k - 0.01
+        if k and zt < float(cota(*(fc + nf * (0.45 + 1.1 * (k + 1))))) + 0.05:
+            break  # o terreno do adro já cobre este degrau
+        m.caixa(fc + nf * (0.45 + 0.55 * (k + 1)), v, W + 1.2 + 0.9 * k, 1.1 * (k + 1), chao - 1.2, zt, 0)
     # cachorrada sob os beirados da nave e da capela-mor, frestas altas nas paredes laterais
     for nome, (u0, u1, v0, v1) in (("nave", (cm, L - 0.2, 0.35, W - 0.35)), ("capela_mor", (0.2, cm + 0.3, 1.6, W - 1.6))):
         bz = res[nome]["beirado"] - ZREF
@@ -1295,7 +1354,7 @@ def igreja():
     m.caixa(a0 + u * 0.15 + v * (W / 2), v, 0.18, 0.05, chao + 2.6, chao + 3.8, 2)  # fresta da cabeceira
     ls = a0 + u * (cm + (L - cm) * 0.55) + v * 0.6
     arco(m, ls, u, -v, 1.1, chao, 1.7, 0.1, 2)  # porta lateral a sul
-    m.objeto("Igreja_Sao_Miguel", "igreja", ["pedra", "telha", "sombra", "cantaria", "madeira_verde"], GRUPOS["Igreja"], uv=3.0)
+    m.objeto("Igreja_Sao_Miguel", "igreja", ["pedra", "telha_velha", "sombra", "cantaria", "madeira_verde"], GRUPOS["Igreja"], uv=3.0)
     res["chao"] = chao + ZREF
     MEDIDAS["igreja"] = res
     return np.array([a0, a0 + u * L, a0 + u * L + v * W, a0 + v * W])
@@ -1308,7 +1367,8 @@ def estatua():
     """Pedestal de granito e figura de bronze: posição e altura total no LiDAR (o MDS sobe 5,5 m acima
     do chão); a divisão entre pedestal e figura e a forma da figura seguem as fotografias: o rei de
     pé, com cota de malha, túnica e manto, elmo cónico, o escudo no braço esquerdo e a espada erguida
-    na mão direita."""
+    na mão direita, de ponta para baixo, à frente do corpo. O pedestal é um tambor cilíndrico de
+    silhares de granito sobre degraus (fotografia)."""
     chao = float(cota(*ESTATUA))
     topo = float(np.max(celulas(centro=ESTATUA, raio=0.8, sem_veg=False)))  # a nuvem classifica-a como vegetação
     alt = topo - chao
@@ -1316,13 +1376,15 @@ def estatua():
     c = ESTATUA
     frente = unit(P(-47, -162) - c)  # virada para o Paço (fotografia)
     lado = np.array([frente[1], -frente[0]])  # direita da figura
-    # pedestal: plataforma em dois degraus, soco com moldura, fuste, cornija e plinto
+    # pedestal: dois degraus quadrados, tambor cilíndrico com base e cornija molduradas
     zp = chao + alt * 0.56  # topo do pedestal
-    for (lg, z0_, z1_) in ((3.6, chao - 0.5, chao + 0.25), (3.0, chao + 0.25, chao + 0.5), (2.1, chao + 0.5, chao + 1.05),
-                           (1.85, chao + 1.05, chao + 1.25), (1.45, chao + 1.25, zp - 0.5), (1.75, zp - 0.5, zp - 0.3),
-                           (1.6, zp - 0.3, zp)):
+    for (lg, z0_, z1_) in ((3.4, chao - 0.5, chao + 0.22), (2.7, chao + 0.22, chao + 0.44)):
         m.caixa(c, frente, lg, lg, z0_, z1_, 0)
-    m.caixa(c + frente * 0.735, lado, 0.9, 0.04, chao + 1.9, chao + 2.4, 1)  # placa de bronze com a inscrição
+    roda = lambda r, k=24: [c + r * (lado * math.cos(a_) + frente * math.sin(a_)) for a_ in np.linspace(0, 2 * math.pi, k, endpoint=False)]
+    for (r, z0_, z1_) in ((1.0, chao + 0.44, chao + 0.7), (0.9, chao + 0.7, chao + 0.82), (0.82, chao + 0.82, zp - 0.42),
+                          (0.9, zp - 0.42, zp - 0.3), (0.98, zp - 0.3, zp - 0.12), (0.86, zp - 0.12, zp)):
+        m.prisma(roda(r)[::-1] if area(np.array(roda(r))) < 0 else roda(r), z0_, z1_, 0)
+    m.caixa(c + frente * 0.84, lado, 0.7, 0.04, chao + 1.5, chao + 1.9, 1)  # placa de bronze com a inscrição
     hf = topo - zp
     s = hf / 2.15  # medidas da figura pensadas para 2,15 m
 
@@ -1367,14 +1429,16 @@ def estatua():
         q = [(x0, -0.17, 1.6), (x1, -0.17, 1.6), (x1 * 1.3, -0.3, 0.12), (x0 * 1.3, -0.3, 0.12)]
         m.face([(*(c + lado * a * s + frente * b * s), zp + z * s) for a, b, z in q], 1)
         m.face([(*(c + lado * a * s + frente * (b - 0.03) * s), zp + z * s) for a, b, z in q][::-1], 1)
-    # braço direito caído, a mão a segurar a espada erguida
-    membro((0.29, 0, 1.58), (0.33, 0.06, 1.25), 0.065, 0.06)
-    membro((0.33, 0.06, 1.25), (0.3, 0.2, 1.05), 0.06, 0.05)
-    mx, my, mz = 0.3, 0.22, 1.02
-    m.caixa(c + lado * mx * s + frente * my * s, frente, 0.07 * s, 0.05 * s, zp + (mz - 0.12) * s, zp + (mz + 0.12) * s, 1)  # punho
-    m.caixa(c + lado * mx * s + frente * my * s, lado, 0.32 * s, 0.05 * s, zp + (mz + 0.12) * s, zp + (mz + 0.16) * s, 1)  # guarda
-    m.caixa(c + lado * mx * s + frente * my * s, lado, 0.07 * s, 0.02 * s, zp + (mz + 0.16) * s, zp + (mz + 1.05) * s, 1)  # lâmina
-    piramide(m, c + lado * mx * s + frente * my * s, 0.035 * s, zp + (mz + 1.05) * s, zp + (mz + 1.15) * s, 1)
+    # braço direito dobrado, a mão sobre o punho da espada, que assenta de ponta no chão à frente
+    membro((0.29, 0, 1.58), (0.34, 0.05, 1.25), 0.065, 0.06)
+    membro((0.34, 0.05, 1.25), (0.2, 0.25, 1.08), 0.06, 0.05)
+    mx, my, mz = 0.17, 0.3, 1.05
+    q_ = c + lado * mx * s + frente * my * s
+    m.caixa(q_, frente, 0.09 * s, 0.09 * s, zp + (mz + 0.06) * s, zp + (mz + 0.13) * s, 1)  # pomo
+    m.caixa(q_, frente, 0.05 * s, 0.05 * s, zp + (mz - 0.12) * s, zp + (mz + 0.06) * s, 1)  # punho
+    m.caixa(q_, lado, 0.34 * s, 0.05 * s, zp + (mz - 0.16) * s, zp + (mz - 0.12) * s, 1)  # guarda
+    m.caixa(q_, lado, 0.07 * s, 0.02 * s, zp + 0.14 * s, zp + (mz - 0.16) * s, 1)  # lâmina
+    m.caixa(q_, lado, 0.035 * s, 0.02 * s, zp + 0.08 * s, zp + 0.14 * s, 1)  # ponta
     # braço esquerdo dobrado, a segurar o escudo de amêndoa à frente do corpo
     membro((-0.29, 0, 1.58), (-0.33, 0.05, 1.3), 0.065, 0.06)
     membro((-0.33, 0.05, 1.3), (-0.2, 0.22, 1.2), 0.06, 0.05)
@@ -1382,7 +1446,7 @@ def estatua():
     for k_, dy in enumerate((0.27, 0.3)):
         pts = [(*(c + lado * x * s + frente * (dy - 0.03 * abs(x + 0.2) / 0.22) * s), zp + z * s) for x, z in esc]
         m.face(pts if k_ else pts[::-1], 1)
-    m.objeto("Estatua_Afonso_Henriques", "estatua", ["cantaria", "bronze", "sombra"], GRUPOS["Estatua"], uv=2.0)
+    m.objeto("Estatua_Afonso_Henriques", "estatua", ["pedra", "bronze", "sombra"], GRUPOS["Estatua"], uv=2.0)
     MEDIDAS["estatua"] = {"chao": chao + ZREF, "topo": topo + ZREF, "altura_total": alt}
 
 
@@ -1419,7 +1483,8 @@ material("cal", (0.94, 0.93, 0.89), 0.85)
 material("telha", (0.66, 0.36, 0.25), 0.8)
 material("telha_viva", (0.80, 0.42, 0.24), 0.8)
 material("telha_paco", (0.34, 0.27, 0.24), 0.85)  # telha velha, escura, do Paço (fotografia aérea)
-material("telha_galeria", (0.48, 0.33, 0.26), 0.85)  # telhados da galeria do pátio, mais vivos
+material("telha_galeria", (0.48, 0.33, 0.26), 0.85)
+material("telha_velha", (0.50, 0.38, 0.32), 0.85)  # telhado da igreja, escurecido (fotografia aérea)  # telhados da galeria do pátio, mais vivos
 material("madeira_escura", (0.40, 0.20, 0.14), 0.75)  # armação da capela, pintada de vermelho-escuro
 material("cantaria", (0.80, 0.78, 0.73), 0.9)
 material("terreno", (1, 1, 1), 0.97, grao, vcor=True)
@@ -1432,7 +1497,7 @@ material("arvore", (1, 1, 1), 0.9, None, vcor=True)
 material("madeira", (0.42, 0.27, 0.15), 0.8)
 material("madeira_verde", (0.20, 0.45, 0.35), 0.7)
 material("tijolo", (0.62, 0.34, 0.24), 0.85)
-material("bronze", (0.24, 0.26, 0.22), 0.5)
+material("bronze", (0.22, 0.27, 0.23), 0.5)  # bronze com pátina esverdeada (fotografia)
 MATS["bronze"].node_tree.nodes["Principled BSDF"].inputs["Metallic"].default_value = 0.6
 
 MEDIDAS = {}  # o que se mediu no LiDAR, para conferir e citar no guimaraes.json
@@ -1542,7 +1607,8 @@ for s in np.linspace(0.15, 0.85, 3):  # esteios até ao chão
 m.objeto("Passadico", "passadico", ["madeira"], GRUPOS["Torre_Menagem"], uv=None)
 
 print("portas…")
-# Porta principal: vão em arco entre as duas torres, com a escadaria semicircular à frente (SIPA)
+# Porta principal (SIPA): por fora, arco quebrado; por dentro, o vão é de volta perfeita. Escadaria
+# semicircular à frente, entre as duas torres. Aduelas e ombreiras em cantaria (fotografias).
 m = Malha()
 c, ang = PORTA_PRINCIPAL
 u = np.array([math.cos(math.radians(ang + 90)), math.sin(math.radians(ang + 90))])  # ao longo do pano
@@ -1554,16 +1620,52 @@ fora_ = float(cota(*(c + out * 4.0)))
 adarve = MEDIDAS["muralha_nascente"]["adarve_mediano"] - ZREF
 vao = min(distancia(np.array([c[0]]), np.array([c[1]]), torres[t_], True)[0][0] for t_ in ("porta_principal_n", "porta_principal_s"))
 m.caixa(c - out * 0.2, u, 2 * vao + 0.6, 2.4, sole - 1.0, adarve, 0)
-arco(m, c + out * 1.0, u, out, 2.0, sole, 2.4, 0.1, 1)
-arco(m, c - out * 1.42, u, -out, 2.0, sole, 2.4, 0.1, 1)
+arco_quebrado(m, c + out * 1.0, u, out, 2.2, sole, 2.0, 1)
+aduelas(m, c + out * 1.0, u, out, 2.2, sole, 2.0, 2, quebrado=True)
+arco(m, c - out * 1.42, u, -out, 2.6, sole, 2.2, 0.1, 1)
+aduelas(m, c - out * 1.42, u, -out, 2.6, sole, 2.2, 2)
 n_deg = max(2, int(round((sole - fora_) / 0.3)))
-for k in range(n_deg):  # degraus em meia-lua
+for k in range(n_deg):  # degraus em meia-lua, de granito como os panos
     r_ = 1.4 + (k + 1) * 0.55
     z1 = sole - k * (sole - fora_) / n_deg
-    arc = [c + out * 1.1 + (u * math.cos(a) + out * math.sin(a)) * r_ for a in np.linspace(0, math.pi, 13)]
-    m.prisma(arc, fora_ - 0.5, z1, 2)
+    arc = [c + out * 1.1 + (u * math.cos(a) + out * math.sin(a)) * r_ for a in np.linspace(0, math.pi, 25)]
+    m.prisma(arc, fora_ - 0.5, z1, 0)
 m.objeto("Porta_Principal", "porta_principal", ["pedra", "sombra", "cantaria"], GRUPOS["Portas"])
 MEDIDAS["porta_principal"] = {"soleira": sole + ZREF, "chao_fora": fora_ + ZREF, "degraus": n_deg}
+# Duas escadas estreitas e divergentes, junto à porta principal, sobem ao caminho de ronda (SIPA):
+# encostadas à face de dentro dos panos nascente, uma para sul e outra para noroeste. Largura e
+# arranque estimados; os degraus seguem o chão medido e acabam à cota do adarve medida.
+m = Malha()
+esc = {}
+for pano, do_fim in (("muralha_nascente", True), ("muralha_nascente_norte", False)):
+    pf = PERFIS[pano]
+    lin, topo_ = pf[:, :2], pf[:, 2]
+    if do_fim:
+        lin, topo_ = lin[::-1], topo_[::-1]
+    esp = PANOS[pano][1]
+    eixo = desvio(lin, (esp / 2 + 0.55) * (-1 if do_fim else 1), False)  # dentro fica à esquerda do sentido original
+    seg = np.linalg.norm(np.diff(eixo, axis=0), axis=1)
+    acum = np.concatenate([[0], np.cumsum(seg)])
+    def em(sv):
+        j = int(np.clip(np.searchsorted(acum, sv) - 1, 0, len(seg) - 1))
+        t = (sv - acum[j]) / max(seg[j], 1e-9)
+        return eixo[j] + (eixo[j + 1] - eixo[j]) * t, unit(eixo[j + 1] - eixo[j]), topo_[j] + (topo_[j + 1] - topo_[j]) * t
+    sv = 5.2  # arranca para lá da torre da porta
+    p0, t0, _ = em(sv)
+    z = float(cota(*p0))
+    n = 0
+    while True:
+        p, t, tp = em(sv)
+        alvo = tp - PARAPEITO - ALT_MERLAO
+        z = min(z + 0.3, alvo)
+        m.caixa(p + t * 0.17, t, 0.36, 1.1, float(cota(*p)) - 0.6, z, 0)
+        n += 1
+        sv += 0.27  # escada íngreme, como as do castelo
+        if z >= alvo - 0.01 or sv > acum[-1] - 2.0:
+            break
+    esc[pano] = {"degraus": n, "comprimento": round(n * 0.27, 1), "chega_ao_adarve": bool(z >= alvo - 0.01)}
+m.objeto("Escadas_Adarve", "porta_principal", ["pedra"], GRUPOS["Portas"])
+MEDIDAS["escadas_adarve"] = esc
 # Porta da Traição: arco quebrado entre as duas torres do pano poente (SIPA)
 m = Malha()
 # o bloco vai de centro a centro das duas torres, para ficar preso a ambas
@@ -1576,9 +1678,10 @@ if out @ np.array([-1.0, 0]) < 0:
 sole = float(np.median(cota(*np.array([c, c + out * 0.5, c - out * 0.5]).T)))
 adarve = MEDIDAS["muralha_noroeste"]["adarve_mediano"] - ZREF
 m.caixa(c, u, float(np.linalg.norm(cn - cs)), 2.6, sole - 1.0, adarve, 0)
-arco_quebrado(m, c + out * 1.3, u, out, 1.5, sole, 1.6, 1)
-arco_quebrado(m, c - out * 1.3, u, -out, 1.5, sole, 1.6, 1)
-m.objeto("Porta_Traicao", "porta_traicao", ["pedra", "sombra"], GRUPOS["Portas"])
+for sg in (1, -1):
+    arco_quebrado(m, c + sg * out * 1.3, u, sg * out, 1.5, sole, 1.6, 1)
+    aduelas(m, c + sg * out * 1.3, u, sg * out, 1.5, sole, 1.6, 2, quebrado=True, esp=0.42)
+m.objeto("Porta_Traicao", "porta_traicao", ["pedra", "sombra", "cantaria"], GRUPOS["Portas"])
 MEDIDAS["porta_traicao"] = {"soleira": sole + ZREF}
 
 print("paço, igreja e estátua…")
@@ -1898,6 +2001,8 @@ if "--vistas" in sys.argv:
         vista("castelo_ne", 40, 25, 150, lente=50, alvo_xy=tuple(CAST), alvo_z=zc + 6)
         vista("castelo_rente", 245, 6, 90, lente=35, alvo_xy=tuple(CAST), alvo_z=zc + 8)
         vista("porta_principal", 75, 8, 45, lente=35, alvo_xy=tuple(P(20, 6)), alvo_z=zc + 6)
+        vista("escadas_adarve", 185, 50, 30, lente=28, alvo_xy=tuple(P(15, 4)), alvo_z=zc + 3)
+        vista("escada_sul", 200, 35, 16, lente=28, alvo_xy=tuple(P(16, -4)), alvo_z=zc + 3)
         vista("paco_aereo", 200, 38, 170, lente=50, alvo_xy=tuple(P(-47, -162)), alvo_z=float(cota(*P(-47, -162))) + 10)
         vista("paco_estatua", 305, 10, 110, lente=35, alvo_xy=tuple(P(-60, -145)), alvo_z=float(cota(*P(-60, -145))) + 9)
         vista("igreja_fachada", 248, 10, 38, lente=35, alvo_xy=tuple(P(-52, -78)), alvo_z=float(cota(*P(-52, -78))) + 4)

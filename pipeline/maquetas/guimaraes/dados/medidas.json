@@ -172,6 +172,18 @@
   "chao_fora": 239.5,
   "degraus": 6
  },
+ "escadas_adarve": {
+  "muralha_nascente": {
+   "degraus": 16,
+   "comprimento": 4.3,
+   "chega_ao_adarve": true
+  },
+  "muralha_nascente_norte": {
+   "degraus": 21,
+   "comprimento": 5.7,
+   "chega_ao_adarve": false
+  }
+ },
  "porta_traicao": {
   "soleira": 238.5
  },

@@ -1,6 +1,6 @@
 # Maqueta 3D do Castelo de Guimarães (estado atual)
 
-Versão 0.2, **provisória**. Gerada por código, à escala 1:1 e georreferenciada (origem no centro da torre de menagem, 41.447926, −8.290429; x para este, y para norte; no visor, −z é o norte). Inclui o castelo, a Igreja de São Miguel do Castelo, o Paço dos Duques de Bragança e a estátua de D. Afonso Henriques. O relevo, as plantas das torres, as cotas e as alturas são medidos no LiDAR da DGT de 2025.
+Versão 0.3, **provisória**. Gerada por código, à escala 1:1 e georreferenciada (origem no centro da torre de menagem, 41.447926, −8.290429; x para este, y para norte; no visor, −z é o norte). Inclui o castelo, a Igreja de São Miguel do Castelo, o Paço dos Duques de Bragança e a estátua de D. Afonso Henriques. O relevo, as plantas das torres, as cotas e as alturas são medidos no LiDAR da DGT de 2025.
 
 ## Como reconstruir
 
@@ -36,7 +36,8 @@ O `bpy` do PyPI não traz o Draco, por isso o script comprime o GLB com `npx @gl
 - **Ruas**: o OSM não traz o pavimento; as ruas de automóveis vão em asfalto com lancis e os passeios, escadas e caminhos em lajeado de granito.
 - **Igreja**: nave e capela-mor tiradas das células de classe edifício, com cumeeiras e beirados medidos.
 - **Estátua**: posição do OSM, altura total medida na nuvem de pontos.
-- **Estimativas**: espessura das muralhas, desenho das ameias chanfradas e parapeito, frestas, janelas da alcáçova, arcos das portas, percurso do passadiço, janelas e arcarias do Paço, figura da estátua, portal e cachorrada da igreja, guaritas do Paço e a forma das árvores.
+- **Portas e escadas (SIPA)**: a porta principal tem arco quebrado por fora e de volta perfeita por dentro, e a da Traição arco quebrado; ambas com aduelas e ombreiras de cantaria (`aduelas()`). Junto à porta principal, duas escadas estreitas e divergentes sobem ao caminho de ronda, encostadas aos panos nascente; os degraus partem do chão medido e acabam à cota do adarve medida. Um merlão em cada três tem seteira.
+- **Estimativas**: espessura das muralhas, desenho das ameias chanfradas e parapeito, frestas e seteiras, janelas da alcáçova, medidas das aduelas, arranque e largura das escadas do adarve, percurso do passadiço, janelas de cruz e arcarias do Paço, figura e tambor da estátua, portal (tímpano, mísulas), cachorrada e escadaria da igreja, guaritas do Paço e a forma das árvores.
 
 ## Onde está a leitura das fontes
 
