@@ -970,41 +970,94 @@ def paco():
         ameias_ao_longo(m, np.array([a, b]), topo_int - MERLAO_PACO["altura"], False, 0, prof=0.4, dims=MERLAO_PACO)
     # cantos do pátio casados com os cantos da parede interior
     pc = np.array([pat[int(np.argmin(np.hypot(*(pat - q).T)))] for q in anel_int]) if len(pat) >= 4 else anel_int
-    m.prisma(pat, z0, beirado_g, 0, topo=False)
     ext_g = desvio(pc, -0.5, True)  # o beirado sai meio metro sobre o pátio
     capela_v = ((PACO_CORPOS["capela"][2] + PACO_CORPOS["capela"][3]) / 2)
     vv_ = lambda q: float((q - PACO_O) @ PACO_V)
     for i in range(4):
         j = (i + 1) % 4
         A0, A1, B0, B1 = ext_g[i], ext_g[j], anel_int[i], anel_int[j]
+        ta = lambda v_: (vv_(A0) - v_) / (vv_(A0) - vv_(A1))
+        tb = lambda v_: (vv_(B0) - v_) / (vv_(B0) - vv_(B1))
         if i == 2:  # lado da capela: o telhado da galeria interrompe-se no alpendre
-            cortes = [(vv_(A0), capela_v + 3.6), (capela_v - 3.6, vv_(A1))]
+            cortes = [((0, 0), (ta(capela_v + 3.6), tb(capela_v + 3.6))), ((ta(capela_v - 3.6), tb(capela_v - 3.6)), (1, 1))]
         else:
-            cortes = [(None, None)]
-        for va, vb in cortes:
-            if va is None:
-                a0, a1, b0, b1 = A0, A1, B0, B1
-            else:
-                ta = lambda v_: (vv_(A0) - v_) / (vv_(A0) - vv_(A1))
-                tb = lambda v_: (vv_(B0) - v_) / (vv_(B0) - vv_(B1))
-                a0, a1 = A0 + (A1 - A0) * ta(va), A0 + (A1 - A0) * ta(vb)
-                b0, b1 = B0 + (B1 - B0) * tb(va), B0 + (B1 - B0) * tb(vb)
+            cortes = [((0, 0), (1, 1))]
+        for (sa0, sb0), (sa1, sb1) in cortes:
+            a0, a1 = A0 + (A1 - A0) * sa0, A0 + (A1 - A0) * sa1
+            b0, b1 = B0 + (B1 - B0) * sb0, B0 + (B1 - B0) * sb1
             m.face([(*a0, beirado_g - 0.15), (*a1, beirado_g - 0.15), (*b1, alto_g), (*b0, alto_g)], 5)
-    # arcaria e galeria em cada lado do pátio
-    for i in range(len(pat)):
-        a, c = pat[i], pat[(i + 1) % len(pat)]
+    # Claustro (fotografia do pátio): no térreo, arcaria de arcos quebrados sobre pilares, aberta para
+    # uma quadra coberta; no andar nobre, galeria aberta com colunas sobre um peitoril, sob o telhado de
+    # uma água. A parede do fundo das duas galerias fica 2,5 m para dentro, com portas e janelas.
+    FUNDO = 2.5
+    z1 = zc + 5.0  # teto da quadra térrea
+    z2 = zc + 5.4  # chão da galeria de cima
+    zn = zc + 2.0  # nascença dos arcos
+    fundo = desvio(pc, FUNDO, True)
+    z_fundo = []
+    for i in range(4):
+        j = (i + 1) % 4
+        D = np.linalg.norm((ext_g[i] + ext_g[j]) / 2 - (anel_int[i] + anel_int[j]) / 2)
+        z_fundo.append(beirado_g - 0.15 + (alto_g - beirado_g + 0.15) * (FUNDO + 0.5) / max(D, FUNDO + 1.0))
+    for i in range(4):
+        j = (i + 1) % 4
+        a, c = pc[i], pc[j]
         L = np.linalg.norm(c - a)
         t = unit(c - a)
         n_ = np.array([t[1], -t[0]])  # para o pátio
+        fa, fc_ = fundo[i], fundo[j]
+        zf = z_fundo[i]
+        # parede do fundo, chão e teto das galerias
+        m.face([(*fa, z0), (*fc_, z0), (*fc_, zf), (*fa, zf)], 0)
+        m.face([(*a, z2), (*c, z2), (*fc_, z2), (*fa, z2)], 0)
+        m.face([(*fa, z1), (*fc_, z1), (*c, z1), (*a, z1)], 0)
+        m.face([(*a, zc - 0.3), (*c, zc - 0.3), (*fc_, zc - 0.3), (*fa, zc - 0.3)][::-1], 0)
+        # arcaria térrea: pilares e tímpanos com o recorte dos arcos quebrados
         k = max(1, int(round(L / 3.4)))
-        for s in (np.arange(k) + 0.5) / k:
-            q = a + (c - a) * s
-            arco_quebrado(m, q, t, n_, 2.2, zc, 1.7, 2)
-            m.caixa(q + n_ * 0.04, t, L / k - 0.5, 0.05, zc + 5.4, beirado_g - 0.5, 2)
-        for s in np.arange(k + 1) / k:
-            q = a + (c - a) * s
-            m.caixa(q + n_ * 0.18, t, 0.34, 0.34, zc + 5.2, beirado_g - 0.2, 3)  # colunas da galeria
-        m.caixa((a + c) / 2 + n_ * 0.1, t, L, 0.3, zc + 5.0, zc + 5.4, 3)  # cornija do andar nobre
+        passo = L / k
+        pil = 0.7
+        for s_ in np.arange(k + 1) / k:
+            q = a + (c - a) * s_
+            m.caixa(q, t, pil, 0.8, zc - 0.3, z1, 0)
+        for b_ in range(k):
+            q0 = a + t * (b_ * passo + pil / 2)
+            q1 = a + t * ((b_ + 1) * passo - pil / 2)
+            w = np.linalg.norm(q1 - q0)
+            curva = []
+            for kk in range(13):  # arco quebrado: cada metade com centro no arranque oposto
+                if kk <= 6:
+                    ang = math.radians(60) * kk / 6
+                    x, zz = w - w * math.cos(ang), w * math.sin(ang)
+                else:
+                    ang = math.radians(60) * (12 - kk) / 6
+                    x, zz = w * math.cos(ang), w * math.sin(ang)
+                curva.append((x, zz))
+            curva.sort(key=lambda p_: p_[0])
+            for dn_, sg in ((0.4, 1), (-0.4, -1)):  # face para o pátio e face para a quadra
+                poly = [(*(q0 + n_ * dn_ + t * x), zn + min(zz, z1 - zn - 0.25)) for x, zz in curva]
+                poly += [(*(q1 + n_ * dn_), z1), (*(q0 + n_ * dn_), z1)]
+                m.face(poly if sg > 0 else poly[::-1], 0)
+            for kk in range(len(curva) - 1):  # intradorso do arco
+                (x0_, z0_), (x1_, z1_) = curva[kk], curva[kk + 1]
+                za_, zb_ = zn + min(z0_, z1 - zn - 0.25), zn + min(z1_, z1 - zn - 0.25)
+                m.face([(*(q0 + t * x0_ + n_ * 0.4), za_), (*(q0 + t * x1_ + n_ * 0.4), zb_),
+                        (*(q0 + t * x1_ - n_ * 0.4), zb_), (*(q0 + t * x0_ - n_ * 0.4), za_)], 3)
+            # portas no fundo da quadra
+            qm = fa + (fc_ - fa) * ((b_ + 0.5) / k)
+            if b_ % 2 == 0:
+                m.caixa(qm + n_ * 0.03, t, 1.2, 0.05, zc, zc + 2.5, 4)
+            m.caixa(qm + n_ * 0.03, t, 1.0, 0.05, z2 + 1.0, z2 + 2.6, 2)  # janelas da galeria de cima
+        m.caixa((a + c) / 2, t, L + 0.8, 0.9, z1, z2, 3)  # cornija entre os dois pisos
+        # galeria de cima: peitoril, colunas com base e capitel, e trave de madeira no beirado
+        m.caixa((a + c) / 2 + n_ * 0.2, t, L, 0.35, z2, z2 + 0.9, 0)
+        ku = max(2, int(round(L / 2.4)))
+        for s_ in np.arange(ku + 1) / ku:
+            q = a + (c - a) * s_ + n_ * 0.2
+            m.caixa(q, t, 0.36, 0.36, z2 + 0.9, z2 + 1.1, 3)
+            m.prisma([q + 0.13 * np.array([math.cos(a_), math.sin(a_)]) for a_ in np.linspace(0, 2 * math.pi, 8, endpoint=False)],
+                     z2 + 1.1, beirado_g - 0.55, 3)
+            m.caixa(q, t, 0.4, 0.4, beirado_g - 0.55, beirado_g - 0.35, 3)
+        m.caixa((a + c) / 2 + n_ * 0.2, t, L + 0.4, 0.3, beirado_g - 0.35, beirado_g - 0.12, 4)
 
     # Capela (ala nascente): na galeria, diante do portal românico da capela, um alpendre de duas águas
     # com a armação de madeira em arco quebrado virada ao pátio (fotografia do pátio).
@@ -1014,7 +1067,7 @@ def paco():
     u_fr = u_beir - 0.6
     ap = alto_g + 2.2  # vértice do alpendre
     for sgn in (-1, 1):
-        m.face([(*puv(u_fr, vc + sgn * lw), beirado_g - 0.3), (*puv(ui1, vc + sgn * lw), beirado_g + 0.6),
+        m.face([(*puv(u_fr, vc + sgn * lw), beirado_g - 0.3), (*puv(ui1, vc + sgn * lw), alto_g),
                 (*puv(ui1, vc), ap), (*puv(u_fr, vc), ap)][:: (1 if sgn > 0 else -1)], 5)
     # empena aberta: frechais, arco quebrado e pendural em madeira
     dn = -PACO_U  # para o pátio
@@ -1054,8 +1107,11 @@ def paco():
     viga(puv(uu, vc), ztop_arco, puv(uu, vc), ap - 0.2, 0.22)  # pendural
     for sgn in (-1, 1):
         viga(puv(uu, vc + sgn * hw), zc + 5.4, puv(uu, vc + sgn * hw), base_z, 0.3)  # pés do arco
-    # portal da capela na parede do fundo: arco pleno com arquivoltas e vitral escuro
-    pp = puv(ui1, vc)
+    # parede do fundo da galeria sob o alpendre, em empena, e o portal da capela nela
+    u_fundo = float(np.median([(q - PACO_O) @ PACO_U for q in fundo if (q - PACO_O) @ PACO_U > 30]))
+    zf = z_fundo[2]
+    m.face([(*puv(u_fundo - 0.02, vc - lw), zf - 0.2), (*puv(u_fundo - 0.02, vc + lw), zf - 0.2), (*puv(u_fundo - 0.02, vc), ap - 0.1)], 0)
+    pp = puv(u_fundo, vc)
     for k, (lg, mt) in enumerate(((3.4, 3), (2.7, 0), (2.1, 3), (1.5, 2))):
         arco(m, pp + dn * (0.02 + 0.02 * k), PACO_V, dn, lg, zc + 5.4, 2.4 - 0.1 * k, 0.1, mt)
 
@@ -1363,7 +1419,7 @@ material("cal", (0.94, 0.93, 0.89), 0.85)
 material("telha", (0.66, 0.36, 0.25), 0.8)
 material("telha_viva", (0.80, 0.42, 0.24), 0.8)
 material("telha_paco", (0.34, 0.27, 0.24), 0.85)  # telha velha, escura, do Paço (fotografia aérea)
-material("telha_galeria", (0.60, 0.38, 0.27), 0.85)  # telhados da galeria do pátio, mais vivos
+material("telha_galeria", (0.48, 0.33, 0.26), 0.85)  # telhados da galeria do pátio, mais vivos
 material("madeira_escura", (0.40, 0.20, 0.14), 0.75)  # armação da capela, pintada de vermelho-escuro
 material("cantaria", (0.80, 0.78, 0.73), 0.9)
 material("terreno", (1, 1, 1), 0.97, grao, vcor=True)
