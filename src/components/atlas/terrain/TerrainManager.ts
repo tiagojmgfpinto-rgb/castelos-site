@@ -28,8 +28,8 @@ const N = 257;
 const SEGMENTS = 128;
 const SPLIT = 2.1; // dividir um nó quando a câmara está a menos de SPLIT x o seu lado
 const MAX_CACHE_GEOM = 220;
-const FUNDO_MAR = 0.12; // relevo submarino suavizado no sombreado
-const REFORCO_SOMBRA = 1.6; // o sombreado acentua o relevo mais do que a geometria, como num mapa de relevo
+const FUNDO_MAR = 0.45; // relevo submarino, suavizado, no sombreado: a plataforma e os canhões leem-se como no castillos.site
+const REFORCO_SOMBRA = 2.6; // o sombreado acentua o relevo mais do que a geometria, como num mapa de relevo
 
 const k = (z: number, x: number, y: number) => `${z}/${x}/${y}`;
 const parse = (key: string) => key.split("/").map(Number) as [number, number, number];
@@ -205,6 +205,10 @@ export class TerrainManager {
         if (this.geoms.size <= MAX_CACHE_GEOM * 0.8) break;
       }
     }
+  }
+
+  get ladoKm() {
+    return this.sizeKm;
   }
 
   get pendentes() {

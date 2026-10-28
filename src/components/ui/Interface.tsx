@@ -1,225 +1,312 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BASE } from "../../lib/base";
+import { CIDADES } from "../../data/cidades";
 import { paraCena, projectar, TERRITORIOS, type TerritorioId } from "../../lib/territorios";
 import { REGIOES, TIPOLOGIAS, type Regiao, type Tipologia } from "../../lib/tipologias";
 import { camaraApi } from "../atlas/Camara";
 import { useAtlas, visivel, type MonumentoResumo } from "../atlas/store";
+import { Escudo, IconeTipo, Rosa } from "./Icones";
 
 const normalizar = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
+/** "século XII" -> "s. XII", como no índice do castillos.site. */
+export const seculoCurto = (s?: string) => (s ? s.replace(/^s[ée]culos?\s+/i, "s. ") : "");
+
+/** Os 18 distritos do Continente e as duas regiões autónomas, pela ordem alfabética. */
+const DISTRITOS: { nome: string; chave: string; territorio: TerritorioId }[] = [
+  ...["Aveiro", "Beja", "Braga", "Bragança", "Castelo Branco", "Coimbra", "Évora", "Faro", "Guarda", "Leiria", "Lisboa", "Portalegre", "Porto", "Santarém", "Setúbal", "Viana do Castelo", "Vila Real", "Viseu"].map(
+    (nome) => ({ nome, chave: nome, territorio: "continente" as TerritorioId }),
+  ),
+  { nome: "Açores", chave: "Região Autónoma dos Açores", territorio: "acores" },
+  { nome: "Madeira", chave: "Região Autónoma da Madeira", territorio: "madeira" },
+];
+
+const plural = (n: number) => `${n} ${n === 1 ? "castelo" : "castelos"}`;
+
 export function Interface({ monumentos, vistaInicial }: { monumentos: MonumentoResumo[]; vistaInicial: () => void }) {
-  const territorio = useAtlas((s) => s.territorio);
   const carregamento = useAtlas((s) => s.carregamento);
+  const painel = useAtlas((s) => s.painel);
+  const territorio = useAtlas((s) => s.territorio);
+  const distritoAtivo = useAtlas((s) => s.distritoAtivo);
+  const nav = useRef<HTMLElement>(null);
+
+  // a leitura do canto inferior esquerdo sobe quando a barra salta de linha (ecrãs estreitos)
+  useEffect(() => {
+    const el = nav.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => el.parentElement?.style.setProperty("--alto-ferramentas", `${el.offsetHeight}px`));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const tecla = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && useAtlas.getState().painel && !useAtlas.getState().selecionado) useAtlas.setState({ painel: null, indiceAberto: false });
+    };
+    addEventListener("keydown", tecla);
+    return () => removeEventListener("keydown", tecla);
+  }, []);
+
+  const centrar = () => {
+    const s = useAtlas.getState();
+    s.selecionar(null);
+    s.setFiltroRegiao(null);
+    s.setDistritoAtivo(null);
+    if (s.territorio !== "continente") s.setTerritorio("continente");
+    else vistaInicial();
+  };
+  const emVistaGeral = territorio === "continente" && !distritoAtivo;
 
   return (
     <div className="interface">
       <header className="marca">
-        <a href={BASE} className="marca-nome">Castelos<span>.site</span></a>
-        <p className="marca-sub">Atlas 3D dos Castelos e Fortalezas de Portugal</p>
+        <Escudo />
+        <div>
+          <a href={BASE}><span className="marca-titulo">Castelos de Portugal</span></a>
+        </div>
       </header>
 
-      <Pesquisa monumentos={monumentos} />
-      <Indice monumentos={monumentos} />
-
-      <nav className="territorios" aria-label="Território">
-        {(Object.keys(TERRITORIOS) as TerritorioId[]).map((id) => (
-          <button key={id} aria-pressed={territorio === id} onClick={() => useAtlas.getState().setTerritorio(id)}>
-            {id === "continente" ? "Continente" : TERRITORIOS[id].nome}
+      <nav className="ferramentas" aria-label="Ferramentas do mapa" ref={nav}>
+        <button className="botao" type="button" aria-expanded={painel === "indice"} aria-controls="indice" onClick={() => useAtlas.getState().alternarPainel("indice")}>
+          <svg viewBox="0 0 24 24"><path d="M5 6h14M5 12h14M5 18h9" /></svg>
+          <span>Índice</span>
+          <b className="conta">{monumentos.length}</b>
+        </button>
+        <div className="grupo" role="group" aria-label="Enquadramentos">
+          <button className="botao" type="button" aria-pressed={false} title="Ver Portugal Continental inteiro" onClick={centrar} data-ativo={emVistaGeral ? "1" : "0"}>
+            Centrar
           </button>
-        ))}
+          <button className="botao" type="button" aria-expanded={painel === "distritos"} aria-controls="distritos" onClick={() => useAtlas.getState().alternarPainel("distritos")}>
+            Distritos
+            <svg className="flecha" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" /></svg>
+          </button>
+        </div>
+        <button className="botao" type="button" aria-expanded={painel === "fontes"} aria-controls="fontes" title="Fontes cartográficas e método" onClick={() => useAtlas.getState().alternarPainel("fontes")}>
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7.4v.6" /></svg>
+          <span>Fontes</span>
+        </button>
       </nav>
 
-      <Controlos vistaInicial={vistaInicial} />
-      <Escala />
+      {painel === "indice" && <Indice monumentos={monumentos} />}
+      {painel === "distritos" && <Distritos monumentos={monumentos} />}
+      {painel === "fontes" && <Fontes />}
 
-      <div className="carregamento" data-visivel={carregamento < 1 ? "1" : "0"} aria-live="polite">
+      <Leitura />
+
+      <div className="estado" data-visivel={carregamento < 1 ? "1" : "0"} aria-live="polite">
+        <span className="estado-roda" />
         <span>A erguer o relevo…</span>
-        <div className="barra"><div style={{ width: `${Math.round(carregamento * 100)}%` }} /></div>
       </div>
     </div>
   );
 }
 
-function Pesquisa({ monumentos }: { monumentos: MonumentoResumo[] }) {
-  const [q, setQ] = useState("");
-  const [aberto, setAberto] = useState(false);
-  const res = useMemo(() => {
-    const n = normalizar(q.trim());
-    if (n.length < 2) return [];
-    return monumentos
-      .filter((m) => normalizar(`${m.nome} ${m.localidade} ${m.concelho} ${m.distrito}`).includes(n))
-      .slice(0, 8);
-  }, [q, monumentos]);
-  const escolher = (m: MonumentoResumo) => {
-    const s = useAtlas.getState();
-    if (s.territorio !== m.territorio) s.setTerritorio(m.territorio);
-    s.selecionar(m.id);
-    setQ("");
-    setAberto(false);
-  };
+function Fechar({ rotulo }: { rotulo: string }) {
   return (
-    <div className="pesquisa">
-      <input
-        type="search"
-        placeholder="Procurar castelo, forte, localidade…"
-        aria-label="Procurar monumento"
-        value={q}
-        onChange={(e) => {
-          setQ(e.target.value);
-          setAberto(true);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && res[0]) escolher(res[0]);
-          if (e.key === "Escape") setAberto(false);
-        }}
-      />
-      {aberto && res.length > 0 && (
-        <ul className="resultados" role="listbox">
-          {res.map((m) => (
-            <li key={m.id}>
-              <button onClick={() => escolher(m)}>
-                <strong>{m.nome}</strong>
-                <span>{m.localidade} · {TIPOLOGIAS[m.tipologia].nome}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+    <button className="fechar" type="button" aria-label={rotulo} onClick={() => useAtlas.setState({ painel: null, indiceAberto: false })}>
+      ×
+    </button>
   );
 }
 
 function Indice({ monumentos }: { monumentos: MonumentoResumo[] }) {
-  const aberto = useAtlas((s) => s.indiceAberto);
+  const [q, setQ] = useState("");
   const filtrosTipologia = useAtlas((s) => s.filtrosTipologia);
-  const filtroRegiao = useAtlas((s) => s.filtroRegiao);
-  const territorio = useAtlas((s) => s.territorio);
-  const visiveis = monumentos.filter((m) => visivel(m, { filtrosTipologia, filtroRegiao }));
-  const presentes = new Set(monumentos.map((m) => m.tipologia));
+  const selecionado = useAtlas((s) => s.selecionado);
+  const busca = useRef<HTMLInputElement>(null);
+  useEffect(() => busca.current?.focus({ preventScroll: true }), []);
 
-  const voarRegiao = (r: Regiao | null) => {
+  const contagem = useMemo(() => {
+    const c = new Map<Tipologia, number>();
+    for (const m of monumentos) c.set(m.tipologia, (c.get(m.tipologia) ?? 0) + 1);
+    return c;
+  }, [monumentos]);
+
+  const n = normalizar(q.trim());
+  const lista = monumentos.filter(
+    (m) =>
+      visivel(m, { filtrosTipologia, filtroRegiao: null }) &&
+      (!n ||
+        normalizar(
+          `${m.nome} ${m.localidade} ${m.concelho} ${m.distrito} ${REGIOES[m.regiao]} ${TIPOLOGIAS[m.tipologia].nome} ${m.seculoOrigem ?? ""} ${seculoCurto(m.seculoOrigem)}`,
+        ).includes(n)),
+  );
+
+  const escolher = (m: MonumentoResumo) => {
     const s = useAtlas.getState();
-    s.setFiltroRegiao(r);
-    if (!r) return;
-    const lista = monumentos.filter((m) => m.regiao === r);
-    if (!lista.length) return;
-    const terr = lista[0].territorio;
-    if (s.territorio !== terr) s.setTerritorio(terr);
-    const t = TERRITORIOS[terr];
-    const pts = lista.map((m) => paraCena(t, ...projectar(t, m.lon, m.lat)));
-    const xs = pts.map((p) => p[0]), zs = pts.map((p) => p[1]);
-    const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cz = (Math.min(...zs) + Math.max(...zs)) / 2;
-    const ext = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...zs) - Math.min(...zs));
-    setTimeout(() => useAtlas.getState().voar({ x: cx, z: cz, distancia: ext * 2.1 + 40, inclinacao: 42 }), 60);
+    if (s.territorio !== m.territorio) s.setTerritorio(m.territorio);
+    s.selecionar(m.id);
+    if (matchMedia("(max-width: 860px)").matches) s.setIndiceAberto(false);
   };
 
+  const todos = filtrosTipologia.size === 0;
   return (
-    <>
-      <button className="botao-indice" aria-expanded={aberto} onClick={() => useAtlas.getState().setIndiceAberto(!aberto)}>
-        Índice <span className="contador">{visiveis.length}</span>
-      </button>
-      {aberto && (
-        <aside className="painel indice" aria-label="Índice de monumentos">
-          <div className="painel-cabeca">
-            <h2>Índice</h2>
-            <button className="fechar" aria-label="Fechar índice" onClick={() => useAtlas.getState().setIndiceAberto(false)}>×</button>
-          </div>
-          <section>
-            <h3>Regiões</h3>
-            <div className="chips">
-              <button aria-pressed={!filtroRegiao} onClick={() => voarRegiao(null)}>Todas</button>
-              {(Object.keys(REGIOES) as Regiao[]).map((r) => (
-                <button key={r} aria-pressed={filtroRegiao === r} onClick={() => voarRegiao(r)}>{REGIOES[r]}</button>
-              ))}
-            </div>
-          </section>
-          <section>
-            <h3>Tipologias</h3>
-            <div className="chips">
-              {(Object.keys(TIPOLOGIAS) as Tipologia[]).filter((t) => presentes.has(t)).map((t) => (
-                <button key={t} aria-pressed={filtrosTipologia.has(t)} onClick={() => useAtlas.getState().alternarTipologia(t)}>
-                  {TIPOLOGIAS[t].plural}
-                </button>
-              ))}
-            </div>
-          </section>
-          <section className="lista">
-            {(Object.keys(REGIOES) as Regiao[]).map((r) => {
-              const doGrupo = visiveis.filter((m) => m.regiao === r);
-              if (!doGrupo.length) return null;
-              return (
-                <div key={r}>
-                  <h3>{REGIOES[r]}</h3>
-                  <ul>
-                    {doGrupo.map((m) => (
-                      <li key={m.id}>
-                        <button
-                          onClick={() => {
-                            const s = useAtlas.getState();
-                            if (s.territorio !== m.territorio) s.setTerritorio(m.territorio);
-                            s.selecionar(m.id);
-                            if (matchMedia("(max-width: 720px)").matches) s.setIndiceAberto(false);
-                          }}
-                          data-fora={m.territorio !== territorio ? "1" : "0"}
-                        >
+    <aside id="indice" className="painel indice" aria-label="Índice de fortalezas">
+      <header>
+        <h2>Índice de fortalezas</h2>
+        <Fechar rotulo="Fechar o índice" />
+      </header>
+      <input
+        ref={busca}
+        id="buscar"
+        type="search"
+        placeholder="Procurar por nome, distrito, século…"
+        autoComplete="off"
+        aria-label="Procurar castelo"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && lista[0] && escolher(lista[0])}
+      />
+      <div className="filtros" role="group" aria-label="Filtrar por tipo de fortificação">
+        <button type="button" className="filtro" aria-pressed={todos} onClick={() => useAtlas.setState({ filtrosTipologia: new Set() })}>
+          Todos<small>{monumentos.length}</small>
+        </button>
+        {(Object.keys(TIPOLOGIAS) as Tipologia[])
+          .filter((t) => contagem.has(t))
+          .map((t) => (
+            <button
+              key={t}
+              type="button"
+              className="filtro"
+              aria-pressed={filtrosTipologia.has(t)}
+              onClick={() => useAtlas.setState({ filtrosTipologia: filtrosTipologia.has(t) && filtrosTipologia.size === 1 ? new Set() : new Set([t]) })}
+            >
+              <IconeTipo tipo={t} />
+              {TIPOLOGIAS[t].plural}
+              <small>{contagem.get(t)}</small>
+            </button>
+          ))}
+      </div>
+      <div className="lista">
+        {lista.length === 0 && <p className="vazio">Nenhum monumento corresponde à pesquisa.</p>}
+        {(Object.keys(REGIOES) as Regiao[]).map((r) => {
+          const daRegiao = lista.filter((m) => m.regiao === r);
+          if (!daRegiao.length) return null;
+          const distritos = [...new Set(daRegiao.map((m) => m.distrito))].sort((a, b) => a.localeCompare(b, "pt"));
+          return (
+            <div key={r}>
+              <h3>{REGIOES[r]}</h3>
+              {distritos.map((d) => (
+                <div key={d}>
+                  {r !== "acores" && r !== "madeira" && <h4>{d}</h4>}
+                  {daRegiao
+                    .filter((m) => m.distrito === d)
+                    .map((m) => (
+                      <button key={m.id} type="button" aria-current={m.id === selecionado} onClick={() => escolher(m)}>
+                        <b>
+                          <IconeTipo tipo={m.tipologia} />
                           {m.nome}
-                          <span>{m.localidade}</span>
-                        </button>
-                      </li>
+                        </b>
+                        <i>{seculoCurto(m.seculoOrigem)}</i>
+                        <span>
+                          {m.localidade} · {TIPOLOGIAS[m.tipologia].nome}
+                        </span>
+                      </button>
                     ))}
-                  </ul>
                 </div>
-              );
-            })}
-          </section>
-        </aside>
-      )}
-    </>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+    </aside>
   );
 }
 
-function Controlos({ vistaInicial }: { vistaInicial: () => void }) {
-  const rumo = useAtlas((s) => s.rumoAtual);
+function Distritos({ monumentos }: { monumentos: MonumentoResumo[] }) {
+  const ativo = useAtlas((s) => s.distritoAtivo);
+
+  const voar = (d: (typeof DISTRITOS)[number]) => {
+    const s = useAtlas.getState();
+    s.selecionar(null);
+    s.setDistritoAtivo(d.chave);
+    const t = TERRITORIOS[d.territorio];
+    if (d.territorio !== "continente") {
+      // nas ilhas, o enquadramento é a vista inicial do arquipélago
+      if (s.territorio !== d.territorio) s.setTerritorio(d.territorio);
+      else s.voar({ ...vistaDe(d.territorio) });
+      return;
+    }
+    if (s.territorio !== "continente") s.setTerritorio("continente");
+    const capital = CIDADES.find((c) => c.nome === d.nome);
+    const pts = monumentos.filter((m) => m.distrito === d.chave).map((m) => paraCena(t, ...projectar(t, m.lon, m.lat)));
+    if (capital) pts.push(paraCena(t, ...projectar(t, capital.lon, capital.lat)));
+    if (!pts.length) return;
+    const xs = pts.map((p) => p[0]), zs = pts.map((p) => p[1]);
+    const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cz = (Math.min(...zs) + Math.max(...zs)) / 2;
+    const ext = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...zs) - Math.min(...zs));
+    setTimeout(() => useAtlas.getState().voar({ x: cx, z: cz + ext * 0.12, distancia: Math.max(ext * 2.6, 70) + 60, inclinacao: 38 }), 60);
+  };
+
   return (
-    <div className="controlos" role="toolbar" aria-label="Navegação">
-      <button aria-label="Aproximar" title="Aproximar" onClick={() => camaraApi.zoom?.(0.55)}>+</button>
-      <button aria-label="Afastar" title="Afastar" onClick={() => camaraApi.zoom?.(1.8)}>−</button>
-      <button aria-label="Orientar a norte" title="Orientar a norte" onClick={() => camaraApi.norte?.()}>
-        <svg viewBox="0 0 24 24" width="18" height="18" style={{ transform: `rotate(${-rumo}deg)` }} aria-hidden="true">
-          <path d="M12 3l4 9h-8z" fill="currentColor" />
-          <path d="M12 21l-4-9h8z" fill="currentColor" opacity="0.35" />
-        </svg>
-      </button>
-      <button
-        aria-label="Vista inicial"
-        title="Vista inicial"
-        onClick={() => {
-          useAtlas.getState().selecionar(null);
-          useAtlas.getState().setFiltroRegiao(null);
-          vistaInicial();
-        }}
-      >
-        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-          <path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z" fill="none" stroke="currentColor" strokeWidth="1.6" />
-        </svg>
-      </button>
-    </div>
+    <aside id="distritos" className="painel painel-distritos" aria-label="Enquadrar um distrito">
+      <header>
+        <h2>Distritos</h2>
+        <Fechar rotulo="Fechar" />
+      </header>
+      <div className="lista-distritos">
+        {DISTRITOS.map((d) => (
+          <button key={d.chave} type="button" aria-pressed={ativo === d.chave} onClick={() => voar(d)}>
+            {d.nome}
+            <small>{plural(monumentos.filter((m) => m.distrito === d.chave).length)}</small>
+          </button>
+        ))}
+      </div>
+    </aside>
+  );
+}
+
+function vistaDe(t: TerritorioId) {
+  const v = TERRITORIOS[t].vista;
+  const [x, z] = paraCena(TERRITORIOS[t], v.x, v.y);
+  return { x, z, distancia: v.distancia, inclinacao: v.inclinacao, rumo: v.rumo };
+}
+
+function Fontes() {
+  return (
+    <aside id="fontes" className="painel fontes" aria-label="Fontes e método">
+      <header>
+        <h2>Fontes e método</h2>
+        <Fechar rotulo="Fechar" />
+      </header>
+      <p>
+        O mapa é uma maqueta em relevo gerada a partir de dados abertos e projetada no sistema oficial português, <em>PT-TM06/ETRS89</em> (Transversa de Mercator,
+        elipsoide GRS80); os Açores e a Madeira usam o <em>PTRA08</em>. Relevo, fronteiras e castelos passam pela mesma projeção: cada fortaleza cai onde dizem as
+        suas coordenadas GPS.
+      </p>
+      <dl>
+        <div><dt>Relevo</dt><dd>Copernicus DEM GLO-30 (Agência Espacial Europeia, via AWS Open Data)</dd></div>
+        <div><dt>Costa e fronteiras</dt><dd>Natural Earth 1:10m (domínio público)</dd></div>
+        <div><dt>Limites dos distritos</dt><dd>Natural Earth, provisório até à CAOP da DGT</dd></div>
+        <div><dt>Rios</dt><dd>Natural Earth 1:10m (domínio público)</dd></div>
+      </dl>
+      <p className="nota">
+        As maquetas dos castelos são construídas com scripts de Python em Blender à escala 1:1 (1 unidade = 1 m) a partir do LiDAR e dos ortofotos da DGT, de plantas e
+        de fotografias; as alturas não publicadas são estimativas e assim se indica em cada ficha.
+      </p>
+      <p className="creditos"><a href={`${BASE}creditos/`}>Créditos e licenças</a></p>
+    </aside>
   );
 }
 
 const PASSOS = [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200];
 
-function Escala() {
+function Leitura() {
   const kmPorPx = useAtlas((s) => s.escalaKmPorPx);
+  const rumo = useAtlas((s) => s.rumoAtual);
+  const cursor = useAtlas((s) => s.cursor);
   const territorio = useAtlas((s) => s.territorio);
-  const alvo = kmPorPx * 110;
+  const alvo = kmPorPx * 85;
   const km = PASSOS.reduce((a, b) => (b <= alvo ? b : a), PASSOS[0]);
   const px = km / kmPorPx;
   return (
-    <div className="escala" aria-hidden="true">
-      <div className="regua" style={{ width: `${px}px` }} />
-      <span>{km < 1 ? `${km * 1000} m` : `${km} km`}</span>
-      <span className="projecao">{TERRITORIOS[territorio].rotuloProjecao}</span>
+    <div className="leitura">
+      <Rosa rumo={rumo} onClick={() => camaraApi.norte?.()} />
+      <div className="escala" aria-hidden="true">
+        <i style={{ width: `${px}px` }} />
+        <span>{km < 1 ? `${km * 1000} m` : `${km} km`}</span>
+      </div>
+      <div className="coordenadas" aria-hidden="true">{cursor || TERRITORIOS[territorio].rotuloProjecao}</div>
     </div>
   );
 }

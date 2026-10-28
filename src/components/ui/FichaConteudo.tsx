@@ -31,11 +31,11 @@ const Ligacao = ({ f }: { f: Fonte }) => (f.url ? <a href={f.url} rel="noopener"
  * Corpo da ficha, com as secções pela ordem das fichas do castillos.site. Serve o painel lateral do
  * atlas (títulos h3) e a página permanente do monumento (títulos h2). Secções sem conteúdo não aparecem.
  */
-export function FichaConteudo({ m, nivel = 3 }: { m: MonumentoResumo; nivel?: 2 | 3 }) {
+export function FichaConteudo({ m, nivel = 3, lateral = false }: { m: MonumentoResumo; nivel?: 2 | 3; lateral?: boolean }) {
   const c = m.conteudo;
   const H = `h${nivel}` as "h2" | "h3";
-  const Seccao = ({ titulo, children }: { titulo: string; children: ReactNode }) => (
-    <section className="ficha-seccao">
+  const Seccao = ({ titulo, classe = "", children }: { titulo: string; classe?: string; children: ReactNode }) => (
+    <section className={`ficha-seccao ${classe}`}>
       <H>{titulo}</H>
       {children}
     </section>
@@ -56,7 +56,7 @@ export function FichaConteudo({ m, nivel = 3 }: { m: MonumentoResumo; nivel?: 2 
             </p>
           )
         )}
-        {c.outrasDesignacoes.length > 0 && (
+        {!lateral && c.outrasDesignacoes.length > 0 && (
           <p className="ficha-designacoes"><em>Também chamado:</em> {c.outrasDesignacoes.join("; ")}</p>
         )}
         {m.notas.map((n) => (
@@ -64,7 +64,19 @@ export function FichaConteudo({ m, nivel = 3 }: { m: MonumentoResumo; nivel?: 2 
         ))}
       </div>
 
-      {(tecnica.length > 0 || v?.resumo) && (
+      {(tecnica.length > 0 || v?.resumo) && (lateral ? (
+        <dl className="ficha-dados ficha-tecnica">
+          {tecnica.map((k) => (
+            <div key={k}><dt>{ROTULOS_TECNICA[k]}</dt><dd>{c.fichaTecnica[k]}</dd></div>
+          ))}
+          {v?.resumo && (
+            <div>
+              <dt>Visita</dt>
+              <dd>{v.resumo}{v.site?.url && <> · <a href={v.site.url} rel="noopener" target="_blank">sítio oficial</a></>}</dd>
+            </div>
+          )}
+        </dl>
+      ) : (
         <Seccao titulo="Ficha técnica">
           <dl className="ficha-dados">
             {tecnica.map((k) => (
@@ -78,10 +90,10 @@ export function FichaConteudo({ m, nivel = 3 }: { m: MonumentoResumo; nivel?: 2 
             )}
           </dl>
         </Seccao>
-      )}
+      ))}
 
       {m.html && (
-        <Seccao titulo="História">
+        <Seccao titulo="História" classe="partivel">
           <div className="ficha-historia" dangerouslySetInnerHTML={{ __html: m.html }} />
         </Seccao>
       )}
@@ -95,7 +107,7 @@ export function FichaConteudo({ m, nivel = 3 }: { m: MonumentoResumo; nivel?: 2 
       )}
 
       {c.cronologia.length > 0 && (
-        <Seccao titulo="Cronologia">
+        <Seccao titulo="Cronologia" classe="partivel">
           <ol className="ficha-cronologia">
             {c.cronologia.map((x) => <li key={x.ano + x.texto}><strong>{x.ano}</strong><span>{x.texto}</span></li>)}
           </ol>

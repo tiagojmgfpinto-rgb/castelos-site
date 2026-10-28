@@ -4,7 +4,7 @@ import { caminhoFicha } from "../../lib/rotas";
 import { REGIOES, TIPOLOGIAS } from "../../lib/tipologias";
 import { useAtlas, type MonumentoResumo } from "../atlas/store";
 import { dadosMaqueta } from "../maqueta/dados";
-import { FichaConteudo } from "./FichaConteudo";
+import { FichaConteudo, gms } from "./FichaConteudo";
 
 const Maqueta = lazy(() => import("../maqueta/Maqueta"));
 
@@ -14,7 +14,7 @@ export function Ficha({ m, monumentos, onFechar }: { m: MonumentoResumo; monumen
   const reconst = m.maquetas.filter((x) => x.tipo === "reconstituicao");
   const dados = dadosMaqueta(m.id);
   const vizinhos = monumentos.filter((x) => x.regiao === m.regiao && x.id !== m.id).slice(0, 8);
-  const corpo = useRef<HTMLDivElement>(null);
+  const corpo = useRef<HTMLElement>(null);
 
   useEffect(() => {
     corpo.current?.scrollTo({ top: 0 });
@@ -23,26 +23,29 @@ export function Ficha({ m, monumentos, onFechar }: { m: MonumentoResumo; monumen
     return () => removeEventListener("keydown", tecla);
   }, [m.id, onFechar]);
 
-  const local = [m.localidade, m.concelho !== m.localidade ? m.concelho : null, m.distrito, REGIOES[m.regiao]].filter(Boolean).join(" · ");
+  const local = [m.localidade, m.concelho !== m.localidade ? m.concelho : null, m.distrito.replace(/^Região Autónoma d[aos]+ /, ""), REGIOES[m.regiao]].filter((x, i, a) => x && a.indexOf(x) === i).join(" · ");
 
   return (
-    <aside className="ficha" aria-label={`Ficha: ${m.nome}`}>
-      <header className="ficha-cabeca">
-        <p className="ficha-local">{local}</p>
-        <h2>{m.nome}</h2>
-        {m.conteudo.subtitulo && <p className="ficha-subtitulo">{m.conteudo.subtitulo}</p>}
-        <button className="fechar" aria-label="Fechar ficha" title="Fechar (Esc)" onClick={onFechar}>×</button>
-      </header>
+    <aside className="ficha" aria-label={`Ficha: ${m.nome}`} ref={corpo}>
+      <div className="ficha-moldura">
+        <div className="ficha-banda">
+          <button className="fechar" type="button" aria-label="Fechar a ficha" title="Fechar (Esc)" onClick={onFechar}>×</button>
+          <p className="ficha-lugar">{local}</p>
+          <h2 className="ficha-nome">{m.nome}</h2>
+        </div>
 
-      <div className="ficha-corpo" ref={corpo}>
-        <ul className="ficha-etiquetas">
-          {m.conteudo.estado && <li data-estado="conservacao">{m.conteudo.estado}</li>}
-          <li>{TIPOLOGIAS[m.tipologia].nome}</li>
-          {m.seculoOrigem && <li>{m.seculoOrigem}</li>}
-          <li data-estado={m.estadoFicha}>{m.estadoFicha === "publicada" ? "Ficha publicada" : "Ficha em preparação"}</li>
-        </ul>
+        <header className="ficha-cabecalho">
+          {m.conteudo.outrasDesignacoes.length > 0 && <p className="ficha-tambem">Também: {m.conteudo.outrasDesignacoes.join(", ")}</p>}
+          {m.conteudo.subtitulo && <p className="ficha-tambem">{m.conteudo.subtitulo}</p>}
+          <ul className="ficha-chips">
+            {m.seculoOrigem && <li>{m.seculoOrigem.replace(/^s/, "S")}</li>}
+            <li>{TIPOLOGIAS[m.tipologia].nome}</li>
+            {m.conteudo.estado && <li className="estado-chip">{m.conteudo.estado}</li>}
+            {m.estadoFicha !== "publicada" && <li className="estado-chip estado-pendente">Ficha em preparação</li>}
+          </ul>
+        </header>
 
-        <figure className="ficha-maqueta">
+        <section className="vitrina" aria-label="Maqueta 3D interativa">
           {atual && dados ? (
             <Suspense fallback={<div className="ficha-maqueta-palco"><p>A preparar a maqueta…</p></div>}>
               <Maqueta url={`${BASE}${atual.ficheiro}`} capa={atual.capa} dados={dados} provisoria={atual.provisoria} onVoltarMapa={onFechar} />
@@ -56,38 +59,44 @@ export function Ficha({ m, monumentos, onFechar }: { m: MonumentoResumo; monumen
                 </p>
               </div>
               <div className="ficha-maqueta-botoes" role="toolbar" aria-label="Maqueta">
-                {["Giro", "Placas", "Enquadrar", "Ampliar"].map((b) => (
+                {["Giro", "Rótulos", "Enquadrar", "Ampliar"].map((b) => (
                   <button key={b} disabled>{b}</button>
                 ))}
               </div>
             </>
           )}
           {reconst.length > 0 && (
-            <figcaption>Reconstituições disponíveis: {reconst.map((r) => r.epoca ?? "sem época").join(", ")}</figcaption>
+            <p className="ficha-nota-pequena">Reconstituições disponíveis: {reconst.map((r) => r.epoca ?? "sem época").join(", ")}</p>
           )}
-        </figure>
+        </section>
 
-        <FichaConteudo m={m} />
+        <div className="ficha-corpo-texto">
+          <FichaConteudo m={m} lateral />
 
-        {vizinhos.length > 0 && (
-          <section>
-            <h3>Mais castelos em {REGIOES[m.regiao]}</h3>
-            <ul className="ficha-vizinhos">
-              {vizinhos.map((x) => (
-                <li key={x.id}>
-                  <button onClick={() => useAtlas.getState().selecionar(x.id)}>
-                    {x.nome}
-                    <span>{x.localidade}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
+          {vizinhos.length > 0 && (
+            <section className="ficha-seccao">
+              <h3>Mais castelos em {REGIOES[m.regiao]}</h3>
+              <ul className="ficha-vizinhos">
+                {vizinhos.map((x) => (
+                  <li key={x.id}>
+                    <button onClick={() => useAtlas.getState().selecionar(x.id)}>
+                      {x.nome}
+                      <span>{x.localidade}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
-        <p className="ficha-permanente">
-          <a href={`${BASE}${caminhoFicha(m)}`}>Endereço permanente desta ficha</a>
-        </p>
+          <footer className="ficha-pe">
+            {m.conteudo.verificadoEm ? `Ficha verificada em ${m.conteudo.verificadoEm.split("-").reverse().join("-")}` : "Ficha em revisão"} · {gms(m.lat, "N", "S")} · {gms(m.lon, "E", "O")}
+            <div className="acoes">
+              <a href={`${BASE}${caminhoFicha(m)}`}>Endereço permanente</a>
+              <a href={`https://www.openstreetmap.org/?mlat=${m.lat}&mlon=${m.lon}#map=17/${m.lat}/${m.lon}`} rel="noopener" target="_blank">Abrir no mapa</a>
+            </div>
+          </footer>
+        </div>
       </div>
     </aside>
   );

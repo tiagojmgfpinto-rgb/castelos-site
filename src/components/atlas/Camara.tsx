@@ -139,6 +139,16 @@ export function Camara({ territorio }: { territorio: TerritorioId }) {
         c.update();
       }
     }
+    // o centro da vista não sai de cima da maqueta
+    const meio = TERRITORIOS[territorio].size / 2000;
+    const dx = THREE.MathUtils.clamp(c.target.x, -meio, meio) - c.target.x;
+    const dz = THREE.MathUtils.clamp(c.target.z, -meio, meio) - c.target.z;
+    if (dx || dz) {
+      c.target.x += dx;
+      c.target.z += dz;
+      camera.position.x += dx;
+      camera.position.z += dz;
+    }
     // planos de recorte e escala adaptados à distância
     const dist = camera.position.distanceTo(c.target);
     camera.near = Math.max(0.01, dist / 400);

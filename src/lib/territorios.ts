@@ -22,9 +22,10 @@ export interface Territorio {
 
 export const TERRITORIOS: Record<TerritorioId, Territorio> = {
   continente: {
-    id: "continente", nome: "Portugal Continental", crs: "EPSG:3763", rotuloProjecao: "PT-TM06 · ETRS89",
-    x0: -260000, y0: 300000, size: 614400,
-    vista: { x: 20000, y: -5000, distancia: 1150, inclinacao: 14, rumo: 0 },
+    id: "continente", nome: "Portugal Continental", crs: "EPSG:3763", rotuloProjecao: "Transversa de Mercator · PT-TM06/ETRS89",
+    // quadrado de 1228,8 km: quase toda a Península, como uma maqueta sobre a mesa (igual ao pipeline)
+    x0: -567200, y0: 607200, size: 1228800,
+    vista: { x: 25000, y: -20000, distancia: 1080, inclinacao: 24, rumo: 0 },
   },
   acores: {
     id: "acores", nome: "Açores", crs: "EPSG:5015", rotuloProjecao: "PTRA08 · UTM 26N",
@@ -52,4 +53,10 @@ export function projectar(t: Territorio, lon: number, lat: number): [number, num
 export function paraCena(t: Territorio, x: number, y: number): [number, number] {
   const { cx, cy } = centro(t);
   return [(x - cx) / 1000, -(y - cy) / 1000];
+}
+
+/** Cena (km) -> coordenadas geográficas [lon, lat]. */
+export function deCena(t: Territorio, sx: number, sz: number): [number, number] {
+  const { cx, cy } = centro(t);
+  return proj4(t.crs, "EPSG:4326", [sx * 1000 + cx, -sz * 1000 + cy]) as [number, number];
 }

@@ -2,29 +2,78 @@ import { Html } from "@react-three/drei";
 import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { CIDADES } from "../../data/cidades";
 import { paraCena, projectar, TERRITORIOS, type TerritorioId } from "../../lib/territorios";
 import { TIPOLOGIAS } from "../../lib/tipologias";
 import { useAtlas, visivel, type MonumentoResumo } from "./store";
 import { EXAGERO, useTerreno } from "./Terrain";
 
-const COR_PEDRA = new THREE.Color("#efe6d2");
-const COR_ATIVA = new THREE.Color("#c0602f");
+// Marcadores como pequenas figuras de torre branca com bandeira vermelha, à maneira do castillos.site:
+// torre redonda ameada para os castelos medievais, baluarte em estrela com torre para as fortificações modernas.
+// um pouco de luz própria: a figura lê-se branca mesmo do lado da sombra
+const MAT_PEDRA = new THREE.MeshStandardMaterial({ color: "#f4efe4", roughness: 0.62, emissive: "#8f897d", emissiveIntensity: 0.55 });
+const MAT_BANDEIRA = new THREE.MeshStandardMaterial({ color: "#b3261b", roughness: 0.7, side: THREE.DoubleSide });
+const MAT_BASE = new THREE.MeshStandardMaterial({ color: "#5b4a38", roughness: 0.9 });
+const MAT_ANEL = new THREE.MeshBasicMaterial({ color: "#c0392b", transparent: true, opacity: 0.85, depthWrite: false });
 
-// Geometrias partilhadas: uma torre (castelos medievais) e um baluarte em estrela (fortificações modernas)
-const haste = new THREE.CylinderGeometry(0.035, 0.035, 1, 6).translate(0, 0.5, 0);
-const torre = new THREE.BoxGeometry(0.42, 0.55, 0.42).translate(0, 1.27, 0);
-const baluarte = (() => {
+function ameias(raio: number, y: number, n: number, lado: number) {
+  const g: THREE.BufferGeometry[] = [];
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2;
+    g.push(new THREE.BoxGeometry(lado, lado * 1.25, lado).rotateY(-a).translate(Math.cos(a) * raio, y + lado * 0.62, Math.sin(a) * raio));
+  }
+  return g;
+}
+
+function torreRedonda(raio: number, base: number, altura: number) {
+  const topo = base + altura;
+  return [
+    new THREE.CylinderGeometry(raio * 0.94, raio, altura, 20).translate(0, base + altura / 2, 0),
+    new THREE.CylinderGeometry(raio * 1.18, raio * 0.96, 0.11, 20).translate(0, topo + 0.055, 0),
+    ...ameias(raio * 1.02, topo + 0.11, 7, raio * 0.42),
+  ];
+}
+
+const estrela = (() => {
   const s = new THREE.Shape();
   for (let i = 0; i < 10; i++) {
     const a = (i / 10) * Math.PI * 2 - Math.PI / 2;
-    const r = i % 2 === 0 ? 0.36 : 0.19;
+    const r = i % 2 === 0 ? 0.62 : 0.36;
     const p = [Math.cos(a) * r, Math.sin(a) * r] as const;
     i === 0 ? s.moveTo(...p) : s.lineTo(...p);
   }
-  return new THREE.ExtrudeGeometry(s, { depth: 0.16, bevelEnabled: false }).rotateX(-Math.PI / 2).translate(0, 1.0, 0);
+  return new THREE.ExtrudeGeometry(s, { depth: 0.2, bevelEnabled: false }).rotateX(-Math.PI / 2).translate(0, 0.07, 0);
 })();
-const base = new THREE.CylinderGeometry(0.16, 0.16, 0.02, 20);
+
+function bandeira(topo: number) {
+  const s = new THREE.Shape();
+  s.moveTo(0, 0);
+  s.lineTo(0.34, -0.07);
+  s.lineTo(0, -0.17);
+  return [
+    new THREE.CylinderGeometry(0.018, 0.018, 0.5, 6).translate(0, topo + 0.25, 0),
+    new THREE.ShapeGeometry(s).translate(0.012, topo + 0.5, 0),
+  ];
+}
+
+const juntar = (g: THREE.BufferGeometry[]) => mergeGeometries(g.map((x) => x.toNonIndexed()));
+const FORMAS = {
+  torre: {
+    pedra: juntar(torreRedonda(0.3, 0.07, 0.86)),
+    mastro: juntar([bandeira(1.08)[0]]),
+    bandeira: bandeira(1.08)[1],
+    topo: 1.62,
+  },
+  baluarte: {
+    pedra: juntar([estrela, ...torreRedonda(0.2, 0.27, 0.5)]),
+    mastro: juntar([bandeira(0.88)[0]]),
+    bandeira: bandeira(0.88)[1],
+    topo: 1.42,
+  },
+};
+const GEO_BASE = new THREE.CylinderGeometry(0.34, 0.37, 0.06, 24).translate(0, 0.03, 0);
+const GEO_ANEL = new THREE.RingGeometry(0.62, 0.8, 40).rotateX(-Math.PI / 2).translate(0, 0.02, 0);
 
 // ——— Gestão dos rótulos ———
 // Com o mapa afastado, os nomes não aparecem todos (atropelar-se-iam). Ao passar o rato
@@ -64,7 +113,7 @@ function GestorRotulos() {
     const cand: { r: Registo; x: number; y: number; w: number; prio: number }[] = [];
     let foco: { x: number; y: number } | null = null;
     const proj = (r: Registo) => {
-      v.set(0, 1.9, 0);
+      v.set(0, 1.6, 0);
       r.grupo.localToWorld(v);
       const d = camera.position.distanceTo(v);
       v.project(camera);
@@ -112,7 +161,7 @@ function GestorRotulos() {
         r.el.dataset.visivel = "0";
         continue;
       }
-      const w = r.m.nome.length * (ativo ? 8.6 : 7.4) + 22;
+      const w = ativo ? Math.min(250, Math.max(r.m.nome.length * 8.4, (r.m.localidade.length + TIPOLOGIAS[r.m.tipologia].nome.length + 3) * 7.2) + 24) : r.m.nome.length * 7 + 18;
       const prio = r.m.id === sobre ? 0 : r.m.id === s.selecionado ? 1 : vizinho ? 2 + Math.hypot(p.x - foco!.x, p.y - foco!.y) / 1000 : 3 + p.d / 1e4;
       cand.push({ r, x: p.x, y: p.y, w, prio });
     }
@@ -125,8 +174,10 @@ function GestorRotulos() {
       const tentativas = c.prio < 3 ? DESLOCAMENTOS : [0];
       let colocado = false;
       for (const dy of tentativas) {
-        const x0 = c.x - c.w / 2, y0 = c.y + dy - ALTURA_ROTULO / 2;
-        const x1 = x0 + c.w, y1 = y0 + ALTURA_ROTULO;
+        // a cartela fica acima da torre: maior (nome e localidade) para o monumento ativo
+        const alto = ativo ? 48 : ALTURA_ROTULO;
+        const x0 = c.x - c.w / 2, y0 = c.y + dy - (ativo ? 22 : 14) - alto;
+        const x1 = x0 + c.w, y1 = y0 + alto;
         if (ativo || livre(x0, y0, x1, y1)) {
           ocupados.push([x0 - 2, y0 - 1, x1 + 2, y1 + 1]);
           c.r.el.style.setProperty("--dy", `${dy}px`);
@@ -167,10 +218,10 @@ export function Marcadores({ monumentos, territorio }: { monumentos: MonumentoRe
 
 function Marcador({ m, x, z }: { m: MonumentoResumo; x: number; z: number }) {
   const ref = useRef<THREE.Group>(null);
+  const anel = useRef<THREE.Mesh>(null);
   const rotulo = useRef<HTMLDivElement>(null);
   const terreno = useTerreno();
-  const mat = useMemo(() => new THREE.MeshStandardMaterial({ color: COR_PEDRA, roughness: 0.7 }), []);
-  const forma = TIPOLOGIAS[m.tipologia].forma;
+  const forma = FORMAS[TIPOLOGIAS[m.tipologia].forma === "torre" ? "torre" : "baluarte"];
   const v = new THREE.Vector3();
 
   useFrame(({ camera }) => {
@@ -184,9 +235,9 @@ function Marcador({ m, x, z }: { m: MonumentoResumo; x: number; z: number }) {
     g.position.set(x, (Math.max(h, 0) / 1000) * EXAGERO, z);
     // tamanho constante no ecrã
     const d = camera.position.distanceTo(v.copy(g.position));
-    const escala = Math.min(d * 0.022, 6) * (ativo ? 1.35 : 1);
+    const escala = Math.min(d * 0.018, 34) * (ativo ? 1.25 : 1);
     g.scale.setScalar(escala);
-    mat.color.copy(ativo ? COR_ATIVA : COR_PEDRA);
+    if (anel.current) anel.current.visible = s.selecionado === m.id;
   });
 
   // o <Html> monta o rótulo noutra raiz React, por isso o registo só é possível quando ele já existe
@@ -203,16 +254,19 @@ function Marcador({ m, x, z }: { m: MonumentoResumo; x: number; z: number }) {
 
   return (
     <group ref={ref} onClick={click}>
-      <mesh geometry={haste} material={mat} />
-      <mesh geometry={forma === "torre" ? torre : baluarte} material={mat} />
-      <mesh geometry={base} material={mat} />
+      <mesh geometry={GEO_BASE} material={MAT_BASE} castShadow />
+      <mesh geometry={forma.pedra} material={MAT_PEDRA} castShadow />
+      <mesh geometry={forma.mastro} material={MAT_BASE} />
+      <mesh geometry={forma.bandeira} material={MAT_BANDEIRA} />
+      <mesh ref={anel} geometry={GEO_ANEL} material={MAT_ANEL} visible={false} renderOrder={2} />
       {/* área de toque mais generosa, invisível */}
       <mesh position={[0, 0.8, 0]} visible={false}>
         <sphereGeometry args={[0.7, 8, 8]} />
       </mesh>
-      <Html position={[0, 1.9, 0]} center zIndexRange={[20, 10]} style={{ pointerEvents: "none" }}>
-        <div ref={rotulo} className="rotulo-monumento" data-visivel="0">
-          {m.nome}
+      <Html position={[0, forma.topo, 0]} center zIndexRange={[20, 10]} style={{ pointerEvents: "none" }}>
+        <div ref={rotulo} className="etiqueta" data-visivel="0" data-ativo="0">
+          <b>{m.nome}</b>
+          <span>{m.localidade} · {TIPOLOGIAS[m.tipologia].nome}</span>
         </div>
       </Html>
     </group>

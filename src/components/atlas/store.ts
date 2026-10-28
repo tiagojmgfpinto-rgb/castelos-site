@@ -64,6 +64,8 @@ export interface Voo {
   instantaneo?: boolean;
 }
 
+export type Painel = "indice" | "distritos" | "fontes";
+
 interface Estado {
   territorio: TerritorioId;
   selecionado: string | null;
@@ -71,6 +73,9 @@ interface Estado {
   filtrosTipologia: Set<Tipologia>;
   filtroRegiao: Regiao | null;
   indiceAberto: boolean;
+  painel: Painel | null;
+  distritoAtivo: string | null;
+  cursor: string; // coordenadas sob o rato, já formatadas
   voo: (Voo & { pedido: number }) | null;
   carregamento: number; // 0..1
   escalaKmPorPx: number;
@@ -81,6 +86,9 @@ interface Estado {
   alternarTipologia: (t: Tipologia) => void;
   setFiltroRegiao: (r: Regiao | null) => void;
   setIndiceAberto: (v: boolean) => void;
+  alternarPainel: (p: Painel) => void;
+  setDistritoAtivo: (d: string | null) => void;
+  setCursor: (c: string) => void;
   voar: (v: Voo) => void;
   setCarregamento: (v: number) => void;
   setEscala: (kmPorPx: number, rumo: number) => void;
@@ -95,6 +103,9 @@ export const useAtlas = create<Estado>((set) => ({
   filtrosTipologia: new Set(),
   filtroRegiao: null,
   indiceAberto: false,
+  painel: null,
+  distritoAtivo: null,
+  cursor: "",
   voo: null,
   carregamento: 0,
   escalaKmPorPx: 1,
@@ -109,7 +120,14 @@ export const useAtlas = create<Estado>((set) => ({
       return { filtrosTipologia: f };
     }),
   setFiltroRegiao: (filtroRegiao) => set({ filtroRegiao }),
-  setIndiceAberto: (indiceAberto) => set({ indiceAberto }),
+  // os painéis de pergaminho abrem um de cada vez, como no castillos.site
+  setIndiceAberto: (v) => set({ indiceAberto: v, painel: v ? "indice" : null }),
+  alternarPainel: (p) => set((s) => {
+    const painel = s.painel === p ? null : p;
+    return { painel, indiceAberto: painel === "indice" };
+  }),
+  setDistritoAtivo: (distritoAtivo) => set({ distritoAtivo }),
+  setCursor: (cursor) => set({ cursor }),
   voar: (v) => set({ voo: { ...v, pedido: ++pedidos } }),
   setCarregamento: (carregamento) => set({ carregamento }),
   setEscala: (escalaKmPorPx, rumoAtual) => set({ escalaKmPorPx, rumoAtual }),

@@ -3,15 +3,13 @@ import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { paraCena, projectar, TERRITORIOS, type TerritorioId } from "../../lib/territorios";
 import { Camara, vistaInicial } from "./Camara";
+import { Cursor } from "./Cursor";
 import { Linhas } from "./Linhas";
 import { Marcadores } from "./Marcadores";
 import { useAtlas, type MonumentoResumo } from "./store";
 import { Terreno } from "./Terrain";
 import { Ficha } from "../ui/Ficha";
 import { Interface } from "../ui/Interface";
-
-// fundo e mar fora do quadrado de mosaicos: o azul do mar profundo depois de iluminado
-const COR_FUNDO = "#3d6f86";
 
 /** Sol baixo de noroeste, como no relevo sombreado clássico; a sombra acompanha a câmara. */
 function Luz() {
@@ -49,14 +47,6 @@ function Luz() {
   );
 }
 
-function Mar() {
-  return (
-    <mesh rotation-x={-Math.PI / 2} position-y={-1.5}>
-      <planeGeometry args={[6000, 6000]} />
-      <meshBasicMaterial color={COR_FUNDO} />
-    </mesh>
-  );
-}
 
 /** Sincroniza a seleção com o endereço (#guimaraes), como ligação partilhável. */
 function useHash(monumentos: MonumentoResumo[]) {
@@ -113,11 +103,11 @@ export default function Atlas({ monumentos }: { monumentos: MonumentoResumo[] })
           shadows="percentage"
           dpr={[1, 2]}
           camera={{ fov: 32, near: 0.5, far: 6000, position: [0, 500, 400] }}
-          gl={{ antialias: true, powerPreference: "high-performance" }}
-          onCreated={({ gl, scene }) => {
+          gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+          onCreated={({ gl }) => {
             gl.toneMapping = THREE.NoToneMapping;
-            scene.background = new THREE.Color(COR_FUNDO);
-            scene.fog = new THREE.Fog(COR_FUNDO, 1400, 3200);
+            // fundo transparente: à volta da maqueta vê-se a mesa escura do CSS
+            gl.setClearColor(0x000000, 0);
           }}
           onPointerMissed={() => {
             // o marcador sob o rato é escolhido por proximidade no ecrã, mesmo sem tocar na malha
@@ -138,11 +128,11 @@ function Cena({ territorio, monumentos }: { territorio: TerritorioId; monumentos
   return (
     <>
       <Luz />
-      <Mar />
       <Terreno key={territorio} territorio={territorio}>
         <Linhas territorio={territorio} />
         <Marcadores monumentos={monumentos} territorio={territorio} />
         <Camara territorio={territorio} />
+        <Cursor territorio={territorio} />
       </Terreno>
     </>
   );

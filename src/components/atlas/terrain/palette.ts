@@ -6,21 +6,20 @@ import * as THREE from "three";
 const rampa = (pares: [number, string][]) => pares.map(([h, c]) => [h, new THREE.Color(c)] as const);
 
 const TERRA = rampa([
-  [0, "#a9b98a"],
-  [100, "#b8c290"],
-  [250, "#d2cd98"],
-  [450, "#ddc98f"],
-  [700, "#cfae78"],
-  [1000, "#b98d5f"],
-  [1400, "#9d7553"],
-  [1800, "#a08d7c"],
-  [2300, "#d9d2c6"],
+  [0, "#a3b57e"],
+  [150, "#b9c389"],
+  [350, "#d6cc93"],
+  [600, "#dcc286"],
+  [900, "#c9a46c"],
+  [1300, "#a87e55"],
+  [1800, "#8d6b4f"],
+  [2300, "#d4cabb"],
 ]);
 const VIZINHO = rampa([
-  [0, "#d6d0c2"],
-  [600, "#cbc3b3"],
-  [1500, "#b9b0a0"],
-  [2500, "#e2ddd3"],
+  [0, "#dad6cc"],
+  [600, "#cfcabd"],
+  [1500, "#bdb6a8"],
+  [2500, "#e4e0d8"],
 ]);
 const MAR = rampa([
   [-6000, "#2e5d77"],
