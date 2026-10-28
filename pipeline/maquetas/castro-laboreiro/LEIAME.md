@@ -1,6 +1,6 @@
 # Maqueta 3D do Castelo de Castro Laboreiro (estado atual)
 
-Versão 0.1, **provisória**. Gerada por código, à escala 1:1 e georreferenciada (origem no centro do recinto, 42.022746, −8.158370; x para este, y para norte; no visor, −z é o norte). É só o monte do castelo, num círculo de 92 m de raio: os dois recintos, as portas, o reduto da ponta sul, os vestígios da capela, o marco geodésico e os afloramentos de granito à volta. O relevo, o traçado dos panos, as cotas e as alturas são medidos no LiDAR da DGT de 2025.
+Versão 0.2, **provisória**. Gerada por código, à escala 1:1 e georreferenciada (origem no centro do recinto, 42.022746, −8.158370; x para este, y para norte; no visor, −z é o norte). É só o monte do castelo, num círculo de 92 m de raio: os dois recintos, as portas e a escada metálica do portal norte, o reduto da ponta sul, os vestígios da capela, o marco geodésico e os afloramentos de granito à volta. O relevo, o traçado dos panos, as cotas e as alturas são medidos no LiDAR da DGT de 2025.
 
 ## Como reconstruir
 
@@ -29,10 +29,14 @@ O `bpy` do PyPI não traz o Draco, por isso o script comprime o GLB com `npx @gl
 
 - **Terreno e afloramentos**: MDT de 50 cm, sem reamostrar. A rocha separa-se da erva pela cor da nuvem de pontos (clara e pouco saturada) e pelo declive, e vai num objeto próprio (`Afloramentos`), com as fissuras escurecidas pela curvatura do terreno. Debaixo dos panos e do reduto, onde a nuvem classifica o topo das muralhas como solo, o terreno desce ao chão vizinho.
 - **Panos**: linha do meio desenhada sobre o relevo local do MDS (o que sobressai numa janela de 6 m) e encostada à crista medida, metro a metro. O topo é o percentil 92 do MDS num raio de 1 m, em todas as classes (as muralhas aparecem na nuvem ora como solo ora como vegetação), filtrado ao longo do pano; pé exterior e chão interior no MDT. A frente poente da cerca e o pano poente do castelo quase não se destacam no LiDAR: seguem o OSM, como troços de 0,9 a 2,4 m acima do chão de dentro.
-- **Reduto**: plataforma de 12 × 9 m lida no MDS, com o topo medido.
+- **Reduto**: cinta de muralha de 12 × 9 m em volta do penedo da ponta sul (MDT, MDS e fotografia aérea); por fora desce ao pé medido, por dentro sobe 0,4 a 1,2 m acima do penedo.
+- **Coroamento**: nos panos altos, patamares horizontais com espelhos verticais (como nas fotografias), à média do topo medido em cada troço; os troços baixos do poente acompanham o chão. As juntas da cantaria têm relevo (mapa de normais tirado da própria textura).
+- **Encosta poente**: debaixo do arvoredo cerrado o MDT tem poucos pontos de solo e mostrava picos e cortinas verticais; aí é suavizado (mediana 3 × 3 e gaussiana de 1 m, com peso pelo coberto) e pintado de folhada em vez de rocha.
 - **Capela**: planta quadrada e altura das paredes no MDS; o vão a norte é onde o MDS mostra o corte.
 - **Marco geodésico**: pico estreito de 2 m no MDS, no ponto mais alto.
 - **Portas**: Porta do Sol, porta entre os recintos e portal norte na posição do OSM; Porta da Fonte a 7 m da Porta do Sol pelo pano (fotografia). Soleira no MDT; tipo de arco pelo SIPA.
+- **Escada do portal norte**: lanço reto de degraus de 0,2 m, da soleira até onde o MDT desce 2,5 m (SIPA: escada metálica com guarda).
+- **Árvores**: castanheiros (souto cerrado da encosta poente) e sobreiros (lajes e mato aberto), segundo o autor do projeto; a espécie é atribuída pelo coberto à volta, com sorte.
 - **Estimativas**: espessura das muralhas (1,7 m no castelo pela legenda de Duarte de Armas citada no SIPA; 2 m na cerca e 1,5 a 1,6 m nos troços baixos, pelas fotografias), coroamento plano, largura e altura dos vãos, aduelas, impostas e mísulas, terrapleno do reduto, forma do marco, das árvores e das moitas.
 - **Fora da maqueta**: a torre de menagem (destruída em 1659), as torres e o cubelo de Duarte de Armas, a cisterna, os alicerces do quartel e as escadas embutidas nas muralhas não se vêem no LiDAR e não há planta que os situe.
 
