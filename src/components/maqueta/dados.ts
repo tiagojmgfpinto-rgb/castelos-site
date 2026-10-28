@@ -25,6 +25,8 @@ export interface DadosMaqueta {
   limitacoes: string[];
   /** Elementos com placa flutuante, por ordem de prioridade quando não cabem todas. */
   placas?: string[];
+  /** Distância inicial da câmara ao centro da maqueta, em metros (por omissão 300). */
+  distancia?: number;
   elementos: ElementoMaqueta[];
 }
 
