@@ -1194,25 +1194,30 @@ def paco():
     pico &= corpo
     chamines = [(np.array([LXS[c_], LXS[r_]]), float(MDS[r_, c_])) for r_, c_ in zip(*np.nonzero(pico))]
     mc = Malha()
-    roda_c = lambda p, r: [p + r * np.array([math.cos(a), math.sin(a)]) for a in np.linspace(0, 2 * math.pi, 14, endpoint=False)]
+    roda_c = lambda p, r: [p + r * np.array([math.cos(a), math.sin(a)]) for a in np.linspace(0, 2 * math.pi, 16, endpoint=False)]
     for p, topo_c in chamines:
-        # fotografia aérea: fustes redondos e esguios de tijolo, um pouco mais finos em cima, com um
-        # anel moldurado e uma coroa saliente no topo, e a boca escura
+        # fotografias aéreas: fustes cilíndricos de tijolo claro, com c. 0,8 m de diâmetro, que nascem
+        # atrás do parapeito; sob o remate, um anel fino de granito e, no topo, uma cúpula de granito
+        # um pouco mais larga do que o fuste. O topo medido no MDS fica no alto da cúpula.
         z0c = float(amostra(sup, *p)) - 1.0
-        hc = topo_c - z0c
-        zs = [z0c + hc * f for f in (0.0, 0.45, 0.82)] + [topo_c - 0.42, topo_c - 0.3, topo_c - 0.22, topo_c]
-        mc.prisma(roda_c(p, 0.31), zs[0], zs[1], 0, topo=False)
-        mc.prisma(roda_c(p, 0.29), zs[1], zs[2], 0, topo=False)
-        mc.prisma(roda_c(p, 0.27), zs[2], zs[3], 0, topo=False)
-        mc.prisma(roda_c(p, 0.35), zs[3], zs[4], 0)  # anel
-        mc.prisma(roda_c(p, 0.28), zs[4], zs[5], 0, topo=False)
-        mc.prisma(roda_c(p, 0.37), zs[5], zs[6], 0, topo=False, fundo=True)  # coroa
-        anel_c = roda_c(p, 0.37)
-        boca = roda_c(p, 0.25)
-        for i in range(14):
-            j = (i + 1) % 14
-            mc.face([(*anel_c[i], topo_c), (*anel_c[j], topo_c), (*boca[j], topo_c), (*boca[i], topo_c)], 0)
-        mc.face([(*q, topo_c - 0.05) for q in boca], 3)
+        rc = 0.44  # raio da cúpula
+        zc_ = topo_c - rc - 0.12  # nascença da cúpula
+        mc.prisma(roda_c(p, 0.42), z0c, zc_ - 0.32, 0, topo=False)
+        mc.prisma(roda_c(p, 0.46), zc_ - 0.32, zc_ - 0.2, 1, fundo=True)  # anel
+        mc.prisma(roda_c(p, 0.4), zc_ - 0.2, zc_, 0, topo=False)
+        mc.prisma(roda_c(p, rc), zc_, zc_ + 0.06, 1, topo=False, fundo=True)
+        prev = roda_c(p, rc)
+        zp_ = zc_ + 0.06
+        for k in range(1, 6):
+            a_ = math.pi / 2 * k / 6
+            cur = roda_c(p, rc * math.cos(a_))
+            zk = zc_ + 0.06 + rc * math.sin(a_)
+            for i in range(16):
+                j = (i + 1) % 16
+                mc.face([(*prev[i], zp_), (*prev[j], zp_), (*cur[j], zk), (*cur[i], zk)], 1)
+            prev, zp_ = cur, zk
+        for i in range(16):
+            mc.face([(*prev[i], zp_), (*prev[(i + 1) % 16], zp_), (*p, topo_c)], 1)
     # Guaritas cónicas nos quatro cunhais (fotografias aéreas)
     for uu, vv in ((0.9, 0.4), (61.4, 0.4), (60.9, 61.4), (-1.7, 61.4)):
         q0 = puv(uu, vv)
@@ -1220,10 +1225,10 @@ def paco():
         zg = float(zm[k_])
         cc = q0 + unit(np.array(lin.mean(0)) - q0) * 0.9
         circ = [cc + 0.95 * np.array([math.cos(a), math.sin(a)]) for a in np.linspace(0, 2 * math.pi, 12, endpoint=False)]
-        mc.prisma(circ, zg - 3.5, zg + 1.6, 1)
+        mc.prisma(circ, zg - 3.5, zg + 1.6, 2)
         for i in range(12):
-            mc.face([(*circ[i], zg + 1.6), (*circ[(i + 1) % 12], zg + 1.6), (*cc, zg + 4.0)], 2)
-    mc.objeto("Paco_Chamines", "paco", ["tijolo_chamine", "pedra", "telha_paco", "sombra"], GRUPOS["Paco"], uv=None)
+            mc.face([(*circ[i], zg + 1.6), (*circ[(i + 1) % 12], zg + 1.6), (*cc, zg + 4.0)], 3)
+    mc.objeto("Paco_Chamines", "paco", ["tijolo_chamine", "cantaria", "pedra", "telha_paco"], GRUPOS["Paco"], uv=None)
     med["chamines"] = len(chamines)
     med["guaritas"] = 4
     med["cumeeiras"] = float(max(corpos.values()))
@@ -1592,7 +1597,7 @@ material("arvore", (1, 1, 1), 0.9, None, vcor=True)
 material("madeira", (0.42, 0.27, 0.15), 0.8)
 material("madeira_verde", (0.20, 0.45, 0.35), 0.7)
 material("tijolo", (0.62, 0.34, 0.24), 0.85)
-material("tijolo_chamine", (0.48, 0.22, 0.14), 0.85)
+material("tijolo_chamine", (0.66, 0.43, 0.35), 0.85)
 material("bronze", (0.22, 0.30, 0.25), 0.5)  # bronze com pátina esverdeada (fotografia)
 material("bronze_escamas", (1, 1, 1), 0.5, imagem("escamas", textura_escamas()))
 for _b in ("bronze", "bronze_escamas"):
@@ -2213,6 +2218,9 @@ if "--vistas" in sys.argv:
         az_e = math.degrees(math.atan2(PACO_U[1], -PACO_U[0]))  # para onde olha a figura (ver estatua())
         vista("estatua_perto", az_e + 25, 4, 6.5, lente=50, alvo_xy=tuple(ESTATUA), alvo_z=ze_ + 1.15)
         vista("estatua_tras", az_e + 200, 6, 6.5, lente=50, alvo_xy=tuple(ESTATUA), alvo_z=ze_ + 1.15)
+        zt_ = MEDIDAS["paco"]["cumeeiras"] - ZREF
+        vista("paco_chamines", 204, 40, 34, lente=50, alvo_xy=tuple(PACO_O + PACO_U * 30 + PACO_V * 6), alvo_z=zt_ - 3)
+        vista("paco_cima", 204, 62, 150, lente=50, alvo_xy=tuple(PACO_O + PACO_U * 30 + PACO_V * 30), alvo_z=zt_ - 8)
         vista("paco_aereo", 200, 38, 170, lente=50, alvo_xy=tuple(P(-47, -162)), alvo_z=float(cota(*P(-47, -162))) + 10)
         vista("paco_estatua", 305, 10, 110, lente=35, alvo_xy=tuple(P(-60, -145)), alvo_z=float(cota(*P(-60, -145))) + 9)
         vista("igreja_fachada", 248, 10, 38, lente=35, alvo_xy=tuple(P(-52, -78)), alvo_z=float(cota(*P(-52, -78))) + 4)
