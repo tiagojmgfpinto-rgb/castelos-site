@@ -8,4 +8,5 @@ public/terrain/
 .DS_Store
 pipeline/maquetas/penela/saida/
 pipeline/maquetas/guimaraes/saida/
+pipeline/maquetas/castro-laboreiro/saida/
 *.blend

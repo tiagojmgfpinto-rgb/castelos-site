@@ -1,0 +1,286 @@
+{
+  "monumento": "castro-laboreiro",
+  "titulo": "Castelo de Castro Laboreiro",
+  "variante": "estado-atual",
+  "versao": "0.1 provisória",
+  "data": "2026-10-28",
+  "origem": {
+    "lat": 42.022746,
+    "lon": -8.15837,
+    "nota": "Centro do recinto do castelo (polígono do OSM, conferido no LiDAR). Eixos da maqueta: x para este, y para norte (no visor, -z é o norte), em metros à escala 1:1."
+  },
+  "fontes": {
+    "sipa": {
+      "titulo": "SIPA, ficha IPA.00002273 — Castelo de Castro Laboreiro (Paula Noé, 2015)",
+      "url": "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=2273"
+    },
+    "cdp": {
+      "titulo": "Castelos de Portugal — Castelo de Castro Laboreiro",
+      "url": "https://www.castelosdeportugal.pt/castelos/castles/Castles(pre)SECXII/castroLaboreiro_en.html"
+    },
+    "wiki": {
+      "titulo": "Wikipédia — Castelo de Castro Laboreiro",
+      "url": "https://pt.wikipedia.org/wiki/Castelo_de_Castro_Laboreiro"
+    },
+    "osm": {
+      "titulo": "OpenStreetMap (ODbL), via Overture Maps 2026-10-21.0: contorno da cerca, muro entre os recintos, três portas e trilhos",
+      "url": "https://www.openstreetmap.org/#map=19/42.0227/-8.1584"
+    },
+    "lidar": {
+      "titulo": "DGT, LiDAR 2025: MDT e MDS de 50 cm e nuvem de pontos classificada com cor, folhas 197562 e 198562 (CC BY 4.0). Traçado dos panos, relevo, cotas e alturas medidas.",
+      "url": "https://cdd.dgterritorio.gov.pt"
+    },
+    "orto": {
+      "titulo": "Ortoimagem de 50 cm feita com a cor dos pontos do LiDAR 2025 da DGT (CC BY 4.0). Conferência das plantas, rocha e erva no chão.",
+      "url": "https://cdd.dgterritorio.gov.pt"
+    },
+    "fotos": {
+      "titulo": "Fotografias do castelo (vista aérea, pano nascente, Porta do Sol e muro entre os recintos) fornecidas pelo autor do projeto, outubro de 2026"
+    }
+  },
+  "limitacoes": [
+    "Não foi encontrada planta cotada publicada. Os panos foram desenhados sobre o relevo do MDS de 50 cm e encostados à crista medida (erro esperado de 0,5 a 1 m); a frente poente da cerca e o pano poente do castelo quase não se destacam no LiDAR e seguem o OpenStreetMap, como troços baixos entre os penedos.",
+    "Cotas e alturas medidas no LiDAR da DGT de 2025 (50 cm): o topo dos panos de metro a metro, o reduto, os vestígios da capela e o marco geodésico, e o terreno no MDT. As muralhas aparecem na nuvem de pontos ora como solo ora como vegetação, por isso o topo mede-se em todas as classes, filtrado ao longo do pano. Erro esperado de 0,3 a 0,5 m na vertical.",
+    "A espessura das muralhas do castelo (1,7 m) segue a legenda de Duarte de Armas citada no SIPA (c. 1,5 varas); a da cerca (2 m; 1,5 m nos troços baixos do poente) é estimada pelas fotografias. As muralhas estão sem remate (SIPA): não levam ameias nem parapeito, e o coroamento é desenhado plano.",
+    "As quatro portas estão na posição do OpenStreetMap (Porta do Sol, porta entre os recintos e portal norte) ou a 7 m da Porta do Sol pelo pano, como na fotografia (Porta da Fonte). O tipo de arco segue o SIPA; largura, altura, aduelas, impostas e mísulas são aproximadas.",
+    "O reduto da ponta sul é lido no MDS (plataforma de 12 × 9 m à cota do topo do pano nascente) e na fotografia aérea; o SIPA não o nomeia e descreve aí uma frente sul estreita e retilínea. O terrapleno do topo é esquemático.",
+    "Não se representam a torre de menagem (destruída em 1659), as torres e o cubelo desenhados por Duarte de Armas c. 1509, a cisterna, os alicerces do quartel nem as escadas embutidas nas muralhas, porque não se vêem no LiDAR nem há planta que os situe.",
+    "Os afloramentos de granito e as cores do chão vêm do MDT e da ortoimagem da nuvem de pontos; a textura da rocha é esquemática. As árvores e as moitas estão nas posições e alturas medidas na nuvem de pontos, com forma esquemática."
+  ],
+  "muralha": {
+    "espessura": 1.7,
+    "estimativa": true,
+    "nota": "O topo dos panos é medido no LiDAR. Espessura de 1,7 m no castelo (Duarte de Armas, SIPA) e 2 m na cerca (estimativa pelas fotografias). Sem ameias nem parapeito (SIPA: sem remate superior)."
+  },
+  "distancia": 290,
+  "placas": [
+    "castelo",
+    "porta_sol",
+    "reduto",
+    "porta_traicao",
+    "porta_recintos",
+    "capela",
+    "marco_geodesico",
+    "porta_fonte",
+    "cerca",
+    "afloramentos"
+  ],
+  "elementos": [
+    {
+      "id": "castelo",
+      "nome": "Castelo (recinto norte)",
+      "grupo": "Castelo",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "O recinto mais alto, a norte: planta retangular, irregular só no ângulo nordeste, curvo e seguido de uma reentrância que corresponde ao antigo cubelo. As muralhas de cantaria de granito, de aparelho isódomo, assentam nos afloramentos e já não têm remate. Lá dentro ficavam a torre de menagem, sobre os penedos ao centro, e a cisterna; o paiol explodiu em 1659 com um raio e destruiu a torre.",
+      "medidas": "Recinto c. 36 × 44 m. Topo dos panos entre 1026 e 1034 m; o muro sul sobe 3 a 5 m acima da cerca e o pano nascente até 9 m acima do pé exterior (LiDAR).",
+      "fontes": [
+        "sipa",
+        "cdp",
+        "wiki",
+        "lidar",
+        "orto",
+        "fotos"
+      ],
+      "resumo": "Recinto norte e mais alto, onde ficava a torre de menagem",
+      "ancora": [
+        2.0,
+        35.5,
+        -50.0
+      ]
+    },
+    {
+      "id": "porta_traicao",
+      "nome": "Porta da Traição (ou do Sapo)",
+      "grupo": "Portas",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Portal norte do castelo, junto ao cunhal noroeste, em arco de volta perfeita com aduelas largas sobre impostas. Por cima tem duas mísulas, que terão sustentado um balcão. É o acesso mais difícil, pela escadaria que sobe da vila.",
+      "medidas": "Soleira a c. 1027 m; o pano sobe c. 4 m acima dela (LiDAR).",
+      "fontes": [
+        "sipa",
+        "cdp",
+        "wiki",
+        "osm",
+        "lidar"
+      ],
+      "resumo": "Portal norte de volta perfeita, com duas mísulas por cima"
+    },
+    {
+      "id": "porta_recintos",
+      "nome": "Porta entre os recintos",
+      "grupo": "Portas",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "A meio do muro sul do castelo, um portal em arco de volta perfeita liga o castelo à cerca da vila, que fica num plano mais baixo.",
+      "medidas": "Soleira a c. 1029 m; o muro sobe c. 3,7 m acima dela (LiDAR).",
+      "fontes": [
+        "sipa",
+        "osm",
+        "lidar",
+        "fotos"
+      ],
+      "resumo": "Arco de volta perfeita entre o castelo e a cerca"
+    },
+    {
+      "id": "cerca",
+      "nome": "Cerca da vila (recinto sul)",
+      "grupo": "Cerca",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "O recinto maior, a sul e mais baixo, onde se recolhiam o gado e os bens em caso de ameaça. A frente sul é estreita e retilínea; a poente a muralha é muito irregular e aproveita os afloramentos como defesa; a nascente tem um troço ovalado a partir do sul e depois um troço retilíneo. Dentro restam vestígios de construções.",
+      "medidas": "Pano nascente com c. 100 m, topo entre 1021 e 1027 m, 3,7 a 6,8 m acima do pé exterior e 1,3 a 4,4 m acima do chão de dentro. Frente poente com c. 97 m, em troços baixos (LiDAR).",
+      "fontes": [
+        "sipa",
+        "cdp",
+        "wiki",
+        "osm",
+        "lidar",
+        "orto",
+        "fotos"
+      ],
+      "resumo": "Recinto sul, maior e mais baixo, para recolher gado e bens",
+      "ancora": [
+        23.0,
+        27.0,
+        10.0
+      ]
+    },
+    {
+      "id": "porta_sol",
+      "nome": "Porta do Sol",
+      "grupo": "Portas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "A porta principal, no troço ovalado do pano nascente, entre grandes penedos. Tem arco apontado de aduelas largas sobre pés-direitos. É a entrada mais fácil, pelo caminho que sobe do sul.",
+      "medidas": "Soleira a c. 1017 m; o pano sobe c. 4,9 m acima dela (LiDAR).",
+      "fontes": [
+        "sipa",
+        "cdp",
+        "wiki",
+        "osm",
+        "lidar",
+        "fotos"
+      ],
+      "resumo": "Porta principal, de arco apontado, entre grandes penedos"
+    },
+    {
+      "id": "porta_fonte",
+      "nome": "Porta da Fonte",
+      "grupo": "Portas",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Logo a seguir à Porta do Sol, no mesmo pano, uma porta de verga reta sobre pés-direitos, fechada por uma porta de madeira.",
+      "medidas": "Soleira a c. 1018 m; o pano sobe c. 4 m acima dela (LiDAR).",
+      "fontes": [
+        "sipa",
+        "lidar",
+        "fotos"
+      ],
+      "resumo": "Porta de verga reta junto à Porta do Sol"
+    },
+    {
+      "id": "reduto",
+      "nome": "Reduto sul",
+      "grupo": "Cerca",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Na ponta sul, onde acaba o pano nascente, uma plataforma retangular de muralha cheia, saliente sobre os penedos, que fecha a frente sul da cerca. Lida no MDS e na fotografia aérea; o SIPA não lhe dá nome.",
+      "medidas": "Planta c. 12 × 9 m, topo a 1021,3 m, c. 4 m acima do chão da cerca e até 10 m acima do terreno a sul (LiDAR).",
+      "fontes": [
+        "sipa",
+        "lidar",
+        "orto",
+        "fotos"
+      ],
+      "resumo": "Plataforma de muralha cheia na ponta sul"
+    },
+    {
+      "id": "capela",
+      "nome": "Vestígios da capela",
+      "grupo": "Vestígios",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Junto ao muro norte da cerca, as primeiras fiadas de uma construção quadrangular, com a entrada a norte. Poderá ser a antiga capela de Nossa Senhora dos Remédios ou de Santa Bárbara (SIPA).",
+      "medidas": "Planta c. 5,6 × 5,4 m; paredes com c. 1 m de altura (LiDAR).",
+      "fontes": [
+        "sipa",
+        "lidar",
+        "orto"
+      ],
+      "resumo": "Primeiras fiadas de uma construção quadrangular, talvez a capela"
+    },
+    {
+      "id": "marco_geodesico",
+      "nome": "Marco geodésico",
+      "grupo": "Vestígios",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Marco geodésico branco no ponto mais alto do castelo, sobre o penedo central onde ficaria a torre de menagem.",
+      "medidas": "C. 2 m de altura; o penedo está a 1035,5 m (LiDAR).",
+      "fontes": [
+        "sipa",
+        "lidar",
+        "fotos"
+      ],
+      "resumo": "No ponto mais alto, a 1035 m"
+    },
+    {
+      "id": "afloramentos",
+      "nome": "Afloramentos de granito",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "O castelo assenta num monte de escarpas rochosas a mais de 1000 m de altitude, no planalto de Castro Laboreiro. As muralhas aproveitam os penedos e os grandes afloramentos de granito, que ficam dentro e fora dos recintos.",
+      "medidas": "Relevo do MDT de 50 cm; a rocha separa-se da erva pela cor da nuvem de pontos e pelo declive.",
+      "fontes": [
+        "sipa",
+        "lidar",
+        "orto",
+        "fotos"
+      ],
+      "resumo": "Penedos e lajes de granito onde assentam as muralhas",
+      "ancora": [
+        40.0,
+        10.2,
+        -10.0
+      ]
+    },
+    {
+      "id": "terreno",
+      "nome": "Terreno",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Relevo do LiDAR da DGT (MDT de 50 cm), num círculo de 92 m de raio à volta do recinto, com a cor da ortoimagem da nuvem de pontos.",
+      "fontes": [
+        "lidar",
+        "orto"
+      ]
+    },
+    {
+      "id": "caminhos",
+      "nome": "Trilhos",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Trilhos de terra do OpenStreetMap: o acesso a sul pela Porta do Sol, a escadaria da porta norte e os carreiros dos dois recintos.",
+      "fontes": [
+        "osm",
+        "orto",
+        "fotos"
+      ]
+    },
+    {
+      "id": "vegetacao",
+      "nome": "Vegetação",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "327 árvores e 788 moitas de mato (giesta, urze, tojo) nas posições, alturas e raios medidos na nuvem de pontos LiDAR, com forma esquemática.",
+      "fontes": [
+        "lidar"
+      ]
+    }
+  ]
+}
