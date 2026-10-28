@@ -54,7 +54,7 @@
     "O Paço dos Duques tem a planta do OpenStreetMap e as alturas das fachadas medidas. Os dez corpos de telhado e as paredes ameadas entre eles foram lidos no MDS (com o cume de cada um medido), e o claustro tem o beirado da galeria e o encontro do telhado com as alas medidos. A arcaria térrea, a galeria de colunas do andar nobre e a profundidade das quadras (2,5 m) seguem a fotografia do pátio. As 36 chaminés estão nas posições medidas, com forma esquemática. As janelas, as arcarias, o portal da capela e a armação de madeira do alpendre seguem as fotografias, com medidas aproximadas; as quatro guaritas dos cunhais são estimativas.",
     "A Igreja de São Miguel tem as cumeeiras e beirados da nave e da capela-mor medidos. O portal de três arquivoltas com tímpano liso e mísulas, a cachorrada, as frestas, os contrafortes, as cruzes e a escadaria seguem as fotografias, com medidas aproximadas.",
     "A estátua de D. Afonso Henriques tem a posição e a altura total medidas (4,9 m com o pedestal). A divisão entre o pedestal (tambor cilíndrico de granito sobre dois degraus) e a figura, e a figura (rochedo, cota de escamas, cinto, antebraços nus, elmo com nasal, barba, manto com pregas, escudo de amêndoa e espada longa de ponta para cima com a bainha na base), seguem as fotografias do Tiago, com proporções e pregas aproximadas.",
-    "O muro com arco a sueste da torre sul segue a fotografia do Street View e o LiDAR (troço junto à torre). Para lá do caminho fica sob as copas e o seu comprimento e altura são estimados; a identificação como arranque da antiga cerca da vila é provável, não confirmada.",
+    "O muro com arco a noroeste segue a fotografia do Street View e o LiDAR, onde aparece coberto de hera (classe vegetação); o traçado e a altura foram lidos nessa faixa e a espessura é estimada; a identificação como arranque da antiga cerca da vila é provável, não confirmada.",
     "Os edifícios da envolvente são volumes simplificados (plantas do OpenStreetMap e da nuvem de pontos, cume medido). As árvores estão nas posições e com as alturas medidas na nuvem de pontos, com forma esquemática. O OpenStreetMap não indica o pavimento: as ruas de automóveis estão em asfalto com lancis e os passeios, escadas e caminhos em lajeado de granito."
   ],
   "muralha": {
@@ -295,17 +295,17 @@
     },
     {
       "id": "muro_arco",
-      "nome": "Muro com arco a sueste",
+      "nome": "Muro com arco a noroeste",
       "grupo": "Muralhas",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "Troço de muro de granito que sai do cunhal sueste da torre sul e é rasgado por um arco de volta perfeita por onde passa o Caminho do Castelo (fotografia do Street View). Provavelmente o arranque da antiga cerca da vila.",
-      "medidas": "C. 15,9 m de comprimento; topo junto à torre a c. 242,0 m; arco a 7,2 m da torre, com a soleira a 235,8 m (LiDAR).",
+      "descricao": "Troço de muro de granito, coberto de hera, que sai da torre noroeste, sobe para norte e vira para poente. É rasgado por um arco de volta perfeita por onde passa o Caminho do Castelo (fotografia do Street View). Provavelmente o arranque da antiga cerca da vila.",
+      "medidas": "C. 28,9 m de comprimento, com 3,8 a 6,5 m de altura; arco a 14,7 m da torre, com a soleira a 233,7 m (LiDAR).",
       "fontes": [
         "lidar",
         "fotos"
       ],
-      "resumo": "Muro com arco sobre o caminho, junto à torre sul"
+      "resumo": "Muro com arco sobre o caminho, junto à torre noroeste"
     },
     {
       "id": "igreja",
@@ -347,7 +347,7 @@
       "grupo": "Estátua",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "Bronze de António Soares dos Reis, inaugurado por D. Luís a 20 de setembro de 1887, hoje junto ao Paço dos Duques: o rei de pé, de elmo e cota de malha, com o escudo e a espada, sobre um pedestal de granito. Posição do OpenStreetMap conferida no LiDAR; figura simplificada a partir das fotografias.",
+      "descricao": "Bronze de António Soares dos Reis, inaugurado por D. Luís a 20 de setembro de 1887, hoje junto ao Paço dos Duques: o rei de pé, de elmo e cota de malha, com o escudo e a espada, sobre um pedestal de granito, de lado para o Paço, com a esquerda virada para a fachada. Posição do OpenStreetMap conferida no LiDAR; figura simplificada a partir das fotografias.",
       "medidas": "4,9 m do chão ao topo da espada, com o pedestal de c. 2,7 m (LiDAR).",
       "fontes": [
         "wiki",
