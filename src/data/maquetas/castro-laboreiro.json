@@ -2,7 +2,7 @@
   "monumento": "castro-laboreiro",
   "titulo": "Castelo de Castro Laboreiro",
   "variante": "estado-atual",
-  "versao": "0.1 provisória",
+  "versao": "0.2 provisória",
   "data": "2026-10-28",
   "origem": {
     "lat": 42.022746,
@@ -36,16 +36,20 @@
     },
     "fotos": {
       "titulo": "Fotografias do castelo (vista aérea, pano nascente, Porta do Sol e muro entre os recintos) fornecidas pelo autor do projeto, outubro de 2026"
+    },
+    "autor": {
+      "titulo": "Indicações do autor do projeto (outubro de 2026): o arvoredo do monte é sobretudo de castanheiros e sobreiros"
     }
   },
   "limitacoes": [
     "Não foi encontrada planta cotada publicada. Os panos foram desenhados sobre o relevo do MDS de 50 cm e encostados à crista medida (erro esperado de 0,5 a 1 m); a frente poente da cerca e o pano poente do castelo quase não se destacam no LiDAR e seguem o OpenStreetMap, como troços baixos entre os penedos.",
     "Cotas e alturas medidas no LiDAR da DGT de 2025 (50 cm): o topo dos panos de metro a metro, o reduto, os vestígios da capela e o marco geodésico, e o terreno no MDT. As muralhas aparecem na nuvem de pontos ora como solo ora como vegetação, por isso o topo mede-se em todas as classes, filtrado ao longo do pano. Erro esperado de 0,3 a 0,5 m na vertical.",
-    "A espessura das muralhas do castelo (1,7 m) segue a legenda de Duarte de Armas citada no SIPA (c. 1,5 varas); a da cerca (2 m; 1,5 m nos troços baixos do poente) é estimada pelas fotografias. As muralhas estão sem remate (SIPA): não levam ameias nem parapeito, e o coroamento é desenhado plano.",
+    "A espessura das muralhas do castelo (1,7 m) segue a legenda de Duarte de Armas citada no SIPA (c. 1,5 varas); a da cerca (2 m; 1,5 m nos troços baixos do poente) é estimada pelas fotografias. As muralhas estão sem remate (SIPA): não levam ameias nem parapeito. Nos panos altos o coroamento sobe e desce em patamares horizontais, como se vê nas fotografias; a altura de cada patamar é a média do topo medido nesse troço.",
     "As quatro portas estão na posição do OpenStreetMap (Porta do Sol, porta entre os recintos e portal norte) ou a 7 m da Porta do Sol pelo pano, como na fotografia (Porta da Fonte). O tipo de arco segue o SIPA; largura, altura, aduelas, impostas e mísulas são aproximadas.",
-    "O reduto da ponta sul é lido no MDS (plataforma de 12 × 9 m à cota do topo do pano nascente) e na fotografia aérea; o SIPA não o nomeia e descreve aí uma frente sul estreita e retilínea. O terrapleno do topo é esquemático.",
+    "O reduto da ponta sul é lido no MDT e no MDS e na fotografia aérea: uma cinta de muralha de 12 × 9 m em volta de um penedo. O SIPA não o nomeia e descreve aí uma frente sul estreita e retilínea. A espessura da cinta (1,5 m) e a altura por dentro (0,4 a 1,2 m acima do penedo) são estimadas.",
+    "A escada metálica do portal norte (SIPA) é desenhada como um lanço reto da soleira até ao chão medido no MDT; largura, degraus e guardas são estimados.",
     "Não se representam a torre de menagem (destruída em 1659), as torres e o cubelo desenhados por Duarte de Armas c. 1509, a cisterna, os alicerces do quartel nem as escadas embutidas nas muralhas, porque não se vêem no LiDAR nem há planta que os situe.",
-    "Os afloramentos de granito e as cores do chão vêm do MDT e da ortoimagem da nuvem de pontos; a textura da rocha é esquemática. As árvores e as moitas estão nas posições e alturas medidas na nuvem de pontos, com forma esquemática."
+    "Os afloramentos de granito e as cores do chão vêm do MDT e da ortoimagem da nuvem de pontos; a textura da rocha é esquemática. Debaixo do arvoredo cerrado da encosta poente o MDT foi suavizado, porque ali tem poucos pontos de solo e mostrava picos e paredes que não existem. As árvores e as moitas estão nas posições e alturas medidas na nuvem de pontos, com forma esquemática; a espécie de cada árvore (castanheiro ou sobreiro) não se mede no LiDAR e é atribuída pelo coberto à volta."
   ],
   "muralha": {
     "espessura": 1.7,
@@ -95,7 +99,7 @@
       "grupo": "Portas",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "Portal norte do castelo, junto ao cunhal noroeste, em arco de volta perfeita com aduelas largas sobre impostas. Por cima tem duas mísulas, que terão sustentado um balcão. É o acesso mais difícil, pela escadaria que sobe da vila.",
+      "descricao": "Portal norte do castelo, junto ao cunhal noroeste, em arco de volta perfeita com aduelas largas sobre impostas. Por cima tem duas mísulas, que terão sustentado um balcão. É o acesso mais difícil, pela escadaria que sobe da vila e acaba numa escada metálica com guarda.",
       "medidas": "Soleira a c. 1027 m; o pano sobe c. 4 m acima dela (LiDAR).",
       "fontes": [
         "sipa",
@@ -105,6 +109,20 @@
         "lidar"
       ],
       "resumo": "Portal norte de volta perfeita, com duas mísulas por cima"
+    },
+    {
+      "id": "escada_norte",
+      "nome": "Escada do portal norte",
+      "grupo": "Portas",
+      "estado": "estado-atual",
+      "confianca": "baixa",
+      "descricao": "Escada metálica com guarda, por onde acaba a subida da vila até à Porta da Traição. Desenhada como um lanço reto da soleira até ao chão; a forma é estimada.",
+      "medidas": "Lanço de c. 3 m e c. 2,6 m de desnível, até ao chão medido no MDT; 13 degraus de 0,2 m (estimativa).",
+      "fontes": [
+        "sipa",
+        "lidar"
+      ],
+      "resumo": "Escada metálica que sobe ao portal norte"
     },
     {
       "id": "porta_recintos",
@@ -128,7 +146,7 @@
       "grupo": "Cerca",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "O recinto maior, a sul e mais baixo, onde se recolhiam o gado e os bens em caso de ameaça. A frente sul é estreita e retilínea; a poente a muralha é muito irregular e aproveita os afloramentos como defesa; a nascente tem um troço ovalado a partir do sul e depois um troço retilíneo. Dentro restam vestígios de construções.",
+      "descricao": "O recinto maior, a sul e mais baixo, onde se recolhiam o gado e os bens em caso de ameaça. A frente sul é estreita e retilínea; a poente a muralha é muito irregular e aproveita os afloramentos como defesa; a nascente tem um troço ovalado a partir do sul e depois um troço retilíneo. Dentro restam vestígios de construções. O coroamento do pano nascente sobe em patamares, como na fotografia junto à Porta do Sol.",
       "medidas": "Pano nascente com c. 100 m, topo entre 1021 e 1027 m, 3,7 a 6,8 m acima do pé exterior e 1,3 a 4,4 m acima do chão de dentro. Frente poente com c. 97 m, em troços baixos (LiDAR).",
       "fontes": [
         "sipa",
@@ -185,15 +203,15 @@
       "grupo": "Cerca",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "Na ponta sul, onde acaba o pano nascente, uma plataforma retangular de muralha cheia, saliente sobre os penedos, que fecha a frente sul da cerca. Lida no MDS e na fotografia aérea; o SIPA não lhe dá nome.",
-      "medidas": "Planta c. 12 × 9 m, topo a 1021,3 m, c. 4 m acima do chão da cerca e até 10 m acima do terreno a sul (LiDAR).",
+      "descricao": "Na ponta sul, onde acaba o pano nascente, uma cinta retangular de muralha em volta de um penedo, saliente sobre as escarpas, que fecha a frente sul da cerca. Por fora as faces descem até 12 m; por dentro a muralha mal passa do penedo, onde cresce mato. Lido no LiDAR e na fotografia aérea; o SIPA não lhe dá nome.",
+      "medidas": "Planta c. 12 × 9 m. Topo da cinta até 1021,7 m; o penedo do miolo sobe de 1019 m a poente a 1021,4 m a nascente; o pé exterior desce a c. 1009,5 m (LiDAR).",
       "fontes": [
         "sipa",
         "lidar",
         "orto",
         "fotos"
       ],
-      "resumo": "Plataforma de muralha cheia na ponta sul"
+      "resumo": "Cinta de muralha em volta de um penedo, na ponta sul"
     },
     {
       "id": "capela",
@@ -277,9 +295,10 @@
       "grupo": "Envolvente",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "327 árvores e 788 moitas de mato (giesta, urze, tojo) nas posições, alturas e raios medidos na nuvem de pontos LiDAR, com forma esquemática.",
+      "descricao": "327 árvores, castanheiros e sobreiros, e 780 moitas de mato (giesta, urze, tojo) nas posições, alturas e raios medidos na nuvem de pontos LiDAR, com forma esquemática. No souto cerrado da encosta poente predominam os castanheiros, de copa redonda e verde-viva; nas lajes e no mato aberto, os sobreiros, de copa larga, achatada e verde-escura.",
       "fontes": [
-        "lidar"
+        "lidar",
+        "autor"
       ]
     }
   ]

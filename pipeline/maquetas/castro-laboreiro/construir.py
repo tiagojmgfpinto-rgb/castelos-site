@@ -81,6 +81,14 @@ MDS = LID["mds"] / 100.0 + float(LID["base"]) - ZREF
 CLS = LID["classe"]
 VEG = (CLS >= 3) & (CLS <= 5)
 LXS = np.linspace(-LMEIO, LMEIO, MDT.shape[0])
+# Debaixo do arvoredo cerrado da encosta poente o MDT é interpolado entre poucos pontos de solo: tem picos
+# e cortinas verticais que não existem (rugosidade dupla da do chão aberto). Aí suaviza-se o MDT (mediana
+# 3 × 3 e gaussiana de 1 m), tanto mais quanto mais fechado o coberto; nas lajes e no recinto fica intacto.
+from scipy import ndimage as _ndi  # noqa: E402
+
+COBERTO = _ndi.uniform_filter(VEG.astype(float), 9)
+_peso = np.clip((COBERTO - 0.2) / 0.45, 0, 1)
+MDT = MDT + _peso * (_ndi.gaussian_filter(_ndi.median_filter(MDT, 3), 2.0) - MDT)
 
 
 def amostra(G, x, y):
@@ -214,16 +222,22 @@ def novo_objeto(nome, me, elemento, mat="terreno", pai=None):
     return ob
 
 
-def uv_mundo(ob, escala):
+def uv_mundo(ob, escala, caixa=False):
+    """UV em metros do mundo. Com caixa=True (rocha), projeção pelo eixo dominante da normal, para o grão
+    não esticar em riscas nas faces a pique."""
     me = ob.data
     if not me.uv_layers:
         me.uv_layers.new(name="UVMap")
     uv = me.uv_layers.active.data
     for poly in me.polygons:
         n = poly.normal
+        ax = max(range(3), key=lambda k: abs(n[k]))
         for li in poly.loop_indices:
             co = ob.matrix_world @ me.vertices[me.loops[li].vertex_index].co
-            if abs(n.z) > 0.7:
+            if caixa:
+                uv[li].uv = ((co.x, co.y) if ax == 2 else (co.y, co.z) if ax == 0 else (co.x, co.z))
+                uv[li].uv = (uv[li].uv[0] / escala, uv[li].uv[1] / escala)
+            elif abs(n.z) > 0.7:
                 uv[li].uv = (co.x / escala, co.y / escala)
             else:  # faces verticais: u ao longo da face, para as fiadas não esticarem nos panos oblíquos
                 h = math.hypot(n.x, n.y) or 1.0
@@ -372,11 +386,19 @@ def textura_grao(n=256):
     return np.repeat((0.84 + 0.22 * g)[..., None], 3, 2).clip(0, 1)
 
 
-def material(nome, cor, rug=0.9, tex=None, vcor=False):
+def material(nome, cor, rug=0.9, tex=None, vcor=False, normal=None, forca=1.0):
     mt = bpy.data.materials.new(nome)
     mt.use_nodes = True
     nt = mt.node_tree
     bsdf = nt.nodes["Principled BSDF"]
+    if normal is not None:
+        normal.colorspace_settings.name = "Non-Color"
+        tn = nt.nodes.new("ShaderNodeTexImage")
+        tn.image = normal
+        nm = nt.nodes.new("ShaderNodeNormalMap")
+        nm.inputs["Strength"].default_value = forca
+        nt.links.new(tn.outputs["Color"], nm.inputs["Color"])
+        nt.links.new(nm.outputs["Normal"], bsdf.inputs["Normal"])
     bsdf.inputs["Base Color"].default_value = (*[c ** 2.2 for c in cor], 1)
     bsdf.inputs["Roughness"].default_value = rug
     if tex is not None:
@@ -461,6 +483,7 @@ def textura_pedra(n=512):
     líquenes, como nas fotografias das muralhas de Castro Laboreiro."""
     r = np.random.default_rng(1290)
     tex = np.zeros((n, n, 3))
+    alt = np.ones((n, n))  # relevo para o mapa de normais: juntas fundas, silhares abaulados
     m_px = n / 3.0
     y = 0
     while y < n:
@@ -475,8 +498,11 @@ def textura_pedra(n=512):
             if x1 > x0:
                 tex[y:y1, x0:x1] = base
                 tex[y:y1, x0:min(x0 + 3, x1)] *= 0.78
+                alt[y:y1, x0:min(x0 + 4, x1)] = 0.0
+                alt[y:y1, x0:x1] += r.uniform(-0.12, 0.12)  # faces dos silhares desencontradas
             x += wf
         tex[y:min(y + 3, n)] *= 0.76
+        alt[y:min(y + 4, n)] = 0.0
         y += hf
     yy, xx = np.mgrid[0:n, 0:n] / n
     grao = fbm(xx * 40, yy * 40, 1.5, 21)[..., None]
@@ -487,7 +513,20 @@ def textura_pedra(n=512):
     liq = fbm(xx * 24, yy * 24, 1.0, 41)[..., None]
     tex = tex * (0.92 + 0.12 * grao) * (0.90 + 0.12 * manchas)
     tex = tex * np.where(liq > 0.68, 1.12, 1.0) * np.where(liq < 0.30, 0.86, 1.0)
+    PEDRA_ALT[:] = [ndi.gaussian_filter(alt, 1.6) + 0.25 * grao[..., 0]]
     return np.clip(tex, 0, 1)
+
+
+PEDRA_ALT = []
+
+
+def normais(alt, forca):
+    """Mapa de normais (espaço tangente, convenção do glTF) a partir de um mapa de alturas periódico."""
+    gx = (np.roll(alt, -1, 1) - np.roll(alt, 1, 1)) * forca
+    gy = (np.roll(alt, -1, 0) - np.roll(alt, 1, 0)) * forca
+    nv = np.stack([-gx, -gy, np.ones_like(alt)], 2)
+    nv /= np.linalg.norm(nv, axis=2, keepdims=True)
+    return nv * 0.5 + 0.5
 
 
 def textura_granito(n=512):
@@ -500,7 +539,11 @@ def textura_granito(n=512):
     v = v * np.where(liq > 0.66, 1.10, 1.0) * np.where(liq < 0.32, 0.84, 1.0)
     pint = np.random.default_rng(54).random((n, n))
     v = v * np.where(pint > 0.985, 0.6, 1.0) * np.where(pint < 0.01, 1.15, 1.0)  # cristais escuros e claros
+    GRANITO_ALT[:] = [0.6 * g2 + 0.4 * g1]
     return np.repeat(v[..., None], 3, 2).clip(0, 1)
+
+
+GRANITO_ALT = []
 
 
 # ---------------------------------------------------------------- planta da cerca (traçada no LiDAR)
@@ -593,6 +636,8 @@ def perfil(linha, esp, baixo=False):
         topo = np.clip(topo, dentro_ + 0.9, dentro_ + 2.4)
     topo = np.clip(topo, chao + 0.8, chao + 7.0)  # copas encostadas ao pano não sobem o topo
     topo = mediana_movel(topo, 3)
+    if baixo:  # o chão de dentro salta de penedo em penedo: o coroamento destes troços corre liso
+        topo = np.convolve(np.pad(topo, 3, mode="edge"), np.ones(7) / 7, mode="valid")
     return linha, topo, fora, dentro_
 
 
@@ -601,24 +646,52 @@ def medir(poly=None, centro=None, raio=None, q=95, sem_veg=True):  # noqa: F811
     return float(np.percentile(v, q)) if len(v) >= 3 else float("nan")
 
 
-def parede(m, linha, esp, topo, fora, dentro_, mat=0, mat_topo=3):
+def degraus(topo, salto=0.45):
+    """Coroamento em degraus: onde o pano sobe ou desce, o topo fica em patamares horizontais com
+    espelhos verticais, como nas fotografias (o adarve sobe aos lanços junto à Porta do Sol)."""
+    k = min(9, len(topo) // 2 * 2 - 1)
+    t_ = np.convolve(np.pad(topo, k // 2, mode="edge"), np.ones(k) / k, mode="valid") if k >= 3 else topo
+    out = np.empty_like(topo)
+    nivel, run = t_[0], 0
+    for i, t in enumerate(t_):
+        run += 1
+        if abs(t - nivel) >= salto and run >= 3:  # patamares de 3 m pelo menos: nada de dentes
+            nivel, run = t, 0
+        out[i] = nivel
+    return out
+
+
+def parede(m, linha, esp, topo, fora, dentro_, mat=0, mat_topo=3, fechada=False, escalonar=True):
     """Pano de muralha arruinado ao longo da linha central (o exterior fica à direita): faces de cantaria
-    até ao topo medido, sem parapeito nem ameias (SIPA: sem remate superior), e coroamento de pedra e
-    terra. Os panos descem 1,5 m abaixo do terreno para não ficarem no ar."""
-    ext = desvio(linha, -esp / 2)
-    inn = desvio(linha, esp / 2)
+    até ao topo medido, sem parapeito nem ameias (SIPA: sem remate superior), e coroamento de lajes em
+    patamares. Os panos descem 1,5 m abaixo do terreno para não ficarem no ar."""
+    ext = desvio(linha, -esp / 2, fechada)
+    inn = desvio(linha, esp / 2, fechada)
     n = len(linha)
     ze = np.minimum(fora, topo - 0.5) - 1.5
     zi = np.minimum(dentro_, topo - 0.5) - 1.5
-    a = topo
-    for i in range(n - 1):
-        j = i + 1
-        m.face([(*ext[i], ze[i]), (*ext[j], ze[j]), (*ext[j], a[j]), (*ext[i], a[i])], mat)
-        m.face([(*inn[j], zi[j]), (*inn[i], zi[i]), (*inn[i], a[i]), (*inn[j], a[j])], mat)
-        m.face([(*ext[i], a[i]), (*ext[j], a[j]), (*inn[j], a[j]), (*inn[i], a[i])], mat_topo)
+    a = degraus(topo) if escalonar else topo
+    # sequência de (vértice, cota do topo); num degrau o vértice repete-se com as duas cotas
+    seq = []
+    for i in range(n):
+        if seq and a[i] != seq[-1][1]:
+            seq.append((i, seq[-1][1]))
+        seq.append((i, a[i]))
+    if fechada:
+        if a[0] != seq[-1][1]:
+            seq.append((0, seq[-1][1]))
+        seq.append((0, a[0]))
+    for (i, ai), (j, aj) in zip(seq[:-1], seq[1:]):
+        if i == j:  # espelho do degrau: só a face vertical do coroamento
+            m.face([(*ext[i], ai), (*ext[i], aj), (*inn[i], aj), (*inn[i], ai)], mat)
+            continue
+        m.face([(*ext[i], ze[i]), (*ext[j], ze[j]), (*ext[j], aj), (*ext[i], ai)], mat)
+        m.face([(*inn[j], zi[j]), (*inn[i], zi[i]), (*inn[i], ai), (*inn[j], aj)], mat)
+        m.face([(*ext[i], ai), (*ext[j], aj), (*inn[j], aj), (*inn[i], ai)], mat_topo)
         m.face([(*ext[j], ze[j]), (*ext[i], ze[i]), (*inn[i], zi[i]), (*inn[j], zi[j])], mat)
-    for i in (0, n - 1):
-        m.face([(*ext[i], ze[i]), (*inn[i], zi[i]), (*inn[i], a[i]), (*ext[i], a[i])], mat)
+    if not fechada:
+        for i in (0, n - 1):
+            m.face([(*ext[i], ze[i]), (*inn[i], zi[i]), (*inn[i], a[i]), (*ext[i], a[i])], mat)
     return ext, inn
 
 
@@ -664,7 +737,7 @@ def rebaixar(X, Y, Z):
         zz = Z[sel]
         zz[perto] = np.minimum(zz[perto], baixo_[k[perto]])
         Z[sel] = zz
-    for poly, folga in ((REDUTO, 0.4), (CAPELA, 0.2)):
+    for poly, folga in ((CAPELA, 0.2),):
         dentro_r = dentro(X, Y, desvio(poly, -folga, True))
         if dentro_r.any():
             Z[dentro_r] = np.minimum(Z[dentro_r], float(np.percentile(Z[dentro_r], 10)) - 0.5)
@@ -697,7 +770,7 @@ def construir_terreno():
     # Cores por vértice (sRGB), guiadas pela ortoimagem da nuvem de pontos: erva seca dourada no
     # recinto e nas encostas, mato verde-escuro, e o granito cinzento-claro onde ele aflora (ortoimagem
     # clara e pouco saturada, ou declive forte), com as fissuras mais escuras.
-    xv, yv = V[:, 0], V[:, 1]
+    xv, yv, zv = V[:, 0], V[:, 1], V[:, 2]
     dv = decl[usados]
     cv = curv[usados]
     orto = ortofoto(xv, yv)
@@ -715,13 +788,20 @@ def construir_terreno():
     seca = np.array([0.76, 0.66, 0.43])
     erva = np.array([0.50, 0.53, 0.32])
     mato = np.array([0.33, 0.38, 0.24])
+    folhada = np.array([0.40, 0.37, 0.25])  # chão do souto: folha de castanheiro e de sobreiro
+    cob = amostra(COBERTO, xv, yv)
     cor = seca * (1 - verde[:, None]) + erva * verde[:, None]
     cor = cor * (1 - sob[:, None] * 0.6) + mato * sob[:, None] * 0.6
-    cor = cor * (0.93 + 0.14 * fbm(xv, yv, 5.0, 3))[:, None]
+    fl = np.clip((cob - 0.35) / 0.4, 0, 1)[:, None] * 0.55
+    cor = cor * (1 - fl) + folhada * fl
+    # o ruído leva a cota, para as faces a pique não ficarem às riscas verticais
+    cor = cor * (0.93 + 0.14 * fbm(xv + 0.6 * zv, yv - 0.4 * zv, 5.0, 3))[:, None]
+    # Rocha: onde a ortoimagem é clara e pouco saturada (as lajes e os penedos), e nas faces quase a
+    # pique fora do arvoredo; debaixo das árvores o declive sozinho não faz rocha (ali é souto).
     rocha = np.clip((lum - 0.52) * 5, 0, 1) * np.clip((0.17 - sat) * 9, 0, 1) * (1 - sob)
-    rocha = np.maximum(rocha, np.clip((dv - 38) / 10, 0, 1) * (1 - 0.7 * sob))
+    rocha = np.maximum(rocha, np.clip((dv - 52) / 10, 0, 1) * np.clip(1 - cob * 2.5, 0, 1))
     rocha = ndi_suave(rocha, usados, X.shape)
-    gran = np.array([0.70, 0.69, 0.65]) * (0.88 + 0.2 * fbm(xv, yv, 3.0, 5))[:, None]
+    gran = np.array([0.70, 0.69, 0.65]) * (0.88 + 0.2 * fbm(xv + 0.7 * zv, yv - 0.5 * zv, 3.0, 5))[:, None]
     gran = gran * (1 - np.clip(cv * 1.6, -0.12, 0.30))[:, None]  # fissuras escuras, lombas claras
     gran = gran * (0.9 + 0.1 * np.clip(lum / 0.75, 0, 1.2))[:, None]
     cor = cor * (1 - rocha[:, None]) + gran * rocha[:, None]
@@ -740,7 +820,7 @@ def construir_terreno():
         me.color_attributes.active_color = ca
         me.shade_smooth()
         ob = novo_objeto(nome, me, el, mat=mat, pai=GRUPOS["Terreno"] if nome == "Terreno" else GRUPOS["Afloramentos"])
-        uv_mundo(ob, 8.0 if nome == "Terreno" else 4.0)
+        uv_mundo(ob, 8.0 if nome == "Terreno" else 4.0, caixa=nome != "Terreno")
         obs[nome] = ob
     MEDIDAS["terreno"] = {"vertices": int(len(V)), "faces_rocha": int(rocha_f.sum()), "faces": int(len(faces))}
 
@@ -788,17 +868,22 @@ for g in ["Terreno", "Afloramentos", "Castelo", "Cerca", "Portas", "Reduto", "Ve
     e.parent = RAIZ_OB
     GRUPOS[g] = e
 
-material("pedra", (1, 1, 1), 0.92, imagem("pedra", textura_pedra()))
+TEX_PEDRA = textura_pedra()
+NRM_PEDRA = imagem("pedra_normal", normais(PEDRA_ALT[0], 3.0))
+material("pedra", (1, 1, 1), 0.92, imagem("pedra", TEX_PEDRA), normal=NRM_PEDRA)
 material("sombra", (0.10, 0.09, 0.08), 1.0)
-material("cantaria", (0.72, 0.71, 0.67), 0.9)
-material("coroamento", (1, 1, 1), 0.97, imagem("coroa", textura_pedra() * np.array([0.86, 0.86, 0.80])))  # topo dos panos: silhares à vista
+material("cantaria", (0.72, 0.71, 0.67), 0.9, normal=NRM_PEDRA, forca=0.5)
+material("coroamento", (1, 1, 1), 0.97, imagem("coroa", TEX_PEDRA * np.array([0.86, 0.86, 0.80])), normal=NRM_PEDRA)  # topo dos panos: silhares à vista
 material("erva_seca", (1, 1, 1), 0.97, imagem("erva", textura_grao() * np.array([0.72, 0.63, 0.42])))
 material("cal", (0.95, 0.95, 0.93), 0.8)
 material("terreno", (1, 1, 1), 0.97, imagem("grao", textura_grao()), vcor=True)
-material("granito", (1, 1, 1), 0.9, imagem("granito", textura_granito()), vcor=True)
+TEX_GRANITO = textura_granito()
+material("granito", (1, 1, 1), 0.9, imagem("granito", TEX_GRANITO), vcor=True,
+         normal=imagem("granito_normal", normais(GRANITO_ALT[0], 6.0)), forca=0.8)
 material("base", (0.33, 0.26, 0.20), 0.95)
 material("trilho", (0.74, 0.66, 0.52), 0.97)
 material("arvore", (1, 1, 1), 0.9, None, vcor=True)
+material("ferro", (0.24, 0.25, 0.26), 0.55)
 
 MEDIDAS = {}  # o que se mediu no LiDAR, para conferir e citar no castro-laboreiro.json
 PERFIS = {}
@@ -816,6 +901,43 @@ for s_, d_ in PANOS.items():
                    "altura_exterior": [float(np.percentile(alt_e, 10)), float(np.percentile(alt_e, 90))],
                    "altura_interior": [float(np.percentile(alt_i, 10)), float(np.percentile(alt_i, 90))]}
 
+print("reduto…")
+# Reduto: na ponta sul, uma cinta de muralha de 1,5 m em volta de um penedo (fotografia aérea; no MDT o
+# miolo é uma lomba de rocha que sobe de 1019,5 m a poente a 1021,4 m a nascente). Por fora as faces
+# descem ao pé medido, até 10 m; por dentro a cinta sobe 0,7 m acima do penedo e o miolo é o próprio
+# terreno, com a rocha e o mato que lá estão.
+ESP_R = 1.5
+b = REDUTO if area(REDUTO) > 0 else REDUTO[::-1]
+anel_r = densificar(desvio(b, ESP_R / 2, True), 1.0, True)
+fora_r = np.min([cota(*desvio(anel_r, -(ESP_R / 2 + d), True).T) for d in (0.8, 1.5)], axis=0)
+dentro_r = np.max([cota(*desvio(anel_r, ESP_R / 2 + d, True).T) for d in (0.5, 1.0)], axis=0)
+topo_mds = np.array([medir(centro=q, raio=0.8, q=90, sem_veg=False) for q in anel_r])
+topo_rr = np.clip(np.nan_to_num(topo_mds, nan=-1e9), dentro_r + 0.4, dentro_r + 1.2)
+topo_rr = mediana_movel(topo_rr, 3, fechada=True)
+MEDIDOS["reduto"] = (np.vstack([anel_r, anel_r[:1]]), ESP_R, np.r_[topo_rr, topo_rr[0]],
+                     np.r_[fora_r, fora_r[0]], np.r_[dentro_r, dentro_r[0]])
+m = Malha()
+parede(m, anel_r, ESP_R, topo_rr, fora_r, dentro_r, mat=0, mat_topo=1, fechada=True)
+# cunhais de silhares maiores nas quatro esquinas, a toda a altura da face exterior
+for k in range(4):
+    c_ = b[k]
+    u_ = unit(b[(k + 1) % 4] - b[k])
+    z_top = float(topo_rr[int(np.argmin(np.hypot(*(anel_r - c_).T)))])
+    z_pe = float(cota(*(c_ + (c_ - b.mean(0)) * 0.08))) - 1.0
+    zs = np.arange(z_pe, z_top - 0.3, 0.55)
+    for j, z_ in enumerate(zs):
+        uu = u_ if j % 2 == 0 else np.array([-u_[1], u_[0]])
+        m.caixa(c_ + uu * 0.45 - (b.mean(0) - c_) / np.linalg.norm(b.mean(0) - c_) * 0.02, uu, 0.95, 0.06,
+                z_ + 0.02, min(z_ + 0.53, z_top), 2)
+m.objeto("Reduto", "reduto", ["pedra", "coroamento", "cantaria"], GRUPOS["Reduto"])
+pe_min = float(np.min(fora_r))
+topo_r = float(np.max(topo_rr))
+chao_in = float(np.median(cota(*densificar(np.array([P(-3.0, -66.0), P(-2.0, -62.0)]), 0.5).T)))
+MEDIDAS["reduto"] = {"topo": topo_r + ZREF, "planta": [float(np.linalg.norm(b[1] - b[0])), float(np.linalg.norm(b[2] - b[1]))],
+                     "pe_exterior": pe_min + ZREF, "altura_exterior_max": topo_r - pe_min,
+                     "miolo": [float(dentro_r.min() + ZREF), float(dentro_r.max() + ZREF)],
+                     "acima_do_recinto": topo_r - chao_in}
+
 print("terreno e afloramentos…")
 construir_terreno()
 
@@ -823,32 +945,10 @@ print("muralhas…")
 for s_, d_ in PANOS.items():
     lin, esp, topo, fora, dentro_ = MEDIDOS[s_]
     m = Malha()
-    parede(m, lin, esp, topo, fora, dentro_, mat=0, mat_topo=1)
+    # os troços baixos entre os penedos acompanham o chão; os panos altos sobem em patamares
+    parede(m, lin, esp, topo, fora, dentro_, mat=0, mat_topo=1, escalonar=not d_.get("baixo", False))
     grupo = GRUPOS["Castelo"] if d_["elemento"] == "castelo" else GRUPOS["Cerca"]
     m.objeto(s_.title(), d_["elemento"], ["pedra", "coroamento"], grupo)
-
-print("reduto…")
-# Reduto: plataforma de muralha cheia, com o topo de terra e erva à cota medida, faces de cantaria até ao
-# chão exterior medido, e um cunhal de silhares maiores em cada esquina.
-m = Malha()
-b = REDUTO if area(REDUTO) > 0 else REDUTO[::-1]
-topo_r = medir(desvio(b, 1.0, True), q=80, sem_veg=False)
-pe_r = cota(*b.T)
-anel_pe = densificar(desvio(b, -1.2, True), 1.0, True)
-pe_min = float(np.min(cota(*anel_pe.T)))
-m.prisma(b, pe_min - 1.5, topo_r, 0, topo=False)
-inn_r = desvio(b, 1.6, True)  # o terrapleno fica um pouco abaixo da orla de silhares
-for i in range(4):
-    j = (i + 1) % 4
-    m.face([(*b[i], topo_r), (*b[j], topo_r), (*inn_r[j], topo_r), (*inn_r[i], topo_r)], 1)
-    m.face([(*inn_r[i], topo_r), (*inn_r[j], topo_r), (*inn_r[j], topo_r - 0.35), (*inn_r[i], topo_r - 0.35)], 1)
-m.face([(*p, topo_r - 0.35) for p in inn_r], 2)
-m.objeto("Reduto", "reduto", ["pedra", "coroamento", "erva_seca"], GRUPOS["Reduto"])
-chao_in = float(np.median(cota(*densificar(np.array([P(-3.0, -66.0), P(-2.0, -62.0)]), 0.5).T)))
-MEDIDAS["reduto"] = {"topo": topo_r + ZREF, "planta": [float(np.linalg.norm(b[1] - b[0])), float(np.linalg.norm(b[2] - b[1]))],
-                     "pe_exterior": pe_min + ZREF, "altura_exterior_max": topo_r - pe_min,
-                     "altura_sul": topo_r - float(np.median(cota(*densificar(desvio(b[:2], -1.5), 0.5).T))),
-                     "acima_do_recinto": topo_r - chao_in}
 
 print("portas…")
 PONTOS_PORTA = {}
@@ -895,6 +995,55 @@ for pid, d_ in PORTAS.items():
     MEDIDAS[pid] = {"soleira": sole + ZREF, "topo_muralha": float(topo[i] + ZREF),
                     "acima_da_soleira": float(topo[i] - sole)}
     m.objeto(pid.title(), pid, ["pedra", "sombra", "cantaria"], GRUPOS["Portas"])  # um objeto por porta (placa e clique)
+
+print("escada da porta norte…")
+# Escada metálica com guarda que sobe ao portal norte (SIPA: o acesso pela porta norte "acaba numa escada
+# metálica com guarda"). Lanço reto, perpendicular ao pano, da soleira até onde o MDT desce 2,5 m ou mais;
+# degraus de 0,2 m; largura, perfis e guardas estimados.
+
+
+def viga(m, a, b, larg, alt, t, mat):
+    """Perfil de secção retangular entre dois pontos 3D (a face de cima passa por a e b)."""
+    a, b = np.asarray(a, float), np.asarray(b, float)
+    o = np.array([t[0], t[1], 0.0]) * larg / 2
+    h = np.array([0, 0, alt])
+    q = [a - o, b - o, b + o, a + o]
+    m.face([tuple(x) for x in q][::-1], mat)
+    m.face([tuple(x - h) for x in q], mat)
+    for k in range(4):
+        x0, x1 = q[k], q[(k + 1) % 4]
+        m.face([tuple(x0), tuple(x0 - h), tuple(x1 - h), tuple(x1)], mat)
+
+
+i, p, t, n_, sole = PONTOS_PORTA["porta_traicao"]
+esp_n = MEDIDOS["castelo_norte"][1]
+ini = p + n_ * (esp_n / 2)
+L = 6.0
+for d in np.arange(0.5, 7.0, 0.25):
+    if cota(*(ini + n_ * d)) <= sole - 2.5:
+        L = float(d)
+        break
+fundo_e = float(cota(*(ini + n_ * L)))
+ndeg = max(3, int(math.ceil((sole - fundo_e) / 0.2)))
+passo_e, esp_e = L / ndeg, (sole - fundo_e) / ndeg
+m = Malha()
+LARG_E = 1.1
+for k in range(ndeg):
+    z_ = sole - (k + 1) * esp_e
+    m.caixa(ini + n_ * passo_e * (k + 0.5), t, LARG_E, passo_e * 0.92, z_ - 0.04, z_, 0)
+for sg in (-1, 1):
+    lado = t * sg * (LARG_E / 2 + 0.04)
+    a3 = np.array([*(ini + lado), sole])
+    b3 = np.array([*(ini + n_ * L + lado), fundo_e])
+    viga(m, a3, b3, 0.06, 0.25, t, 0)  # banzo
+    viga(m, a3 + [0, 0, 1.0], b3 + [0, 0, 1.0], 0.05, 0.05, t, 0)  # corrimão
+    viga(m, a3 + [0, 0, 0.5], b3 + [0, 0, 0.5], 0.03, 0.03, t, 0)  # travessa
+    for f_ in np.linspace(0, 1, max(2, int(L / 1.2) + 1)):
+        c_ = ini + n_ * L * f_ + lado
+        z_ = sole + (fundo_e - sole) * f_
+        m.caixa(c_, t, 0.05, 0.05, z_ - 0.2, z_ + 1.0, 0)  # prumos
+m.objeto("Escada_Norte", "escada_norte", ["ferro"], GRUPOS["Portas"], uv=None)
+MEDIDAS["escada_norte"] = {"lanco": L, "desnivel": sole - fundo_e, "degraus": ndeg}
 
 print("vestígios da capela e marco geodésico…")
 # Construção quadrangular junto ao muro norte da cerca (SIPA): só as primeiras fiadas, com a entrada a
@@ -948,6 +1097,7 @@ for f in F["caminhos"]:
     for lin_ in paredes:  # não sobem às muralhas (passam nas portas, que ficam por baixo do coroamento)
         ok &= distancia(pts[:, 0], pts[:, 1], lin_)[0] > 1.2
     ok &= ~dentro(pts[:, 0], pts[:, 1], REDUTO)
+    ok &= distancia(pts[:, 0], pts[:, 1], np.array([ini - n_ * 0.5, ini + n_ * (L + 0.8)]))[0] > LARG_E / 2 + 0.3  # a escada
     troco = []
     for i, (p, k) in enumerate(zip(pts, ok)):
         if k:
@@ -994,51 +1144,56 @@ def _lobo(cx, cy, cz, rx, rz, cor, base, topo, grande, irregular):
     mc.extend(map(tuple, np.clip(np.array(cor)[None, :] * luz[:, None], 0, 1)))
 
 
-def plantar(x, y, z, raio, alt, copa_cor, tronco=1.0, oliveira=False):
-    """Árvore com a posição, o topo e o raio de copa medidos; a forma da copa é esquemática:
-    um lobo principal e, nas maiores, dois a quatro lobos à volta, como nas maquetas de referência."""
+def plantar(x, y, z, raio, alt, especie, tronco=1.0):
+    """Árvore com a posição, o topo e o raio de copa medidos; a forma da copa é esquemática, por espécie:
+    castanheiro (copa redonda e cheia, verde-vivo, tronco cinzento grosso) ou sobreiro (copa larga e
+    achatada, irregular, verde-escuro acinzentado, tronco de cortiça)."""
     b = len(mv)
-    rt = 0.12 + 0.035 * raio
-    # tronco: prisma de 6 lados, a afinar para cima
+    sobreiro = especie == "sobreiro"
+    rt = (0.16 + 0.05 * raio) if sobreiro else (0.14 + 0.045 * raio)
+    inclina = rng.normal(0, 0.25 if sobreiro else 0.1, 2)  # o sobreiro tem o tronco torto
     for k in range(6):
         a = 2 * math.pi * k / 6
         mv.append((x + rt * math.cos(a), y + rt * math.sin(a), z - 0.3))
-        mv.append((x + 0.7 * rt * math.cos(a), y + 0.7 * rt * math.sin(a), z + tronco + alt * 0.4))
+        mv.append((x + inclina[0] + 0.7 * rt * math.cos(a), y + inclina[1] + 0.7 * rt * math.sin(a), z + tronco + alt * 0.35))
     for k in range(6):
         j = (k + 1) % 6
         mf.append([b + 2 * k, b + 2 * j, b + 2 * j + 1, b + 2 * k + 1])
-    mc.extend([(0.36, 0.28, 0.2)] * 12)
+    mc.extend([(0.42, 0.31, 0.22) if sobreiro else (0.36, 0.32, 0.27)] * 12)
+    x, y = x + inclina[0], y + inclina[1]
     base, topo = z + tronco, z + tronco + alt
     sh = 0.88 + 0.24 * rng.random()
-    cor = tuple(np.clip(np.array(copa_cor) * sh, 0, 1))
-    irregular = 0.11 if oliveira else 0.06
-    n = 1 if raio < 1.8 else (3 if raio < 3.2 else 4)
+    if sobreiro:
+        cor = tuple(np.clip(np.array((0.27, 0.33, 0.22)) * sh, 0, 1))
+        irregular, n, abre, achata = 0.13, (2 if raio < 1.8 else 5), 0.52, 0.32
+    else:
+        cor = tuple(np.clip(np.array((0.31, 0.43, 0.17)) * sh, 0, 1))
+        irregular, n, abre, achata = 0.07, (1 if raio < 1.8 else 4), 0.40, 0.40
     if n == 1:
         _lobo(x, y, base + alt / 2, raio, alt / 2, cor, base, topo, False, irregular)
         return
     # lobo principal, um pouco abaixo do topo medido, e lobos menores à volta sem passar do raio medido
-    _lobo(x, y, topo - alt * 0.42, raio * 0.68, alt * 0.42, cor, base, topo, raio > 3, irregular)
+    _lobo(x, y, topo - alt * 0.42, raio * (0.6 if sobreiro else 0.7), alt * 0.42, cor, base, topo, raio > 3, irregular)
     a0 = rng.random() * 2 * math.pi
     for k in range(n):
         a = a0 + 2 * math.pi * k / n + rng.normal(0, 0.3)
-        d = raio * (0.4 + 0.08 * rng.random())
-        rl = raio * (0.5 + 0.08 * rng.random())
-        zl = base + alt * (0.36 + 0.12 * rng.random())
+        d = raio * (abre + 0.08 * rng.random())
+        rl = raio * (0.48 + 0.08 * rng.random())
+        zl = base + alt * ((0.5 if sobreiro else 0.36) + 0.12 * rng.random())
         c2 = tuple(np.clip(np.array(cor) * (0.92 + 0.14 * rng.random()), 0, 1))
-        _lobo(x + d * math.cos(a), y + d * math.sin(a), zl, rl, min(rl, alt * 0.36), c2, base, topo, False, irregular)
-
+        _lobo(x + d * math.cos(a), y + d * math.sin(a), zl, rl, min(rl, alt * achata), c2, base, topo, False, irregular)
 
 
 ico0, ico0f = arvore_modelo(0)
 ico1, ico1f = arvore_modelo(1)
 ico2, ico2f = arvore_modelo(2)
 mv, mf, mc = [], [], []
-evitar = [REDUTO, CAPELA]
+evitar = [CAPELA]  # no miolo do reduto há mato (fotografia aérea)
 
 # Copas medidas no LiDAR (lidar.py): posição, topo e raio de cada árvore; a forma é esquemática. Os panos
 # aparecem por vezes na nuvem de pontos como vegetação alta: os "topos" a menos de 2,5 m de uma
 # muralha não são árvores.
-n_arv = 0
+n_arv = n_sob = 0
 for x, y, topo, _, r in ARV_LIDAR:
     if np.hypot(x, y) > RAIO - 2:
         continue
@@ -1051,10 +1206,14 @@ for x, y, topo, _, r in ARV_LIDAR:
     if h < 2.0:
         continue
     r = float(np.clip(r, 1.0, 5.5))
-    alt = float(np.clip(h * 0.62, 1.4, 2.6 * r))
-    cor = (0.28, 0.37, 0.21) if rng.random() < 0.6 else (0.38, 0.44, 0.26)  # carvalhos e pinheiros da encosta
-    plantar(float(x), float(y), z, r, alt, cor, tronco=max(h - alt, 0.6))
+    # Castanheiros e sobreiros (o arvoredo do monte, segundo o Tiago): o souto cerrado da encosta poente é
+    # sobretudo de castanheiros; nas lajes e no mato aberto, de sobreiros.
+    p_sob = 0.2 + 0.6 * float(np.clip(1 - amostra(COBERTO, x, y) * 1.4, 0, 1))
+    especie = "sobreiro" if rng.random() < p_sob else "castanheiro"
+    alt = float(np.clip(h * (0.5 if especie == "sobreiro" else 0.65), 1.4, (1.5 if especie == "sobreiro" else 2.4) * r))
+    plantar(float(x), float(y), z, r, alt, especie, tronco=max(h - alt, 0.6))
     n_arv += 1
+    n_sob += especie == "sobreiro"
 
 # Mato baixo (giestas, urze, tojo das fotografias): máximos da altura da vegetação entre 0,5 e 2,5 m nas
 # células de classe vegetação, cada um com uma moita de copa redonda à altura medida.
@@ -1083,7 +1242,7 @@ for r_, c_ in zip(rr, cc):
     luz = 0.65 + 0.45 * np.clip((pts[:, 2] - z) / max(h, 0.1), 0, 1)
     mc.extend(map(tuple, np.clip(cor[None, :] * luz[:, None], 0, 1)))
     n_mato += 1
-MEDIDAS["vegetacao"] = {"arvores": n_arv, "moitas": n_mato}
+MEDIDAS["vegetacao"] = {"arvores": n_arv, "sobreiros": int(n_sob), "castanheiros": n_arv - int(n_sob), "moitas": n_mato}
 
 me = bpy.data.meshes.new("vegetacao")
 me.from_pydata(mv, [], mf)

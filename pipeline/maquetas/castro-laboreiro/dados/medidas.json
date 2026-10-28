@@ -7,7 +7,7 @@
   ],
   "altura_exterior": [
    3.7,
-   6.8
+   6.9
   ],
   "altura_interior": [
    1.3,
@@ -17,22 +17,22 @@
  "cerca_poente": {
   "comprimento": 96.8,
   "topo": [
-   1015.6,
-   1029.5
+   1016.1,
+   1028.1
   ],
   "altura_exterior": [
-   1.9,
-   10.7
+   2.3,
+   10.6
   ],
   "altura_interior": [
-   0.9,
-   1.9
+   0.2,
+   2.0
   ]
  },
  "muro_recintos": {
   "comprimento": 36.4,
   "topo": [
-   1026.1,
+   1026.4,
    1032.7
   ],
   "altura_exterior": [
@@ -52,7 +52,7 @@
   ],
   "altura_exterior": [
    1.7,
-   9.0
+   8.6
   ],
   "altura_interior": [
    0.8,
@@ -66,44 +66,47 @@
    1034.0
   ],
   "altura_exterior": [
-   3.5,
-   6.0
+   3.8,
+   5.9
   ],
   "altura_interior": [
-   1.5,
-   4.0
+   1.6,
+   3.9
   ]
  },
  "castelo_poente": {
   "comprimento": 44.4,
   "topo": [
-   1026.9,
+   1027.1,
    1033.3
   ],
   "altura_exterior": [
-   2.1,
-   7.0
+   2.3,
+   6.5
   ],
   "altura_interior": [
-   0.9,
+   0.4,
    1.6
   ]
  },
- "terreno": {
-  "vertices": 106745,
-  "faces_rocha": 30957,
-  "faces": 106008
- },
  "reduto": {
-  "topo": 1021.3,
+  "topo": 1021.7,
   "planta": [
    12.0,
    9.0
   ],
-  "pe_exterior": 1009.3,
-  "altura_exterior_max": 12.0,
-  "altura_sul": 10.7,
-  "acima_do_recinto": 4.3
+  "pe_exterior": 1009.5,
+  "altura_exterior_max": 12.3,
+  "miolo": [
+   1019.2,
+   1021.4
+  ],
+  "acima_do_recinto": 4.7
+ },
+ "terreno": {
+  "vertices": 106745,
+  "faces_rocha": 25207,
+  "faces": 106008
  },
  "porta_sol": {
   "soleira": 1016.9,
@@ -121,9 +124,14 @@
   "acima_da_soleira": 3.7
  },
  "porta_traicao": {
-  "soleira": 1027.2,
+  "soleira": 1027.7,
   "topo_muralha": 1031.3,
-  "acima_da_soleira": 4.0
+  "acima_da_soleira": 3.6
+ },
+ "escada_norte": {
+  "lanco": 3.0,
+  "desnivel": 2.6,
+  "degraus": 13
  },
  "capela": {
   "planta": [
@@ -140,7 +148,9 @@
  },
  "vegetacao": {
   "arvores": 327,
-  "moitas": 788
+  "sobreiros": 73,
+  "castanheiros": 254,
+  "moitas": 780
  },
  "ancoras": {
   "castelo": [
@@ -155,7 +165,7 @@
   ],
   "afloramentos": [
    40.0,
-   10.2,
+   9.8,
    -10.0
   ],
   "porta_sol": [
