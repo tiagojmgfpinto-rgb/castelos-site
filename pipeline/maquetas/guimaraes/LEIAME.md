@@ -31,11 +31,12 @@ O `bpy` do PyPI não traz o Draco, por isso o script comprime o GLB com `npx @gl
 - **Terreno**: MDT de 50 cm amostrado a 1 m, sem retoques.
 - **Torres de canto e torre de menagem**: planta tirada do MDS (retângulo mínimo das células acima do topo da muralha, à volta de um ponto escolhido), topo dentro da planta, pé no anel exterior. O OSM só tem o contorno exterior, desviado c. 1 m para oeste (corrigido com `DESVIO_OSM`).
 - **Torres das portas e eixo dos panos**: desenhados à mão sobre o MDS e a ortoimagem (`PANOS`, `torres` no `construir.py`).
-- **Muralhas**: topo dos merlões medido ao longo do eixo de 2 em 2 m; pé exterior e chão interior no MDT.
+- **Muralhas**: topo dos merlões medido ao longo do eixo de 2 em 2 m, sem os pontos a menos de 1,9 m das torres (o círculo de medida apanhava o topo delas e fazia rampas no adarve); pé exterior e chão interior no MDT. Merlões altos e pontiagudos (1,45 m mais 0,75 m de ponta), como nas fotografias do pátio. Cada torre tem uma porta de volta perfeita, com aduelas, onde o adarve chega.
+- **Muro com arco**: troço de muro que sai do cunhal sueste da torre sul, medido no LiDAR junto à torre, com o arco vazado onde o caminho do OSM o atravessa (fotografia do Street View). Para lá do caminho está sob as copas e é estimado.
 - **Paço**: planta do OSM (anel exterior e pátio); altura das fachadas medida em três profundidades. Os corpos de telhado e as paredes ameadas entre eles foram lidos no MDS rodado para o referencial do edifício (`PACO_CORPOS`, `PACO_PAREDES`), e cada corpo tem um telhado de quatro águas com o cume medido. A galeria do pátio tem telhado de uma água entre o beirado e a parede das alas, ambos medidos. Chaminés nos picos do MDS mais de 1,2 m acima da vizinhança. A capela tem o alpendre de madeira em arco quebrado e o portal, pela fotografia do pátio.
 - **Ruas**: o OSM não traz o pavimento; as ruas de automóveis vão em asfalto com lancis e os passeios, escadas e caminhos em lajeado de granito.
 - **Igreja**: nave e capela-mor tiradas das células de classe edifício, com cumeeiras e beirados medidos.
-- **Estátua**: posição do OSM, altura total medida na nuvem de pontos.
+- **Estátua**: posição do OSM, altura total medida na nuvem de pontos. A figura segue as fotografias do Tiago: rochedo, cota de escamas (textura `textura_escamas()`), manto com pregas, elmo com nasal, barba, escudo de amêndoa e espada longa de ponta para cima, com a bainha na base.
 - **Portas e escadas (SIPA)**: a porta principal tem arco quebrado por fora e de volta perfeita por dentro, e a da Traição arco quebrado; ambas com aduelas e ombreiras de cantaria (`aduelas()`). Junto à porta principal, duas escadas estreitas e divergentes sobem ao caminho de ronda, encostadas aos panos nascente; os degraus partem do chão medido e acabam à cota do adarve medida. Um merlão em cada três tem seteira.
 - **Estimativas**: espessura das muralhas, desenho das ameias chanfradas e parapeito, frestas e seteiras, janelas da alcáçova, medidas das aduelas, arranque e largura das escadas do adarve, percurso do passadiço, janelas de cruz e arcarias do Paço, figura e tambor da estátua, portal (tímpano, mísulas), cachorrada e escadaria da igreja, guaritas do Paço e a forma das árvores.
 
@@ -51,19 +52,20 @@ Tudo o que é interpretação está em `src/data/maquetas/guimaraes.json`: estad
 | Passadiço da torre de menagem | estado-atual | média | — | sipa, fotos |
 | Porta principal | estado-atual | alta | Soleira a 241,5 m, c. 2 m acima do largo exterior; torres de 12 a 13 m acima do pé (LiDAR). | sipa, lidar, orto, fotos |
 | Porta da Traição | estado-atual | média | Soleira a c. 238,5 m; torres de 14 a 15 m acima do pé (LiDAR). | sipa, lidar, orto |
-| Alcáçova | estado-atual | média | Topo a 255,3–257,1 m, 17 a 18 m acima do pé exterior e 13 a 15 m acima da praça (LiDAR). | sipa, lidar, fotos |
-| Pano leste (sul da porta) | estado-atual | alta | Topo a 249,3–256,8 m, 10,5 a 15,5 m acima do pé exterior (LiDAR). | sipa, lidar, orto, fotos |
-| Pano leste (norte da porta) | estado-atual | alta | Topo a 250,3–255,8 m, 10,4 a 13,7 m acima do pé exterior (LiDAR). | sipa, lidar, orto, fotos |
-| Pano oeste (norte) | estado-atual | alta | Topo a 251,1–255,7 m, 15,4 a 20,9 m acima do pé exterior (LiDAR). | sipa, lidar, orto, fotos |
-| Pano oeste (sul) | estado-atual | alta | Topo a 250,8–257,8 m, 11,2 a 17,4 m acima do pé exterior (LiDAR). | sipa, lidar, orto, fotos |
-| Pano sul | estado-atual | alta | Topo a 250,3–256,9 m, 11,4 a 18,1 m acima do pé exterior (LiDAR). | sipa, lidar, orto, fotos |
+| Alcáçova | estado-atual | média | Topo a 255,2–257,9 m, 16,6 a 20,3 m acima do pé exterior e 13,4 a 16,2 m acima da praça (LiDAR). | sipa, lidar, fotos |
+| Pano leste (sul da porta) | estado-atual | alta | Topo a 249,3–250,5 m, 10,5 a 11,9 m acima do pé exterior (LiDAR). | sipa, lidar, orto, fotos |
+| Pano leste (norte da porta) | estado-atual | alta | Topo a 250,2–250,3 m, 10,3 a 11,1 m acima do pé exterior (LiDAR). | sipa, lidar, orto, fotos |
+| Pano oeste (norte) | estado-atual | alta | Topo a 250,4 m, 14,5 a 15,7 m acima do pé exterior (LiDAR). | sipa, lidar, orto, fotos |
+| Pano oeste (sul) | estado-atual | alta | Topo a 250,8–251,4 m, 11,1 a 12,3 m acima do pé exterior (LiDAR). | sipa, lidar, orto, fotos |
+| Pano sul | estado-atual | alta | Topo a 250,0–252,2 m, 11,3 a 13,3 m acima do pé exterior (LiDAR). | sipa, lidar, orto, fotos |
 | Torre nordeste | estado-atual | alta | 19,1 m acima do pé; topo a 256,2 m (LiDAR). | sipa, lidar, orto, fotos |
 | Torre sul | estado-atual | alta | 19,2 m acima do pé; topo a 256,9 m (LiDAR). | sipa, lidar, orto, fotos |
 | Torre sudoeste | estado-atual | alta | 19,6 m acima do pé; topo a 257,6 m (LiDAR). | sipa, lidar, orto, fotos |
 | Torre noroeste | estado-atual | alta | 21,1 m acima do pé; topo a 255,7 m (LiDAR). | sipa, lidar, orto, fotos |
+| Muro com arco a sueste | estado-atual | média | C. 15,9 m de comprimento; topo junto à torre a c. 242,0 m; arco a 7,2 m da torre, com a soleira a 235,8 m (LiDAR). | lidar, fotos |
 | Igreja de São Miguel do Castelo | estado-atual | alta | Nave c. 16,6 × 9,4 m, cumeeira a 239,4 m; capela-mor c. 6,1 × 6,9 m, cumeeira a 237,7 m (LiDAR). | sipa, wiki, lidar, osm, fotos |
 | Paço dos Duques de Bragança | estado-atual | média | Fachadas de 15 a 21 m acima do pé; 10 corpos de telhado com cumes a 244,2–246,4 m e a capela a 248,8 m; galeria do pátio com beirado a c. 232 m; 36 chaminés (LiDAR). | paco, osm, lidar, orto, fotos |
-| Estátua de D. Afonso Henriques | estado-atual | média | 4,9 m do chão ao topo da figura, com o pedestal (LiDAR). | wiki, osm, lidar, fotos |
+| Estátua de D. Afonso Henriques | estado-atual | média | 4,9 m do chão ao topo da espada, com o pedestal de c. 2,7 m (LiDAR). | wiki, osm, lidar, fotos |
 | Terreno | estado-atual | alta | — | lidar, orto |
 | Casario | estado-atual | média | 12 edifícios (8 do OSM, 4 da nuvem de pontos), cume medido em todos. | osm, lidar |
 | Caminhos e ruas | estado-atual | média | — | osm, orto, fotos |
