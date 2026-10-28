@@ -4,6 +4,7 @@ Web Mercator em cache. Só é usado onde não há terra: o relevo terrestre vem 
 
 Uso:
     python pipeline/terrain/fetch_bathy.py --region continente --zoom 9
+    python pipeline/terrain/fetch_bathy.py --region continente-moldura --zoom 8
 """
 import argparse
 import concurrent.futures as cf
@@ -22,6 +23,8 @@ CACHE = Path(os.environ.get("CASTELOS_CACHE", Path(__file__).resolve().parents[2
 REGIONS = {
     # lon_min, lat_min, lon_max, lat_max (com margem à volta do quadrado de mosaicos)
     "continente": (-12.5, 35.8, -3.0, 43.2),
+    # moldura larga, de menor resolução: quase toda a Península, o Atlântico e as pontas de França e de Marrocos
+    "continente-moldura": (-16.0, 33.0, 1.6, 46.6),
     "acores": (-32.5, 35.5, -23.5, 41.0),
     "madeira": (-17.7, 32.0, -15.8, 33.6),
 }

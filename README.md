@@ -9,7 +9,7 @@ Atlas 3D dos Castelos e Fortalezas de Portugal: o território em relevo real, co
 | `pipeline/terrain/` | Scripts Python que descarregam o Copernicus DEM GLO-30 e geram os mosaicos de relevo (quadtree) e as linhas cartográficas de cada território. |
 | `src/content/monumentos/` | Um ficheiro Markdown por monumento. O esquema está em `src/content.config.ts`. |
 | `src/components/atlas/` | Atlas 3D em React Three Fiber: terreno com níveis de detalhe, linhas, marcadores, câmara. |
-| `src/components/ui/` | Interface sobre o mapa: pesquisa, índice e filtros, ficha, controlos. |
+| `src/components/ui/` | Interface sobre o mapa, à maneira do castillos.site: barra de ferramentas, índice com pesquisa e filtros, distritos, fontes, rosa dos ventos e ficha lateral. |
 | `src/pages/` | Páginas estáticas Astro: atlas, lista de castelos, ficha de cada monumento, créditos. |
 
 ## Desenvolvimento
@@ -22,6 +22,8 @@ pip install rasterio pyproj shapely pillow numpy
 python pipeline/terrain/fetch_dem.py --region continente
 python pipeline/terrain/fetch_dem.py --region acores
 python pipeline/terrain/fetch_dem.py --region madeira
+for r in continente acores madeira; do python pipeline/terrain/fetch_bathy.py --region $r --zoom 9; done
+python pipeline/terrain/fetch_bathy.py --region continente-moldura --zoom 8   # resto da Península, mais grosseiro
 bash pipeline/terrain/naturalearth.sh
 python pipeline/terrain/build_tiles.py
 

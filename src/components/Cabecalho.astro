@@ -2,7 +2,13 @@
 const base = import.meta.env.BASE_URL;
 ---
 <header class="cabecalho">
-  <a class="marca-nome" href={base}>Castelos<span>.site</span></a>
+  <a class="marca-nome" href={base}>
+    <svg class="escudo" viewBox="0 0 48 56" aria-hidden="true">
+      <path class="e-campo" d="M3 3h42v26c0 14-9 21-21 25C12 50 3 43 3 29z" />
+      <path class="e-torre" fill-rule="evenodd" d="M14 11h4.5v4h3v-4h5v4h3v-4H34v9h-2.2v21H16.2V20H14zM21.2 41v-6.5a2.8 2.8 0 0 1 5.6 0V41z" />
+    </svg>
+    Castelos de Portugal
+  </a>
   <nav>
     <a href={base}>Mapa 3D</a>
     <a href={`${base}castelos/`}>Todos os castelos</a>

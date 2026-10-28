@@ -40,6 +40,7 @@ jobs:
             [ -f .cache/dem_${r}_3s.tif ] || python pipeline/terrain/fetch_dem.py --region $r --arcsec 3
             [ -f .cache/bathy_${r}_z9.tif ] || python pipeline/terrain/fetch_bathy.py --region $r --zoom 9
           done
+          [ -f .cache/bathy_continente-moldura_z8.tif ] || python pipeline/terrain/fetch_bathy.py --region continente-moldura --zoom 8
           bash pipeline/terrain/naturalearth.sh
           python -W ignore pipeline/terrain/build_tiles.py
 

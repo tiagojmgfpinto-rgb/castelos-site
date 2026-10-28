@@ -27,7 +27,7 @@ const vizinhos = (await todosMonumentos()).filter((x) => x.data.regiao === d.reg
     <p class="entrada">{d.localidade}, {d.distrito}, {REGIOES[d.regiao]} · {d.subtitulo ?? `${TIPOLOGIAS[d.tipologia].nome}${d.seculoOrigem ? ` do ${d.seculoOrigem}` : ""}`}</p>
     <p class="ficha-pagina-acoes">
       {d.estado && <span class="ficha-pagina-estado">{d.estado}</span>}
-      <a class="botao" href={`${base}#${m.id}`}>Ver no mapa 3D</a>
+      <a class="botao-texto" href={`${base}#${m.id}`}>Ver no mapa 3D</a>
     </p>
 
     {maqueta && (
