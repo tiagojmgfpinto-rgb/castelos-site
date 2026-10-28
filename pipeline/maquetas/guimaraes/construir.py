@@ -1194,11 +1194,25 @@ def paco():
     pico &= corpo
     chamines = [(np.array([LXS[c_], LXS[r_]]), float(MDS[r_, c_])) for r_, c_ in zip(*np.nonzero(pico))]
     mc = Malha()
+    roda_c = lambda p, r: [p + r * np.array([math.cos(a), math.sin(a)]) for a in np.linspace(0, 2 * math.pi, 14, endpoint=False)]
     for p, topo_c in chamines:
+        # fotografia aérea: fustes redondos e esguios de tijolo, um pouco mais finos em cima, com um
+        # anel moldurado e uma coroa saliente no topo, e a boca escura
         z0c = float(amostra(sup, *p)) - 1.0
-        oct_ = [p + 0.42 * np.array([math.cos(a), math.sin(a)]) for a in np.linspace(0, 2 * math.pi, 8, endpoint=False)]
-        mc.prisma(oct_, z0c, topo_c - 0.25, 0)
-        mc.prisma([p + 0.52 * np.array([math.cos(a), math.sin(a)]) for a in np.linspace(0, 2 * math.pi, 8, endpoint=False)], topo_c - 0.25, topo_c, 0)
+        hc = topo_c - z0c
+        zs = [z0c + hc * f for f in (0.0, 0.45, 0.82)] + [topo_c - 0.42, topo_c - 0.3, topo_c - 0.22, topo_c]
+        mc.prisma(roda_c(p, 0.31), zs[0], zs[1], 0, topo=False)
+        mc.prisma(roda_c(p, 0.29), zs[1], zs[2], 0, topo=False)
+        mc.prisma(roda_c(p, 0.27), zs[2], zs[3], 0, topo=False)
+        mc.prisma(roda_c(p, 0.35), zs[3], zs[4], 0)  # anel
+        mc.prisma(roda_c(p, 0.28), zs[4], zs[5], 0, topo=False)
+        mc.prisma(roda_c(p, 0.37), zs[5], zs[6], 0, topo=False, fundo=True)  # coroa
+        anel_c = roda_c(p, 0.37)
+        boca = roda_c(p, 0.25)
+        for i in range(14):
+            j = (i + 1) % 14
+            mc.face([(*anel_c[i], topo_c), (*anel_c[j], topo_c), (*boca[j], topo_c), (*boca[i], topo_c)], 0)
+        mc.face([(*q, topo_c - 0.05) for q in boca], 3)
     # Guaritas cónicas nos quatro cunhais (fotografias aéreas)
     for uu, vv in ((0.9, 0.4), (61.4, 0.4), (60.9, 61.4), (-1.7, 61.4)):
         q0 = puv(uu, vv)
@@ -1209,7 +1223,7 @@ def paco():
         mc.prisma(circ, zg - 3.5, zg + 1.6, 1)
         for i in range(12):
             mc.face([(*circ[i], zg + 1.6), (*circ[(i + 1) % 12], zg + 1.6), (*cc, zg + 4.0)], 2)
-    mc.objeto("Paco_Chamines", "paco", ["tijolo", "pedra", "telha_paco"], GRUPOS["Paco"], uv=None)
+    mc.objeto("Paco_Chamines", "paco", ["tijolo_chamine", "pedra", "telha_paco", "sombra"], GRUPOS["Paco"], uv=None)
     med["chamines"] = len(chamines)
     med["guaritas"] = 4
     med["cumeeiras"] = float(max(corpos.values()))
@@ -1397,7 +1411,9 @@ def estatua():
     alt = topo - chao
     m = Malha()  # pedestal: 0 pedra, 1 bronze
     c = ESTATUA
-    frente = unit(P(-47, -162) - c)  # virada para o Paço (fotografia)
+    # de lado para o Paço: o rei dá a sua esquerda à fachada poente (normal -PACO_U), por isso olha
+    # para a direita de quem vem do Paço, para sul-sudoeste
+    frente = np.array([PACO_U[1], -PACO_U[0]])
     lado = np.array([frente[1], -frente[0]])  # direita da figura
     # pedestal: dois degraus quadrados, tambor cilíndrico com base e cornija molduradas, plinto
     zp = chao + alt * 0.54  # topo do pedestal
@@ -1576,6 +1592,7 @@ material("arvore", (1, 1, 1), 0.9, None, vcor=True)
 material("madeira", (0.42, 0.27, 0.15), 0.8)
 material("madeira_verde", (0.20, 0.45, 0.35), 0.7)
 material("tijolo", (0.62, 0.34, 0.24), 0.85)
+material("tijolo_chamine", (0.48, 0.22, 0.14), 0.85)
 material("bronze", (0.22, 0.30, 0.25), 0.5)  # bronze com pátina esverdeada (fotografia)
 material("bronze_escamas", (1, 1, 1), 0.5, imagem("escamas", textura_escamas()))
 for _b in ("bronze", "bronze_escamas"):
@@ -1795,58 +1812,57 @@ for sg in (1, -1):
     aduelas(m, c + sg * out * 1.3, u, sg * out, 1.5, sole, 1.6, 2, quebrado=True, esp=0.42)
 m.objeto("Porta_Traicao", "porta_traicao", ["pedra", "sombra", "cantaria"], GRUPOS["Portas"])
 MEDIDAS["porta_traicao"] = {"soleira": sole + ZREF}
-# Muro com arco a sueste (fotografia do Street View no Caminho do Castelo; LiDAR): troço de muro de
-# granito que sai do cunhal sueste da torre sul, com c. 6 m acima do chão junto à torre, e é rasgado
-# por um arco de volta perfeita com aduelas por onde passa o caminho. Provavelmente o arranque da
-# antiga cerca da vila; o troço para lá do caminho está sob as copas e o seu fim é estimado.
+# Muro com arco a noroeste (fotografia do Street View no Caminho do Castelo; LiDAR): troço de muro de
+# granito que sai da face norte da torre noroeste, sobe para norte c. 16 m e vira para poente. A nuvem
+# vê-o coberto de hera (classe vegetação, 4 a 6 m acima do chão) e o traçado foi lido nessa faixa. É
+# rasgado por um arco de volta perfeita com aduelas onde o caminho do OSM o atravessa. Provavelmente
+# o arranque da antiga cerca da vila.
 m = Malha()
-bt = np.asarray(torres["torre_sul"], float)
-A_ = bt[int(np.argmin(np.hypot(*(bt - P(23.0, -28.5)).T)))]
-B_ = P(37.0, -35.5)
-d_ = unit(B_ - A_)
-nm_ = np.array([-d_[1], d_[0]])
-cam0, cam1 = P(25.2, -39.1), P(30.0, -30.6)  # o caminho (OSM) que atravessa o muro
+lin_m = densificar(np.array([P(*q) for q in ((-19.8, 16.0), (-20.6, 22.0), (-21.4, 26.0), (-22.6, 30.0), (-22.7, 34.3), (-33.0, 34.6))]), 0.5)
+ss = np.concatenate([[0], np.cumsum(np.linalg.norm(np.diff(lin_m, axis=0), axis=1))])
+L_ = float(ss[-1])
+cam0, cam1 = P(-22.3, 30.6), P(-26.2, 28.5)  # o caminho (OSM) que atravessa o muro
 cr2 = lambda a, b: a[0] * b[1] - a[1] * b[0]
-s_arco = float(cr2(cam0 - A_, cam1 - cam0) / cr2(d_, cam1 - cam0))
-L_ = float(np.linalg.norm(B_ - A_))
-ss = np.arange(0, L_ + 0.01, 0.5)
-lin_m = np.array([A_ + d_ * v for v in ss])
+s_arco = None
+for i in range(len(lin_m) - 1):
+    a, b = lin_m[i], lin_m[i + 1]
+    den = cr2(b - a, cam1 - cam0)
+    if abs(den) > 1e-9:
+        t = cr2(cam0 - a, cam1 - cam0) / den
+        u_ = cr2(cam0 - a, b - a) / den
+        if 0 <= t <= 1 and -0.5 <= u_ <= 1.5:
+            s_arco = float(ss[i] + t * (ss[i + 1] - ss[i]))
+            break
 chao_m = np.array([float(cota(*q)) for q in lin_m])
-topo_m = np.full(len(ss), np.nan)
-for i, q in enumerate(lin_m):
-    if ss[i] > 0.8:
-        v = celulas(centro=q, raio=0.6)
-        if len(v) and np.max(v) - chao_m[i] > 2.5:
-            topo_m[i] = np.max(v)
-med_ok = ~np.isnan(topo_m)
-topo_med = float(np.median(topo_m[med_ok])) if med_ok.any() else float(chao_m[0] + 5.5)
-sole_a = float(cota(*(A_ + d_ * s_arco)))
-# onde a nuvem não o vê (copas), o topo segue o medido mas não fica a menos de 4 m do chão nem acima de 6
-topo_m = np.where(med_ok, topo_m, np.clip(topo_med, chao_m + 4.0, chao_m + 6.0))
-topo_m = np.minimum(topo_m, np.maximum(chao_m + 4.0, sole_a + 5.0))
+topo_m = np.array([float(np.percentile(v, 70)) if len(v := celulas(centro=q, raio=0.7, sem_veg=False)) else np.nan for q in lin_m])
+topo_m = np.where(np.isnan(topo_m) | (topo_m - chao_m < 2.5), chao_m + 4.5, topo_m)
 from scipy.ndimage import median_filter, uniform_filter1d
-topo_m = uniform_filter1d(median_filter(topo_m, 7, mode="nearest"), 5, mode="nearest")  # a nuvem é ruidosa no capeamento
+topo_m = uniform_filter1d(median_filter(topo_m, 9, mode="nearest"), 7, mode="nearest")
+topo_m = np.clip(topo_m, chao_m + 3.5, chao_m + 6.5)  # a hera engrossa a copa: o muro fica dentro do medido
 esp_m = 1.3
 LA_ = 2.6  # vão do arco (fotografia)
 s0_, s1_ = s_arco - LA_ / 2, s_arco + LA_ / 2
-ss = np.unique(np.concatenate([ss, [s0_, s1_]]))
-lin_m = np.array([A_ + d_ * v for v in ss])
-topo_m = np.interp(ss, np.arange(0, L_ + 0.01, 0.5), topo_m)
+ss_n = np.unique(np.concatenate([ss, [s0_, s1_]]))
+lin_m = np.array([np.interp(ss_n, ss, lin_m[:, 0]), np.interp(ss_n, ss, lin_m[:, 1])]).T
+topo_m = np.interp(ss_n, ss, topo_m)
+ss = ss_n
 chao_m = np.array([float(cota(*q)) for q in lin_m])
+nrm_m = desvio(lin_m, 1.0) - lin_m  # normal à esquerda em cada vértice (com mitra)
+pa_ = np.array([np.interp(s_arco, ss, lin_m[:, 0]), np.interp(s_arco, ss, lin_m[:, 1])])
+i_a = int(np.searchsorted(ss, s_arco)) - 1
+d_ = unit(lin_m[i_a + 1] - lin_m[i_a])
+nm_ = np.array([-d_[1], d_[0]])
+sole_a = float(cota(*pa_))
 for i in range(len(ss) - 1):
     a, b = lin_m[i], lin_m[i + 1]
-    vao_ = s0_ - 1e-6 <= ss[i] and ss[i + 1] <= s1_ + 1e-6
-    if vao_:  # sobre o vão, o muro só existe acima do arco (feito abaixo); falta o capeamento
-        m.prisma([a - nm_ * (esp_m / 2 + 0.06), b - nm_ * (esp_m / 2 + 0.06), b + nm_ * (esp_m / 2 + 0.06), a + nm_ * (esp_m / 2 + 0.06)],
-                 [topo_m[i], topo_m[i + 1], topo_m[i + 1], topo_m[i]], [topo_m[i] + 0.18, topo_m[i + 1] + 0.18, topo_m[i + 1] + 0.18, topo_m[i] + 0.18], 2)
-        continue
-    m.prisma([a - nm_ * esp_m / 2, b - nm_ * esp_m / 2, b + nm_ * esp_m / 2, a + nm_ * esp_m / 2],
-             [chao_m[i] - 1.0, chao_m[i + 1] - 1.0, chao_m[i + 1] - 1.0, chao_m[i] - 1.0],
-             [topo_m[i], topo_m[i + 1], topo_m[i + 1], topo_m[i]], 0)
-    # capeamento de lajes, um pouco saliente
-    m.prisma([a - nm_ * (esp_m / 2 + 0.06), b - nm_ * (esp_m / 2 + 0.06), b + nm_ * (esp_m / 2 + 0.06), a + nm_ * (esp_m / 2 + 0.06)],
+    na, nb = nrm_m[i], nrm_m[i + 1]
+    h0, h1 = esp_m / 2, esp_m / 2 + 0.06
+    if not (s0_ - 1e-6 <= ss[i] and ss[i + 1] <= s1_ + 1e-6):  # sobre o vão, o muro só existe acima do arco
+        m.prisma([a - na * h0, b - nb * h0, b + nb * h0, a + na * h0],
+                 [chao_m[i] - 1.0, chao_m[i + 1] - 1.0, chao_m[i + 1] - 1.0, chao_m[i] - 1.0],
+                 [topo_m[i], topo_m[i + 1], topo_m[i + 1], topo_m[i]], 0)
+    m.prisma([a - na * h1, b - nb * h1, b + nb * h1, a + na * h1],  # capeamento de lajes, um pouco saliente
              [topo_m[i], topo_m[i + 1], topo_m[i + 1], topo_m[i]], [topo_m[i] + 0.18, topo_m[i + 1] + 0.18, topo_m[i + 1] + 0.18, topo_m[i] + 0.18], 2)
-pa_ = A_ + d_ * s_arco
 # o arco vazado: tímpanos das duas faces (do arco até ao topo), intradorso e ombreiras até ao chão
 zn_a = sole_a + 1.9
 r_a = LA_ / 2
@@ -1855,8 +1871,7 @@ arcos_ = [(math.cos(math.pi * (1 - k / 16)), math.sin(math.pi * (1 - k / 16))) f
 for sg in (1, -1):
     o = pa_ + sg * nm_ * (esp_m / 2)
     for (c0_, s0__), (c1_, s1__) in zip(arcos_[:-1], arcos_[1:]):
-        p0 = o + d_ * r_a * c0_
-        p1 = o + d_ * r_a * c1_
+        p0, p1 = o + d_ * r_a * c0_, o + d_ * r_a * c1_
         m.face([(*p0, zn_a + r_a * s0__), (*p1, zn_a + r_a * s1__), (*p1, zt_a), (*p0, zt_a)], 0)
 for (c0_, s0__), (c1_, s1__) in zip(arcos_[:-1], arcos_[1:]):  # intradorso
     p0, p1 = pa_ + d_ * r_a * c0_, pa_ + d_ * r_a * c1_
@@ -1869,8 +1884,8 @@ for x_ in (-r_a, r_a):  # ombreiras: dos lados do vão, do chão à nascença
 for sg in (1, -1):
     aduelas(m, pa_ + sg * nm_ * (esp_m / 2), d_, sg * nm_, LA_, sole_a, 1.9, 2, esp=0.42, saliencia=0.06)
 m.objeto("Muro_Arco", "muro_arco", ["pedra", "sombra", "cantaria"], GRUPOS["Muralhas"])
-MEDIDAS["muro_arco"] = {"comprimento": L_, "topo_medido": topo_med + ZREF, "soleira_arco": sole_a + ZREF,
-                        "altura_junto_a_torre": float(topo_m[2] - chao_m[2]), "arco_a_m_da_torre": s_arco}
+MEDIDAS["muro_arco"] = {"comprimento": L_, "altura": [float(np.min(topo_m - chao_m)), float(np.max(topo_m - chao_m))],
+                        "soleira_arco": sole_a + ZREF, "arco_a_m_da_torre": s_arco}
 
 print("paço, igreja e estátua…")
 PACO_EXT, PACO_PAT = paco()
@@ -2193,10 +2208,11 @@ if "--vistas" in sys.argv:
         vista("escada_sul", 200, 35, 16, lente=28, alvo_xy=tuple(P(16, -4)), alvo_z=zc + 3)
         zs_ = MEDIDAS["muralha_sul"]["adarve_mediano"] - ZREF
         vista("patio_adarve", 300, 4, 17, lente=28, alvo_xy=tuple(P(12, -24)), alvo_z=zs_ + 1.2)
-        vista("muro_arco", 205, 6, 20, lente=28, alvo_xy=tuple(pa_ + d_ * 2), alvo_z=sole_a + 3.5)
+        vista("muro_arco", 75, 6, 20, lente=28, alvo_xy=tuple(pa_), alvo_z=sole_a + 3.5)
         ze_ = MEDIDAS["estatua"]["chao"] - ZREF + MEDIDAS["estatua"]["pedestal"]
-        vista("estatua_perto", 150, 4, 6.5, lente=50, alvo_xy=tuple(ESTATUA), alvo_z=ze_ + 1.15)
-        vista("estatua_tras", 330, 6, 6.5, lente=50, alvo_xy=tuple(ESTATUA), alvo_z=ze_ + 1.15)
+        az_e = math.degrees(math.atan2(PACO_U[1], -PACO_U[0]))  # para onde olha a figura (ver estatua())
+        vista("estatua_perto", az_e + 25, 4, 6.5, lente=50, alvo_xy=tuple(ESTATUA), alvo_z=ze_ + 1.15)
+        vista("estatua_tras", az_e + 200, 6, 6.5, lente=50, alvo_xy=tuple(ESTATUA), alvo_z=ze_ + 1.15)
         vista("paco_aereo", 200, 38, 170, lente=50, alvo_xy=tuple(P(-47, -162)), alvo_z=float(cota(*P(-47, -162))) + 10)
         vista("paco_estatua", 305, 10, 110, lente=35, alvo_xy=tuple(P(-60, -145)), alvo_z=float(cota(*P(-60, -145))) + 9)
         vista("igreja_fachada", 248, 10, 38, lente=35, alvo_xy=tuple(P(-52, -78)), alvo_z=float(cota(*P(-52, -78))) + 4)

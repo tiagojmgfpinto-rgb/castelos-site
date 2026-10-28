@@ -189,11 +189,13 @@
   "soleira": 238.5
  },
  "muro_arco": {
-  "comprimento": 15.9,
-  "topo_medido": 242.0,
-  "soleira_arco": 235.8,
-  "altura_junto_a_torre": 4.0,
-  "arco_a_m_da_torre": 7.2
+  "comprimento": 28.9,
+  "altura": [
+   3.8,
+   6.5
+  ],
+  "soleira_arco": 233.7,
+  "arco_a_m_da_torre": 14.7
  },
  "paco": {
   "fachadas": {
