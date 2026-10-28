@@ -2,116 +2,116 @@
  "muralha_nascente": {
   "topo": [
    249.3,
-   256.8
+   250.5
   ],
   "altura_exterior": [
    10.5,
-   15.5
+   11.9
   ],
   "acima_do_chao_interior": [
    6.5,
-   12.0
+   8.3
   ],
   "adarve": [
-   246.9,
-   254.5
+   246.4,
+   247.6
   ],
-  "adarve_mediano": 247.7
+  "adarve_mediano": 247.0
  },
  "muralha_nascente_norte": {
   "topo": [
-   250.3,
-   255.8
+   250.2,
+   250.3
   ],
   "altura_exterior": [
-   10.4,
-   13.7
+   10.3,
+   11.1
   ],
   "acima_do_chao_interior": [
-   9.0,
-   12.8
+   8.6,
+   10.7
   ],
   "adarve": [
-   248.0,
-   253.5
+   247.4,
+   247.5
   ],
-  "adarve_mediano": 248.5
+  "adarve_mediano": 247.5
  },
  "alcacova": {
   "topo": [
-   255.3,
-   257.1
+   255.2,
+   257.9
   ],
   "altura_exterior": [
-   16.9,
-   18.2
+   16.6,
+   20.3
   ],
   "acima_do_chao_interior": [
    13.4,
-   14.9
+   16.2
   ],
   "adarve": [
-   253.0,
-   254.7
+   252.4,
+   255.0
   ],
-  "adarve_mediano": 253.5
+  "adarve_mediano": 252.8
  },
  "muralha_noroeste": {
   "topo": [
-   251.1,
-   255.7
+   250.4,
+   250.4
   ],
   "altura_exterior": [
-   15.4,
-   20.9
+   14.5,
+   15.7
   ],
   "acima_do_chao_interior": [
-   10.1,
-   14.0
+   8.9,
+   12.4
   ],
   "adarve": [
-   248.8,
-   253.3
+   247.6,
+   247.6
   ],
-  "adarve_mediano": 249.1
+  "adarve_mediano": 247.6
  },
  "muralha_sudoeste": {
   "topo": [
    250.8,
-   257.8
+   251.4
   ],
   "altura_exterior": [
-   11.2,
-   17.4
+   11.1,
+   12.3
   ],
   "acima_do_chao_interior": [
    7.9,
-   15.5
+   9.5
   ],
   "adarve": [
-   248.5,
-   255.4
+   248.0,
+   248.5
   ],
-  "adarve_mediano": 248.6
+  "adarve_mediano": 248.1
  },
  "muralha_sul": {
   "topo": [
-   250.3,
-   256.9
+   250.0,
+   252.2
   ],
   "altura_exterior": [
-   11.4,
-   18.1
+   11.3,
+   13.3
   ],
   "acima_do_chao_interior": [
-   8.2,
-   15.7
+   7.9,
+   11.3
   ],
   "adarve": [
-   247.9,
-   254.5
+   247.2,
+   249.3
   ],
-  "adarve_mediano": 248.7
+  "adarve_mediano": 247.9
  },
  "torre_nordeste": {
   "topo": 256.2,
@@ -155,6 +155,7 @@
   "pe": 237.1,
   "altura_exterior": 13.9
  },
+ "portas_torres_adarve": 8,
  "torre_menagem": {
   "topo_ameias": 268.3,
   "cume": 268.4,
@@ -172,8 +173,27 @@
   "chao_fora": 239.5,
   "degraus": 6
  },
+ "escadas_adarve": {
+  "muralha_nascente": {
+   "degraus": 15,
+   "comprimento": 4.1,
+   "chega_ao_adarve": true
+  },
+  "muralha_nascente_norte": {
+   "degraus": 21,
+   "comprimento": 5.7,
+   "chega_ao_adarve": true
+  }
+ },
  "porta_traicao": {
   "soleira": 238.5
+ },
+ "muro_arco": {
+  "comprimento": 15.9,
+  "topo_medido": 242.0,
+  "soleira_arco": 235.8,
+  "altura_junto_a_torre": 4.0,
+  "arco_a_m_da_torre": 7.2
  },
  "paco": {
   "fachadas": {
@@ -227,7 +247,8 @@
  "estatua": {
   "chao": 221.2,
   "topo": 226.2,
-  "altura_total": 4.9
+  "altura_total": 4.9,
+  "pedestal": 2.7
  },
  "vila": {
   "edificios": 12,

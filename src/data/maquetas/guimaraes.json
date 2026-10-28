@@ -2,7 +2,7 @@
   "monumento": "guimaraes",
   "titulo": "Castelo de Guimarães",
   "variante": "estado-atual",
-  "versao": "0.2 provisória",
+  "versao": "0.3 provisória",
   "data": "2026-10-27",
   "origem": {
     "lat": 41.447926,
@@ -49,21 +49,22 @@
   "limitacoes": [
     "Não foi encontrada planta arquitetónica cotada publicada. A planta das quatro torres de canto e da torre de menagem foi tirada do MDS do LiDAR (retângulo das células acima do topo da muralha); as quatro torres das portas e o eixo dos panos foram desenhados sobre o MDS e a ortoimagem, com erro esperado de 0,5 a 1 m. O OpenStreetMap estava desviado c. 1 m para oeste e foi corrigido.",
     "Cotas e alturas medidas no LiDAR da DGT de 2025 (50 cm): o topo de cada pano de 2 em 2 m, o das torres e edifícios dentro da sua planta, e o terreno no MDT. Erro esperado de 0,3 a 0,5 m na vertical.",
-    "O LiDAR não distingue merlões e parapeito. O topo medido é o dos merlões; o desenho das ameias chanfradas, o parapeito de 1 m e a espessura das muralhas (2,6 m, 2 m na alcáçova) são estimativas a partir das fotografias.",
-    "As frestas das torres, as janelas da alcáçova e os arcos das portas estão em posição e tamanho esquemáticos. O percurso do passadiço de madeira da torre de menagem é estimado (SIPA: vem do caminho de ronda a oeste).",
+    "O LiDAR não distingue merlões e parapeito. O topo medido é o dos merlões, sem as células junto às torres, que apanham o topo delas; o desenho das ameias chanfradas, o parapeito de 1 m e a espessura das muralhas (2,6 m, 2 m na alcáçova) são estimativas a partir das fotografias.",
+    "As frestas das torres, as seteiras de um merlão em cada três, as portas de volta perfeita das torres para o caminho de ronda e as janelas da alcáçova estão em posição e tamanho esquemáticos. A porta principal tem arco quebrado por fora e de volta perfeita por dentro, e a da Traição arco quebrado (SIPA), com aduelas e ombreiras de cantaria de medidas aproximadas. As duas escadas estreitas e divergentes que sobem ao caminho de ronda junto à porta principal (SIPA) têm o arranque e a largura estimados. O percurso do passadiço de madeira da torre de menagem é estimado (SIPA: vem do caminho de ronda a oeste).",
     "O Paço dos Duques tem a planta do OpenStreetMap e as alturas das fachadas medidas. Os dez corpos de telhado e as paredes ameadas entre eles foram lidos no MDS (com o cume de cada um medido), e o claustro tem o beirado da galeria e o encontro do telhado com as alas medidos. A arcaria térrea, a galeria de colunas do andar nobre e a profundidade das quadras (2,5 m) seguem a fotografia do pátio. As 36 chaminés estão nas posições medidas, com forma esquemática. As janelas, as arcarias, o portal da capela e a armação de madeira do alpendre seguem as fotografias, com medidas aproximadas; as quatro guaritas dos cunhais são estimativas.",
-    "A Igreja de São Miguel tem as cumeeiras e beirados da nave e da capela-mor medidos. O portal de três arquivoltas, a cachorrada, as frestas, os contrafortes, as cruzes e a escadaria seguem as fotografias, com medidas aproximadas.",
-    "A estátua de D. Afonso Henriques tem a posição e a altura total medidas (4,9 m com o pedestal). A divisão entre pedestal e figura e a figura (elmo, cota de malha, manto, escudo e espada) seguem as fotografias, de forma simplificada.",
+    "A Igreja de São Miguel tem as cumeeiras e beirados da nave e da capela-mor medidos. O portal de três arquivoltas com tímpano liso e mísulas, a cachorrada, as frestas, os contrafortes, as cruzes e a escadaria seguem as fotografias, com medidas aproximadas.",
+    "A estátua de D. Afonso Henriques tem a posição e a altura total medidas (4,9 m com o pedestal). A divisão entre o pedestal (tambor cilíndrico de granito sobre dois degraus) e a figura, e a figura (rochedo, cota de escamas, cinto, antebraços nus, elmo com nasal, barba, manto com pregas, escudo de amêndoa e espada longa de ponta para cima com a bainha na base), seguem as fotografias do Tiago, com proporções e pregas aproximadas.",
+    "O muro com arco a sueste da torre sul segue a fotografia do Street View e o LiDAR (troço junto à torre). Para lá do caminho fica sob as copas e o seu comprimento e altura são estimados; a identificação como arranque da antiga cerca da vila é provável, não confirmada.",
     "Os edifícios da envolvente são volumes simplificados (plantas do OpenStreetMap e da nuvem de pontos, cume medido). As árvores estão nas posições e com as alturas medidas na nuvem de pontos, com forma esquemática. O OpenStreetMap não indica o pavimento: as ruas de automóveis estão em asfalto com lancis e os passeios, escadas e caminhos em lajeado de granito."
   ],
   "muralha": {
     "espessura": 2.6,
     "parapeito": 1.0,
     "merlao": {
-      "altura": 1.1,
-      "largura": 1.0,
-      "intervalo": 0.75,
-      "ponta": 0.55
+      "altura": 1.45,
+      "largura": 0.8,
+      "intervalo": 0.95,
+      "ponta": 0.75
     },
     "estimativa": true,
     "nota": "O topo dos merlões é medido no LiDAR; a espessura, o parapeito e o desenho das ameias chanfradas são estimativas a partir das fotografias."
@@ -147,7 +148,7 @@
       "estado": "estado-atual",
       "confianca": "média",
       "descricao": "Restos da residência adossada à muralha do lado norte, com paredes rasgadas por grandes janelas e chaminés em dois registos (SIPA). É o pano mais alto do recinto. Os vãos do lado do pátio são esquemáticos.",
-      "medidas": "Topo a 255,3–257,1 m, 17 a 18 m acima do pé exterior e 13 a 15 m acima da praça (LiDAR).",
+      "medidas": "Topo a 255,2–257,9 m, 16,6 a 20,3 m acima do pé exterior e 13,4 a 16,2 m acima da praça (LiDAR).",
       "fontes": [
         "sipa",
         "lidar",
@@ -162,7 +163,7 @@
       "estado": "estado-atual",
       "confianca": "alta",
       "descricao": "Pano leste entre a porta principal e a torre sul, com adarve e merlões chanfrados.",
-      "medidas": "Topo a 249,3–256,8 m, 10,5 a 15,5 m acima do pé exterior (LiDAR).",
+      "medidas": "Topo a 249,3–250,5 m, 10,5 a 11,9 m acima do pé exterior (LiDAR).",
       "fontes": [
         "sipa",
         "lidar",
@@ -177,7 +178,7 @@
       "estado": "estado-atual",
       "confianca": "alta",
       "descricao": "Pano leste entre a porta principal e a torre nordeste.",
-      "medidas": "Topo a 250,3–255,8 m, 10,4 a 13,7 m acima do pé exterior (LiDAR).",
+      "medidas": "Topo a 250,2–250,3 m, 10,3 a 11,1 m acima do pé exterior (LiDAR).",
       "fontes": [
         "sipa",
         "lidar",
@@ -192,7 +193,7 @@
       "estado": "estado-atual",
       "confianca": "alta",
       "descricao": "Pano oeste entre a alcáçova e a Porta da Traição, sobre o afloramento mais alto do lado exterior.",
-      "medidas": "Topo a 251,1–255,7 m, 15,4 a 20,9 m acima do pé exterior (LiDAR).",
+      "medidas": "Topo a 250,4 m, 14,5 a 15,7 m acima do pé exterior (LiDAR).",
       "fontes": [
         "sipa",
         "lidar",
@@ -207,7 +208,7 @@
       "estado": "estado-atual",
       "confianca": "alta",
       "descricao": "Pano oeste entre a Porta da Traição e a torre sudoeste.",
-      "medidas": "Topo a 250,8–257,8 m, 11,2 a 17,4 m acima do pé exterior (LiDAR).",
+      "medidas": "Topo a 250,8–251,4 m, 11,1 a 12,3 m acima do pé exterior (LiDAR).",
       "fontes": [
         "sipa",
         "lidar",
@@ -222,7 +223,7 @@
       "estado": "estado-atual",
       "confianca": "alta",
       "descricao": "Pano sul, que fecha a ponta do escudo entre a torre sudoeste e a torre sul.",
-      "medidas": "Topo a 250,3–256,9 m, 11,4 a 18,1 m acima do pé exterior (LiDAR).",
+      "medidas": "Topo a 250,0–252,2 m, 11,3 a 13,3 m acima do pé exterior (LiDAR).",
       "fontes": [
         "sipa",
         "lidar",
@@ -293,6 +294,20 @@
       ]
     },
     {
+      "id": "muro_arco",
+      "nome": "Muro com arco a sueste",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Troço de muro de granito que sai do cunhal sueste da torre sul e é rasgado por um arco de volta perfeita por onde passa o Caminho do Castelo (fotografia do Street View). Provavelmente o arranque da antiga cerca da vila.",
+      "medidas": "C. 15,9 m de comprimento; topo junto à torre a c. 242,0 m; arco a 7,2 m da torre, com a soleira a 235,8 m (LiDAR).",
+      "fontes": [
+        "lidar",
+        "fotos"
+      ],
+      "resumo": "Muro com arco sobre o caminho, junto à torre sul"
+    },
+    {
       "id": "igreja",
       "nome": "Igreja de São Miguel do Castelo",
       "grupo": "Igreja de São Miguel",
@@ -333,7 +348,7 @@
       "estado": "estado-atual",
       "confianca": "média",
       "descricao": "Bronze de António Soares dos Reis, inaugurado por D. Luís a 20 de setembro de 1887, hoje junto ao Paço dos Duques: o rei de pé, de elmo e cota de malha, com o escudo e a espada, sobre um pedestal de granito. Posição do OpenStreetMap conferida no LiDAR; figura simplificada a partir das fotografias.",
-      "medidas": "4,9 m do chão ao topo da figura, com o pedestal (LiDAR).",
+      "medidas": "4,9 m do chão ao topo da espada, com o pedestal de c. 2,7 m (LiDAR).",
       "fontes": [
         "wiki",
         "osm",
