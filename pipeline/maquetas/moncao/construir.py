@@ -7,12 +7,12 @@ Corre com o módulo bpy (Blender 5.2) instalado em Python 3.13:
     python pipeline/maquetas/moncao/construir.py --vistas   # GLB + capa + vistas de verificação
 
 Dados: dados/fontes.json (recolher.py: OSM via Overture), dados/lidar.npz e dados/orto.jpg (lidar.py:
-MDT, MDS, classes e cor da nuvem de pontos do LiDAR 2025 da DGT), dados/escarpas.json (tracar.py: os
+MDT, MDS, classes e cor da nuvem de pontos do LiDAR 2025 da DGT), dados/ortofoto.jpg (ortofoto.py:
+ortofotomapa OrtoSat 2023 da DGT a 25 cm, acertado com o LiDAR), dados/escarpas.json (tracar.py: os
 panos de muralha traçados no relevo) e src/data/maquetas/moncao.json, com a leitura das fontes.
 
 Monção é uma vila medieval cercada no século XVII por uma fortificação abaluartada, num esporão sobre o
-rio Minho. O relevo da maqueta é o MDT de 50 cm, com a cor do chão tirada da ortoimagem da nuvem de
-pontos; os panos de muralha são peças próprias (talude, cordão, parapeito, cunhais e guaritas), com a
+rio Minho. O relevo da maqueta é o MDT de 50 cm, com a cor do chão tirada do ortofotomapa da DGT; os panos de muralha são peças próprias (talude, cordão, parapeito, cunhais e guaritas), com a
 alvenaria de granito cinzento e ferrugento das fotografias. As portas do Rosal e de Salvaterra, a ponte
 da estrada nacional sobre a muralha e as igrejas Matriz e da Misericórdia levam o detalhe das
 fotografias; o casario fica em volumes simples. O rio Minho é um plano de água à cota medida.
@@ -944,51 +944,69 @@ def construir_rio():
 
 # ---------------------------------------------------------------- terreno
 
-ORTO_DGT_LAB = [(36.0, 18.0), (-6.8, 6.8), (11.4, 5.1)]  # L, a, b (média, desvio); captura do WebSIG, 1:9504
+TOMBO = (0.36, -0.18)  # deslocamento dos telhados no OrtoSat 2023 (linhas para sul, colunas para este) por metro de altura
 
 
-def textura_terreno():
-    """Cor do chão: a ortoimagem da nuvem de pontos (cor do ponto mais alto de cada célula de 50 cm),
-    sem os telhados nem as copas, que se preenchem com a cor do chão à volta (convolução normalizada a
-    várias escalas), um pouco suavizada para a escala de maqueta. Norte em cima, como o orto.jpg."""
+def textura_terreno(k=2):
+    """Cor do chão a 25 cm: o ortofotomapa da DGT (OrtoSat 2023, dados/ortofoto.jpg do ortofoto.py, acertado
+    com o LiDAR), a camada que o WebSIG da Câmara de Monção mostra. Os telhados (que na maqueta são peças
+    próprias) preenchem-se com a cor do chão à volta (convolução normalizada a várias escalas); as sombras
+    fortes dos prédios levantam-se um pouco, porque a maqueta faz as suas. Norte em cima."""
     from PIL import Image
-    img0 = np.asarray(Image.open(AQUI / "dados" / "orto.jpg"), float) / 255.0
-    # A cor dos pontos do LiDAR sai muito desmaiada. Passa-se para as cores do ortofotomapa da DGT (visto no
-    # WebSIG da Câmara de Monção): média e desvio de cada canal Lab medidos numa captura da mesma área.
-    from skimage import color as _color
-    lab = _color.rgb2lab(img0)
-    for c_, (m_, s_) in enumerate(ORTO_DGT_LAB):
-        lab[..., c_] = (lab[..., c_] - lab[..., c_].mean()) / lab[..., c_].std() * s_ + m_
-    img = np.clip(_color.lab2rgb(lab), 0, 1)
-    ky, kx = img.shape[:2]
-    H = MDS - MDT
-    tapa = ((CLS == 6) & (H > 1.5)) | (VEG & (H > 1.8)) | ((CLS == 0) & ~AGUA)
-    # nós da grelha (linha 0 = sul) -> células da imagem (linha 0 = norte)
-    tc = (tapa[:-1, :-1] | tapa[1:, :-1] | tapa[:-1, 1:] | tapa[1:, 1:])[::-1]
-    tc = ndi.binary_dilation(tc, iterations=1)
+    img = np.asarray(Image.open(AQUI / "dados" / "ortofoto.jpg"), float) / 255.0
+    H, W = img.shape[:2]
+    assert (H, W) == ((len(LYS) - 1) * k, (len(LXS) - 1) * k), "ortofoto.jpg fora da grelha (corre ortofoto.py)"
+    Hm = MDS - MDT
+    # só os telhados (as copas ficam: o chão debaixo das árvores é sombra de mata, como na imagem)
+    casa = (CLS == 6) & (Hm > 1.5)
+    tapa = casa[:-1, :-1][::-1]  # células da imagem (linha 0 = norte), a 50 cm
+    h_ = np.where(casa, Hm, 0.0)[:-1, :-1][::-1]
+    tc = ndi.zoom(tapa.astype(np.uint8), k, order=0).astype(bool)
+    # o satélite vê os prédios de lado: o telhado aparece deslocado para sul-sudoeste c. 0,36 m por metro de
+    # altura para sul e 0,18 m para oeste (medido pela sobreposição dos telhados da imagem com os do LiDAR);
+    # tapa-se o caminho da base ao telhado (fachada e telhado tombados), conforme a altura de cada célula
+    rr, cc = np.nonzero(tapa)
+    hh = h_[rr, cc]
+    for t_ in np.linspace(0.1, 1.0, 10):
+        r2 = ((rr + 0.5) * k + t_ * TOMBO[0] * hh * k / LPASSO).astype(int).clip(0, H - 1)
+        c2 = ((cc + 0.5) * k + t_ * TOMBO[1] * hh * k / LPASSO).astype(int).clip(0, W - 1)
+        for dr in range(k):
+            for dc in range(k):
+                tc[(r2 - k // 2 + dr).clip(0, H - 1), (c2 - k // 2 + dc).clip(0, W - 1)] = True
+    sem_pontos = ((CLS == 0) & ~AGUA)[:-1, :-1][::-1]
+    tc |= ndi.zoom(sem_pontos.astype(np.uint8), k, order=0).astype(bool)
+    tc = ndi.binary_closing(tc, iterations=1) | tc
     bom = (~tc).astype(float)
     out = img.copy()
     falta = tc.copy()
-    for sg in (1.5, 3, 6, 12, 24, 48):
-        num = np.stack([ndi.gaussian_filter(img[..., k] * bom, sg) for k in range(3)], -1)
+    for sg in (2, 4, 8, 16, 32):
+        num = np.stack([ndi.gaussian_filter(img[..., c] * bom, sg) for c in range(3)], -1)
         den = ndi.gaussian_filter(bom, sg)[..., None]
         ok = (den[..., 0] > 0.15) & falta
         out[ok] = (num / np.maximum(den, 1e-6))[ok]
         falta &= ~ok
-    out = np.stack([ndi.gaussian_filter(out[..., k], 0.6) for k in range(3)], -1)
+    # no miolo da vila o satélite não vê as ruas (os telhados tombados tapam-nas): fica a cor média do chão à
+    # volta, com o grão dos cubos de granito (só se vê nas frestas entre as casas da maqueta)
+    for sg in (64, 128):
+        num = np.stack([ndi.gaussian_filter(img[..., c] * bom, sg) for c in range(3)], -1)
+        den = ndi.gaussian_filter(bom, sg)[..., None]
+        ok = (den[..., 0] > 0.003) & falta
+        out[ok] = (num / np.maximum(den, 1e-6))[ok]
+        falta &= ~ok
+    g_ = ndi.gaussian_filter(np.random.default_rng(56).random((H, W)), 0.7)
+    out[tc] *= (1 + 0.08 * (g_[tc] - g_.mean()) / g_.std())[:, None]
+    # sombras dos prédios e dos muros (a imagem é de manhã): levantam-se até metade do caminho para a luz
+    # média à volta, sem mexer na cor
+    lum = out.mean(-1)
+    viz = ndi.gaussian_filter(lum, 10)
+    somb = np.clip((viz - lum - 0.05) * 8, 0, 1) * np.clip((0.32 - lum) * 6, 0, 1)
+    somb = ndi.gaussian_filter(somb, 1.0)[..., None]
+    out = out * (1 + somb * np.clip(viz / np.maximum(lum, 0.03) - 1, 0, 1.5)[..., None] * 0.5)
     # debaixo de água: cascalho e lodo do leito (só se vê junto às margens)
-    ag = (AGUA[:-1, :-1] & AGUA[1:, 1:])[::-1]
+    ag = ndi.zoom((AGUA[:-1, :-1] & AGUA[1:, 1:])[::-1].astype(np.uint8), k, order=0).astype(bool)
     out[ag] = np.array([0.36, 0.36, 0.30])
-    # relva um pouco mais verde e viva, como na maqueta de museu; o resto quase como está
-    verde = np.clip((out[..., 1] - (out[..., 0] + out[..., 2]) / 2) * 8, 0, 1)[..., None]
-    out = out * (1 - 0.25 * verde) + (out * np.array([0.92, 1.08, 0.86])) * 0.25 * verde
-    # as sombras da ortoimagem (de verão, ao meio-dia) são azuladas: tira-se o azul e levantam-se um pouco
-    lum = out.mean(-1, keepdims=True)
-    azul = np.clip((out[..., 2:3] - out[..., 0:1]) * 10, 0, 1) * np.clip((0.5 - lum) * 4, 0, 1)
-    neutro = np.concatenate([out[..., :2], np.minimum(out[..., 2:3], out[..., 1:2] * 0.92)], -1) * 1.25
-    out = out * (1 - azul) + neutro * azul
     out = np.clip(out, 0, 1)
-    return pavimentos(out, img0, tc)
+    return pavimentos(out, img, tc, k)
 
 
 # encosta norte, entre a vila e o rio (socalcos e o passadiço de madeira; ortofotomapa da DGT)
@@ -996,125 +1014,77 @@ ENCOSTA_N = shapely.Polygon([(-104, 192), (-50, 168), (-13, 180), (5, 170), (57,
                              (90, 250), (-104, 250)])
 
 
-# larguras (m) e pavimento de cada classe de caminho do OSM; dentro da praça-forte as ruas da vila são de
-# cubos de granito e os largos de lajes (Street View); fora, as estradas são de asfalto
+# larguras (m) de cada classe de caminho do OSM
 LARG_CAM = {"secondary": 8.0, "tertiary": 7.0, "unclassified": 5.5, "residential": 5.0, "service": 4.0,
             "pedestrian": 5.0, "footway": 2.2, "path": 1.6, "track": 3.0, "steps": 2.5, "cycleway": 2.0, "unknown": 3.0}
-COR_PAV = {
-    "asfalto": np.array([0.29, 0.29, 0.30]),
-    "cubos": np.array([0.46, 0.45, 0.43]),     # cubos de granito (paralelepípedos), cinzento baço
-    "lajes": np.array([0.56, 0.54, 0.50]),     # lajeado de granito dos largos e passeios
-    "saibro": np.array([0.55, 0.47, 0.36]),
-    "relva": np.array([0.27, 0.40, 0.14]),
-}
 
 
 def pavimentos(out, img, tc, k=2):
-    """Pavimentos e jardins sobre a cor do chão, a 25 cm: as ruas e estradas do OSM com a largura da classe,
-    em asfalto (fora da praça-forte e nas estradas principais), cubos de granito (ruas da vila) ou lajeado
-    (ruas pedonais, largos e escadas); os largos abertos dentro das muralhas em lajeado; a relva onde a
-    ortoimagem do LiDAR é verde ou nos jardins do OSM. Cada pavimento leva uma textura fina (grão, juntas)
-    e guarda um pouco da variação da ortoimagem (manchas, sombras de uso)."""
+    """Limpa as ruas e estradas: o ortofotomapa já tem o pavimento verdadeiro (asfalto, cubos, a calçada da
+    praça Deu-la-Deu, os jardins), mas também os carros estacionados e as sombras. Em cada troço do OSM
+    (com a largura da classe, e só onde a imagem é de facto chão de rua) mede-se a cor do pavimento (mediana
+    dos pontos ao longo do eixo); o que se afasta muito dela (carros, sombras, marcas) passa a essa cor, com
+    o grão fino da imagem à volta. O resto fica como no ortofotomapa."""
     from PIL import Image, ImageDraw
-    H0, W0 = out.shape[:2]
-    H, W = H0 * k, W0 * k
-    base = np.stack([ndi.zoom(out[..., c], k, order=1) for c in range(3)], -1)
-    im = np.stack([ndi.zoom(img[..., c], k, order=1) for c in range(3)], -1)
-    tap = ndi.zoom(tc.astype(np.uint8), k, order=0).astype(bool)
+    H, W = out.shape[:2]
     px = lambda x, y: ((x - LXS[0]) / (LXS[-1] - LXS[0]) * W, (LYS[-1] - y) / (LYS[-1] - LYS[0]) * H)
     ppm = W / (LXS[-1] - LXS[0])
-    muros = shapely.union_all([shapely.LineString(geom(f)) for f in F["infraestrutura"]
-                               if f["classe"] == "city_wall" and f["geometria"]["type"] == "LineString"]).convex_hull
-    camadas = {nm_: Image.new("L", (W, H), 0) for nm_ in ("saibro", "lajes", "cubos", "asfalto")}
-    for f in F["caminhos"]:
+    cor = Image.new("RGB", (W, H), (0, 0, 0))
+    msk = Image.new("L", (W, H), 0)
+    dc, dm = ImageDraw.Draw(cor), ImageDraw.Draw(msk)
+    lum_o = img.mean(-1)
+    n_tr = 0
+    for f in sorted(F["caminhos"], key=lambda f_: LARG_CAM.get(f_["classe"], 3.0)):  # as largas por cima
         g = f["geometria"]
         if g["type"] != "LineString" or f["subtipo"] != "road":
             continue
         cl = f["classe"]
+        if cl in ("path", "track", "steps"):
+            continue  # caminhos de terra e escadas ficam como no orto
         xy = geom(f)
-        # cor do troço na ortoimagem (os 60% mais claros dos pontos ao longo do eixo, sem sombras): o asfalto
-        # sai neutro (azul >= vermelho), o granito sai quente (bege); medido nos troços do OSM
         ln_ = shapely.LineString(xy)
-        q_ = np.array([ln_.interpolate(d_).coords[0] for d_ in np.arange(0, ln_.length, 0.5)] or [xy[0]])
-        cc_ = ((q_[:, 0] - LXS[0]) / (LXS[-1] - LXS[0]) * W0).astype(int).clip(0, W0 - 1)
-        rr_ = ((LYS[-1] - q_[:, 1]) / (LYS[-1] - LYS[0]) * H0).astype(int).clip(0, H0 - 1)
-        v_ = img[rr_, cc_]
-        v_ = v_[v_.mean(1) >= np.percentile(v_.mean(1), 40)]
-        med_ = np.median(v_, 0)
-        neutro_ = (med_[2] - med_[0] > -0.012) and med_.mean() < 0.93
-        if cl == "track" or (cl == "path" and not neutro_ and not muros.contains(ln_.centroid)):
-            pav = "saibro"
-        elif neutro_:
-            pav = "asfalto"
-        elif cl in ("pedestrian", "footway", "steps", "path", "cycleway"):
-            pav = "lajes"
-        else:
-            pav = "cubos"
-        larg = LARG_CAM.get(cl, 3.0) * ppm
-        ImageDraw.Draw(camadas[pav]).line([px(*q) for q in xy], fill=255, width=max(2, int(round(larg))), joint="curve")
-    jard = Image.new("L", (W, H), 0)
-    for f in F["usos"]:
-        if f["classe"] in ("village_green", "park", "garden", "grass", "pitch", "playground") and f["geometria"]["type"] == "Polygon":
-            ImageDraw.Draw(jard).polygon([px(*q) for q in geom(f)], fill=255)
-    M = {nm_: np.asarray(c) > 0 for nm_, c in camadas.items()}
-    jard = np.asarray(jard) > 0
-    gi = ndi.gaussian_filter(im[..., 1] - (im[..., 0] + im[..., 2]) / 2, 2.0 * k / 2)
-    lum_o = im.mean(-1)
-    rua = M["asfalto"] | M["cubos"] | M["lajes"] | M["saibro"]
-    relva = ((gi > 0.03) | (jard & (gi > 0.0))) & ~rua & ~tap
-    relva = ndi.binary_closing(ndi.binary_opening(relva, iterations=2), iterations=2) & ~rua
-    lab_, n_ = ndi.label(relva)
-    tam_ = ndi.sum(relva, lab_, range(1, n_ + 1)) / ppm ** 2
-    relva = np.isin(lab_, 1 + np.nonzero(tam_ > 12)[0])  # só manchas de relva com mais de 12 m²
-    # largos dentro das muralhas: chão claro e cinzento, que não é rua, relva nem casa -> lajeado
-    X, Y = np.meshgrid(LXS[0] + (np.arange(W) + 0.5) / ppm, LYS[-1] - (np.arange(H) + 0.5) / ppm)
-    dentro = shapely.contains_xy(muros, X, Y)
-    sat = im.max(-1) - im.min(-1)
-    # (os largos de Monção são de cubos de granito, como o do Rosal e o da Misericórdia no Street View)
-    # tudo o que é chão aberto dentro da vila e não é relva, terra (bege-alaranjado), terrapleno ou casa;
-    # as sombras e as copas da ortoimagem não contam (o pavimento continua por baixo)
-    terra = (im[..., 0] - im[..., 2] > 0.09) & (sat > 0.13) & (lum_o < 0.88)
-    terra = ndi.binary_opening(terra, iterations=2)
-    casa_ = ndi.zoom((((CLS == 6) & (MDS - MDT > 1.5))[:-1, :-1])[::-1].astype(np.uint8), k, order=0).astype(bool)
-    tp_ = ndi.zoom(TERRAPLENO[:-1, :-1][::-1].astype(np.uint8), k, order=0).astype(bool)
-    # nem nas encostas (declive acima de 12°) nem na encosta norte, entre a vila e o rio
-    gy_, gx_ = np.gradient(MDT, LPASSO)
-    ingreme = ndi.zoom((np.hypot(gx_, gy_) > math.tan(math.radians(12)))[:-1, :-1][::-1].astype(np.uint8), k, order=0).astype(bool)
-    ingreme = ndi.binary_dilation(ingreme, iterations=2)
-    encosta = shapely.contains_xy(ENCOSTA_N, X, Y)
-    largo = dentro & ~rua & ~relva & ~terra & ~casa_ & ~tp_ & ~ingreme & ~encosta
-    largo = ndi.binary_closing(ndi.binary_opening(largo, iterations=2), iterations=3) & ~relva & ~rua & ~tp_
-    M["cubos"] = M["cubos"] | largo
-    yy, xx = np.mgrid[0:H, 0:W]
-    rg = np.random.default_rng(2024)
-    grao = ndi.gaussian_filter(rg.random((H, W)), 0.6)
-    grao = (grao - grao.mean()) / grao.std()
-    manchas = fbm(xx, yy, 18.0 * k, 77)  # manchas largas (desgaste, humidade)
-    var_o = np.clip((lum_o - ndi.gaussian_filter(lum_o, 6)) * 1.2, -0.25, 0.25)  # pormenor da ortoimagem
-    res = base.copy()
-    def pinta(mask, cor, gr, mch, orto):
-        t = cor * (1 + gr * grao[..., None] + mch * (manchas[..., None] - 0.5) + orto * var_o[..., None])
-        res[mask] = np.clip(t, 0, 1)[mask]
-    pinta(M["saibro"] & ~M["lajes"], COR_PAV["saibro"], 0.06, 0.25, 0.6)
-    pinta(M["lajes"], COR_PAV["lajes"], 0.04, 0.18, 0.5)
-    # juntas do lajeado (lajes de c. 0,75 x 0,5 m, aqui só como um reticulado ténue)
-    junta = ((xx % max(3, int(0.75 * ppm)) == 0) | (yy % max(2, int(0.5 * ppm)) == 0)) & M["lajes"]
-    res[junta] *= 0.9
-    pinta(M["cubos"] & ~M["lajes"], COR_PAV["cubos"], 0.07, 0.22, 0.5)
-    pinta(M["asfalto"], COR_PAV["asfalto"], 0.05, 0.20, 0.35)
-    # traço contínuo branco no eixo das estradas nacionais
-    eixo = Image.new("L", (W, H), 0)
-    for f in F["caminhos"]:
-        if f["classe"] in ("secondary",) and f["geometria"]["type"] == "LineString":
-            ImageDraw.Draw(eixo).line([px(*q) for q in geom(f)], fill=255, width=1)
-    eixo = (np.asarray(eixo) > 0) & ((xx // int(3 * ppm) + yy // int(3 * ppm)) % 2 == 0)
-    res[eixo] = np.array([0.78, 0.78, 0.74])
-    # relva: verde de jardim regado, com manchas de corte e de sombra
-    t = COR_PAV["relva"] * (1 + 0.05 * grao[..., None] + 0.35 * (fbm(xx, yy, 7.0 * k, 91)[..., None] - 0.5)
-                            + 0.4 * var_o[..., None])
-    res[relva] = np.clip(t, 0, 1)[relva]
-    # bordas suaves (meio pixel) para os pavimentos não ficarem serrilhados
-    return np.clip(ndi.gaussian_filter(res, (0.5, 0.5, 0)), 0, 1)
+        if ln_.intersection(ENCOSTA_N).length > 0.5 * ln_.length:
+            continue  # o passadiço e os socalcos da encosta norte
+        q_ = np.array([ln_.interpolate(d_).coords[0] for d_ in np.arange(0, ln_.length, 0.25)] or [xy[0]])
+        cc_, rr_ = px(q_[:, 0], q_[:, 1])
+        cc_, rr_ = cc_.astype(int).clip(0, W - 1), rr_.astype(int).clip(0, H - 1)
+        livre_ = ~tc[rr_, cc_]
+        if livre_.sum() < 8:
+            continue
+        v_ = img[rr_, cc_][livre_]
+        l_ = v_.mean(1)
+        v_ = v_[(l_ >= np.percentile(l_, 25)) & (l_ <= np.percentile(l_, 85))]  # sem sombras nem carros claros
+        med = np.median(v_, 0)
+        larg = LARG_CAM.get(cl, 3.0) * ppm * 0.9
+        pts = [px(*q) for q in xy]
+        dc.line(pts, fill=tuple(int(c * 255) for c in med), width=max(2, int(round(larg))), joint="curve")
+        dm.line(pts, fill=255, width=max(2, int(round(larg))), joint="curve")
+        n_tr += 1
+    rua = (np.asarray(msk) > 0) & ~tc
+    med = np.asarray(cor, float) / 255.0
+    # só onde a imagem parece pavimento (cinzento ou bege pouco saturado), não relva nem canteiros
+    sat = img.max(-1) - img.min(-1)
+    verde = img[..., 1] - (img[..., 0] + img[..., 2]) / 2
+    chao = ~((verde > 0.035) & (sat > 0.06))
+    dif = np.abs(img - med).max(-1)
+    lum_m = med.mean(-1)
+    # carros e sombras: longe da cor do pavimento; o resto do pavimento fica com o seu pormenor
+    estranho = rua & ((dif > 0.10) | (lum_o < lum_m - 0.07))
+    estranho = ndi.binary_opening(estranho, iterations=1)
+    estranho = ndi.binary_dilation(estranho, iterations=2) & rua & (chao | (dif > 0.10))
+    grao = np.clip(lum_o - ndi.gaussian_filter(lum_o, 2.0), -0.04, 0.04)
+    rg = np.random.default_rng(2023)
+    ru = ndi.gaussian_filter(rg.random((H, W)), 0.7)
+    ru = (ru - ru.mean()) / ru.std()
+    limpo = med * (1 + 0.035 * ru[..., None] + 0.12 * (fbm(*np.mgrid[0:H, 0:W][::-1], 14.0 * k, 77)[..., None] - 0.5))
+    res = out.copy()
+    res[estranho] = np.clip(limpo + grao[..., None] * 0.5, 0, 1)[estranho]
+    MEDIDAS["chao"] = {"fonte": "DGT OrtoSat 2023 (WMS ortosat2023), 25 cm, acertado ao LiDAR 2025",
+                       "trocos_limpos": n_tr, "rua_limpa_pct": round(100 * float(estranho.sum()) / max(1, rua.sum()), 1)}
+    # bordas suaves para não ficar serrilhado
+    sm = ndi.gaussian_filter(estranho.astype(float), 0.8)[..., None]
+    res = out * (1 - sm) + res * sm
+    return np.clip(res, 0, 1)
 
 
 def construir_terreno():
