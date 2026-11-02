@@ -2,7 +2,7 @@
   "monumento": "valenca",
   "titulo": "Fortaleza de Valença",
   "variante": "estado-atual",
-  "versao": "0.1 provisória",
+  "versao": "0.2 provisória",
   "data": "2026-11-02",
   "origem": {
     "lat": 42.030224,
@@ -26,15 +26,15 @@
       "titulo": "Burgenwelt — Festung Valença: 10 baluartes e 2 meios-baluartes, 5 revelins, 2 contraguardas, 34 guaritas e 214 canhoneiras"
     },
     "fotos": {
-      "titulo": "Fotografias da fortaleza (vistas aéreas, Porta da Coroada, portas interiores, guarita, rua e igrejas) fornecidas pelo autor do projeto, novembro de 2026"
+      "titulo": "Fotografias da fortaleza (vistas aéreas, portas da Coroada e do Meio, guarita, rua e igrejas) fornecidas pelo autor do projeto como referência, novembro de 2026"
     }
   },
   "limitacoes": [
     "Não foi usada planta cotada. As escarpas (os panos de muralha em talude) foram traçadas automaticamente no MDT de 50 cm, onde o declive passa de 58° e o desnível de 2 m em 3 m, e encostadas à aresta medida (erro esperado de 0,5 a 1 m em planta). Os troços muito baixos ou tapados por casas e árvores podem faltar ou estar partidos.",
     "Topo e pé de cada pano medidos no LiDAR de metro a metro e filtrados ao longo dele (erro de 0,3 a 0,5 m na vertical). O perfil é esquemático: talude de 1/10 a 1/4, cordão de meia-cana, parapeito de alvenaria de 1,1 m nos panos com mais de 5 m e terrapleno por trás. As canhoneiras e as banquetas não se modelam, porque não se lêem no LiDAR com esta resolução.",
     "As guaritas ficam nos ângulos salientes dos baluartes e dos revelins com mais de 45° e panos de mais de 8 m a cada lado: saem 37, perto das 34 que a Burgenwelt conta. A forma (mísula em degraus, corpo chanfrado com seteiras, cúpula e pináculo em bola) segue a fotografia de uma guarita; não se mediu cada uma.",
-    "As portas estão na posição do OpenStreetMap, corrigida pelo LiDAR (a soleira é a cota do chão à frente da face). A Porta da Coroada segue a fotografia; as frontarias das outras portas são tipos (frontão triangular por fora, arco de túnel por dentro) e não desenhos de cada uma. Larguras, alturas e brasões são aproximados.",
-    "As igrejas e capelas têm a pegada, as cumeeiras e a altura das torres medidas no MDS de 50 cm; as fachadas seguem as fotografias da Misericórdia e de Santa Maria dos Anjos. Para Santo Estêvão, o Bom Jesus e o Senhor do Encontro não houve fotografias: a fachada a poente com frontão em Santo Estêvão, a frontaria barroca com sineira no Bom Jesus e a fachada da capela do Encontro são hipóteses, e a orientação delas lê-se só nos telhados.",
+    "As portas estão na posição do OpenStreetMap, corrigida pelo LiDAR (a soleira é a cota do chão à frente da face). A Porta da Coroada e a face sul da Porta do Meio seguem fotografias, com as calçadas entre muros sobre o fosso lidas no MDT; as frontarias das outras portas são tipos (frontão triangular por fora, arco de túnel por dentro) e não desenhos de cada uma. Larguras, alturas e brasões são aproximados.",
+    "As igrejas e capelas têm a pegada (OSM), as cumeeiras e a altura das torres medidas no MDS de 50 cm; as fachadas de Santo Estêvão, da Misericórdia, de Santa Maria dos Anjos e do Bom Jesus seguem fotografias, com medidas de vãos e cantarias aproximadas. A capela do Senhor do Encontro não tem fotografia e a fachada é uma hipótese.",
     "O casario é feito de volumes simples: os quarteirões do OpenStreetMap partidos em casas de c. 7,5 m de frente, com a altura medida no MDS e telhado de quatro águas; as cores das paredes são sorteadas. Não se representam o Paiol do Açougue, os quartéis, a Casa do Governador nem outros edifícios militares como peças próprias.",
     "A estátua de São Teotónio é esquemática (vulto de hábito, capa, mitra e báculo sobre o pedestal); a posição é a do OpenStreetMap.",
     "O terreno é o MDT simplificado para 300 mil triângulos; junto ao pé das escarpas foi rebaixado ao plano da face, para o pano ficar à vista. As árvores estão nas posições e alturas medidas na nuvem de pontos, com forma esquemática. A maqueta abrange a fortaleza e os fossos, com 30,8 ha; a cidade nova e o rio Minho ficam de fora."
@@ -64,7 +64,7 @@
       "estado": "estado-atual",
       "confianca": "média",
       "descricao": "Duas praças fortificadas, a Coroada a sul e a Magistral a norte, unidas e cercadas por panos de muralha em talude, de granito, com cordão e parapeito. Desenham baluartes, meios-baluartes, revelins e contraguardas em estrela, ao modo francês do século XVII (traçado de Vauban), sobre a muralha medieval. Os fossos e as esplanadas de terra rodeiam tudo.",
-      "medidas": "88 panos traçados, com c. 7.1 km. Sobem em mediana 7.3 m acima do pé e até 17 m (LiDAR).",
+      "medidas": "88 panos traçados, com c. 7.1 km. Sobem em mediana 7.4 m acima do pé e até 17 m (LiDAR).",
       "fontes": [
         "lidar",
         "burgenwelt",
@@ -142,14 +142,15 @@
       "nome": "Porta do Meio",
       "grupo": "Portas",
       "estado": "estado-atual",
-      "confianca": "média",
-      "descricao": "Túnel através do maciço que separa a Coroada da praça Magistral, com frontaria de cantaria com frontão do lado norte e arco simples do lado sul.",
-      "medidas": "Soleira a c. 70.9 m (LiDAR).",
+      "confianca": "alta",
+      "descricao": "Túnel através do maciço que separa a Coroada da praça Magistral. A face sul, para o fosso, tem moldura de cantaria com pilastras de almofadado, arco de volta perfeita e entablamento, e por cima as armas reais coroadas entre enrolamentos e duas bolas sobre plintos; chega-se a ela por uma calçada estreita entre muros com guardas, que atravessa o fosso. A face norte abre para a vila.",
+      "medidas": "Soleira a sul a c. 71.8 m, a norte a c. 70.9 m; o maciço sobe a 78 m (LiDAR).",
       "fontes": [
+        "fotos",
         "osm",
         "lidar"
       ],
-      "resumo": "Túnel entre a Coroada e a Magistral",
+      "resumo": "Túnel entre a Coroada e a Magistral, com as armas reais",
       "ancora": [
         79.2,
         81.9,
@@ -183,16 +184,16 @@
       "estado": "estado-atual",
       "confianca": "média",
       "descricao": "Porta da ponta norte da praça Magistral, que desce para o vale do Minho: túnel com frontaria de frontão por fora e arco por dentro.",
-      "medidas": "Soleira por fora a c. 44.5 m e por dentro a c. 54.9 m (LiDAR).",
+      "medidas": "Soleira por fora a c. 44.3 m e por dentro a c. 54.9 m (LiDAR).",
       "fontes": [
         "osm",
         "lidar"
       ],
       "resumo": "Porta norte, para o vale do Minho",
       "ancora": [
-        72.4,
-        55.5,
-        -318.2
+        73.6,
+        55.3,
+        -319.0
       ]
     },
     {
@@ -201,17 +202,18 @@
       "grupo": "Igrejas",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "A igreja matriz, reconstruída em estilo neoclássico: nave larga com fachada de pilastras gigantes de granito, entablamento e frontão com óculo, portal e janelão ao centro e portas laterais; torre sineira a sul com balaustrada, pináculos, tambor, cúpula e lanterna; capela-mor e anexos mais baixos.",
+      "descricao": "A igreja matriz, de fachada caiada a poente sobre uma escadaria: quatro pilastras de granito, entablamento e frontão triangular sobre o tramo central, com cruz e pináculos de chama; portal de verga reta com frontão e, por cima, três janelas de arco; janelas de granito nos tramos laterais. A torre sineira, caiada com cunhais de granito, tem óculo, sineira, pináculos e uma coroa de ferro. A nave alta tem corpos laterais mais baixos.",
       "medidas": "Cumeeira da nave a c. 84 m e torre a c. 90 m, sobre o chão a 69 m (MDS).",
       "fontes": [
+        "fotos",
         "lidar",
         "osm"
       ],
-      "resumo": "Matriz neoclássica com torre de cúpula",
+      "resumo": "Matriz de fachada caiada, frontão e torre com coroa de ferro",
       "ancora": [
-        95.5,
+        93.2,
         92.0,
-        -145.4
+        -145.5
       ]
     },
     {
@@ -258,16 +260,16 @@
       "id": "capela_bom_jesus",
       "nome": "Capela do Bom Jesus",
       "grupo": "Igrejas",
-      "estado": "hipotese",
-      "confianca": "baixa",
-      "descricao": "Capela da praça da Coroada, com fachada de granito a sueste rematada por empena recortada com volutas e sineira, e telhado de lousa escura. Junto a ela fica a estátua de São Teotónio.",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Capela barroca da praça da Coroada, caiada, com largas pilastras de granito nos cunhais e empena de granito com bolas sobre plintos nos cantos e uma cruz lavrada no vértice. O portal de arco tem pilastras, entablamento e frontão interrompido de enrolamentos, que sobe numa janela emoldurada com remate curvo. Junto a ela fica a estátua de São Teotónio.",
       "medidas": "Cumeeira a c. 83 m sobre o chão a 73 m (MDS).",
       "fontes": [
+        "fotos",
         "lidar",
-        "orto",
         "osm"
       ],
-      "resumo": "Capela da Coroada, junto a São Teotónio",
+      "resumo": "Capela barroca da Coroada, junto a São Teotónio",
       "ancora": [
         16.0,
         88.0,
@@ -317,7 +319,7 @@
       "estado": "estado-atual",
       "confianca": "baixa",
       "descricao": "As casas da vila dentro das muralhas, em volumes simples com telhados de quatro águas. As ruas estreitas e as lojas ocupam a Coroada e a Magistral.",
-      "medidas": "98 edifícios do OpenStreetMap e do LiDAR, partidos em 406 casas com a altura medida no MDS.",
+      "medidas": "99 edifícios do OpenStreetMap e do LiDAR, partidos em 410 casas com a altura medida no MDS.",
       "fontes": [
         "osm",
         "lidar"

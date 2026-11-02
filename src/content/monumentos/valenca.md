@@ -41,9 +41,9 @@ oQueVer:
   - nome: "Santa Maria dos Anjos e a Misericórdia"
     texto: "No norte da Magistral, lado a lado: Santa Maria dos Anjos, românica, de granito, com portal de arquivoltas e torre caiada; e a Igreja da Misericórdia, caiada, com rosácea na fachada e o relevo da Misericórdia no portal lateral."
   - nome: "Igreja Matriz de Santo Estêvão"
-    texto: "A matriz, reconstruída em estilo neoclássico, com fachada de pilastras de granito e frontão, e torre sineira coroada por uma cúpula com lanterna."
+    texto: "A matriz, com a fachada caiada sobre uma escadaria: pilastras de granito, frontão com cruz e pináculos de chama, portal com frontão e três janelas de arco. Ao lado, a torre sineira, rematada por uma coroa de ferro."
   - nome: "A Coroada"
-    texto: "A praça sul, mais pequena, com a Capela do Bom Jesus, a Capela do Senhor do Encontro e a estátua de São Teotónio, o primeiro santo português, nascido em Ganfei, no concelho de Valença."
+    texto: "A praça sul, mais pequena, com a Capela do Bom Jesus, barroca, de portal e janela num só frontispício de granito, a Capela do Senhor do Encontro e a estátua de São Teotónio, o primeiro santo português, nascido em Ganfei, no concelho de Valença. Para a Magistral passa-se pela Porta do Meio, um túnel com as armas reais sobre a calçada do fosso."
   - nome: "A vista sobre o Minho"
     texto: "Das muralhas vê-se o rio Minho, as pontes internacionais e, na outra margem, Tui e a sua catedral."
 cronologia:
