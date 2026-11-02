@@ -944,12 +944,22 @@ def construir_rio():
 
 # ---------------------------------------------------------------- terreno
 
+ORTO_DGT_LAB = [(36.0, 18.0), (-6.8, 6.8), (11.4, 5.1)]  # L, a, b (média, desvio); captura do WebSIG, 1:9504
+
+
 def textura_terreno():
     """Cor do chão: a ortoimagem da nuvem de pontos (cor do ponto mais alto de cada célula de 50 cm),
     sem os telhados nem as copas, que se preenchem com a cor do chão à volta (convolução normalizada a
     várias escalas), um pouco suavizada para a escala de maqueta. Norte em cima, como o orto.jpg."""
     from PIL import Image
-    img = np.asarray(Image.open(AQUI / "dados" / "orto.jpg"), float) / 255.0
+    img0 = np.asarray(Image.open(AQUI / "dados" / "orto.jpg"), float) / 255.0
+    # A cor dos pontos do LiDAR sai muito desmaiada. Passa-se para as cores do ortofotomapa da DGT (visto no
+    # WebSIG da Câmara de Monção): média e desvio de cada canal Lab medidos numa captura da mesma área.
+    from skimage import color as _color
+    lab = _color.rgb2lab(img0)
+    for c_, (m_, s_) in enumerate(ORTO_DGT_LAB):
+        lab[..., c_] = (lab[..., c_] - lab[..., c_].mean()) / lab[..., c_].std() * s_ + m_
+    img = np.clip(_color.lab2rgb(lab), 0, 1)
     ky, kx = img.shape[:2]
     H = MDS - MDT
     tapa = ((CLS == 6) & (H > 1.5)) | (VEG & (H > 1.8)) | ((CLS == 0) & ~AGUA)
@@ -977,15 +987,13 @@ def textura_terreno():
     azul = np.clip((out[..., 2:3] - out[..., 0:1]) * 10, 0, 1) * np.clip((0.5 - lum) * 4, 0, 1)
     neutro = np.concatenate([out[..., :2], np.minimum(out[..., 2:3], out[..., 1:2] * 0.92)], -1) * 1.25
     out = out * (1 - azul) + neutro * azul
-    cinza = out.mean(-1, keepdims=True)
-    out = cinza + (out - cinza) * 1.35  # um pouco mais de cor: a ortoimagem do LiDAR é desmaiada
-    # o asfalto e as calçadas de granito saem quase brancos com o sol da maqueta: escurece-se (gama)
-    out = np.clip(out, 0, 1) ** 1.7 * 0.86
-    # comprime os claros (calçadas e saibro saem quase brancos com o AgX)
-    lum = out.mean(2, keepdims=True)
-    k_ = np.clip((lum - 0.42) / 0.4, 0, 1)
-    out = out * (1 - 0.3 * k_)
-    return pavimentos(out, img, tc)
+    out = np.clip(out, 0, 1)
+    return pavimentos(out, img0, tc)
+
+
+# encosta norte, entre a vila e o rio (socalcos e o passadiço de madeira; ortofotomapa da DGT)
+ENCOSTA_N = shapely.Polygon([(-104, 192), (-50, 168), (-13, 180), (5, 170), (57, 152), (85, 143), (90, 150),
+                             (90, 250), (-104, 250)])
 
 
 # larguras (m) e pavimento de cada classe de caminho do OSM; dentro da praça-forte as ruas da vila são de
@@ -1069,7 +1077,12 @@ def pavimentos(out, img, tc, k=2):
     terra = ndi.binary_opening(terra, iterations=2)
     casa_ = ndi.zoom((((CLS == 6) & (MDS - MDT > 1.5))[:-1, :-1])[::-1].astype(np.uint8), k, order=0).astype(bool)
     tp_ = ndi.zoom(TERRAPLENO[:-1, :-1][::-1].astype(np.uint8), k, order=0).astype(bool)
-    largo = dentro & ~rua & ~relva & ~terra & ~casa_ & ~tp_
+    # nem nas encostas (declive acima de 12°) nem na encosta norte, entre a vila e o rio
+    gy_, gx_ = np.gradient(MDT, LPASSO)
+    ingreme = ndi.zoom((np.hypot(gx_, gy_) > math.tan(math.radians(12)))[:-1, :-1][::-1].astype(np.uint8), k, order=0).astype(bool)
+    ingreme = ndi.binary_dilation(ingreme, iterations=2)
+    encosta = shapely.contains_xy(ENCOSTA_N, X, Y)
+    largo = dentro & ~rua & ~relva & ~terra & ~casa_ & ~tp_ & ~ingreme & ~encosta
     largo = ndi.binary_closing(ndi.binary_opening(largo, iterations=2), iterations=3) & ~relva & ~rua & ~tp_
     M["cubos"] = M["cubos"] | largo
     yy, xx = np.mgrid[0:H, 0:W]
@@ -2615,6 +2628,36 @@ MEDIDAS["guaritas"] = len(GUARITAS)
 
 print("terreno…")
 construir_terreno()
+# passadiço de madeira em ziguezague na encosta norte, entre a vila e o rio (ortofotomapa da DGT no WebSIG
+# da Câmara; traçado dos caminhos pedonais do OSM): tabuleiro de 1,8 m sobre o terreno, com guardas de madeira
+m = Malha()
+n_pass = 0.0
+for f in F["caminhos"]:
+    if f["classe"] not in ("footway", "path", "steps") or f["geometria"]["type"] != "LineString":
+        continue
+    ln_ = shapely.LineString(geom(f))
+    if ln_.length < 5 or ln_.intersection(ENCOSTA_N).length < 0.6 * ln_.length:
+        continue
+    xs_ = np.array(ln_.coords)[:, 0]
+    if xs_.min() < -125 or xs_.max() > 105:  # os caminhos de terra ao longo do rio, que seguem para fora, não são passadiço
+        continue
+    q_ = densificar(np.array(ln_.coords), 1.0)
+    z_ = mediana_movel(np.array([float(cota_t(*p_)) for p_ in q_]), 5) + 0.35
+    for i in range(len(q_) - 1):
+        a_, b_ = q_[i], q_[i + 1]
+        u_ = unit(b_ - a_)
+        w_ = np.array([-u_[1], u_[0]]) * 0.9
+        za, zb = z_[i], z_[i + 1]
+        m.face([(*(a_ - w_), za), (*(b_ - w_), zb), (*(b_ + w_), zb), (*(a_ + w_), za)], 0)        # tabuleiro
+        for sg in (-1, 1):
+            m.face([(*(a_ + sg * w_), za), (*(b_ + sg * w_), zb), (*(b_ + sg * w_), zb - 0.25), (*(a_ + sg * w_), za - 0.25)], 0)
+            barra(m, (*(a_ + sg * w_), za), (*(a_ + sg * w_), za + 1.0), 0.05, 0)                    # prumos
+            barra(m, (*(a_ + sg * w_), za + 1.0), (*(b_ + sg * w_), zb + 1.0), 0.04, 0)              # corrimão
+            barra(m, (*(a_ + sg * w_), za + 0.5), (*(b_ + sg * w_), zb + 0.5), 0.03, 0)
+    n_pass += ln_.length
+m.objeto("Passadico", "caminhos", ["madeira"], GRUPOS["Vila"], uv=2.0)
+MEDIDAS["passadico"] = round(n_pass, 1)
+
 _tt = textura_terreno()
 if "--vistas" in sys.argv:
     from PIL import Image as _Im
@@ -2848,7 +2891,7 @@ if "--vistas" in sys.argv:
     SUF = next((a_.split("=")[1] for a_ in sys.argv if a_.startswith("--sufixo=")), "")
     for nm_, az_, el_, di_, xy_, zz_ in [  # vistas das igrejas e da ponte, do lado das fotografias
         ("i_matriz_alto", 250, 35, 60, (20, 112), 40),
-        ("i_miser", 338, 10, 36, (-82, 37), 38), ("i_miser_alto", 330, 35, 60, (-78, 30), 38),
+        ("i_miser", 338, 10, 36, (-82, 37), 38), ("f_passadico", 340, 30, 90, (-10, 185), 25), ("i_miser_alto", 330, 35, 60, (-78, 30), 38),
         ("f_ponte", 180, 6, 40, (-62, -129), 31), ("f_ponte_n", 0, 10, 45, (-62, -129), 31),
         ("f_rosal", 212, 8, 26, (-353, 83), 34), ("f_rosal_dentro", 30, 30, 32, (-343, 97), 36), ("f_rosal_alto", 30, 50, 70, (-345, 92), 36)]:
         VISTAS_EXTRA.append(((nm_ + SUF, az_, el_, di_), dict(lente=35, alvo_xy=xy_, alvo_z=zz_)))

@@ -60,6 +60,9 @@ EXCLUIR = [shapely.Polygon(p) for p in (
     [(-385, -40), (-355, -40), (-355, -65), (-385, -65)],
     [(295, -45), (325, -45), (325, -70), (295, -70)],
     [(-86, 36), (-70, 36), (-70, 46), (-86, 46)],  # degraus da Misericórdia, no largo
+    # encosta norte, entre a muralha da vila e o rio: socalcos e o passadiço de madeira em ziguezague
+    # (ortofotomapa da DGT no WebSIG da Câmara), não são panos
+    [(-104, 192), (-50, 168), (-13, 180), (5, 170), (57, 152), (85, 143), (90, 150), (90, 250), (-104, 250)],
 )]
 
 

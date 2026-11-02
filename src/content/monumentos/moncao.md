@@ -59,9 +59,9 @@ cronologia:
     texto: "Classificação como Monumento Nacional (23 de outubro)."
 medidas:
   - conceito: "Muralhas"
-    valor: "C. 6,6 km de panos traçados no LiDAR, com 6,3 m de altura mediana acima do pé e até 19 m (LiDAR DGT 2025)"
+    valor: "C. 6,2 km de panos traçados no LiDAR, com 6,4 m de altura mediana acima do pé e até 19 m (LiDAR DGT 2025)"
   - conceito: "Guaritas"
-    valor: "25 nos ângulos salientes mais a da Porta do Rosal, na maqueta"
+    valor: "24 nos ângulos salientes mais a da Porta do Rosal, na maqueta"
   - conceito: "Cota"
     valor: "A vila fica a 30–42 m de altitude; o rio Minho corre a c. 3 m (LiDAR DGT 2025)"
   - conceito: "Igreja Matriz"

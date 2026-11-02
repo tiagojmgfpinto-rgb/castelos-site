@@ -1,17 +1,18 @@
 {
  "escarpas": {
-  "panos": 157,
-  "comprimento": 6577.7,
-  "altura_p50": 6.3,
-  "altura_p90": 9.7,
+  "panos": 143,
+  "comprimento": 6228.6,
+  "altura_p50": 6.4,
+  "altura_p90": 10.0,
   "altura_max": 19.0
  },
- "guaritas": 25,
+ "guaritas": 24,
  "terreno": {
-  "vertices": 151369,
-  "triangulos": 299999,
+  "vertices": 151370,
+  "triangulos": 300000,
   "area_ha": 45.9
  },
+ "passadico": 356.9,
  "porta_rosal": {
   "soleira": 30.9,
   "topo_muralha": 40.3,
@@ -65,7 +66,7 @@
   }
  },
  "vegetacao": {
-  "arvores": 1671
+  "arvores": 1678
  },
  "ancoras": {
   "porta_rosal": [
@@ -74,7 +75,7 @@
    -82.2
   ],
   "porta_salvaterra": [
-   -234.0,
+   -233.9,
    45.0,
    -202.3
   ],
