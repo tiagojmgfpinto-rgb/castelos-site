@@ -1,0 +1,63 @@
+{
+ "ponto_mais_alto": 217.0,
+ "praca": 191.37,
+ "altura_ate_ameias": 24.3,
+ "altura_ate_pontas": 25.65,
+ "planta": [
+  10.4,
+  10.0
+ ],
+ "azimute_faces": [
+  71.7,
+  161.7
+ ],
+ "ancoras": {
+  "torre": [
+   0.0,
+   219.5,
+   -0.0
+  ],
+  "balcoes": [
+   -3.6,
+   217.6,
+   6.8
+  ],
+  "janela_geminada": [
+   1.4,
+   213.6,
+   5.1
+  ],
+  "porta": [
+   5.9,
+   200.8,
+   -0.7
+  ],
+  "escada": [
+   4.6,
+   196.0,
+   4.5
+  ]
+ },
+ "olhar": {
+  "janela_geminada": [
+   0.31,
+   0.35,
+   0.95
+  ],
+  "porta": [
+   1.03,
+   0.35,
+   -0.08
+  ],
+  "escada": [
+   0.6,
+   0.5,
+   0.86
+  ],
+  "balcoes": [
+   -0.44,
+   0.3,
+   0.88
+  ]
+ }
+}
