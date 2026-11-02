@@ -28,17 +28,21 @@
     },
     "fotos": {
       "titulo": "Fotografias de terceiros (Google Street View e Google Maps, blogues: Porta do Rosal por fora e por dentro, Porta de Salvaterra, fachada da Misericórdia, Igreja Matriz e torre, alvenaria, fosso, ponte da EN202, vistas aéreas) usadas só como referência de cor e forma, novembro de 2026"
+    },
+    "orto_dgt": {
+      "titulo": "DGT, ortofotomapa visto no WebSIG da Câmara Municipal de Monção (capturas do Tiago, novembro de 2026): cores do chão, socalcos e passadiço da encosta norte",
+      "url": "https://websig.cm-moncao.pt"
     }
   },
   "limitacoes": [
-    "Não foi usada planta cotada. Em Monção os panos vêm em parte como edifício (classe 6) e os parapeitos como não classificados (classe 1) na nuvem de pontos, e o MDT da DGT apaga-os. O traçado corre sobre uma superfície feita com os pontos das classes 1, 2 e 6, dentro de uma faixa de 40 m à volta das linhas de muralha do OSM e fora das casas; ficam os degraus com terrapleno ou adarve do lado de dentro, ou junto às linhas do OSM (erro esperado de 0,5 a 1 m em planta). Os socalcos da margem do rio e os cortes das estradas foram tirados à mão.",
-    "Os panos são 157 peças com c. 6.6 km, de alvenaria em talude com cordão e parapeito; a altura acima do pé é medida metro a metro (mediana 6.3 m, máximo 19 m). Os terraplenos por trás dos panos vêm dos mesmos pontos. A alvenaria é uma textura de 8 m feita a partir das fotografias da Porta do Rosal: fiadas de 0,3 a 0,5 m e pedras de 0,45 a 1,1 m de comprido, medidas no Street View, granito bege, cinzento e cor de salmão com manchas de ferrugem, juntas fundas, líquenes e musgo. É igual em todos os panos. Canhoneiras e banquetas não se modelam.",
-    "As guaritas ficam nos ângulos salientes com mais de 38° em panos altos (saem 25, mais a da Porta do Rosal). A forma segue as fotografias; não se mediu cada uma.",
+    "Não foi usada planta cotada. Em Monção os panos vêm em parte como edifício (classe 6) e os parapeitos como não classificados (classe 1) na nuvem de pontos, e o MDT da DGT apaga-os. O traçado corre sobre uma superfície feita com os pontos das classes 1, 2 e 6, dentro de uma faixa de 40 m à volta das linhas de muralha do OSM e fora das casas; ficam os degraus com terrapleno ou adarve do lado de dentro, ou junto às linhas do OSM (erro esperado de 0,5 a 1 m em planta). Os socalcos da margem do rio, os cortes das estradas e a encosta norte entre a vila e o rio (socalcos e o passadiço de madeira em ziguezague, vistos no ortofotomapa da DGT) foram tirados à mão.",
+    "Os panos são 143 peças com c. 6.2 km, de alvenaria em talude com cordão e parapeito; a altura acima do pé é medida metro a metro (mediana 6.4 m, máximo 19 m). Os terraplenos por trás dos panos vêm dos mesmos pontos. A alvenaria é uma textura de 8 m feita a partir das fotografias da Porta do Rosal: fiadas de 0,3 a 0,5 m e pedras de 0,45 a 1,1 m de comprido, medidas no Street View, granito bege, cinzento e cor de salmão com manchas de ferrugem, juntas fundas, líquenes e musgo. É igual em todos os panos. Canhoneiras e banquetas não se modelam.",
+    "As guaritas ficam nos ângulos salientes com mais de 38° em panos altos (saem 24, mais a da Porta do Rosal). A forma segue as fotografias; não se mediu cada uma.",
     "As portas são vãos abertos nos panos, que continuam inteiros à volta. A Porta do Rosal, por fora (arco de granito de volta perfeita, túnel de c. 21 m e guarita sobre o cordão) e por dentro (contrafortes, lojas, arcos, escadas para o adarve e gradeamento), e a Porta de Salvaterra (frontispício com pilastras almofadadas, arco com impostas e fecho, entablamento e frontão curvo interrompido com tarja) seguem as fotografias, com a soleira e o topo dos panos medidos no LiDAR; as medidas dos arcos são aproximadas. As outras portas da obra de 1656 não estão no OSM e não foram modeladas.",
     "A Igreja Matriz e a Igreja da Misericórdia têm pegada, cumeeira e torre medidas no MDS; as fachadas seguem as fotografias, com medidas aproximadas. A fachada da Misericórdia está virada a norte, para o largo, como no ortofotomapa e no Street View. As outras igrejas e capelas da vila entram como casas.",
     "A ponte pedonal da EN202 tem o tabuleiro e o vão medidos no MDS; a estrutura metálica e as silhuetas de castelo no guarda-corpo seguem a fotografia.",
     "O rio Minho é um plano a 3,0 m de altitude onde o LiDAR não tem pontos, com o fundo rebaixado para dar a cor da água funda; as ilhas de areia vêm do MDT. O nível muda com a maré e as cheias.",
-    "O casario é feito de volumes simples a partir do OpenStreetMap e do LiDAR, com a altura medida no MDS. O terreno é o MDT simplificado para 300 mil triângulos. As árvores estão nas posições medidas, com forma esquemática. O chão é a ortoimagem do LiDAR a 25 cm com os pavimentos por cima: as ruas do OSM com a largura da classe, em asfalto ou em granito conforme a cor de cada troço na ortoimagem (o asfalto sai neutro, o granito bege); os largos abertos da vila em cubos de granito, como no Street View; as ruas pedonais em lajeado; a relva onde a ortoimagem é verde ou nos jardins do OSM. Os passeios e as passadeiras não se desenham."
+    "O casario é feito de volumes simples a partir do OpenStreetMap e do LiDAR, com a altura medida no MDS. O terreno é o MDT simplificado para 300 mil triângulos. As árvores estão nas posições medidas, com forma esquemática. O chão é a ortoimagem do LiDAR a 25 cm, com as cores passadas às do ortofotomapa da DGT (média e desvio de cada canal, medidos numa captura do WebSIG da Câmara), e os pavimentos por cima: as ruas do OSM com a largura da classe, em asfalto ou em granito conforme a cor de cada troço na ortoimagem (o asfalto sai neutro, o granito bege); os largos abertos da vila em cubos de granito, como no Street View; as ruas pedonais em lajeado; a relva onde a ortoimagem é verde ou nos jardins do OSM. Os passeios e as passadeiras não se desenham. O passadiço de madeira da encosta norte segue os caminhos pedonais do OSM, sobre o terreno, com guardas de madeira."
   ],
   "distancia": 1000,
   "placas": [
@@ -59,7 +63,7 @@
       "estado": "estado-atual",
       "confianca": "média",
       "descricao": "Panos de muralha em talude, de alvenaria de granito com cordão e parapeito, que desenham os baluartes da obra começada em 1656 com traçado de Miguel de L'École, à volta da vila e da cerca medieval. A norte seguem a escarpa do rio Minho; a sul e a nascente têm à frente o fosso seco.",
-      "medidas": "157 panos traçados, com c. 6.6 km. Sobem em mediana 6.3 m acima do pé e até 19 m (LiDAR).",
+      "medidas": "143 panos traçados, com c. 6.2 km. Sobem em mediana 6.4 m acima do pé e até 19 m (LiDAR).",
       "fontes": [
         "lidar",
         "castelos",
@@ -80,7 +84,7 @@
       "estado": "estado-atual",
       "confianca": "média",
       "descricao": "Guaritas de cantaria de granito, com cúpula e frestas, sobre os ângulos salientes dos baluartes.",
-      "medidas": "25 guaritas nos ângulos salientes, mais a da Porta do Rosal.",
+      "medidas": "24 guaritas nos ângulos salientes, mais a da Porta do Rosal.",
       "fontes": [
         "lidar",
         "fotos"
