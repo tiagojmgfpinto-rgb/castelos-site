@@ -1,0 +1,116 @@
+{
+ "escarpas": {
+  "panos": 92,
+  "comprimento": 5060.8,
+  "altura_p50": 6.8,
+  "altura_p90": 9.8,
+  "altura_max": 18.0
+ },
+ "guaritas": 15,
+ "terreno": {
+  "vertices": 151480,
+  "triangulos": 299999,
+  "area_ha": 44.1
+ },
+ "porta_rosal": {
+  "soleira": 30.9,
+  "topo_muralha": 40.3,
+  "altura_frontaria": 8.2,
+  "ponte": 0.0
+ },
+ "porta_rosal_dentro": {
+  "soleira": 33.1,
+  "topo_muralha": 41.8,
+  "altura_frontaria": 8.7,
+  "ponte": 0.0
+ },
+ "porta_salvaterra": {
+  "soleira": 33.1,
+  "topo_muralha": 36.0,
+  "altura_frontaria": 5.2,
+  "ponte": 0.0
+ },
+ "rio": {
+  "nivel": 3.0,
+  "area_ha": 2.6,
+  "triangulos": 39999
+ },
+ "igreja_matriz": {
+  "adro": 34.6,
+  "cumeeira": 45.2,
+  "torre": 53.5,
+  "faces": 4689
+ },
+ "igreja_misericordia": {
+  "rua": 30.3,
+  "cumeeira": 44.9,
+  "faces": 894
+ },
+ "ponte_en202": {
+  "estrada": 27.5,
+  "tabuleiro": 33.9,
+  "vao": 16.5,
+  "faces": 364
+ },
+ "vila": {
+  "edificios": 461,
+  "do_osm": 406,
+  "do_lidar": 55,
+  "medidos": 931,
+  "recusas": {
+   "fora": 539,
+   "evitar": 17,
+   "escarpa": 76
+  }
+ },
+ "vegetacao": {
+  "arvores": 1612
+ },
+ "ancoras": {
+  "porta_rosal": [
+   -356.3,
+   42.9,
+   -79.7
+  ],
+  "porta_salvaterra": [
+   -233.7,
+   45.1,
+   -202.2
+  ],
+  "igreja_matriz": [
+   10.5,
+   56.0,
+   -109.5
+  ],
+  "igreja_misericordia": [
+   -70.0,
+   49.0,
+   -16.0
+  ],
+  "ponte_en202": [
+   -62.0,
+   40.0,
+   129.0
+  ],
+  "escarpas": [
+   200.0,
+   52.5,
+   230.0
+  ],
+  "guaritas": [
+   189.5,
+   47.5,
+   222.6
+  ],
+  "rio": [
+   150.0,
+   10.0,
+   -275.0
+  ],
+  "vila": [
+   -60.0,
+   52.3,
+   -60.0
+  ]
+ }
+}
