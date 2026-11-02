@@ -29,6 +29,10 @@ export interface DadosMaqueta {
   placas?: string[];
   /** Distância inicial da câmara ao centro da maqueta, em metros (por omissão 300). */
   distancia?: number;
+  /** Direção inicial da câmara (x este, y para cima, z sul), por omissão de sudoeste. */
+  direcao?: [number, number, number];
+  /** Distância mínima da câmara ao alvo, em metros (por omissão 22); menor nas maquetas pequenas. */
+  distanciaMinima?: number;
   elementos: ElementoMaqueta[];
 }
 

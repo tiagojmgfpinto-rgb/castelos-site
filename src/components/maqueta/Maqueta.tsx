@@ -127,6 +127,8 @@ export default function Maqueta({ url, capa, dados, provisoria, onVoltarMapa }: 
               rotulos={rotulos}
               placas={placas}
               distancia={dados.distancia ?? 300}
+              direcao={dados.direcao}
+              distanciaMinima={dados.distanciaMinima ?? 22}
               camadaPlacas={camadaPlacas}
               pausa={pausa}
               terreno={terreno}
@@ -216,7 +218,7 @@ function FichaElemento({ e, dados, onFechar }: { e: ElementoMaqueta; dados: Dado
   );
 }
 
-function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, camadaPlacas, pausa, terreno, pedidoEnquadrar, bussola, escala, escalaTexto, onCarregada }: {
+function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, direcao, distanciaMinima, camadaPlacas, pausa, terreno, pedidoEnquadrar, bussola, escala, escalaTexto, onCarregada }: {
   url: string;
   elementos: Map<string, ElementoMaqueta>;
   sel: string | null;
@@ -225,6 +227,8 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, c
   rotulos: boolean;
   placas: ElementoMaqueta[];
   distancia: number;
+  direcao?: [number, number, number];
+  distanciaMinima: number;
   camadaPlacas: React.RefObject<HTMLDivElement | null>;
   pausa: React.RefObject<boolean>;
   terreno: boolean;
@@ -273,8 +277,8 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, c
       const s = b.getSize(new THREE.Vector3());
       alvos.set(id, { centro: c, topo: new THREE.Vector3(c.x, b.max.y + 1.5, c.z), raio: Math.max(s.x, s.z, s.y) / 2 });
     }
-    // O enquadramento inicial abrange as muralhas e os elementos com placa (em Guimarães, também o Paço)
-    const muralhas = scene.getObjectByName("Muralhas_grupo");
+    // O enquadramento inicial abrange as muralhas (ou a torre) e os elementos com placa (em Guimarães, também o Paço)
+    const muralhas = scene.getObjectByName("Muralhas_grupo") ?? scene.getObjectByName("Torre_grupo");
     const bm = new THREE.Box3().setFromObject(muralhas ?? scene);
     for (const e of placas) porElemento.get(e.id)?.forEach((m) => bm.expandByObject(m));
     const centro = bm.getCenter(new THREE.Vector3());
@@ -341,7 +345,8 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, c
   }, [sel]);
 
   const enquadrar = useCallback((instantaneo = false) => {
-    const pos = centro.clone().addScaledVector(DIRECAO_INICIAL, distancia);
+    const dir = direcao ? new THREE.Vector3(...direcao).normalize() : DIRECAO_INICIAL;
+    const pos = centro.clone().addScaledVector(dir, distancia);
     if (instantaneo && controlos.current) {
       camera.position.copy(pos);
       controlos.current.target.copy(centro);
@@ -349,7 +354,7 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, c
     } else {
       objetivo.current = { alvo: centro.clone(), pos };
     }
-  }, [camera, centro, distancia]);
+  }, [camera, centro, distancia, direcao]);
 
   useEffect(() => {
     enquadrar(true);
@@ -533,7 +538,7 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, c
         makeDefault
         enableDamping
         dampingFactor={0.08}
-        minDistance={22}
+        minDistance={distanciaMinima}
         maxDistance={Math.max(560, distancia * 1.5)}
         minPolarAngle={0.08}
         maxPolarAngle={1.36}
