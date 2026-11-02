@@ -78,6 +78,44 @@ LXS = np.linspace(-float(LID["meiox"]), float(LID["meiox"]), MDT.shape[1])
 LYS = np.linspace(-float(LID["meioy"]), float(LID["meioy"]), MDT.shape[0])
 
 
+def _terraplenos():
+    """Em Monção os terraplenos de vários baluartes (o da Porta do Rosal, o da frente norte) vêm na classe 6
+    ou 1 da nuvem de pontos e o MDT da DGT passa por baixo deles, à cota da rua. Onde a superfície sem
+    árvores (dados/superficie.npz) fica mais de 0,5 m acima do MDT em manchas largas (mais de 80 m², com
+    mais de 2,5 m de largura), fora das casas do OSM e do LiDAR, o terreno passa a ser essa superfície."""
+    S = np.load(AQUI / "dados" / "superficie.npz")
+    sup = S["sup"].astype(float)
+    tem = sup > -32000
+    sup = np.where(tem, sup / 100.0 - ZREF, MDT)
+    sup = np.where(VEG & ~tem, MDT, sup)
+    pl = []
+    for f in F["edificios"]:
+        g = geom(f)
+        if g is not None and np.ndim(g) == 2 and len(g) >= 3:
+            q = shapely.Polygon(g)
+            if q.is_valid:
+                pl.append(q.buffer(0.8))
+    pl += [shapely.Polygon(c["planta"]).buffer(0.8) for c in json.loads((AQUI / "dados" / "casas.json").read_text())]
+    X, Y = np.meshgrid(LXS, LYS)
+    casa = shapely.contains_xy(shapely.union_all(pl), X, Y)
+    alto = (sup - MDT > 0.5) & ~casa
+    alto &= ~((X > -86) & (X < -70) & (Y > 36) & (Y < 46))  # degraus da Misericórdia, no largo
+    alto = ndi.binary_opening(alto, structure=np.ones((5, 5)))
+    lab, n_ = ndi.label(alto)
+    tam = ndi.sum(alto, lab, range(1, n_ + 1)) * LPASSO ** 2
+    alto = np.isin(lab, 1 + np.nonzero(tam > 80)[0])
+    # preenche as falhas (sem pontos) dentro das manchas com a vizinhança
+    sup = ndi.grey_closing(np.where(alto, sup, -1e3), size=3)
+    # suaviza (os pontos mais altos de cada célula fazem degraus e dentes no terrapleno)
+    peso = ndi.gaussian_filter(alto.astype(float), 1.5)
+    sup = ndi.gaussian_filter(np.where(alto, sup, 0.0), 1.5) / np.maximum(peso, 1e-6)
+    return np.where(alto, np.maximum(sup, MDT), MDT), alto
+
+
+MDT, TERRAPLENO = _terraplenos()
+
+
+
 def amostra(G, x, y):
     """Interpolação bilinear numa grelha do LiDAR."""
     c = (np.asarray(x, float) - LXS[0]) / LPASSO
@@ -364,15 +402,23 @@ def imagem(nome, arr):
     return img
 
 
-def material(nome, cor, rug=0.9, tex=None, vcor=False, normal=None, forca=1.0, uv_nome=None):
+def material(nome, cor, rug=0.9, tex=None, vcor=False, normal=None, forca=1.0, uv_nome=None, escala=None):
     mt = bpy.data.materials.new(nome)
     mt.use_nodes = True
     nt = mt.node_tree
     bsdf = nt.nodes["Principled BSDF"]
+    mapa = None
+    if escala is not None:  # escala própria do material (sai no glTF como KHR_texture_transform)
+        uvn = nt.nodes.new("ShaderNodeUVMap")
+        mapa = nt.nodes.new("ShaderNodeMapping")
+        mapa.inputs["Scale"].default_value = (escala, escala, 1.0)
+        nt.links.new(uvn.outputs["UV"], mapa.inputs["Vector"])
     if normal is not None:
         normal.colorspace_settings.name = "Non-Color"
         tn = nt.nodes.new("ShaderNodeTexImage")
         tn.image = normal
+        if mapa is not None:
+            nt.links.new(mapa.outputs["Vector"], tn.inputs["Vector"])
         nm = nt.nodes.new("ShaderNodeNormalMap")
         nm.inputs["Strength"].default_value = forca
         nt.links.new(tn.outputs["Color"], nm.inputs["Color"])
@@ -382,6 +428,8 @@ def material(nome, cor, rug=0.9, tex=None, vcor=False, normal=None, forca=1.0, u
     if tex is not None:
         ti = nt.nodes.new("ShaderNodeTexImage")
         ti.image = tex
+        if mapa is not None:
+            nt.links.new(mapa.outputs["Vector"], ti.inputs["Vector"])
         if vcor:
             va = nt.nodes.new("ShaderNodeVertexColor")
             va.layer_name = "Col"
@@ -411,28 +459,31 @@ def normais(alt, forca):
     return nv * 0.5 + 0.5
 
 
-def textura_alvenaria(n=512, metros=4.0, semente=1661):
-    """Alvenaria de granito dos panos (4 m por repetição), como nas fotografias de Monção: pedras grandes e
-    irregulares (de 0,3 a 0,7 m de altura e até 1,2 m de comprido), mal fiadas, quase todas cinzentas com
-    algumas castanhas e cor de ferrugem (o granito da região tem óxidos de ferro), juntas escuras e
-    fundas, manchas de musgo e líquenes brancos. Os blocos são células de Voronoi alongadas, periódicas.
+def textura_alvenaria(n=1024, metros=8.0, semente=1661):
+    """Alvenaria de granito dos panos (8 m por repetição), medida no Street View da Porta do Rosal: fiadas de
+    0,28 a 0,5 m, pedras de 0,45 a 1,1 m de comprido (e algumas pequenas), mal fiadas, bege, cinzentas e cor
+    de salmão, com manchas de ferrugem (o granito da região tem óxidos de ferro), juntas escuras e fundas,
+    cantos arredondados, musgo e líquenes brancos. Os blocos são células de Voronoi alongadas, periódicas.
     Devolve a cor e o relevo (para o mapa de normais)."""
     r = np.random.default_rng(semente)
     m_px = n / metros
     pts, cores = [], []
     y = 0.0
     # cinzentos rosados do granito de Monção; a ferrugem vem depois, em manchas largas
-    paleta = np.array([(0.55, 0.52, 0.49), (0.60, 0.57, 0.53), (0.49, 0.47, 0.45), (0.58, 0.52, 0.47),
-                       (0.53, 0.48, 0.44), (0.62, 0.58, 0.52), (0.46, 0.44, 0.42), (0.57, 0.50, 0.44)])
-    prob = np.array([0.2, 0.17, 0.15, 0.14, 0.11, 0.09, 0.08, 0.06])
+    # cores medidas nas fotografias da Porta do Rosal (Street View): granito cor de salmão e ferrugem,
+    # bege e cinzento, algumas pedras castanho-avermelhadas escuras
+    # (revisto pelas cores medidas na fotografia da muralha ao sol: bege rosado, mediana c. 182/156/129)
+    paleta = np.array([(0.66, 0.50, 0.42), (0.60, 0.45, 0.38), (0.68, 0.60, 0.52), (0.60, 0.55, 0.50),
+                       (0.55, 0.52, 0.49), (0.47, 0.44, 0.42), (0.52, 0.38, 0.33), (0.74, 0.65, 0.56)])
+    prob = np.array([0.12, 0.08, 0.22, 0.20, 0.16, 0.08, 0.05, 0.09])
     while y < n - 0.15 * m_px:
-        hf = r.uniform(0.3, 0.62) * m_px
+        hf = r.uniform(0.28, 0.50) * m_px  # fiadas medidas na Porta do Rosal (c. 30 px/m no Street View)
         if y + hf > n - 0.25 * m_px:
             hf = n - y
         x = r.uniform(0, 0.6) * m_px
         x0 = x
         while x < x0 + n:
-            wf = (r.uniform(0.18, 0.35) if r.random() < 0.22 else r.uniform(0.45, 1.25)) * m_px
+            wf = (r.uniform(0.22, 0.38) if r.random() < 0.18 else r.uniform(0.45, 1.1)) * m_px
             pts.append(((x + wf / 2) % n, y + hf / 2 + r.uniform(-0.12, 0.12) * hf))
             cores.append(paleta[r.choice(8, p=prob)] * r.uniform(0.92, 1.08))
             x += wf
@@ -444,30 +495,44 @@ def textura_alvenaria(n=512, metros=4.0, semente=1661):
     arv = cKDTree(viz * np.array([1.0, 2.1]))  # métrica alongada: blocos deitados
     yy, xx = np.mgrid[0:n, 0:n]
     # contornos irregulares: deforma as coordenadas antes de procurar a pedra mais próxima
-    wx = (fbm(xx, yy, 22.0, semente + 7) - 0.5) * 0.30 * m_px
-    wy = (fbm(xx, yy, 22.0, semente + 8) - 0.5) * 0.22 * m_px
+    wx = (fbm(xx, yy, 0.25 * m_px, semente + 7) - 0.5) * 0.12 * m_px
+    wy = (fbm(xx, yy, 0.25 * m_px, semente + 8) - 0.5) * 0.08 * m_px
     d, idx = arv.query(np.stack([(xx + wx).ravel(), (yy + wy).ravel() * 2.1], 1), k=2)
     junta = (d[:, 1] - d[:, 0]).reshape(n, n)
     cel = (idx[:, 0] % k).reshape(n, n)
+    cores = cores * 0.72 + np.array([0.60, 0.54, 0.47]) * 0.28  # menos saturado: o granito é baço
     tex = cores[cel]
+    manchas = fbm(xx, yy, 9.0, semente + 13)[..., None]  # cada pedra é manchada
+    tex = tex * (0.8 + 0.4 * manchas)
     # cada pedra é um pouco abaulada: mais clara no meio, escura na junta
-    bomb = np.clip(junta / (0.18 * m_px), 0, 1)
-    alt = np.sqrt(bomb)
-    tex = tex * (0.9 + 0.1 * alt[..., None])
-    sombra_j = np.clip(1.0 - junta / (0.05 * m_px), 0, 1)[..., None]
-    tex = tex * (1.0 - 0.55 * sombra_j)
+    # juntas fundas (2 a 4 cm), cantos das pedras arredondados (a distância à junta é suavizada)
+    junta = ndi.gaussian_filter(junta, 1.1, mode="wrap")
+    larg_j = (0.016 + 0.02 * fbm(xx, yy, 30.0, semente + 11)) * m_px  # juntas de largura variável
+    bomb = np.clip((junta - larg_j) / (0.06 * m_px), 0, 1)
+    alt = np.sqrt(bomb) * (junta > larg_j)
+    tex = tex * (0.74 + 0.26 * alt[..., None])
+    sombra_j = np.clip(1.0 - (junta - larg_j * 0.6) / (larg_j * 0.6 + 1e-6), 0, 1)[..., None]
+    arg = np.array([0.22, 0.19, 0.17]) * (0.8 + 0.4 * fbm(xx, yy, 6.0, semente + 14))[..., None]
+    tex = tex * (1.0 - sombra_j) + arg * sombra_j
+    # grão do granito: pintas escuras (biotite) e claras (feldspato)
+    rg = np.random.default_rng(semente + 12)
+    pint = ndi.gaussian_filter(rg.random((n, n)), 0.7, mode="wrap")
+    pint = (pint - pint.mean()) / pint.std()
+    tex = tex * (1 + 0.07 * pint[..., None])
+    tex = np.where((pint < -2.3)[..., None], tex * 0.75, tex)
+    tex = np.where((pint > 2.1)[..., None], tex * 0.75 + 0.22, tex)
     # óxidos de ferro: manchas largas que apanham várias pedras, cada uma com a sua intensidade
     ferr = np.clip((fbm(xx, yy, 70.0, semente + 9) - 0.5) * 3.2, 0, 1)[..., None]
     absorve = r.uniform(0.2, 1.0, k)[cel][..., None]
-    tex = tex * (1 - 0.55 * ferr * absorve) + np.array([0.62, 0.43, 0.31]) * 0.55 * ferr * absorve
+    tex = tex * (1 - 0.25 * ferr * absorve) + np.array([0.62, 0.43, 0.31]) * 0.25 * ferr * absorve
     u, v = xx / n, yy / n
     grao = fbm(u * 48, v * 48, 1.5, semente + 1)[..., None]
     liq = fbm(u * 36, v * 36, 1.0, semente + 2)[..., None]
     musgo = fbm(u * 18, v * 18, 1.0, semente + 3)[..., None]
     escorre = (0.5 + 0.5 * np.sin(2 * math.pi * (u * 9 + 0.3 * np.sin(2 * math.pi * v * 2))))[..., None]
     tex = tex * (0.86 + 0.24 * grao)
-    tex = np.where(liq > 0.78, tex * 0.5 + np.array([0.78, 0.78, 0.74]) * 0.5, tex)
-    tex = np.where((musgo > 0.68) & (bomb[..., None] < 0.6), tex * 0.5 + np.array([0.28, 0.34, 0.17]) * 0.5, tex)
+    tex = np.where(liq > 0.84, tex * 0.5 + np.array([0.78, 0.78, 0.74]) * 0.5, tex)
+    tex = np.where((musgo > 0.74) & (bomb[..., None] < 0.5), tex * 0.6 + np.array([0.26, 0.30, 0.17]) * 0.4, tex)
     tex = tex * (0.93 + 0.08 * escorre)
     return np.clip(tex, 0, 1), ndi.gaussian_filter(alt, 1.0) + 0.12 * grao[..., 0]
 
@@ -498,7 +563,7 @@ def textura_cantaria(n=512, metros=3.0, semente=1713):
     yy, xx = np.mgrid[0:n, 0:n] / n
     liq = fbm(xx * 30, yy * 30, 1.0, semente + 2)[..., None]
     tex = tex * (0.93 + 0.12 * fbm(xx * 40, yy * 40, 1.5, semente + 1)[..., None])
-    tex = np.where(liq > 0.78, tex * 0.5 + 0.42, tex)
+    tex = np.where(liq > 0.84, tex * 0.5 + 0.42, tex)
     tex = np.where(liq < 0.27, tex * 0.85, tex)
     return np.clip(tex, 0, 1), ndi.gaussian_filter(alt, 1.0)
 
@@ -647,18 +712,63 @@ def degraus(lin, topo, pe, a, fim, salto=2.5, folga=0.8):
     return np.array(L), np.array(T), np.array(P), np.array(A), np.array(Fm)
 
 
+def vaos(lin, topo, pe, a, fim):
+    """Vãos das portas abertos no próprio pano (sem o cortar): o traçado é densificado a 0,1 m na largura do
+    vão e, aí, a face começa no intradorso do arco (zbot) em vez de no chão; o resto do pano (por cima do
+    arco, o cordão e o parapeito) segue inteiro. Devolve os arrays densificados e zbot (-inf fora dos vãos)."""
+    zbot = np.full(len(lin), -np.inf)
+    for d_ in PORTAS.values():
+        v = d_.get("vao")
+        if not v:
+            continue
+        n_ = unit(np.array(d_["normal"], float))
+        t_ = np.array([-n_[1], n_[0]])
+        p0 = np.array(d_["ponto"])
+        r, omb, sole = v["r"], v["omb"], d_["soleira"] - ZREF
+        s_ = (lin - p0) @ t_
+        dd = (lin - p0) @ n_
+        cruza = [i for i in range(len(lin) - 1)
+                 if (s_[i] + r + 0.5) * (s_[i + 1] - r - 0.5) < 0 or (s_[i] - r - 0.5) * (s_[i + 1] + r + 0.5) < 0
+                 if min(abs(dd[i]), abs(dd[i + 1])) < 8 and abs(s_[i] - s_[i + 1]) > 1e-6]
+        cruza = [i for i in cruza if abs(dd[i] + (dd[i + 1] - dd[i]) * (0 - s_[i]) / (s_[i + 1] - s_[i])) < 4.0]
+        if not cruza:
+            continue
+        i = cruza[0]
+        # amostras novas: bordas exatas (com um par para a ombreira vertical) e de 0,1 em 0,1 m no vão
+        ss = sorted(set(np.round(np.concatenate([np.arange(-r, r + 1e-6, 0.1), [-r - 0.02, r + 0.02, -r - 0.5, r + 0.5]]), 3)))
+        fs = [(x - s_[i]) / (s_[i + 1] - s_[i]) for x in ss]
+        fs = sorted(f for f in fs if 0 < f < 1)
+        novos = [lin[i] + (lin[i + 1] - lin[i]) * f for f in fs]
+        interp = lambda v_: [v_[i] + (v_[i + 1] - v_[i]) * f for f in fs]
+        lin = np.vstack([lin[:i + 1], novos, lin[i + 1:]])
+        topo = np.concatenate([topo[:i + 1], interp(topo), topo[i + 1:]])
+        pe = np.concatenate([pe[:i + 1], interp(pe), pe[i + 1:]])
+        a = np.concatenate([a[:i + 1], interp(a), a[i + 1:]])
+        fim = np.concatenate([fim[:i + 1], interp(fim), fim[i + 1:]])
+        zbot = np.concatenate([zbot[:i + 1], np.full(len(fs), -np.inf), zbot[i + 1:]])
+        s_ = (lin - p0) @ t_
+        dentro = (np.abs(s_) <= r + 1e-3) & (np.abs(np.arange(len(lin)) - (i + 1 + len(fs) / 2)) <= len(fs) / 2 + 1)
+        zb = sole + omb + np.sqrt(np.clip(r * r - s_ ** 2, 0, None))
+        zbot = np.where(dentro, np.maximum(zbot, zb), zbot)
+        # o pé à frente do vão é a soleira
+        perto_ = np.abs(s_) <= r + 0.6
+        pe = np.where(perto_ & (np.abs(np.arange(len(lin)) - (i + 1 + len(fs) / 2)) <= len(fs) / 2 + 1), sole, pe)
+    return lin, topo, pe, a, fim, zbot
+
+
 def escarpa(e, m, mq):
     """Um pano de escarpa: face em talude até ao cordão, parapeito de alvenaria por cima e o maciço por
     trás (escondido pelo terrapleno). Os valores medidos (topo, pé, aresta) vêm do tracar.py."""
     lin, topo, pe, a, fim = degraus(np.array(e["linha"], float), np.array(e["topo"]) - ZREF, np.array(e["pe"]) - ZREF,
                                     np.clip(np.array(e["aresta"]), -2.0, 1.0), np.array(e["fim"]))
+    lin, topo, pe, a, fim, zbot = vaos(lin, topo, pe, a, fim)
     h = np.maximum(topo - pe, 0.5)
     # talude: o MDT de 50 cm alarga a faixa da escarpa; fica entre 1/10 e 1/4 da altura
     bt = np.clip((fim - a) / h, 0.10, 0.25)
     hm = float(np.median(h))
     alto = hm > 5.0
     zc = topo - (PARAPEITO if alto else 0.0)
-    zf = pe - 1.2
+    zf = np.maximum(pe - 1.2, zbot)  # nos vãos das portas a face começa no arco
     tem_cordao = hm > 3.4
     # muros estreitos: a face não passa do meio do muro e o maciço chega só ao meio (mais 0,3 m)
     dl = espaco_livre(lin, e["id"])
@@ -1186,10 +1296,15 @@ class Quadro:
         self.o = np.asarray(origem, float)
         self.n = unit(np.asarray(normal, float))
         self.t = np.array([self.n[1], -self.n[0]])  # olhando de fora (contra a normal), a direita
+        self.bt, self.zb = 0.0, 0.0  # talude da face: d recua bt por metro acima de zb
 
     def p(self, s, z, d):
-        q = self.o + self.t * s + self.n * d
+        q = self.o + self.t * s + self.n * (d - self.bt * (z - self.zb))
         return (q[0], q[1], z)
+
+    def caixa_t(self, s0, s1, z0, z1, d0, d1, mat):
+        """Bloco encostado à face em talude (as faces da frente e de trás seguem o talude)."""
+        self.placa([(s0, z0), (s1, z0), (s1, z1), (s0, z1)], d0, d1, mat)
 
     def bloco(self, s0, s1, z0, z1, d0, d1, mat):
         c = self.o + self.t * (s0 + s1) / 2 + self.n * (d0 + d1) / 2
@@ -1255,126 +1370,209 @@ class Quadro:
             self.bloco(s0 + ss, s1 - ss, z + 0.04, min(z + fiada - 0.04, z1), d1 - 0.08, d1, mat)
 
 
-def _pano_rustico(Q, s0, s1, z0, z1, d0=-1.6, d1=0.04, vao=None):
-    """Pano de alvenaria que fecha o corte da muralha à volta de uma porta (o traçado é cortado na porta);
-    com vao=(w, sole, zn) fica com o recorte do arco de volta perfeita."""
-    if vao is None:
-        Q.bloco(s0, s1, z0, z1, d0, d1, 3)
-        return
-    w, sole, zn = vao
-    pts = [(s0, z0), (-w, z0), (-w, zn)]
-    pts += [(-w * math.cos(math.pi * k / 14), zn + w * math.sin(math.pi * k / 14)) for k in range(1, 14)]
-    pts += [(w, zn), (w, z0), (s1, z0), (s1, z1), (s0, z1)]
-    Q.placa(pts, d0, d1, 3)
+def tunel(Q, r, sole, omb, L, bt_=None):
+    """Túnel de abóbada de volta perfeita (raio r, nascença a omb do chão) que entra L metros na muralha a
+    partir da face: paredes e abóbada de alvenaria escurecida (a luz não entra) e lajeado no chão. A boca
+    segue o talude da face."""
+    zn = sole + omb
+    bt0, Q.bt = Q.bt, 0.0
+    d0 = -L
+    d1 = -bt0 * omb  # a boca recua com o talude: o túnel começa onde a face está à altura da nascença
+    for sg in (-1, 1):
+        a_, b_ = sorted((sg * r, sg * (r + 0.4)))
+        Q.bloco(a_, b_, sole - 0.1, zn, d0, d1 + 0.02, 1)
+    # a abóbada começa por trás da face à altura do fecho (senão o extradorso escuro sai do pano em talude)
+    Q.arco_sz(0.0, r, r + 0.4, zn, d0, -bt0 * (omb + r + 0.4) - 0.1, 1, k=12)
+    Q.bloco(-r - 0.05, r + 0.05, sole - 0.3, sole + 0.01, d0, 0.3, 0)
+    Q.bt = bt0
 
 
-def _arco_granito(Q, w, sole, zn, prof=0.9, aduela=0.55, fiada=0.5, ombreira=(0.62, 0.42)):
-    """Arco de volta perfeita com aduelas grandes de granito e ombreiras em silhares alternados, com o vão
-    escuro recuado (a boca do túnel) e o intradorso em cantaria."""
-    c, s_ = 0, 1
-    Q.vao(2 * w, sole, zn - sole, -prof, s_)
-    for sg in (-1, 1):  # face interior do túnel, até ao fundo escuro
-        s0, s1 = sorted((sg * w, sg * (w + 0.05)))
-        Q.bloco(s0, s1, sole, zn, -prof, 0.06, c)
-    Q.arco_sz(0.0, w - 0.02, w + 0.03, zn, -prof, 0.06, c, k=12)
-    Q.arco_sz(0.0, w, w + aduela, zn, 0.0, 0.1, c, k=11, aduelas=True)
-    for k, zz in enumerate(np.arange(sole, zn - 0.15, fiada)):
-        e_ = ombreira[k % 2]
+def arco_granito(Q, r, sole, omb, aduela=0.5, n_ad=13, fiada=0.48, ombreira=(0.62, 0.40), prof=0.7, saliencia=0.06,
+                 impostas=False, chave=False):
+    """Arco de volta perfeita de granito sobre a face em talude: aduelas, ombreiras de silhares alternados
+    e intradorso de cantaria nos primeiros 0,7 m do túnel. Com impostas=True, cornija de imposta na
+    nascença; com chave=True, aduela de fecho saliente (Salvaterra)."""
+    zn = sole + omb
+    for k_ in range(n_ad):
+        t0 = math.pi * k_ / n_ad + 0.01
+        t1 = math.pi * (k_ + 1) / n_ad - 0.01
+        ra = r + aduela * (1.2 if (chave and k_ == n_ad // 2) else 1.0)
+        q = [(r * math.cos(t0), zn + r * math.sin(t0)), (ra * math.cos(t0), zn + ra * math.sin(t0)),
+             (ra * math.cos(t1), zn + ra * math.sin(t1)), (r * math.cos(t1), zn + r * math.sin(t1))]
+        Q.placa(q, -0.02, saliencia + (0.06 if (chave and k_ == n_ad // 2) else 0.0), 0)
+    # intradorso em cantaria (boca do túnel)
+    bt0, Q.bt = Q.bt, 0.0
+    d1 = -bt0 * omb
+    Q.arco_sz(0.0, r - 0.01, r + 0.02, zn, d1 - prof, d1 + 0.02, 0, k=12)
+    for sg in (-1, 1):
+        a_, b_ = sorted((sg * (r - 0.01), sg * (r + 0.02)))
+        Q.bloco(a_, b_, sole, zn, d1 - prof, 0.02, 0)
+    Q.bt = bt0
+    for k_, zz in enumerate(np.arange(sole, zn - 0.12, fiada)):
+        e_ = ombreira[k_ % 2]
         for sg in (-1, 1):
-            s0, s1 = sorted((sg * w, sg * (w + e_)))
-            Q.bloco(s0, s1, zz + 0.02, min(zz + fiada - 0.02, zn), 0.0, 0.1, c)
+            a_, b_ = sorted((sg * (r - 0.0), sg * (r + e_)))
+            Q.caixa_t(a_, b_, zz + 0.015, min(zz + fiada - 0.015, zn), -0.02, saliencia, 0)
+    if impostas:
+        for sg in (-1, 1):
+            a_, b_ = sorted((sg * (r - 0.08), sg * (r + 0.75)))
+            Q.caixa_t(a_, b_, zn - 0.2, zn, -0.02, saliencia + 0.1, 0)
 
 
 def porta_rosal(Q, sole):
-    """Porta do Rosal, por fora (fotografia): boca de um túnel de c. 20 m através do terrapleno, num pano
-    alto de alvenaria de granito; arco de volta perfeita com aduelas grandes e ombreiras de silhares,
-    lápide à direita e grelha de escoamento à frente. Por cima, a meio do pano, uma guarita de cantaria
-    sobre mísula, ao nível do cordão."""
+    """Porta do Rosal, por fora (Street View, 2021): arco de volta perfeita de granito, de c. 2,1 m de vão e
+    3,5 m de altura, aberto num pano alto e liso de alvenaria (o vão é aberto no próprio pano, que segue
+    inteiro por cima até ao cordão e ao parapeito); aduelas grandes, ombreiras de silhares; o túnel
+    atravessa o terrapleno até à porta de dentro. Por cima, a meio do pano, a guarita sobre mísula, assente
+    no cordão. À frente, o lajeado e a grelha de escoamento."""
     topo = getattr(Q, "topo", sole + 9.0)
     zc = getattr(Q, "zc", topo - PARAPEITO)
-    w, zn = 1.35, sole + 2.35
-    _pano_rustico(Q, -2.6, 2.6, sole - 0.6, zc - 0.17, vao=(w, sole, zn))
-    _arco_granito(Q, w, sole, zn)
-    Q.bloco(1.95, 2.45, sole + 2.0, sole + 2.32, 0.05, 0.1, 4)  # lápide branca
-    Q.bloco(-1.3, 1.3, sole - 0.02, sole + 0.02, 0.0, 0.6, 1)    # grelha
-    # a guarita é posta à parte (na lista das guaritas), um pouco à esquerda do arco, como na fotografia
-    GUAR_EXTRA.append((np.array(Q.p(-0.9, 0, 0.3)[:2]), Q.n.copy(), float(zc), float(topo)))
+    v = PORTAS["porta_rosal"]["vao"]
+    r, omb = v["r"], v["omb"]
+    tunel(Q, r, sole, omb, v["tunel"])
+    arco_granito(Q, r, sole, omb, aduela=0.5, n_ad=13, ombreira=(0.55, 0.38))
+    Q.bt, bt0 = 0.0, Q.bt
+    Q.bloco(-r, r, sole - 0.02, sole + 0.02, 0.0, 0.7, 1)  # grelha de escoamento
+    Q.bloco(-2.6, 2.6, sole - 0.25, sole + 0.01, 0.0, 3.0, 0)  # lajeado à frente do arco
+    Q.bt = bt0
+    GUAR_EXTRA.append((np.array(Q.p(0.0, zc, 0.3)[:2]), Q.n.copy(), float(zc), float(topo)))
     return zc - sole
 
 
 def porta_rosal_dentro(Q, sole):
-    """Porta do Rosal, por dentro (fotografia): pano de alvenaria recolhido entre dois contrafortes de
-    pedra com musgo no alto; ao meio o arco de granito da passagem, aos lados duas portas de lojas abertas
-    no terrapleno; por cima, dois arcos de abóbada a que se sobe por escadas de pedra encostadas ao pano,
-    e um gradeamento de ferro no alto da muralha."""
-    c, s_, mv, alv, rel = 0, 1, 2, 3, 5
+    """Porta do Rosal, por dentro (Street View, 2021): o arco da passagem, de granito, ao fundo de um recanto
+    entre dois contrafortes grossos de alvenaria (com o alto em talude e musgo); entre os contrafortes e os
+    muros das escadas, duas portas de lojas abertas no terrapleno (à esquerda envidraçada, à direita de
+    madeira verde) com moldura de cantaria; no alto do pano, nos dois cantos, dois arcos de abóbada a que se
+    chega pelas escadas de pedra que sobem por trás dos muros laterais; gradeamento de ferro no alto. O
+    pano é o da própria muralha, com o vão aberto."""
+    c, s_, mv, alv, rel, vid, fer = 0, 1, 2, 3, 5, 6, 7
     topo = getattr(Q, "topo", sole + 9.0)
-    h = max(topo - sole, 6.0)
-    w, zn = 1.2, sole + 2.25
-    _pano_rustico(Q, -8.5, 8.5, sole - 0.6, topo - 0.05, d0=-1.8, d1=0.0, vao=(w, sole, zn))
-    _arco_granito(Q, w, sole, zn, prof=1.2, aduela=0.48, ombreira=(0.55, 0.4))
+    v = PORTAS["porta_rosal_dentro"]["vao"]
+    r, omb = v["r"], v["omb"]
+    tunel(Q, r, sole, omb, v["tunel"])
+    arco_granito(Q, r, sole, omb, aduela=0.42, n_ad=11, ombreira=(0.45, 0.32), saliencia=0.05)
+    bt0, Q.bt = Q.bt, 0.0
     for sg in (-1, 1):
-        a, b = sorted((sg * 2.25, sg * 3.15))
-        Q.bloco(a, b, sole - 0.3, sole + 4.4, 0.0, 1.35, alv)        # contrafortes
-        Q.bloco(a - 0.05, b + 0.05, sole + 4.4, sole + 4.62, -0.1, 1.42, rel)  # musgo no alto
-        a2, b2 = sorted((sg * 7.6, sg * 8.5))
-        Q.bloco(a2, b2, sole - 0.3, sole + 4.6, 0.0, 1.6, alv)       # muros das escadas
-    # portas das lojas: à esquerda envidraçada (escura), à direita de madeira verde, com moldura de cantaria
-    for s0, mat in ((-4.6, 6), (4.6, mv)):
-        Q.bloco(s0 - 0.62, s0 + 0.62, sole, sole + 2.2, 0.0, 0.04, mat)
+        a_, b_ = sorted((sg * (r + 0.55), sg * (r + 1.55)))
+        Q.bloco(a_, b_, sole - 0.3, sole + 3.6, -0.3, 1.25, alv)              # contrafortes
+        q = [(a_, sole + 3.6), (b_, sole + 3.6), (b_, sole + 4.5), (a_, sole + 4.5)]
+        Q.placa([(a_, sole + 3.6), (b_, sole + 3.6), (b_, sole + 4.6)] if sg < 0 else
+                [(a_, sole + 3.6), (b_, sole + 3.6), (a_, sole + 4.6)], -0.3, 1.25, alv)  # remate em talude
+        a2, b2 = sorted((sg * 6.4, sg * 7.4))
+        db_ = -0.3 - bt0 * (sole + 5.0 - Q.zb)  # encostados ao pano em talude
+        Q.bloco(a2, b2, sole - 0.3, sole + 4.8, db_, 2.6, alv)               # muros das escadas
+        Q.bloco(a2 - 0.05, b2 + 0.05, sole + 4.8, sole + 4.95, db_, 2.65, c)    # capeamento de granito
+    # portas das lojas, com moldura de cantaria e lintel
+    for s0, mat in ((-(r + 2.6), vid), (r + 2.6, mv)):
+        Q.bloco(s0 - 0.55, s0 + 0.55, sole, sole + 2.15, -0.06, 0.0, mat)
         for sg in (-1, 1):
-            a, b = sorted((s0 + sg * 0.62, s0 + sg * 0.84))
-            Q.bloco(a, b, sole, sole + 2.42, 0.0, 0.1, c)
-        Q.bloco(s0 - 0.84, s0 + 0.84, sole + 2.2, sole + 2.48, 0.0, 0.1, c)
-    # arcos de abóbada altos, a que se chega pelas escadas
-    zs = sole + 4.6
+            a_, b_ = sorted((s0 + sg * 0.55, s0 + sg * 0.78))
+            Q.bloco(a_, b_, sole, sole + 2.38, -0.02, 0.06, c)
+        Q.bloco(s0 - 0.78, s0 + 0.78, sole + 2.15, sole + 2.45, -0.02, 0.06, c)
+    # arcos de abóbada altos nos cantos, com aduelas de granito
+    zs = sole + 5.1
     for sg in (-1, 1):
-        o = Q.o
-        Q.o = Q.o + Q.t * sg * 6.1
-        Q.vao(2.3, zs, 1.0, 0.012, s_)
-        Q.arco_sz(0.0, 1.15, 1.6, zs + 1.0, 0.0, 0.08, c, k=10, aduelas=True)
+        o_ = Q.o
+        Q.o = Q.o + Q.t * sg * 6.6  # por cima dos muros das escadas, como no Street View
+        Q.bt = bt0  # os arcos ficam na face do pano em talude
+        Q.vao(2.2, zs, 0.6, 0.012, s_)
+        Q.arco_sz(0.0, 1.1, 1.5, zs + 0.6, 0.0, 0.07, c, k=10, aduelas=True)
         for sg2 in (-1, 1):
-            a, b = sorted((sg2 * 1.15, sg2 * 1.6))
-            Q.bloco(a, b, zs, zs + 1.0, 0.0, 0.08, c)
-        Q.o = o
-        # escadas: degraus de 0,3 m a subir do chão para fora até ao patamar dos arcos
-        n = 15
-        for k in range(n):
-            s0 = sg * (3.3 + k * 0.29)
-            a, b = sorted((s0, s0 + sg * 0.29))
-            Q.bloco(a, b, sole - 0.2, sole + (k + 1) * (zs - sole) / n, 0.15, 1.5, c)
-        a, b = sorted((sg * 7.6, sg * 4.6))
-        Q.bloco(a, b, zs - 0.2, zs, 0.15, 1.55, c)  # patamar
-    # gradeamento no alto
+            a_, b_ = sorted((sg2 * 1.1, sg2 * 1.5))
+            Q.bloco(a_, b_, zs, zs + 0.6, 0.0, 0.07, c)
+        Q.o = o_
+        Q.bt = 0.0
+        # escadas por trás dos muros laterais: do chão até ao patamar dos arcos
+        n = 16
+        for k_ in range(n):
+            d0_ = 2.5 - k_ * 0.16
+            a_, b_ = sorted((sg * 7.4, sg * 8.6))
+            Q.bloco(a_, b_, sole - 0.2, sole + (k_ + 1) * (zs - 0.3 - sole) / n, max(d0_ - 0.16, 0.05), 2.6, c)  # o último degrau fica sob o patamar
+        a_, b_ = sorted((sg * 5.2, sg * 8.6))
+        Q.bloco(a_, b_, zs - 0.25, zs, -0.3 - bt0 * (zs - Q.zb), 2.6, alv)  # patamar, à frente dos arcos
     for s0 in np.arange(-8.4, 8.41, 1.2):
-        barra(Q.m, Q.p(s0, topo, 0.35), Q.p(s0, topo + 1.05, 0.35), 0.025, 7)
-    barra(Q.m, Q.p(-8.4, topo + 1.05, 0.35), Q.p(8.4, topo + 1.05, 0.35), 0.03, 7)
-    barra(Q.m, Q.p(-8.4, topo + 0.55, 0.35), Q.p(8.4, topo + 0.55, 0.35), 0.02, 7)
-    return h
+        barra(Q.m, Q.p(s0, topo, 0.3), Q.p(s0, topo + 1.05, 0.3), 0.025, fer)
+    barra(Q.m, Q.p(-8.4, topo + 1.05, 0.3), Q.p(8.4, topo + 1.05, 0.3), 0.03, fer)
+    barra(Q.m, Q.p(-8.4, topo + 0.55, 0.3), Q.p(8.4, topo + 0.55, 0.3), 0.02, fer)
+    Q.bt = bt0
+    return topo - sole
 
 
 def porta_salvaterra(Q, sole):
-    """Porta de Salvaterra (estimativa, pelo tipo da Porta do Rosal; não há fotografia): arco de volta
-    perfeita de granito num pano baixo de alvenaria, com lápide por cima."""
-    topo = getattr(Q, "topo", sole + 5.0)
-    w, zn = 1.4, sole + 2.4
-    zt = max(topo, zn + w + 1.4)
-    _pano_rustico(Q, -2.8, 2.8, sole - 0.6, zt, vao=(w, sole, zn))
-    _arco_granito(Q, w, sole, zn)
-    Q.bloco(-0.55, 0.55, zn + w + 0.75, zn + w + 1.25, 0.05, 0.12, 4)
-    return zt - sole
+    """Porta de Salvaterra (fotografia de 2026): frontispício de cantaria de granito à frente do pano, com
+    duas pilastras de silhares almofadados, arco de volta perfeita (c. 2,6 m de vão, 3,9 m de altura) com
+    impostas e aduela de fecho, entablamento à altura do cordão da muralha e, por cima, um frontão
+    curvo interrompido com um bloco central (tarja) mais alto, que passa um pouco o parapeito. O pano em
+    talude continua dos dois lados, com o cordão e o parapeito; a guarita fica no ângulo à esquerda."""
+    c, alv = 0, 3
+    topo = getattr(Q, "topo", sole + 6.0)
+    zc = getattr(Q, "zc", topo - PARAPEITO)
+    v = PORTAS["porta_salvaterra"]["vao"]
+    r, omb = v["r"], v["omb"]
+    tunel(Q, r, sole, omb, v["tunel"])
+    W = 2.55          # meia largura do frontispício
+    pil = 1.0         # largura das pilastras
+    ze = sole + 4.7   # base do entablamento (à altura do cordão)
+    bt0 = Q.bt
+    Q.bt = 0.0
+    base_d = bt0 * 0.0
+    prof = bt0 * (ze - sole) + 0.35   # o frontispício é vertical: à altura do entablamento sai 0,35 m da face
+    # pano do frontispício entre as pilastras, com o recorte do arco
+    pts = [(-(W - pil), sole), (-r, sole), (-r, sole + omb)]
+    pts += [(-r * math.cos(math.pi * k_ / 14), sole + omb + r * math.sin(math.pi * k_ / 14)) for k_ in range(1, 14)]
+    pts += [(r, sole + omb), (r, sole), (W - pil, sole), (W - pil, ze), (-(W - pil), ze)]
+    Q.placa(pts, -0.4, prof - 0.1, c)
+    # pilastras de silhares almofadados (fiadas alternadas)
+    for sg in (-1, 1):
+        a_, b_ = sorted((sg * (W - pil), sg * W))
+        Q.bloco(a_, b_, sole - 0.2, sole + 0.45, -0.4, prof + 0.12, c)  # plinto
+        for k_, zz in enumerate(np.arange(sole + 0.45, ze - 0.1, 0.52)):
+            ex = 0.05 if k_ % 2 else 0.0
+            Q.bloco(a_ - (ex if sg < 0 else 0), b_ + (ex if sg > 0 else 0), zz + 0.02, min(zz + 0.5, ze), -0.4, prof + 0.04, c)
+    # arco: aduelas com fecho, impostas
+    Q.o, o_ = Q.o + Q.n * (prof - 0.1), Q.o
+    arco_granito(Q, r, sole, omb, aduela=0.5, n_ad=11, ombreira=(0.35, 0.35), prof=prof + 0.6, saliencia=0.05,
+                 impostas=True, chave=True)
+    Q.o = o_
+    # entablamento: arquitrave, friso e cornija
+    Q.bloco(-W - 0.05, W + 0.05, ze, ze + 0.22, -0.4, prof + 0.06, c)
+    Q.bloco(-W - 0.05, W + 0.05, ze + 0.22, ze + 0.42, -0.4, prof + 0.02, c)
+    Q.bloco(-W - 0.2, W + 0.2, ze + 0.42, ze + 0.58, -0.4, prof + 0.2, c)
+    # ático: pedestais por cima das pilastras e frontão curvo interrompido
+    za = ze + 0.58
+    for sg in (-1, 1):
+        a_, b_ = sorted((sg * (W - 0.8), sg * W))
+        Q.bloco(a_, b_, za, za + 0.5, -0.3, prof, c)
+        # meio frontão: arco de círculo que sobe da pilastra para o meio, com cornija
+        pts = []
+        for k_ in range(9):
+            f = k_ / 8
+            ss = sg * (W - f * (W - 1.0))
+            zz = za + 0.5 + 0.75 * math.sin(f * math.pi / 2)
+            pts.append((ss, zz))
+        inner = [(s0_, z0_ - 0.32) for s0_, z0_ in pts[::-1]]
+        Q.placa(pts + inner, -0.3, prof + 0.1, c)
+    # bloco central (tarja) com almofada
+    Q.bloco(-0.95, 0.95, za, za + 1.35, -0.3, prof + 0.05, c)
+    Q.bloco(-0.55, 0.55, za + 0.35, za + 1.0, prof + 0.05, prof + 0.12, c)
+    Q.bloco(-1.05, 1.05, za + 1.35, za + 1.5, -0.3, prof + 0.12, c)
+    Q.bt = bt0
+    return za + 1.5 - sole
 
 
 GUAR_EXTRA = []
 MAT_PORTA = ["cantaria", "sombra", "madeira_verde", "alvenaria", "cal", "relva", "vidro", "ferro"]
 
 PORTAS = {
-    # ponto e normal (para fora) medidos no traçado dos panos; as três portas cortam a muralha (fixo)
-    "porta_rosal": dict(ponto=(-353.4, 83.0), normal=(-0.66, -0.75), estilo=porta_rosal, elemento="porta_rosal", fixo=True),
-    "porta_rosal_dentro": dict(ponto=(-341.2, 100.5), normal=(0.44, 0.9), estilo=porta_rosal_dentro, elemento="porta_rosal",
-                               fixo=True, largura=8.5),
-    "porta_salvaterra": dict(ponto=(-234.8, 202.0), normal=(-0.98, -0.19), estilo=porta_salvaterra, elemento="porta_salvaterra",
-                             fixo=True),
+    # ponto e normal (para fora) medidos na nuvem de pontos; o vão é aberto no próprio pano (sem o cortar):
+    # r = meia largura, omb = altura da nascença, tunel = comprimento da passagem
+    "porta_rosal": dict(ponto=(-353.4, 83.0), normal=(-0.66, -0.75), estilo=porta_rosal, elemento="porta_rosal", fixo=True,
+                        soleira=30.85, vao=dict(r=1.05, omb=2.4, tunel=21.0)),
+    "porta_rosal_dentro": dict(ponto=(-341.2, 100.5), normal=(0.31, 0.95), estilo=porta_rosal_dentro, elemento="porta_rosal",
+                               fixo=True, largura=8.5, soleira=32.0, vao=dict(r=0.95, omb=2.25, tunel=3.0)),
+    "porta_salvaterra": dict(ponto=(-232.6, 202.5), normal=(-0.99, -0.12), estilo=porta_salvaterra, elemento="porta_salvaterra",
+                             fixo=True, largura=2.6, soleira=33.0, vao=dict(r=1.3, omb=2.65, tunel=3.0)),
 }
 
 
@@ -1568,7 +1766,7 @@ def faixa_inclinada(Q, pts, esp, d0, d1, mat):
 
 
 def corpo(Q, L, W, z0, ze, inc=30.0, mw=CAL, mr=TEL, beiral=0.32, cachorros=False, cunhais=True,
-          cornija_frente=True, soco=True, d_ini=0.0):
+          cornija_frente=True, soco=True, d_ini=0.0, cachorros_empena=None):
     """Corpo de nave ou capela-mor: paredes com empena, cunhais e cornijas de granito, soco, telhado de
     duas águas com beiral e (opcional) cachorrada de modilhões sob as cornijas (românico)."""
     tg = math.tan(_ang(inc))
@@ -1606,7 +1804,7 @@ def corpo(Q, L, W, z0, ze, inc=30.0, mw=CAL, mr=TEL, beiral=0.32, cachorros=Fals
             continue
         d0, d1 = (dd - 0.12, dd + 0.14) if sg > 0 else (dd - 0.14, dd + 0.12)
         faixa_inclinada(Q, [(-W / 2 - 0.18, ze - 0.05), (0, zr), (W / 2 + 0.18, ze - 0.05)], 0.38, d0, d1, CAN)
-        if cachorros:
+        if cachorros if cachorros_empena is None else cachorros_empena:
             for s_ in np.arange(-W / 2 + 0.5, W / 2 - 0.4, 0.7):
                 zz = zr - abs(s_) * tg
                 d2 = (dd, dd + 0.22) if sg > 0 else (dd - 0.22, dd)
@@ -1656,16 +1854,28 @@ def porta_igreja(Q, s0, z0, w, hn, moldura=0.3, arco=True, d=0.0, folhas=MAD):
         Q.bloco(s0 - w / 2 - moldura, s0 + w / 2 + moldura, z0 + hn, z0 + hn + moldura, d, d + 0.1, CAN)
 
 
-def portal_arquivoltas(Q, s0, z0, w, hn, n=3, passo=0.24, prof=0.5):
+def portal_arquivoltas(Q, s0, z0, w, hn, n=3, passo=0.24, prof=0.5, saliente=True, timpano=True):
     """Portal românico (Santa Maria dos Anjos): arquivoltas de volta perfeita em degrau, cada uma sobre
-    colunelos com capitel e base, tímpano liso e porta de madeira; num corpo ligeiramente saliente."""
+    colunelos com capitel e base, tímpano liso e porta de madeira; num corpo ligeiramente saliente
+    (saliente=False: aberto no pano, só com o arco de resguardo por fora, como na fotografia da Matriz)."""
     R = w / 2 + (n + 1) * passo
-    # corpo saliente do portal, com remate em cornija
-    for sg in (-1, 1):
-        ss = sorted((s0 + sg * R, s0 + sg * (R + 0.45)))
-        Q.bloco(ss[0], ss[1], z0, z0 + hn + R + 0.5, 0, prof, CAN)
-    Q.bloco(s0 - R - 0.45, s0 + R + 0.45, z0 + hn + R, z0 + hn + R + 0.5, 0, prof, CAN)
-    Q.bloco(s0 - R - 0.55, s0 + R + 0.55, z0 + hn + R + 0.5, z0 + hn + R + 0.68, 0, prof + 0.1, CAN)
+    if saliente:
+        # corpo saliente do portal, com remate em cornija
+        for sg in (-1, 1):
+            ss = sorted((s0 + sg * R, s0 + sg * (R + 0.45)))
+            Q.bloco(ss[0], ss[1], z0, z0 + hn + R + 0.5, 0, prof, CAN)
+        Q.bloco(s0 - R - 0.45, s0 + R + 0.45, z0 + hn + R, z0 + hn + R + 0.5, 0, prof, CAN)
+        Q.bloco(s0 - R - 0.55, s0 + R + 0.55, z0 + hn + R + 0.5, z0 + hn + R + 0.68, 0, prof + 0.1, CAN)
+    else:
+        # arco de resguardo com dentículos e ombreiras lisas até ao chão
+        Q.arco_sz(s0, R, R + 0.22, z0 + hn, prof - 0.1, prof + 0.06, CAN, k=18, aduelas=True)
+        for k_ in range(15):
+            a_ = math.pi * (k_ + 0.5) / 15
+            sc, zc_ = s0 + (R + 0.11) * math.cos(a_), z0 + hn + (R + 0.11) * math.sin(a_)
+            Q.bloco(sc - 0.06, sc + 0.06, zc_ - 0.06, zc_ + 0.06, prof + 0.06, prof + 0.13, CAN)
+        for sg in (-1, 1):
+            ss = sorted((s0 + sg * R, s0 + sg * (R + 0.22)))
+            Q.bloco(ss[0], ss[1], z0, z0 + hn, 0, prof + 0.06, CAN)
     for i in range(n + 1):
         r0 = w / 2 + i * passo
         di = prof * (i + 1) / (n + 1)
@@ -1683,11 +1893,13 @@ def portal_arquivoltas(Q, s0, z0, w, hn, n=3, passo=0.24, prof=0.5):
             Q.m.cilindro(c, 0.095, z0 + 0.35, z0 + hn - 0.3, CAN, k=8)
             Q.bloco(sc - 0.15, sc + 0.15, z0, z0 + 0.35, prof * i / (n + 1) - 0.05, prof * i / (n + 1) + 0.25, CAN)
             Q.bloco(sc - 0.17, sc + 0.17, z0 + hn - 0.3, z0 + hn, prof * i / (n + 1) - 0.07, prof * i / (n + 1) + 0.27, CAN)
-    # porta e tímpano
-    _vao_desloc(Q, s0, w, z0, hn - 0.15, 0.012, MAD, reto=True)
-    Q.bloco(s0 - w / 2, s0 + w / 2, z0 + hn - 0.2, z0 + hn, 0.0, 0.08, CAN)  # lintel
-    tp = [(s0 + w / 2 * math.cos(math.pi * k / 12), z0 + hn + w / 2 * math.sin(math.pi * k / 12)) for k in range(13)]
-    Q.placa(tp, 0.0, 0.05, CAN)
+    if timpano:  # porta reta com lintel e tímpano liso
+        _vao_desloc(Q, s0, w, z0, hn - 0.15, 0.012, MAD, reto=True)
+        Q.bloco(s0 - w / 2, s0 + w / 2, z0 + hn - 0.2, z0 + hn, 0.0, 0.08, CAN)  # lintel
+        tp = [(s0 + w / 2 * math.cos(math.pi * k / 12), z0 + hn + w / 2 * math.sin(math.pi * k / 12)) for k in range(13)]
+        Q.placa(tp, 0.0, 0.05, CAN)
+    else:  # porta de madeira em arco, até ao intradorso (Matriz)
+        _vao_desloc(Q, s0, w, z0, hn, 0.012, MAD, reto=False)
     Q.bloco(s0 - R - 0.8, s0 + R + 0.8, z0 - 0.18, z0, -0.1, prof + 0.9, CAN)  # degrau
 
 
@@ -1930,8 +2142,8 @@ def torre_matriz(m, c, u, lado, g):
     w = np.array([-u[1], u[0]])
     c = np.asarray(c, float)
     h = lado / 2
-    z1, z2, z3, z4 = g + 6.6, g + 10.4, g + 15.0, g + 15.55
-    m.caixa(c, u, lado, lado, g - 1.5, z3, CAN)
+    z1, z2, z3, z4 = g + 6.8, g + 10.0, g + 14.2, g + 14.7  # cornija de remate a 49,3 m no MDS
+    m.caixa(c, u, lado, lado, g - 1.5, z2 + 0.14, CAN)  # corpo maciço até à sineira, que é aberta
     m.caixa(c, u, lado + 0.16, lado + 0.16, g - 1.5, g + 0.7, CAN)  # soco
     for zz in (z1, z2):  # cornijas entre andares
         m.caixa(c, u, lado + 0.22, lado + 0.22, zz - 0.18, zz, CAN)
@@ -1939,19 +2151,34 @@ def torre_matriz(m, c, u, lado, g):
     faces = [u, -u, w, -w]
     QS = [Quadro(m, c + n_ * h, n_) for n_ in faces]
     for i, Qf in enumerate(QS):
-        if i in (0, 2, 3):
-            janela(Qf, 0.0, g + 7.4, 0.32, 0.6, arco=False, mat_vidro=SOM, moldura=0.12)  # fresta
-            relogio(Qf, 0.0, g + 9.0, 0.62)
-        # sineira: arco de volta perfeita com impostas, pilares de canto
-        wv = lado - 2.0
-        hn = (z3 - z2) - wv / 2 - 0.9
+        if i == 0:  # face da frente (poente): relógio e, por baixo à direita, uma janela pequena
+            relogio(Qf, -0.25, g + 9.1, 0.55)
+            janela(Qf, 1.2, g + 7.6, 0.34, 0.5, arco=False, mat_vidro=SOM, moldura=0.1)
+        elif i == 3:  # a sul: fresta
+            janela(Qf, 0.0, g + 7.6, 0.28, 0.7, arco=False, mat_vidro=SOM, moldura=0.1)
+        # pilastras de canto no andar da sineira
+        for sg in (-1, 1):
+            a, b = sorted((sg * (h - 0.45), sg * h))
+            Qf.bloco(a, b, z2 + 0.14, z3, 0.0, 0.07, CAN)
+        # sineira: arco de volta perfeita, alto e estreito (fotografias), com impostas
+        wv = 1.75
+        hn = (z3 - z2) - wv / 2 - 1.1
         za = z2 + 0.14
-        Qf.vao(wv, za + 0.6, hn, -0.25, SOM)
+        zn = za + 0.6 + hn
+        # paredes da sineira com o arco vazado (vê-se o sino): dois pilares, peitoril e tímpano em arco
+        for sg in (-1, 1):
+            a, b = sorted((sg * wv / 2, sg * (h + 0.001)))
+            Qf.bloco(a, b, za, z3, -0.5, 0.0, CAN)
+        Qf.bloco(-wv / 2, wv / 2, za, za + 0.6, -0.5, 0.0, CAN)
+        ta = [(wv / 2 * math.cos(math.pi * k / 12), zn + wv / 2 * math.sin(math.pi * k / 12)) for k in range(13)]
+        Qf.placa(ta + [(-wv / 2, z3), (wv / 2, z3)], -0.5, 0.0, CAN)
         Qf.arco_sz(0.0, wv / 2, wv / 2 + 0.28, za + 0.6 + hn, -0.02, 0.08, CAN, k=12, aduelas=True)
         for sg in (-1, 1):
             a, b = sorted((sg * wv / 2, sg * (wv / 2 + 0.28)))
             Qf.bloco(a, b, za + 0.6, za + 0.6 + hn, -0.02, 0.08, CAN)
-        Qf.bloco(-wv / 2 - 0.35, wv / 2 + 0.35, za + 0.6 + hn - 0.16, za + 0.6 + hn, 0.0, 0.12, CAN)  # impostas
+        for sg in (-1, 1):  # impostas, só sobre os pilares (o vão fica livre)
+            a, b = sorted((sg * (wv / 2 - 0.08), sg * (wv / 2 + 0.38)))
+            Qf.bloco(a, b, zn - 0.16, zn, -0.5, 0.12, CAN)
         Qf.bloco(-wv / 2 - 0.1, wv / 2 + 0.1, za + 0.45, za + 0.62, 0.0, 0.14, CAN)  # peitoril
     sino(m, c + u * 0.0 + w * 0.0, z2 + 1.25, r=0.45)
     Qs = Quadro(m, c, u)
@@ -1963,13 +2190,15 @@ def torre_matriz(m, c, u, lado, g):
     for a, b in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
         cc = c + (u * a + w * b) * (h + 0.05)
         pinaculo(Quadro(m, cc, u), 0, z4, 0, esc=1.25, tipo="bola")
-    # coruchéu: plinto, bola grande e cata-vento
-    m.caixa(c, u, 1.3, 1.3, z4, z4 + 0.7, CAN)
-    m.caixa(c, u, 1.5, 1.5, z4 + 0.7, z4 + 0.85, CAN)
-    m.esfera((c[0], c[1], z4 + 1.35), 0.5, CAN, k=12)
-    barra(m, (c[0], c[1], z4 + 1.8), (c[0], c[1], z4 + 3.3), 0.035, FER)
-    barra(m, (*(c - w * 0.35), z4 + 2.7), (*(c + w * 0.35), z4 + 2.7), 0.03, FER)
-    Qs.placa([(0.0, z4 + 2.9), (0.75, z4 + 3.0), (0.75, z4 + 3.2), (0.0, z4 + 3.25)], -0.015, 0.015, FER)  # bandeira
+    # remate ao meio (fotografias): base em degraus, pirâmide baixa com bola e cata-vento de ferro
+    m.caixa(c, u, 1.6, 1.6, z4, z4 + 0.35, CAN)
+    m.caixa(c, u, 1.15, 1.15, z4 + 0.35, z4 + 0.75, CAN)
+    piramide(m, c, u, 1.0, z4 + 0.75, z4 + 1.45, CAN, lado1=0.3)
+    m.esfera((c[0], c[1], z4 + 1.62), 0.2, CAN, k=10)
+    barra(m, (c[0], c[1], z4 + 1.75), (c[0], c[1], z4 + 3.4), 0.03, FER)
+    barra(m, (*(c - w * 0.3), z4 + 2.9), (*(c + w * 0.3), z4 + 2.9), 0.025, FER)
+    barra(m, (*(c - u * 0.45), z4 + 2.55), (*(c + u * 0.45), z4 + 2.55), 0.025, FER)  # seta do cata-vento
+    Qs.placa([(0.3, z4 + 2.45), (0.55, z4 + 2.55), (0.3, z4 + 2.65)], -0.012, 0.012, FER)
     return z4 + 3.3
 
 
@@ -1987,13 +2216,16 @@ def igreja_matriz(m):
     cf = p0 + t * (4.9 + W / 2)
     Q = Quadro(m, cf, n)
     ze = 41.6
-    zr = corpo(Q, 22.0, W, g, ze, inc=33, mw=CAN, cachorros=True)
+    # empena lisa, sem modilhões (fotografia); a cachorrada fica só nas cornijas laterais
+    zr = corpo(Q, 22.0, W, g, ze, inc=37, mw=CAN, cachorros=True, cachorros_empena=False)
     Qc = Quadro(m, cf - n * 22.0, n)
-    corpo(Qc, 8.5, 7.6, g, 40.2, inc=33, mw=CAN, cachorros=True, cornija_frente=False)
-    portal_arquivoltas(Q, 0.0, g, 1.6, 2.55, n=4, passo=0.22, prof=0.62)
+    corpo(Qc, 8.5, 7.6, g, 40.2, inc=33, mw=CAN, cachorros=True, cornija_frente=False, cachorros_empena=False)
+    portal_arquivoltas(Q, 0.0, g, 1.6, 2.55, n=4, passo=0.22, prof=0.62, saliente=False, timpano=False)
     for sg in (-1, 1):
         oculo_lobado(Q, sg * 2.75, g + 2.55, 0.42)
-    rosacea(Q, 0.0, g + 6.9, 0.62, raios=6)
+    # rosácea grande (c. 2,2 m com a moldura, na fotografia), com anéis moldurados
+    rosacea(Q, 0.0, g + 6.9, 0.8, raios=6)
+    Q.arco_sz(0.0, 1.12, 1.24, g + 6.9, 0.0, 0.1, CAN, a0=0, a1=2 * math.pi, k=28)
     cruz(Q, 0.0, zr + 0.25, 0.0, alt=1.5, mat=CAN, esp=0.18)
     # frestas da nave (lado norte, para o largo)
     Qn = Quadro(m, cf + t * (W / 2) - n * 11.0, t)
@@ -2005,69 +2237,121 @@ def igreja_matriz(m):
     porta_igreja(Qa, 0.0, g, 1.3, 2.2, arco=False, moldura=0.25)
     cruz(Qa, 0.0, 39.6 + 3.4 * math.tan(_ang(30)) + 0.3, 0.0, alt=0.9, mat=CAN, esp=0.13)
     # torre a sul, alinhada com a fachada
-    ct = p0 + t * 2.35 - n * 2.35
+    ct = p0 + t * 2.35 - n * 1.75  # no MDS a torre sai c. 0,6 m da fachada
     topo = torre_matriz(m, ct, n, 4.7, g)
     MEDIDAS["igreja_matriz"] = {"adro": g, "cumeeira": round(zr, 1), "torre": round(topo, 1)}
     return [list(p0 + n * 7.0 - t * 1.0), list(p0 + t * 21.5 + n * 7.0), list(p0 + t * 21.5 - n * 32.0), list(p0 - t * 1.0 - n * 32.0)]
 
 
 def igreja_misericordia(m):
-    """Igreja da Misericórdia (barroca, século XVIII; sem fotografia: tipo das Misericórdias do Alto
-    Minho): fachada a sul, sobre a rua, com cunhais e pilastras de granito e panos caiados, portal de
-    verga reta com frontão, janelão por cima, nicho, frontão de enrolamentos com cruz e pináculos;
-    sineira no topo norte. Pegada do OSM, cumeeira (45,2 m) e sineira (47 m) no MDS."""
-    g = 30.3
-    n = np.array([0.37, -0.93])
-    t = np.array([n[1], -n[0]])
-    cf = np.array([-67.2, 9.6])
-    W, L = 10.2, 29.5
+    """Igreja da Misericórdia (Street View): a fachada é a NORTE, sobre o largo (no MDS o frontão mais alto,
+    47,7 m, fica no topo norte e a capela-mor, mais baixa, a sul). Fachada caiada entre cunhais de granito:
+    portal de arco pleno com porta verde, em moldura de pilastras e entablamento; por cima, nicho com a
+    imagem entre volutas; à direita um óculo gradeado; friso e cornija de granito; frontão triangular caiado
+    com o relógio, cruz no vértice e bolas nos cantos. À direita, a casa da Misericórdia (dois pisos, janelas
+    de sacada com frontão e varandas de ferro) e a sineira de um sino sobre o encontro das duas. Medidas no
+    MDS: largo a 33,3 m, cornija a 43,0 m, cumeeira da nave a 45,2 m."""
+    g = 33.3
+    n = np.array([-0.37, 0.93])
+    cf = np.array([-79.0, 39.2])
+    W, L = 11.0, 22.0
     Q = Quadro(m, cf, n)
-    ze = 42.4
-    zr = corpo(Q, L, W, g, ze, inc=26, cornija_frente=False)
-    # frontispício de granito: pilastras, entablamento, frontão de enrolamentos
-    for s_ in (-W / 2 + 0.3, -1.9, 1.9, W / 2 - 0.3):
-        Q.bloco(s_ - 0.38, s_ + 0.38, g - 1.0, ze - 0.4, 0.0, 0.22, CAN)
-        Q.bloco(s_ - 0.48, s_ + 0.48, g - 1.0, g + 0.9, 0.0, 0.3, CAN)
-    Q.bloco(-W / 2 - 0.1, W / 2 + 0.1, ze - 0.4, ze + 0.2, 0.0, 0.42, CAN)
-    Q.bloco(-W / 2 - 0.2, W / 2 + 0.2, ze + 0.2, ze + 0.45, 0.0, 0.55, CAN)
-    zf = ze + 0.45
-    Q.placa([(-3.6, zf), (3.6, zf), (3.6, zf + 0.9), (2.2, zf + 1.4), (1.4, zf + 2.4), (0.0, zf + 2.9),
-             (-1.4, zf + 2.4), (-2.2, zf + 1.4), (-3.6, zf + 0.9)], -0.3, 0.3, CAN)
+    t = Q.t  # para a esquerda de quem olha a fachada (para nascente)
+    ze = 43.0
+    zr = corpo(Q, L, W, g, ze, inc=22, cornija_frente=False, cunhais=False)
+    corpo(Q, 10.0, 8.2, g, 41.6, inc=24, d_ini=-L + 0.3, cornija_frente=True)  # capela-mor, a sul
+    # cunhais e soco de granito
+    for s0_, larg in ((W / 2, 0.9), (-W / 2, 1.0)):
+        a_, b_ = sorted((s0_, s0_ - np.sign(s0_) * larg))
+        Q.bloco(a_, b_, g - 1.0, ze - 0.62, 0.0, 0.16, CAN)
+    Q.bloco(-W / 2 - 0.05, W / 2 + 0.05, g - 1.0, g + 0.55, 0.0, 0.2, CAN)
+    # friso e cornija
+    Q.bloco(-W / 2 - 0.05, W / 2 + 0.05, ze - 0.62, ze - 0.12, 0.0, 0.2, CAN)
+    Q.bloco(-W / 2 - 0.2, W / 2 + 0.2, ze - 0.12, ze + 0.18, 0.0, 0.42, CAN)
+    # frontão triangular caiado, com cornija inclinada de granito, até 47,6 m
+    zt = 47.4
+    Q.placa([(-W / 2, ze + 0.18), (W / 2, ze + 0.18), (0.0, zt)], -0.6, 0.02, CAL)
+    faixa_inclinada(Q, [(-W / 2 - 0.25, ze + 0.12), (0.0, zt + 0.05), (W / 2 + 0.25, ze + 0.12)], 0.4, -0.6, 0.4, CAN)
+    relogio(Q, 0.0, ze + 2.5, 0.55, d=0.02)
+    Q.arco_sz(0.0, 0.67, 0.85, ze + 2.5, 0.0, 0.12, CAN, a0=0, a1=2 * math.pi, k=20)
     for sg in (-1, 1):
-        Q.arco_sz(sg * 2.6, 0.15, 0.45, zf + 1.25, 0.0, 0.4, CAN, a0=0, a1=2 * math.pi, k=10)
-        pinaculo(Q, sg * (W / 2 - 0.3), zf, 0.15, esc=1.1, tipo="agulha")
-    cruz(Q, 0.0, zf + 2.9, 0.0, alt=1.4, mat=CAN, esp=0.16)
-    _vao_desloc(Q, 0.0, 1.3, zf + 0.35, 1.3, 0.02, SOM)  # nicho no frontão
-    # portal com frontão triangular e janelão de sacada por cima
-    porta_igreja(Q, 0.0, g + 0.4, 1.8, 3.4, arco=False, moldura=0.32)
-    Q.bloco(-1.6, 1.6, g, g + 0.4, 0.0, 1.4, CAN)  # degraus
-    zt_ = g + 0.4 + 3.4 + 0.32
-    Q.placa([(-1.6, zt_), (1.6, zt_), (0.0, zt_ + 0.9)], 0.2, 0.5, CAN)
-    janela(Q, 0.0, g + 6.3, 1.3, 2.5, arco=False, mat_vidro=VID, moldura=0.25)
-    Q.bloco(-1.2, 1.2, g + 6.0, g + 6.3, 0.0, 0.75, CAN)  # sacada
-    for s_ in np.arange(-1.1, 1.11, 0.22):
-        Q.bloco(s_ - 0.015, s_ + 0.015, g + 6.3, g + 7.2, 0.68, 0.71, FER)
-    Q.bloco(-1.2, 1.2, g + 7.2, g + 7.25, 0.65, 0.74, FER)
+        pinaculo(Q, sg * (W / 2 - 0.35), ze + 0.18, 0.1, esc=1.0, tipo="bola")
+    Q.bloco(-0.35, 0.35, zt, zt + 0.45, -0.25, 0.25, CAN)
+    cruz(Q, 0.0, zt + 0.45, 0.0, alt=1.5, mat=CAN, esp=0.16)
+    # portal: pilastras, entablamento, arco pleno com porta verde e degrau
+    sp = 0.9
+    porta_igreja(Q, sp, g + 0.15, 2.2, 2.7, moldura=0.28, arco=True)
     for sg in (-1, 1):
-        janela(Q, sg * 3.6, g + 6.6, 0.9, 1.6, arco=False, mat_vidro=VID, moldura=0.2, d=0.0)
-    # janelas laterais altas
-    Ql = Quadro(m, cf - t * (W / 2) - n * 14.0, -t)
-    for s_ in (-8.0, 0.0, 8.0):
-        janela(Ql, s_, g + 6.5, 1.0, 2.0, arco=False, mat_vidro=VID, moldura=0.2)
-    # sineira no topo norte: parede de granito com dois arcos e sinos
-    Qb = Quadro(m, cf - n * (L - 0.6), n)
-    zb = zr - 0.3
-    Qb.bloco(-2.0, 2.0, zb - 1.0, zb + 3.2, -0.5, 0.0, CAN)
+        a_, b_ = sorted((sp + sg * 1.45, sp + sg * 1.95))
+        Q.bloco(a_, b_, g, g + 5.3, 0.0, 0.18, CAN)
+        Q.bloco(a_ - 0.06, b_ + 0.06, g, g + 0.5, 0.0, 0.24, CAN)
+    Q.bloco(sp - 2.05, sp + 2.05, g + 5.3, g + 5.75, 0.0, 0.26, CAN)
+    Q.bloco(sp - 2.15, sp + 2.15, g + 5.75, g + 5.9, 0.0, 0.34, CAN)
+    Q.bloco(sp - 1.7, sp + 1.7, g - 0.2, g + 0.15, 0.0, 0.9, CAN)  # degrau
+    # nicho com a imagem, entre volutas, com remate
+    zn0 = g + 6.2
+    Q.bloco(sp - 0.75, sp + 0.75, zn0 - 0.2, zn0, 0.0, 0.35, CAN)  # peanha
+    _vao_desloc(Q, sp, 1.0, zn0, 1.7, 0.01, SOM)
+    Q.arco_sz(sp, 0.5, 0.72, zn0 + 1.7, 0.0, 0.14, CAN, k=10)
     for sg in (-1, 1):
-        o = Qb.o
-        Qb.o = Qb.o + Qb.t * sg * 0.85
-        Qb.vao(1.0, zb + 0.4, 1.4, 0.01, SOM)
-        Qb.o = o
-        sino(m, Qb.p(sg * 0.85, 0, -0.25)[:2], zb + 0.65, r=0.3)
-    Qb.placa([(-2.0, zb + 3.2), (2.0, zb + 3.2), (0.0, zb + 4.2)], -0.5, 0.0, CAN)
-    cruz(Qb, 0.0, zb + 4.2, -0.25, alt=1.0, mat=CAN, esp=0.13)
-    MEDIDAS["igreja_misericordia"] = {"rua": g, "cumeeira": round(zr, 1)}
-    return [list(cf - t * 6.5 + n * 2.0), list(cf + t * 6.5 + n * 2.0), list(cf + t * 6.5 - n * 31.0), list(cf - t * 6.5 - n * 31.0)]
+        a_, b_ = sorted((sp + sg * 0.5, sp + sg * 0.72))
+        Q.bloco(a_, b_, zn0, zn0 + 1.7, 0.0, 0.14, CAN)
+        # voluta: enrolamento em espiral achatada
+        Q.arco_sz(sp + sg * 1.05, 0.12, 0.3, zn0 + 0.35, 0.0, 0.16, CAN, a0=0, a1=2 * math.pi, k=10)
+        pts = [(sp + sg * (0.72 + 0.6 * f), zn0 + 2.3 - 1.7 * f - 0.25 * math.sin(math.pi * f)) for f in np.linspace(0, 1, 7)]
+        Q.placa(pts + [(x_, z_ - 0.2) for x_, z_ in pts[::-1]], 0.0, 0.14, CAN)
+    Q.m.cilindro(Q.p(sp, 0, -0.15)[:2], 0.2, zn0 + 0.02, zn0 + 1.05, LIS, k=10, r1=0.14)  # a imagem
+    Q.esfera(sp, zn0 + 1.22, -0.15, 0.13, LIS)
+    Q.bloco(sp - 0.95, sp + 0.95, zn0 + 2.45, zn0 + 2.65, 0.0, 0.25, CAN)
+    Q.placa([(sp - 0.85, zn0 + 2.65), (sp + 0.85, zn0 + 2.65), (sp, zn0 + 3.05)], 0.0, 0.2, CAN)
+    # óculo gradeado à direita
+    so = -2.1
+    zo = g + 8.4
+    Q.m.face([Q.p(so + 0.55 * math.cos(2 * math.pi * i / 20), zo + 0.55 * math.sin(2 * math.pi * i / 20), 0.012) for i in range(20)], VID)
+    Q.arco_sz(so, 0.55, 0.85, zo, 0.0, 0.14, CAN, a0=0, a1=2 * math.pi, k=20)
+    for k_ in range(-2, 3):
+        Q.bloco(so + k_ * 0.18 - 0.012, so + k_ * 0.18 + 0.012, zo - 0.5, zo + 0.5, 0.02, 0.04, FER)
+        Q.bloco(so - 0.5, so + 0.5, zo + k_ * 0.18 - 0.012, zo + k_ * 0.18 + 0.012, 0.02, 0.04, FER)
+    # casa da Misericórdia, à direita (poente): dois pisos caiados, cornija de granito, telhado de quatro águas
+    s_a, s_b, P_ = -W / 2, -W / 2 - 15.0, 10.0
+    za = 41.6
+    Qa = Quadro(m, cf + t * ((s_a + s_b) / 2) - n * 0.25, n)
+    Wa = abs(s_b - s_a)
+    corpo(Qa, P_, Wa, g, za, inc=28, cornija_frente=False, cunhais=True)
+    Qa.bloco(-Wa / 2 - 0.05, Wa / 2 + 0.05, za - 0.35, za + 0.05, 0.0, 0.3, CAN)
+    Qa.bloco(-Wa / 2, Wa / 2, g + 3.65, g + 3.85, 0.0, 0.12, CAN)  # friso entre pisos
+    for k_, sx in enumerate((-5.0, -0.8, 3.4)):
+        sx_ = sx + 0.4
+        # rés-do-chão: porta verde ou janela, com moldura
+        if k_ == 1:
+            porta_igreja(Qa, sx_, g, 1.3, 2.5, moldura=0.18, arco=False)
+        else:
+            janela(Qa, sx_, g + 1.0, 1.0, 1.4, arco=False, moldura=0.16)
+        # andar: janela de sacada com frontão e varanda de ferro
+        janela(Qa, sx_, g + 4.3, 1.2, 2.1, arco=False, moldura=0.18)
+        Qa.placa([(sx_ - 0.95, g + 6.62), (sx_ + 0.95, g + 6.62), (sx_, g + 7.15)], 0.0, 0.16, CAN)
+        Qa.bloco(sx_ - 0.95, sx_ + 0.95, g + 4.15, g + 4.3, 0.0, 0.55, CAN)
+        for b_ in np.arange(sx_ - 0.85, sx_ + 0.86, 0.17):
+            Qa.bloco(b_ - 0.012, b_ + 0.012, g + 4.3, g + 5.25, 0.47, 0.5, FER)
+        Qa.bloco(sx_ - 0.9, sx_ + 0.9, g + 5.25, g + 5.3, 0.45, 0.53, FER)
+    # sineira sobre o encontro: duas pilastras, arco com o sino, cornija, bolas e cruz
+    ss_ = -W / 2 - 1.2
+    zs = za + 0.05
+    for sg in (-1, 1):
+        a_, b_ = sorted((ss_ + sg * 0.55, ss_ + sg * 0.95))
+        Q.bloco(a_, b_, zs, zs + 1.9, -0.6, 0.1, CAN)
+    Q.arco_sz(ss_, 0.55, 0.95, zs + 1.3, -0.6, 0.1, CAN, k=8)
+    Q.bloco(ss_ - 1.05, ss_ + 1.05, zs + 1.9, zs + 2.15, -0.7, 0.2, CAN)
+    sino(m, Q.p(ss_, 0, -0.25)[:2], zs + 0.75, r=0.3)
+    for sg in (-1, 1):
+        Q.esfera(ss_ + sg * 0.8, zs + 2.4, -0.25, 0.17, CAN)
+    Q.bloco(ss_ - 0.18, ss_ + 0.18, zs + 2.15, zs + 2.5, -0.43, -0.07, CAN)
+    cruz(Q, ss_, zs + 2.5, -0.25, alt=0.9, mat=CAN, esp=0.12)
+    MEDIDAS["igreja_misericordia"] = {"largo": g, "cumeeira": round(zr, 1), "frontao": zt}
+    q0 = cf + t * (W / 2 + 0.5) + n * 3.0
+    q1 = cf + t * (s_b - 0.5) + n * 3.0
+    return [list(q0), list(q1), list(q1 - n * (P_ + 3.5)), list(cf + t * (s_a - 0.3) - n * (P_ + 3.5)),
+            list(cf + t * (s_a - 0.3) - n * (L + 11.0)), list(cf + t * (W / 2 + 0.5) - n * (L + 11.0))]
 
 
 IGREJAS = [
@@ -2107,7 +2391,7 @@ for g in ["Terreno", "Muralhas", "Guaritas", "Portas", "Igrejas", "Vila", "Veget
 
 TEX_ALV, ALT_ALV = textura_alvenaria()
 NRM_ALV = imagem("alvenaria_normal", normais(ALT_ALV, 2.5))
-material("alvenaria", (1, 1, 1), 0.93, imagem("alvenaria", TEX_ALV), normal=NRM_ALV)
+material("alvenaria", (1, 1, 1), 0.93, imagem("alvenaria", TEX_ALV), normal=NRM_ALV, escala=0.5)  # textura de 8 m nos UV de 4 m
 TEX_CANT, ALT_CANT = textura_cantaria()
 NRM_CANT = imagem("cantaria_normal", normais(ALT_CANT, 3.0))
 material("cantaria", (1, 1, 1), 0.88, imagem("cantaria", TEX_CANT), normal=NRM_CANT, forca=0.7)
@@ -2197,9 +2481,7 @@ def cortar(e):
 
 
 for e in ESC:
-    for e_ in cortar(e):
-        if len(e_["linha"]) >= 2 and np.linalg.norm(np.diff(np.array(e_["linha"]), axis=0), axis=1).sum() > 1.0:
-            LINHAS_ESC.append(escarpa(e_, m, mq))
+    LINHAS_ESC.append(escarpa(e, m, mq))
 m.objeto("Escarpas", "escarpas", ["alvenaria", "cantaria", "relva"], GRUPOS["Muralhas"], uv=4.0)
 mq.objeto("Cunhais", "escarpas", ["cantaria"], GRUPOS["Muralhas"], uv=3.0)
 alturas = np.concatenate([d["h"] for d in ESC_DADOS])
@@ -2355,7 +2637,7 @@ for pid_ in ("porta_rosal", "porta_salvaterra"):
     if pid_ in PONTOS_PORTA:
         F0_, n_, sole_ = PONTOS_PORTA[pid_]
         MEDIDAS["ancoras"][pid_] = [round(float(F0_[0] + n_[0] * 2), 1), round(float(sole_ + ZREF + 12), 1), round(-float(F0_[1] + n_[1] * 2), 1)]
-for el_, (x_, y_, z_) in {"igreja_matriz": (10.5, 109.5, 56.0), "igreja_misericordia": (-70.0, 16.0, 49.0),
+for el_, (x_, y_, z_) in {"igreja_matriz": (10.5, 109.5, 56.0), "igreja_misericordia": (-78.5, 37.5, 50.0),
                          "ponte_en202": (-62.0, -129.0, 40.0)}.items():
     MEDIDAS["ancoras"][el_] = [x_, z_, -y_]
 MEDIDAS["ancoras"]["escarpas"] = ancora(200, -230, 14.0)
@@ -2422,7 +2704,8 @@ if "--vistas" in sys.argv:
     pasta.mkdir(exist_ok=True)
     SO = next((a_.split("=")[1].split(",") for a_ in sys.argv if a_.startswith("--so=")), None)
 
-    def vista(nome, azimute, elev, dist, lente=50, orto=None, res=(1200, 800), destino=None, alvo_xy=(0, 0), alvo_z=None):
+    def vista(nome, azimute, elev, dist, lente=50, orto=None, res=(1200, 800), destino=None, alvo_xy=(0, 0), alvo_z=None,
+              perto=0.1):
         if SO and nome not in SO:
             return
         a, e = math.radians(azimute), math.radians(elev)
@@ -2436,6 +2719,7 @@ if "--vistas" in sys.argv:
             cam.type = "PERSP"
             cam.lens = lente
         cam.clip_end = 6000
+        cam.clip_start = perto  # >0,1 para ver através das casas entre a câmara e o monumento
         sc.render.resolution_x, sc.render.resolution_y = res
         sc.render.filepath = str(destino or (pasta / f"{nome}.jpg"))
         bpy.ops.render.render(write_still=True)
@@ -2446,12 +2730,14 @@ if "--vistas" in sys.argv:
     VISTAS_EXTRA = list(globals().get("VISTAS_EXTRA", []))
     SUF = next((a_.split("=")[1] for a_ in sys.argv if a_.startswith("--sufixo=")), "")
     for nm_, az_, el_, di_, xy_, zz_ in [  # vistas das igrejas e da ponte, do lado das fotografias
-        ("i_matriz", 290, 26, 36, (12, 114), 42), ("i_matriz_alto", 250, 35, 60, (20, 112), 40),
-        ("i_miser", 160, 14, 40, (-67, 12), 36), ("i_miser_alto", 120, 40, 70, (-72, 25), 36),
+        ("i_matriz_alto", 250, 35, 60, (20, 112), 40),
+        ("i_miser", 338, 10, 36, (-82, 37), 38), ("i_miser_alto", 330, 35, 60, (-78, 30), 38),
         ("f_ponte", 180, 6, 40, (-62, -129), 31), ("f_ponte_n", 0, 10, 45, (-62, -129), 31),
-        ("f_rosal", 212, 8, 26, (-353, 83), 34), ("f_rosal_dentro", 30, 30, 32, (-343, 97), 36), ("f_rosal_alto", 30, 50, 70, (-345, 92), 36),
-        ("f_bastiao_se", 200, 12, 80, (330, -230), 42), ("f_fosso", 260, 10, 70, (250, -225), 40)]:
+        ("f_rosal", 212, 8, 26, (-353, 83), 34), ("f_rosal_dentro", 30, 30, 32, (-343, 97), 36), ("f_rosal_alto", 30, 50, 70, (-345, 92), 36)]:
         VISTAS_EXTRA.append(((nm_ + SUF, az_, el_, di_), dict(lente=35, alvo_xy=xy_, alvo_z=zz_)))
+    # a Matriz abre para uma rua estreita (c. 8 m, ortofotomapa): vista de perto e grande angular, como a fotografia
+    # (a câmara fica dentro das casas do outro lado da rua: perto=4 corta-as, como se a fotografia fosse da rua)
+    VISTAS_EXTRA.append((("i_matriz" + SUF, 289, 7, 11.0), dict(lente=15, alvo_xy=(9.5, 116.5), alvo_z=40.5, perto=4.5)))
     for pid_, (F0_, n_, sole_) in PONTOS_PORTA.items():  # uma vista de frente, um pouco de lado, para cada porta
         az_ = math.degrees(math.atan2(n_[0], n_[1])) + 25
         VISTAS_EXTRA.append(((f"p_{pid_}{SUF}", az_, 22, 40), dict(lente=35, alvo_xy=tuple(F0_), alvo_z=sole_ + 4)))

@@ -33,13 +33,13 @@ fichaTecnica:
   usoAtual: "Espaço público: passeio pelas muralhas, jardins e miradouros sobre o rio"
 oQueVer:
   - nome: "A Porta do Rosal"
-    texto: "Arco de granito de volta perfeita aberto num pano alto de alvenaria, com uma guarita sobre mísula por cima e um túnel que atravessa o terrapleno até dentro da vila. Do lado de dentro sai-se entre dois contrafortes, com escadas de pedra para o adarve."
+    texto: "Arco de granito de volta perfeita aberto num pano alto de alvenaria, com uma guarita por cima, sobre o cordão e um túnel que atravessa o terrapleno até dentro da vila. Do lado de dentro sai-se entre dois contrafortes, com escadas de pedra para o adarve."
   - nome: "Os baluartes sobre o Minho"
     texto: "A frente norte segue a escarpa do rio, com os panos de granito em talude, cordão de pedra e guaritas nos ângulos. Lê-se bem do passeio ribeirinho e da margem galega."
   - nome: "Os fossos"
     texto: "A sul e a nascente o fosso seco, hoje calçado ou ajardinado, separa os baluartes das esplanadas. A estrada nacional 202 atravessa a muralha a nascente por um corte, com uma ponte pedonal metálica por cima."
   - nome: "As igrejas"
-    texto: "A Igreja Matriz, de origem românica, tem portal de arquivoltas, rosácea e uma torre com coroamento do século XVIII; a Igreja da Misericórdia, barroca, de granito, tem frontão de enrolamentos e sineira."
+    texto: "A Igreja Matriz, de origem românica, tem portal de arquivoltas, rosácea e uma torre com relógio e coroamento do século XVIII; a Igreja da Misericórdia, barroca, abre para o largo a norte, com cunhais de granito, frontão com relógio e pináculos, nicho com imagem e sineira."
 cronologia:
   - ano: "1258"
     texto: "Monção aparece nas Inquirições de D. Afonso III."
@@ -59,13 +59,13 @@ cronologia:
     texto: "Classificação como Monumento Nacional (23 de outubro)."
 medidas:
   - conceito: "Muralhas"
-    valor: "C. 5 km de panos traçados no LiDAR, com 6,8 m de altura mediana acima do pé e até 18 m (LiDAR DGT 2025)"
+    valor: "C. 6,6 km de panos traçados no LiDAR, com 6,3 m de altura mediana acima do pé e até 19 m (LiDAR DGT 2025)"
   - conceito: "Guaritas"
-    valor: "15 nos ângulos salientes mais a da Porta do Rosal, na maqueta"
+    valor: "25 nos ângulos salientes mais a da Porta do Rosal, na maqueta"
   - conceito: "Cota"
     valor: "A vila fica a 30–42 m de altitude; o rio Minho corre a c. 3 m (LiDAR DGT 2025)"
   - conceito: "Igreja Matriz"
-    valor: "Cumeeira a c. 45 m de altitude e torre a c. 53,5 m (LiDAR DGT 2025)"
+    valor: "Cumeeira a c. 45,7 m de altitude e torre a c. 52,6 m (LiDAR DGT 2025)"
 curiosidades:
   - "O brasão de Monção mostra a figura de Deu-la-Deu Martins, e a divisa lembra as palavras que a lenda lhe atribui diante dos castelhanos."
   - "Da muralha norte vê-se, do outro lado do Minho, Salvaterra do Miño, que também tem uma praça-forte do século XVII: as duas vigiavam-se de margem a margem."

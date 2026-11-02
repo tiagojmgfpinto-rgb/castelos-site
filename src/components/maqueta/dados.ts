@@ -12,6 +12,8 @@ export interface ElementoMaqueta {
   resumo?: string;
   /** Ponto da placa em coordenadas do visor (x este, y cota, z sul). Sem ele, usa-se o topo do elemento. */
   ancora?: [number, number, number];
+  /** Direção de onde a câmara olha o elemento ao clicar na placa (x este, y cima, z sul), p. ex. para mostrar a fachada. */
+  olhar?: [number, number, number];
 }
 
 export interface DadosMaqueta {
