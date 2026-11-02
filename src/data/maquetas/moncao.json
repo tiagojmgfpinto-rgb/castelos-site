@@ -2,7 +2,7 @@
   "monumento": "moncao",
   "titulo": "Fortaleza de Monção",
   "variante": "estado-atual",
-  "versao": "0.1 provisória",
+  "versao": "0.2 provisória",
   "data": "2026-11-02",
   "origem": {
     "lat": 42.07785,
@@ -11,7 +11,7 @@
   },
   "fontes": {
     "lidar": {
-      "titulo": "DGT, LiDAR 2025: MDT e MDS de 50 cm e nuvem de pontos classificada com cor, folhas 170568 e 171568 (CC BY 4.0). Traçado dos panos, relevo, cotas, alturas e pegadas medidas.",
+      "titulo": "DGT, LiDAR 2025: MDT e MDS de 50 cm e nuvem de pontos classificada com cor, folhas 170568 e 171568 (CC BY 4.0). Traçado dos panos (com os pontos das classes 1, 2 e 6), relevo, cotas, alturas e pegadas medidas.",
       "url": "https://cdd.dgterritorio.gov.pt"
     },
     "orto": {
@@ -27,18 +27,18 @@
       "url": "https://www.castelosdeportugal.pt/castelos/castles/CastlesSECXIII/moncao_en.html"
     },
     "fotos": {
-      "titulo": "Fotografias de terceiros (Google Maps e blogues: Porta do Rosal por fora e por dentro, fosso, baluarte com guarita, ponte da EN202, Igreja Matriz, vistas aéreas) usadas só como referência de cor e forma, novembro de 2026"
+      "titulo": "Fotografias de terceiros (Google Street View e Google Maps, blogues: Porta do Rosal por fora e por dentro, Porta de Salvaterra, fachada da Misericórdia, Igreja Matriz e torre, alvenaria, fosso, ponte da EN202, vistas aéreas) usadas só como referência de cor e forma, novembro de 2026"
     }
   },
   "limitacoes": [
-    "Não foi usada planta cotada. Muitos panos de Monção vêm classificados como edifício (classe 6) na nuvem de pontos e o MDT apaga-os; foram traçados sobre o MDS junto às linhas de muralha do OSM e sobre o MDT no resto (erro esperado de 0,5 a 1 m em planta). Os socalcos da margem do rio e os cortes das estradas, que têm o mesmo desnível, foram tirados à mão.",
-    "Os panos são 92 peças com c. 5.1 km, de alvenaria em talude com cordão e parapeito; a altura acima do pé é medida metro a metro (mediana 6.8 m, máximo 18 m). A alvenaria (pedras irregulares cinzento-rosadas com manchas de ferrugem, líquenes e musgo) é uma textura feita a partir das fotografias, igual em todos os panos. Canhoneiras e banquetas não se modelam.",
-    "As guaritas ficam nos ângulos salientes com mais de 38° em panos altos (saem 15, mais a da Porta do Rosal). A forma segue as fotografias; não se mediu cada uma.",
-    "A Porta do Rosal, por fora (arco de granito, túnel, lápide e guarita sobre mísula) e por dentro (contrafortes, lojas, escadas para o adarve e gradeamento), segue as fotografias, com a soleira e o topo dos panos medidos no LiDAR; as medidas do arco são aproximadas. A Porta de Salvaterra não tem fotografia: é um arco do mesmo tipo, à posição do OSM. As outras portas da obra de 1656 não estão no OSM e não foram modeladas.",
-    "A Igreja Matriz e a Igreja da Misericórdia têm pegada, cumeeira e torre medidas no MDS; as fachadas seguem as fotografias (a da Misericórdia, sem fotografia de frente, é um tipo barroco de granito). As outras igrejas e capelas da vila entram como casas.",
+    "Não foi usada planta cotada. Em Monção os panos vêm em parte como edifício (classe 6) e os parapeitos como não classificados (classe 1) na nuvem de pontos, e o MDT da DGT apaga-os. O traçado corre sobre uma superfície feita com os pontos das classes 1, 2 e 6, dentro de uma faixa de 40 m à volta das linhas de muralha do OSM e fora das casas; ficam os degraus com terrapleno ou adarve do lado de dentro, ou junto às linhas do OSM (erro esperado de 0,5 a 1 m em planta). Os socalcos da margem do rio e os cortes das estradas foram tirados à mão.",
+    "Os panos são 157 peças com c. 6.6 km, de alvenaria em talude com cordão e parapeito; a altura acima do pé é medida metro a metro (mediana 6.3 m, máximo 19 m). Os terraplenos por trás dos panos vêm dos mesmos pontos. A alvenaria é uma textura de 8 m feita a partir das fotografias da Porta do Rosal: fiadas de 0,3 a 0,5 m e pedras de 0,45 a 1,1 m de comprido, medidas no Street View, granito bege, cinzento e cor de salmão com manchas de ferrugem, juntas fundas, líquenes e musgo. É igual em todos os panos. Canhoneiras e banquetas não se modelam.",
+    "As guaritas ficam nos ângulos salientes com mais de 38° em panos altos (saem 25, mais a da Porta do Rosal). A forma segue as fotografias; não se mediu cada uma.",
+    "As portas são vãos abertos nos panos, que continuam inteiros à volta. A Porta do Rosal, por fora (arco de granito de volta perfeita, túnel de c. 21 m e guarita sobre o cordão) e por dentro (contrafortes, lojas, arcos, escadas para o adarve e gradeamento), e a Porta de Salvaterra (frontispício com pilastras almofadadas, arco com impostas e fecho, entablamento e frontão curvo interrompido com tarja) seguem as fotografias, com a soleira e o topo dos panos medidos no LiDAR; as medidas dos arcos são aproximadas. As outras portas da obra de 1656 não estão no OSM e não foram modeladas.",
+    "A Igreja Matriz e a Igreja da Misericórdia têm pegada, cumeeira e torre medidas no MDS; as fachadas seguem as fotografias, com medidas aproximadas. A fachada da Misericórdia está virada a norte, para o largo, como no ortofotomapa e no Street View. As outras igrejas e capelas da vila entram como casas.",
     "A ponte pedonal da EN202 tem o tabuleiro e o vão medidos no MDS; a estrutura metálica e as silhuetas de castelo no guarda-corpo seguem a fotografia.",
     "O rio Minho é um plano a 3,0 m de altitude onde o LiDAR não tem pontos, com o fundo rebaixado para dar a cor da água funda; as ilhas de areia vêm do MDT. O nível muda com a maré e as cheias.",
-    "O casario é feito de volumes simples a partir do OpenStreetMap e do LiDAR, com a altura medida no MDS. O terreno é o MDT simplificado para 300 mil triângulos. As árvores estão nas posições medidas, com forma esquemática."
+    "O casario é feito de volumes simples a partir do OpenStreetMap e do LiDAR, com a altura medida no MDS. O terreno é o MDT simplificado para 300 mil triângulos. As árvores estão nas posições medidas, com forma esquemática. O chão é a ortoimagem do LiDAR a 25 cm com os pavimentos por cima: as ruas do OSM com a largura da classe, em asfalto ou em granito conforme a cor de cada troço na ortoimagem (o asfalto sai neutro, o granito bege); os largos abertos da vila em cubos de granito, como no Street View; as ruas pedonais em lajeado; a relva onde a ortoimagem é verde ou nos jardins do OSM. Os passeios e as passadeiras não se desenham."
   ],
   "distancia": 1000,
   "placas": [
@@ -59,7 +59,7 @@
       "estado": "estado-atual",
       "confianca": "média",
       "descricao": "Panos de muralha em talude, de alvenaria de granito com cordão e parapeito, que desenham os baluartes da obra começada em 1656 com traçado de Miguel de L'École, à volta da vila e da cerca medieval. A norte seguem a escarpa do rio Minho; a sul e a nascente têm à frente o fosso seco.",
-      "medidas": "92 panos traçados, com c. 5.1 km. Sobem em mediana 6.8 m acima do pé e até 18 m (LiDAR).",
+      "medidas": "157 panos traçados, com c. 6.6 km. Sobem em mediana 6.3 m acima do pé e até 19 m (LiDAR).",
       "fontes": [
         "lidar",
         "castelos",
@@ -80,16 +80,16 @@
       "estado": "estado-atual",
       "confianca": "média",
       "descricao": "Guaritas de cantaria de granito, com cúpula e frestas, sobre os ângulos salientes dos baluartes.",
-      "medidas": "15 guaritas nos ângulos salientes, mais a da Porta do Rosal.",
+      "medidas": "25 guaritas nos ângulos salientes, mais a da Porta do Rosal.",
       "fontes": [
         "lidar",
         "fotos"
       ],
       "resumo": "Guaritas de granito nos ângulos",
       "ancora": [
-        189.5,
+        188.7,
         47.5,
-        222.6
+        224.9
       ]
     },
     {
@@ -98,8 +98,8 @@
       "grupo": "Portas",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "Arco de granito de volta perfeita num pano alto, com uma lápide ao lado e uma guarita sobre mísula por cima; um túnel atravessa o terrapleno e do lado de dentro sai-se entre dois contrafortes, com escadas de pedra para o adarve de cada lado.",
-      "medidas": "Soleira a 30.9 m e topo do pano a 40.3 m de altitude (LiDAR); arco de c. 2,7 m de largura (fotografia).",
+      "descricao": "Arco de granito de volta perfeita aberto num pano alto de alvenaria, com uma guarita sobre o cordão por cima; um túnel atravessa o terrapleno e do lado de dentro sai-se entre dois contrafortes, com arcos, lojas e escadas de pedra para o adarve de cada lado.",
+      "medidas": "Soleira a 30.9 m e topo do pano a 40.3 m de altitude (LiDAR); arco de c. 2,1 m de largura (fotografia).",
       "fontes": [
         "lidar",
         "osm",
@@ -107,9 +107,14 @@
       ],
       "resumo": "A porta do poente, com guarita sobre o arco",
       "ancora": [
-        -356.3,
+        -354.1,
         42.9,
-        -79.7
+        -82.2
+      ],
+      "olhar": [
+        -0.66,
+        0.5,
+        0.75
       ]
     },
     {
@@ -117,18 +122,24 @@
       "nome": "Porta de Salvaterra",
       "grupo": "Portas",
       "estado": "estado-atual",
-      "confianca": "baixa",
-      "descricao": "Porta virada a poente, com o nome de Salvaterra do Miño, a vila galega do outro lado do rio. Modelada como um arco de granito do mesmo tipo da Porta do Rosal; não houve fotografia.",
-      "medidas": "Soleira a c. 33.1 m de altitude (LiDAR).",
+      "confianca": "média",
+      "descricao": "Porta virada a poente, com o nome de Salvaterra do Miño, a vila galega do outro lado do rio. Frontispício de cantaria de granito à frente do pano, com pilastras de silhares almofadados, arco de volta perfeita com impostas e aduela de fecho, entablamento e um frontão curvo interrompido com uma tarja ao meio, pela fotografia.",
+      "medidas": "Soleira a c. 33.0 m de altitude (LiDAR); vão de c. 2,6 m (fotografia).",
       "fontes": [
         "lidar",
-        "osm"
+        "osm",
+        "fotos"
       ],
-      "resumo": "A porta do lado do rio (estimada)",
+      "resumo": "A porta virada à Galiza",
       "ancora": [
-        -233.7,
-        45.1,
-        -202.2
+        -234.0,
+        45.0,
+        -202.3
+      ],
+      "olhar": [
+        -0.99,
+        0.5,
+        0.12
       ]
     },
     {
@@ -137,8 +148,8 @@
       "grupo": "Igrejas",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "Igreja de origem românica, de granito, com portal de arquivoltas, dois óculos quadrilobados, rosácea e capela-mor mais baixa; ao lado, a torre sineira com relógio e coroamento do século XVIII, e a norte a capela de São Sebastião.",
-      "medidas": "Cumeeira a 45.2 m e torre a 53.5 m de altitude (LiDAR).",
+      "descricao": "Igreja de origem românica, de granito, com portal de arquivoltas, dois óculos quadrilobados, rosácea e capela-mor mais baixa; ao lado da fachada, a torre sineira com relógio, sineira em arco, pilastras nos cunhais e remate em pirâmide com bola e cata-vento, e a norte a capela de São Sebastião.",
+      "medidas": "Cumeeira a 45.7 m e torre a 52.6 m de altitude (LiDAR).",
       "fontes": [
         "lidar",
         "castelos",
@@ -149,6 +160,11 @@
         10.5,
         56.0,
         -109.5
+      ],
+      "olhar": [
+        -0.94,
+        0.55,
+        -0.34
       ]
     },
     {
@@ -156,19 +172,25 @@
       "nome": "Igreja da Misericórdia",
       "grupo": "Igrejas",
       "estado": "estado-atual",
-      "confianca": "baixa",
-      "descricao": "Igreja barroca do século XVIII, de granito, com pilastras, frontão de enrolamentos com nicho e cruz, portal com frontão e sineira na cabeceira. A fachada é um tipo; a pegada e a cumeeira são medidas.",
-      "medidas": "Cumeeira a 44.9 m de altitude (LiDAR).",
+      "confianca": "média",
+      "descricao": "Igreja barroca do século XVIII com a fachada virada a norte, para o largo: cunhais de granito, paredes caiadas, frontão branco com relógio, pináculos de bola e cruz, portal com pilastras e porta verde, nicho com imagem e óculo gradeado; a poente, a casa da Misericórdia, com janelas de sacada, e a sineira.",
+      "medidas": "Cumeeira a 45.2 m e frontão a 47.4 m de altitude (LiDAR e fotografia).",
       "fontes": [
         "lidar",
         "castelos",
-        "osm"
+        "osm",
+        "fotos"
       ],
       "resumo": "A Misericórdia barroca",
       "ancora": [
-        -70.0,
-        49.0,
-        -16.0
+        -78.5,
+        50.0,
+        -37.5
+      ],
+      "olhar": [
+        -0.37,
+        0.5,
+        -0.93
       ]
     },
     {

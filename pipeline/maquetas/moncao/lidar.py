@@ -204,6 +204,8 @@ def casas(mdt, mds, cls, xs, ys, corte=1.2, area_min=12.0):
         mrr = np.array(g.minimum_rotated_rectangle.exterior.coords)
         if min(np.linalg.norm(mrr[1] - mrr[0]), np.linalg.norm(mrr[2] - mrr[1])) < 3.0:
             continue  # tiras estreitas: muros e muralhas, não casas
+        if g.area > 1000:
+            continue  # terraplenos dos baluartes que vêm na classe 6 (em Monção), não casas
         cx = np.array(g.exterior.coords)[:-1]
         out.append({"planta": np.round(cx, 2).tolist(), "cume": round(float(np.percentile(mds[r, c], 95)), 2),
                     "chao": round(float(np.percentile(mdt[r, c], 10)), 2)})

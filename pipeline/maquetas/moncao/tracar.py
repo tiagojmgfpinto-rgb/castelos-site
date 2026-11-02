@@ -59,27 +59,50 @@ EXCLUIR = [shapely.Polygon(p) for p in (
     [(-85, 205), (-15, 205), (-15, 177), (-85, 181)],
     [(-385, -40), (-355, -40), (-355, -65), (-385, -65)],
     [(295, -45), (325, -45), (325, -70), (295, -70)],
+    [(-86, 36), (-70, 36), (-70, 46), (-86, 46)],  # degraus da Misericórdia, no largo
 )]
 
 
-def superficie(linhas, faixa=4.5):
-    """Em Monção muitos panos (a frente norte, a muralha da Porta do Rosal) vêm na classe 6 da nuvem de
-    pontos e o MDT passa por baixo deles. Numa faixa estreita à volta das linhas de muralha do OSM usa-se o
-    MDS onde a célula é solo ou edifício (não árvore); fora dela fica o MDT."""
+def edificios_mascara():
+    """Plantas das casas (OSM e LiDAR), alargadas 1 m: os beirados não são escarpas."""
+    pl = []
+    for f in F["edificios"]:
+        g = f["geometria"]
+        if g["type"] == "Polygon":
+            pl.append(shapely.Polygon([ll(c) for c in g["coordinates"][0]]))
+        elif g["type"] == "MultiPolygon":
+            pl += [shapely.Polygon([ll(c) for c in q[0]]) for q in g["coordinates"]]
+    pl += [shapely.Polygon(c["planta"]) for c in json.loads((AQUI / "dados" / "casas.json").read_text())]
+    u = shapely.union_all([q.buffer(1.0) for q in pl if q.is_valid])
     X, Y = np.meshgrid(XS, YS)
-    perto = shapely.contains_xy(shapely.union_all([x.buffer(faixa) for x in linhas]), X, Y)
-    return np.where(perto & ((CLS == 2) | (CLS == 6)), np.maximum(MDS, MDT0), MDT0)
+    return shapely.contains_xy(u, X, Y)
+
+
+def superficie(zona_):
+    """Em Monção os parapeitos e muitas faces vêm na classe 1 (não classificado) ou 6 da nuvem de pontos, e o
+    MDT passa por baixo deles. Dentro da zona das fortificações e fora das casas usa-se o ponto mais alto das
+    classes 1, 2 e 6 (dados/superficie.npz, do pontos.py); no resto fica o MDT."""
+    S = np.load(AQUI / "dados" / "superficie.npz")
+    sup = S["sup"].astype(float)
+    tem = sup > -32000
+    sup = np.where(tem, sup / 100.0, -1e9)
+    X, Y = np.meshgrid(XS, YS)
+    dentro = shapely.contains_xy(zona_, X, Y) & ~edificios_mascara()
+    return np.where(dentro & tem, np.maximum(sup, MDT0), MDT0)
 
 
 def zona():
-    """Faixa das fortificações: 45 m à volta das linhas de muralha do OSM (em Monção não há polígono da
-    praça; as linhas cobrem a frente do rio, os baluartes de poente, sul e nascente e a cerca medieval)."""
+    """Zona das fortificações: o polígono que envolve as linhas de muralha do OSM, alargado 40 m (em Monção
+    as linhas do OSM têm falhas, por isso não chega uma faixa à volta delas), sem os socalcos do rio e os
+    cortes das estradas (EXCLUIR)."""
     linhas = []
     for f in F["infraestrutura"]:
         if f["classe"] == "city_wall" and f["geometria"]["type"] == "LineString":
             linhas.append(shapely.LineString([ll(c) for c in f["geometria"]["coordinates"]]))
-    u = shapely.union_all([x.buffer(30) for x in linhas])
+    u = shapely.union_all(linhas).convex_hull.buffer(40)
     u = u.intersection(shapely.box(-480, -290, 400, 290))  # a leste de x = 400 são socalcos e quintas
+    for p in EXCLUIR:
+        u = u.difference(p)
     return u, linhas
 
 
@@ -265,7 +288,30 @@ def unit_(v):
     return v / n if n > 1e-9 else v
 
 
-def medir(linha):
+def perto(G, x, y):
+    c = np.clip(np.round((np.asarray(x, float) - XS[0]) / PASSO).astype(int), 0, G.shape[1] - 1)
+    r = np.clip(np.round((np.asarray(y, float) - YS[0]) / PASSO).astype(int), 0, G.shape[0] - 1)
+    return G[r, c]
+
+
+def plataforma(pts, topo):
+    """Fração do troço que tem por cima um terrapleno ou um parapeito: pontos de solo (classe 2) até 2,5 m
+    abaixo do topo, ou da classe 1 até 1,5 m abaixo, entre 1,5 e 6 m para dentro. Distingue as muralhas
+    (com adarve e parapeito) das fachadas e dos beirados das casas, que só têm telhado por cima."""
+    S = np.load(AQUI / "dados" / "superficie.npz")
+    solo = np.where(S["solo"] > -32000, S["solo"] / 100.0, -1e9)
+    c1 = np.where(S["c1"] > -32000, S["c1"] / 100.0, -1e9)
+    t = np.gradient(pts, axis=0)
+    t /= np.maximum(np.linalg.norm(t, axis=1, keepdims=True), 1e-9)
+    nr = np.stack([t[:, 1], -t[:, 0]], 1)
+    ok = np.zeros(len(pts), bool)
+    for d in np.arange(-1.5, -6.01, -0.5):
+        q = pts + nr * d
+        ok |= (perto(solo, *q.T) >= topo - 2.5) | (perto(c1, *q.T) >= topo - 1.5)
+    return float(ok.mean())
+
+
+def medir(linha, virado=False):
     """Orienta o troço com o lado baixo à direita e mede em cada vértice (densificado a 1 m) o topo, o pé,
     e onde começa a escarpa por cima (aresta) e acaba por baixo, a partir da linha do esqueleto."""
     g = shapely.LineString(linha)
@@ -279,8 +325,8 @@ def medir(linha):
     z = amostra(MDT, xy[..., 0], xy[..., 1])
     esq = z[:, d < -1.0].mean()
     dir_ = z[:, d > 1.0].mean()
-    if dir_ > esq:  # o lado baixo tem de ficar à direita
-        return medir(linha[::-1])
+    if dir_ > esq and not virado:  # o lado baixo tem de ficar à direita
+        return medir(linha[::-1], True)
     i0 = int(np.argmin(np.abs(d)))
     topo = np.zeros(n)
     pe = np.zeros(n)
@@ -305,8 +351,10 @@ def medir(linha):
 
 def main():
     global MDT
+    global LINHAS_OSM
     z_, linhas_osm = zona()
-    MDT = superficie(linhas_osm)
+    LINHAS_OSM = shapely.union_all(linhas_osm)
+    MDT = superficie(z_)
     gy, gx = np.gradient(ndi.gaussian_filter(MDT, 0.6), PASSO)
     decl = np.degrees(np.arctan(np.hypot(gx, gy)))
     dz = ndi.maximum_filter(MDT, 7) - ndi.minimum_filter(MDT, 7)
@@ -341,6 +389,10 @@ def main():
         h = topo - pe
         if np.median(h) < 2.2:
             continue
+        pl = plataforma(pts, topo)
+        osm = g.buffer(6.0).intersection(LINHAS_OSM).length / max(g.length, 1e-6)
+        if pl < 0.4 and osm < 0.5:
+            continue
         # o traço final: os vértices do troço simplificado, com as medidas filtradas (mediana de 5 m)
         k = 5
 
@@ -357,6 +409,7 @@ def main():
             "fim": np.round(fim[idx], 2).tolist(),
             "comprimento": round(float(g.length), 1),
             "altura_mediana": round(float(np.median(h)), 2),
+            "plataforma": round(pl, 2),
         })
     out.sort(key=lambda e: -e["comprimento"])
     for i, e in enumerate(out):

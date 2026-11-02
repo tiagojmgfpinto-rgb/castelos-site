@@ -371,10 +371,11 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, c
     });
     const a = sel ? alvos.get(sel) : undefined;
     if (!a || !controlos.current) return;
-    const dir = camera.position.clone().sub(controlos.current.target).normalize();
+    const olhar = sel ? elementos.get(sel)?.olhar : undefined;
+    const dir = olhar ? new THREE.Vector3(...olhar).normalize() : camera.position.clone().sub(controlos.current.target).normalize();
     const dist = THREE.MathUtils.clamp(a.raio * 3.6, 60, 260);
     objetivo.current = { alvo: a.centro.clone(), pos: a.centro.clone().addScaledVector(dir, dist) };
-  }, [sel, alvos, porElemento, camera]);
+  }, [sel, alvos, porElemento, camera, elementos]);
 
   useEffect(() => {
     CAMADAS_TERRENO.forEach((n) => {
