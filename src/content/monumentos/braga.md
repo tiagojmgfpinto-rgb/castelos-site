@@ -28,7 +28,7 @@ fichaTecnica:
   tipologia: "Torre de menagem isolada, de planta quadrangular, com quatro pisos e balcões com matacães nos cunhais"
   estilo: "Arquitetura militar gótica"
   conservacao: "Bom. Parte dos matacães caiu em 1996 e foi reposta, com obras no telhado e reforço da estrutura"
-  materiais: "Cantaria de granito em fiadas regulares; telhado de quatro águas de telha por dentro do parapeito; pavimentos e tetos de madeira por dentro"
+  materiais: "Cantaria de granito cinzento, de grão médio, em fiadas regulares; telhado de quatro águas de telha por dentro do parapeito; pavimentos e tetos de madeira por dentro"
   protecao: "Monumento Nacional (Decreto de 16-06-1910)"
   usoAtual: "Cultural"
 oQueVer:
@@ -44,6 +44,8 @@ oQueVer:
     texto: "A porta fica a c. 5 m do chão, na face nascente, em arco de volta perfeita. Por cima tem o escudo real de D. Dinis, que atesta a construção por sua ordem; o escudo repete-se na face poente."
   - nome: "Escada de pedra"
     texto: "Uma escada maciça de cantaria, encostada à torre, sobe em dois lanços até à porta: o primeiro ao longo da face sul, a partir de um portão de ferro, o segundo ao longo da face nascente, com um guarda-corpo de pedra de topo inclinado."
+  - nome: "Padrão em coluna"
+    texto: "Junto ao cunhal noroeste, à frente da face norte, um pequeno padrão de granito com c. 2,5 m: pedestal quadrado, fuste cilíndrico liso, bloco cúbico e uma cruz de ferro de braços abertos."
 cronologia:
   - ano: "C. 1300"
     texto: "D. Dinis manda construir o castelo e a torre de menagem, como atesta o escudo por cima da porta da torre."

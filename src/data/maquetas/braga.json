@@ -2,7 +2,7 @@
   "monumento": "braga",
   "titulo": "Torre de Menagem de Braga",
   "variante": "estado-atual",
-  "versao": "0.1 provisória",
+  "versao": "0.2 provisória",
   "data": "2026-11-02",
   "origem": {
     "lat": 41.551322,
@@ -40,13 +40,25 @@
     "Orientação das faces: a janela geminada e as seteiras estão na face sul (SSE), com a escada a subir para a direita; a janela em arco simples na face norte (NNO), pela fotografia de 2006; a porta alta com o escudo na face nascente (ENE), no topo da escada (Wikipédia). Confirmadas pela escada e pela árvore no LiDAR e no ortofotomapa. O Google Street View não estava acessível a partir desta sessão.",
     "As janelas das faces nascente e poente (em arco, ao nível do telhado) e o segundo escudo da face poente vêm da descrição da Wikipédia, sem fotografia: a forma e a altura são estimativas. As gárgulas das faces norte, nascente e poente repetem a da face sul.",
     "A escada foi medida no LiDAR: 1.º lanço encostado à face sul (18 degraus, de 191,35 a 194,55 m), patamar no cunhal sudeste, 2.º lanço encostado à face nascente (10 degraus) até ao patamar da porta, a 196,6 m. O guarda-corpo de pedra sobe c. 0,9 m acima dos degraus (topo medido a 195,4 e 197,55 m). O número de degraus é estimado.",
-    "A cantaria é uma textura de 6 m feita pelas fotografias: fiadas de 0,30 a 0,48 m (média de 0,38 m, medida na periodicidade das juntas), silhares de 0,55 a 1,6 m, granito cinzento-bege com silhares rosados e cor de mel; a pedra escurece e esverdeia para o alto da torre. O escudo de D. Dinis é esquemático.",
-    "As casas vizinhas são volumes simples (planta do OSM recortada, cornija e cume medidos no MDS); as árvores estão nas posições do LiDAR, com copa esquemática (o LiDAR é de julho, com folha)."
+    "A cantaria é uma textura de 6 m feita pelas fotografias: fiadas de 0,30 a 0,48 m (média de 0,38 m, medida na periodicidade das juntas), silhares de 0,55 a 1,6 m, em granito cinzento de grão médio (pintas escuras de biotite e claras de feldspato), com pouca diferença de tom entre silhares, manchas ocre de óxido de ferro, escorrências escuras e líquenes; a pedra escurece e esverdeia para o alto da torre. O escudo de D. Dinis é esquemático.",
+    "As casas vizinhas são volumes simples, num só cinzento, para dar a escala sem tirar destaque à torre (planta do OSM recortada num quadrado de 44 m, cornija e cume medidos no MDS). A árvore a noroeste está na posição do LiDAR, com copa esquemática (o LiDAR é de julho, com folha).",
+    "O padrão em coluna junto ao cunhal noroeste está na posição do LiDAR (o topo do bloco a 193,4 m, c. 2,1 m acima do chão); as proporções do pedestal, do fuste, do bloco e da cruz de ferro vêm da fotografia de 2006 da face norte, à escala dessa altura. O que diz a pedra e a data não se conhecem."
   ],
-  "distancia": 95,
+  "distancia": 68,
   "distanciaMinima": 10,
-  "direcao": [0.42, 0.62, 0.66],
-  "placas": ["torre", "balcoes", "janela_geminada", "porta", "escada"],
+  "direcao": [
+    0.42,
+    0.62,
+    0.66
+  ],
+  "placas": [
+    "torre",
+    "balcoes",
+    "janela_geminada",
+    "porta",
+    "escada",
+    "padrao"
+  ],
   "elementos": [
     {
       "id": "torre",
@@ -56,9 +68,19 @@
       "confianca": "alta",
       "descricao": "O que resta do castelo medieval de Braga, mandado construir por D. Dinis por volta de 1300: uma torre de planta quadrangular, em cantaria de granito, com o soco ligeiramente escalonado junto ao chão, quatro pisos (o primeiro, com c. 12 m, muito mais alto que os outros) e coroamento de merlões piramidais com balcões nos cunhais. Por dentro do parapeito há um telhado de quatro águas que não se vê da rua. O resto do castelo foi demolido em 1905–1906.",
       "medidas": "Planta de c. 10,4 × 10,0 m. Soleira das ameias a 215,65 m e pontas dos merlões a 217,0 m: 24,3 e 25,6 m acima da praça, que está a 191,4 m (LiDAR 2025).",
-      "fontes": ["lidar", "orto", "wiki", "wiki_en", "fotos"],
+      "fontes": [
+        "lidar",
+        "orto",
+        "wiki",
+        "wiki_en",
+        "fotos"
+      ],
       "resumo": "Torre de D. Dinis, c. 1300, o que resta do castelo",
-      "ancora": [0.0, 219.5, 0.0]
+      "ancora": [
+        0.0,
+        219.5,
+        -0.0
+      ]
     },
     {
       "id": "balcoes",
@@ -68,10 +90,22 @@
       "confianca": "média",
       "descricao": "Nos quatro cunhais, balcões de parapeito saliente sobre mísulas de quatro fiadas arredondadas (cinco na do cunhal), com os matacães abertos entre elas, para atirar sobre o pé da torre. Cada balcão leva quatro merlões piramidais em cada face. O coroamento de merlões e matacães é atribuído ao tempo de D. Fernando; parte dos matacães caiu em 1996 e foi reposta.",
       "medidas": "Cada balcão tem c. 2,45 m ao longo da face e sai c. 0,55 m (LiDAR e fotografia); mísulas de c. 1,6 m de altura; topo do parapeito a c. 216,3 m (fotografias).",
-      "fontes": ["lidar", "fotos", "wiki"],
+      "fontes": [
+        "lidar",
+        "fotos",
+        "wiki"
+      ],
       "resumo": "Balcões dos cunhais sobre mísulas, com matacães",
-      "ancora": [-3.6, 217.6, 6.8],
-      "olhar": [-0.44, 0.3, 0.88]
+      "ancora": [
+        -3.6,
+        217.6,
+        6.8
+      ],
+      "olhar": [
+        -0.44,
+        0.3,
+        0.88
+      ]
     },
     {
       "id": "janela_geminada",
@@ -81,10 +115,22 @@
       "confianca": "média",
       "descricao": "Na face sul, perto do alto, duas luzes estreitas em arco de volta perfeita, separadas por um mainel, com vidraça de chumbo em losangos, debaixo de um arco de descarga e sobre um peitoril saliente. As janelas geminadas são da adaptação da torre a residência, no tempo de D. João. Por baixo, a meio da face, abrem-se duas seteiras.",
       "medidas": "Luzes de c. 0,52 × 1,35 m, de 211,5 a 212,85 m; seteiras a 207,7–208,9 e 203,3–204,6 m (fotografias, à escala do LiDAR).",
-      "fontes": ["fotos", "wiki", "wiki_en"],
+      "fontes": [
+        "fotos",
+        "wiki",
+        "wiki_en"
+      ],
       "resumo": "Duas luzes em arco na face sul, com as seteiras por baixo",
-      "ancora": [1.4, 213.6, 5.1],
-      "olhar": [0.31, 0.35, 0.95]
+      "ancora": [
+        1.4,
+        213.6,
+        5.1
+      ],
+      "olhar": [
+        0.31,
+        0.35,
+        0.95
+      ]
     },
     {
       "id": "porta",
@@ -94,10 +140,22 @@
       "confianca": "média",
       "descricao": "A entrada da torre é alta, na face nascente, ao cimo da escada: uma porta em arco de volta perfeita, com aduelas, e por cima o escudo real de D. Dinis, que atesta a construção por sua ordem. O escudo repete-se na face poente. No modelo, o escudo é esquemático.",
       "medidas": "Soleira a c. 196,6 m, 5,3 m acima da praça (LiDAR); vão de c. 1 m (estimativa).",
-      "fontes": ["lidar", "wiki", "wiki_en"],
+      "fontes": [
+        "lidar",
+        "wiki",
+        "wiki_en"
+      ],
       "resumo": "Porta alta com o escudo real por cima",
-      "ancora": [5.9, 200.8, -0.7],
-      "olhar": [1.03, 0.35, -0.08]
+      "ancora": [
+        5.9,
+        200.8,
+        -0.7
+      ],
+      "olhar": [
+        1.03,
+        0.35,
+        -0.08
+      ]
     },
     {
       "id": "escada",
@@ -107,10 +165,46 @@
       "confianca": "alta",
       "descricao": "Escada maciça de cantaria encostada à torre, em dois lanços: o primeiro sobe ao longo da face sul a partir de um portão de ferro, o segundo dobra o cunhal e sobe ao longo da face nascente até ao patamar da porta. Do lado de fora tem um guarda-corpo de pedra, de topo inclinado.",
       "medidas": "1.º lanço de c. 4,5 m (191,35 a 194,55 m), 2.º lanço de c. 2,4 m (até 196,6 m); largura de c. 1,2 m com o guarda-corpo (LiDAR).",
-      "fontes": ["lidar", "fotos", "wiki_en"],
+      "fontes": [
+        "lidar",
+        "fotos",
+        "wiki_en"
+      ],
       "resumo": "Dois lanços de pedra até à porta, com portão de ferro",
-      "ancora": [4.6, 196.0, 4.5],
-      "olhar": [0.6, 0.5, 0.86]
+      "ancora": [
+        4.6,
+        196.0,
+        4.5
+      ],
+      "olhar": [
+        0.6,
+        0.5,
+        0.86
+      ]
+    },
+    {
+      "id": "padrao",
+      "nome": "Padrão em coluna",
+      "grupo": "Torre",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Junto ao cunhal noroeste da torre, à frente da face norte, um pequeno padrão de granito: pedestal baixo quadrado, fuste cilíndrico liso, um bloco cúbico em cima e uma cruz de ferro de braços abertos.",
+      "medidas": "C. 2,5 m de altura até ao alto da cruz; fuste de c. 0,22 m de diâmetro (LiDAR e fotografia de 2006).",
+      "fontes": [
+        "lidar",
+        "fotos"
+      ],
+      "resumo": "Coluna de granito com cruz de ferro, junto à face norte",
+      "ancora": [
+        -7.8,
+        194.2,
+        -4.2
+      ],
+      "olhar": [
+        -0.5,
+        0.25,
+        -0.89
+      ]
     },
     {
       "id": "praca",
@@ -120,7 +214,12 @@
       "confianca": "média",
       "descricao": "O espaço pedonal à volta da torre, entre a Rua do Castelo e a Praça da República, em calçada de cubos de granito.",
       "medidas": "Chão a 191,2–191,6 m junto à torre (LiDAR).",
-      "fontes": ["lidar", "orto", "osm", "fotos"],
+      "fontes": [
+        "lidar",
+        "orto",
+        "osm",
+        "fotos"
+      ],
       "resumo": "Calçada de granito à volta da torre"
     },
     {
@@ -129,21 +228,27 @@
       "grupo": "Envolvente",
       "estado": "estado-atual",
       "confianca": "baixa",
-      "descricao": "Os quarteirões à volta da torre, em volumes simples, para dar a escala: a poente o edifício comprido da Rua do Castelo e a nascente as casas que fecham a Praça da República.",
+      "descricao": "Os quarteirões à volta da torre, em volumes simples e num só cinzento, só para dar a escala: a poente o edifício comprido da Rua do Castelo e a nascente as casas que fecham a Praça da República.",
       "medidas": "Cornijas e cumes medidos no MDS de 50 cm (LiDAR).",
-      "fontes": ["osm", "lidar"],
+      "fontes": [
+        "osm",
+        "lidar"
+      ],
       "resumo": "Volumes simples das casas à volta"
     },
     {
       "id": "vegetacao",
-      "nome": "Árvores",
+      "nome": "Árvore",
       "grupo": "Envolvente",
       "estado": "estado-atual",
       "confianca": "baixa",
-      "descricao": "As árvores junto à torre, na posição e com a altura medidas no LiDAR; copa esquemática.",
+      "descricao": "A árvore a noroeste da torre, na posição e com a altura medidas no LiDAR; copa esquemática.",
       "medidas": "LiDAR 2025.",
-      "fontes": ["lidar", "orto"],
-      "resumo": "Árvores junto à torre"
+      "fontes": [
+        "lidar",
+        "orto"
+      ],
+      "resumo": "Árvore a noroeste da torre"
     }
   ]
 }
