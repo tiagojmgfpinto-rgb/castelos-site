@@ -1062,6 +1062,8 @@ _mb = (CLS == 6) & (ALTURA > 1.0)
 S5 = ndi.median_filter(np.where(_mb, MDS, np.nan), size=5, mode="nearest")
 S5 = np.where(np.isnan(S5), MDS, S5)
 SMDS = ndi.median_filter(MDS, size=3)
+S9 = ndi.gaussian_filter(ndi.median_filter(S5, size=9), 1.0)  # topo dos terraplenos sem o entulho e a erva
+GULLY = shapely.Polygon([(61.5, 45.0), (64.5, 78.5), (70.0, 79.5), (97.0, 77.0), (99.0, 43.0), (76.0, 38.0)])  # fosso da ponte: rocha
 
 
 def topo_s(x, y):
@@ -1187,10 +1189,11 @@ def uv_misto(ob, escala, planta=()):
 # Zona da antiga prisão (hoje Museu Nacional Resistência e Liberdade): as plataformas que caem aqui são
 # edifícios (paredes caiadas, janelas, terraços), as outras são terraplenos e panos de muralha.
 PRISAO = shapely.Polygon([(-46, -34), (-46, 28), (-30, 40), (-17, 67), (8, 62), (33, 47), (34, 14), (28, -36)])
-FORTIM = dict(c=np.array([-11.0, -63.5]), r=12.6, corda=-55.8, topo=17.05, chao=14.3)
+FORTIM = dict(c=np.array([-10.5, -63.3]), r=11.8, corda=-57.3, frente=-50.8, topo=17.05, chao=14.3)
 AMARELO_EDIF = shapely.box(17.0, 18.0, 36.0, 47.0)  # a ponta sudeste do pavilhão grande, amarela (fotografias)
 ALV, CHAO_, CAL_, TERR, OCRE_, CANT_ = range(6)
 MAT_PLAT = ["alvenaria", "chao", "cal", "terraco", "ocre", "cantaria"]
+ESCARPAS = []   # escarpas de alvenaria por baixo dos parapeitos: o terreno à frente é rebaixado ao pé
 BORDAS = []     # (linha, normal para fora, topo, queda, tipo) de cada troço das plataformas, para parapeitos
 EDIFICIOS = []  # (poligono, topo, chão, amarelo)
 PLAT_SHP = []
@@ -1204,6 +1207,22 @@ def plataforma(p, m):
     if np.hypot(c.x - FORTIM["c"][0], c.y - FORTIM["c"][1]) < 10:
         return None  # o Fortim Redondo é feito à parte
     edif = poly.intersection(PRISAO).area > 0.6 * poly.area
+    if not edif:
+        # o tabuleiro da ponte também é classe 6: tira-se, a ponte é feita à parte
+        ponte_shp = shapely.LineString([PONTE["a"], PONTE["b"]]).buffer(PONTE["largura"] / 2 + 0.8, cap_style="flat")
+        if poly.intersects(ponte_shp):
+            pd_ = poly.difference(ponte_shp)
+            if pd_.is_empty:
+                return None
+            if pd_.geom_type != "Polygon":
+                pd_ = max(pd_.geoms, key=lambda g: g.area)
+            if pd_.area < 5:
+                return None
+            poly = shapely.geometry.polygon.orient(pd_, 1.0)
+        # panos direitos: o contorno da grelha de 50 cm vem aos dentes; simplificado, cada pano fica um plano
+        ps = poly.simplify(0.75, preserve_topology=True).buffer(0)
+        if ps.geom_type == "Polygon" and ps.area > 0.9 * poly.area:
+            poly = shapely.geometry.polygon.orient(ps, 1.0)
     amarelo = False
     tipo = "edificio" if edif else "muralha"
     PLAT_SHP.append(poly)
@@ -1219,14 +1238,42 @@ def plataforma(p, m):
         zt = topo_s(dentro_[:, 0], dentro_[:, 1])
         if edif:
             zt = np.full(len(q), float(np.median(zt)))
+        elif len(zt) > 9:
+            # coroamento regular: mediana ao longo do pano (c. 5 m), sem os dentes do MDS
+            zt = ndi.median_filter(zt, size=7, mode="wrap")
         bpts.append(q)
         bz.append(zt)
         # panos: do topo ao chão de fora, em talude nas muralhas (1/10 da altura)
         fora = desvio(q, -0.9, True)
         zg = np.minimum(cota_t(fora[:, 0], fora[:, 1]), zt - 0.3) - 0.8
+        if not edif and len(zg) > 9:
+            zg = ndi.minimum_filter(ndi.median_filter(zg, size=5, mode="wrap"), size=3, mode="wrap")
         bat = np.clip(0.10 * (zt - zg), 0, 1.6) if not edif else np.zeros(len(q))
         base = desvio(q, -bat, True)
         n = len(q)
+        if not edif:
+            # cordão de pedra (meia-cana) a 1,2 m do coroamento, nos panos com mais de 3,5 m (fotografias)
+            alto = (zt - zg) > 3.5
+            zc = zt - 1.2
+            frac = np.clip(1.2 / np.maximum(zt - zg, 0.1), 0, 1)
+            i0 = 0
+            alto_c = np.append(alto, alto[0])
+            k = 0
+            while k < n:
+                if not alto[k]:
+                    k += 1
+                    continue
+                j = k
+                while j < n and alto[j]:
+                    j += 1
+                idx_ = list(range(k, min(j + 1, n)))
+                if len(idx_) >= 3:
+                    lin_ = q[idx_]
+                    off = bat[idx_] * frac[idx_]
+                    zz = zc[idx_]
+                    perf = [(off, zz - 0.16), (off + 0.16, zz - 0.1), (off + 0.21, zz), (off + 0.16, zz + 0.1), (off, zz + 0.16)]
+                    varrer(m, lin_, perf, CANT_, fechar=False)
+                k = j
         for i in range(n):
             j = (i + 1) % n
             mt_ = mat_lado
@@ -1246,7 +1293,7 @@ def plataforma(p, m):
     gx, gy = gx.ravel(), gy.ravel()
     k = shapely.contains_xy(inner, gx, gy)
     ip = np.column_stack([gx[k], gy[k]])
-    iz = topo_s(ip[:, 0], ip[:, 1]) if not edif else np.full(len(ip), float(np.median(np.concatenate(bz))))
+    iz = amostra(S9, ip[:, 0], ip[:, 1]) if not edif else np.full(len(ip), float(np.median(np.concatenate(bz))))
     pts = np.vstack(bpts + [ip])
     zz = np.concatenate(bz + [iz])
     tri = Delaunay(pts).simplices
@@ -1259,7 +1306,7 @@ def plataforma(p, m):
         if (b - a)[0] * (c_ - a)[1] - (b - a)[1] * (c_ - a)[0] < 0:
             t = t[::-1]
         zr = zz[t].max() - zz[t].min()
-        m.face([(*pts[i], zz[i]) for i in t], mat_topo if zr < 0.9 else mat_lado)  # degraus por dentro: pano
+        m.face([(*pts[i], zz[i]) for i in t], mat_topo if zr < 1.4 else mat_lado)  # degraus por dentro: pano
     if edif:
         EDIFICIOS.append((poly, float(np.median(np.concatenate(bz))), float(cota_t(c.x, c.y)), amarelo))
     return poly
@@ -1280,6 +1327,9 @@ def parapeitos(mq):
         if np.median(mu["relevo"]) < 0.6 or ln.intersection(edif).length > 0.5 * ln.length:
             continue
         cf = ln.centroid
+        ponte_shp = shapely.LineString([PONTE["a"], PONTE["b"]]).buffer(PONTE["largura"] / 2 + 1.5)
+        if ln.intersection(ponte_shp).length > 0.3 * ln.length:
+            continue  # as guardas da ponte, feitas com ela
         if cf.distance(shapely.Point(*FORTIM["c"])) < FORTIM["r"] - 1.0 and ln.length < 40:
             continue
         if cf.distance(shapely.Point(*FORTIM["c"])) < FORTIM["r"] + 6 and cf.y > FORTIM["corda"] - 2:
@@ -1307,7 +1357,26 @@ def parapeitos(mq):
         zbase = np.interp(sv, ss, base)
         zlow = np.maximum(np.minimum(np.minimum(za, zb_), zt - 0.8) - 0.5, zbase - 9.0)
         zpin = np.minimum(np.maximum(zbase - 0.25, zlow + 0.05), zt - 0.3)  # a pintura começa no chão de dentro
-        amarelo = np.mean([perto_do_mar(*p) for p in lin[::3]]) < 25
+        amarelo = np.mean([perto_do_mar(*p) for p in lin[::3]]) < 25 and lin[:, 0].mean() < 80
+        # escarpa de alvenaria por baixo do parapeito, do lado de fora (o mais baixo): da cota do chão de
+        # dentro até ao pé, medido 2 a 3,6 m para fora (no máximo 9 m de pano); por baixo fica a rocha
+        e = 0.42
+        so = 1.0 if np.median(za - zb_) < 0 else -1.0
+        nout = nr * so
+        zf = np.min([cota_t(*(lin + nout * o).T) for o in (2.0, 2.8, 3.6)], axis=0)
+        zf = ndi.minimum_filter(ndi.median_filter(zf, size=7, mode="nearest"), size=3, mode="nearest")
+        zf = np.maximum(np.maximum(zf, zbase - 9.0), NIVEL + 0.3)
+        alto = (zbase - zf) > 1.5
+        if alto.sum() >= 3:
+            bat = 0.12 * (zbase - zf)
+            top_ = lin + nout * e
+            pe_ = lin + nout * (e + bat)[:, None]
+            zt_e = np.minimum(zlow, zbase)
+            for i in range(len(lin) - 1):
+                if alto[i] and alto[i + 1]:
+                    f_ = [(*top_[i], zt_e[i]), (*top_[i + 1], zt_e[i + 1]), (*pe_[i + 1], zf[i + 1] - 0.3), (*pe_[i], zf[i] - 0.3)]
+                    mq.face(f_ if so < 0 else f_[::-1], 0)
+            ESCARPAS.append(dict(linha=lin, nout=nout, pe=zf - 0.3, alto=alto))
         mw, mc = (1, 3) if amarelo else (0, 2)
         e = 0.42
         perfil = [(e, zlow), (e, zpin), (e, zt), (e - 0.07, zt + 0.1), (-e + 0.07, zt + 0.1), (-e, zt), (-e, zpin), (-e, zlow)]
@@ -1431,20 +1500,27 @@ def torre_branca(m, c, z0, ztopo):
 # ---------------------------------------------------------------- Fortim Redondo
 
 def fortim(m):
-    """Fortim Redondo (1557–1558 a c. 1578; fotografias e Catarina Oliveira, MNRL 2020): planta circular
-    voltada ao mar e frente reta para a praça, pano em talude pintado de amarelo-ocre com cordão de pedra,
-    parapeito com merlões e canhoneiras, portal de pedra do século XVIII com frontão triangular e cartela, e
-    a sineira com varanda, também do século XVIII, sobre a porta. Medidas no MDS: terrapleno a 17,05 m,
-    parapeito a 18,6 m, sineira a 23,1 m."""
+    """Fortim Redondo (1557–1558 a c. 1578; fotografias e Catarina Oliveira, MNRL 2020). Lido no MDS: um
+    círculo de 11,8 m de raio, cortado a norte por uma frente reta (y = −50,8) onde abre o portal; o
+    terrapleno (17,05 m) só ocupa a parte sul, até y = −57,3, e entre ele e a frente fica um pátio ao nível
+    da praça (14,3 m). Pano em talude pintado de amarelo-ocre com cordão de pedra; no terrapleno, parapeito
+    grosso com merlões e canhoneiras; na frente, parapeito liso. Portal de pedra do século XVIII com
+    frontão triangular, cartela e armas, e a sineira com varanda no bordo do terrapleno, por trás do portal
+    (pico do MDS a 23,1 m; o pináculo, fino, não aparece)."""
     C, R, yc, TOP = FORTIM["c"], FORTIM["r"], FORTIM["corda"], FORTIM["topo"]
-    a0 = math.asin((yc - C[1]) / R)          # ângulo onde o círculo encontra a frente reta
-    angs = np.linspace(math.pi - a0, 2 * math.pi + a0, 56)   # do lado oeste da frente, pelo sul, ao lado este
+    yf, CH = FORTIM["frente"], FORTIM["chao"]
+    # o círculo do lado do mar (de 160° a 380°) e, para a praça, dois panos retos até aos cantos da frente
+    angs = np.linspace(math.radians(160), math.radians(380), 60)
     arco = np.array([C + R * np.array([math.cos(a), math.sin(a)]) for a in angs])
-    frente = np.array([arco[-1] + (arco[0] - arco[-1]) * t for t in np.linspace(0, 1, 9)[1:-1]])
-    linha = np.vstack([arco, frente])  # anti-horário
+    FW, FE = np.array([C[0] - 6.0, yf]), np.array([C[0] + 5.5, yf])
+    lado_e = np.array([arco[-1] + (FE - arco[-1]) * t for t in np.linspace(0, 1, 6)[1:]])
+    frente = np.array([FE + (FW - FE) * t for t in np.linspace(0, 1, 9)[1:]])
+    lado_o = np.array([FW + (arco[0] - FW) * t for t in np.linspace(0, 1, 6)[1:-1]])
+    linha = np.vstack([arco, lado_e, frente, lado_o])  # anti-horário
     n = len(linha)
+    terr = linha[:, 1] < yc + 0.4           # troços do terrapleno (parapeito grosso com merlões)
     fora = desvio(linha, -2.5, True)
-    zg = np.minimum(cota_t(fora[:, 0], fora[:, 1]), TOP - 2.6) - 0.6
+    zg = np.minimum(cota_t(fora[:, 0], fora[:, 1]), CH - 0.2) - 0.6
     zc = TOP - 0.25  # cordão
     bat = np.clip(0.12 * (zc - zg), 0.2, 1.6)
     base = desvio(linha, -bat, True)
@@ -1454,81 +1530,115 @@ def fortim(m):
     rc = 0.2
     perf = [(0.0, zc - 0.15), (rc * 0.8, zc - 0.1), (rc, zc), (rc * 0.8, zc + 0.1), (0.0, zc + 0.15)]
     varrer(m, np.vstack([linha, linha[:1]]), perf, CAN, fechar=False)
-    # parapeito grosso de remate boleado, com merlões altos e canhoneiras (fotografias)
+    # parapeito: grosso e boleado no terrapleno, liso e fino na frente do pátio (fotografias)
     hp = 1.45
-    perf = [(0.0, zc + 0.15), (0.0, TOP + hp - 0.25), (-0.15, TOP + hp), (-1.05, TOP + hp), (-1.2, TOP + hp - 0.25), (-1.2, TOP - 0.05)]
-    varrer(m, np.vstack([linha, linha[:1]]), perf, [OGA, OGA, OGA, OGA, OGA], fechar=False)
+    TF = 17.6
+    ztp = np.where(terr, TOP + hp, TF)
+    esp = np.where(terr, 1.2, 0.65)
+    zin = np.where(terr, TOP - 0.05, CH)
+    L2 = np.vstack([linha, linha[:1]])
+    ztp, esp, zin = (np.append(a, a[0]) for a in (ztp, esp, zin))
+    perf = [(0.0, zc + 0.15), (0.0, ztp - 0.2), (-0.12, ztp), (-esp + 0.12, ztp), (-esp, ztp - 0.2), (-esp, zin)]
+    varrer(m, L2, perf, [OGA, OGA, OGA, OGA, OGA], fechar=False)
     seg = np.linalg.norm(np.diff(arco, axis=0), axis=1)
     s = np.concatenate([[0], np.cumsum(seg)])
-    for s0 in np.arange(1.0, s[-1] - 3.0, 4.6):
+    for s0 in np.arange(1.0, s[-1] - 3.0, 4.4):
         a_ = np.array([np.interp(s0, s, arco[:, 0]), np.interp(s0, s, arco[:, 1])])
-        b_ = np.array([np.interp(s0 + 3.2, s, arco[:, 0]), np.interp(s0 + 3.2, s, arco[:, 1])])
+        b_ = np.array([np.interp(s0 + 3.0, s, arco[:, 0]), np.interp(s0 + 3.0, s, arco[:, 1])])
+        if max(a_[1], b_[1]) > yc - 0.5:
+            continue
         t_ = unit(b_ - a_)
         no = np.array([t_[1], -t_[0]])
-        m.caixa((a_ + b_) / 2 - no * 0.6, t_, np.linalg.norm(b_ - a_), 1.2, TOP + hp - 0.05, TOP + hp + 0.75, OGA)
-        m.caixa((a_ + b_) / 2 - no * 0.6, t_, np.linalg.norm(b_ - a_) - 0.3, 0.9, TOP + hp + 0.75, TOP + hp + 0.9, OGA)
-    # terrapleno lajeado (com a cor da ortoimagem)
-    dentro_ = desvio(linha, 1.2, True)
-    m.face([(*p, TOP) for p in dentro_], CHAO_P)
-    # frente para a praça: portal com frontão e cartela, e a sineira por cima da porta
-    meio = (arco[0] + arco[-1]) / 2
+        m.caixa((a_ + b_) / 2 - no * 0.6, t_, np.linalg.norm(b_ - a_), 1.2, TOP + hp - 0.05, TOP + hp + 0.85, OGA)
+        m.caixa((a_ + b_) / 2 - no * 0.6, t_, np.linalg.norm(b_ - a_) - 0.3, 0.9, TOP + hp + 0.85, TOP + hp + 1.0, OGA)
+    # terrapleno lajeado (com a cor da ortoimagem), até ao bordo sobre o pátio
+    circ = shapely.Polygon(linha).buffer(-1.2)
+    tp = circ.intersection(shapely.box(-1e3, -1e3, 1e3, yc))
+    if tp.geom_type == "Polygon":
+        q = np.array(tp.exterior.coords)[:-1]
+        if area(q) < 0:
+            q = q[::-1]
+        m.face([(*p, TOP) for p in q], CHAO_P)
+    # pano do terrapleno virado ao pátio, com parapeito baixo e uma porta para as casernas
+    _cr = shapely.LineString([(-1e3, yc), (1e3, yc)]).intersection(shapely.Polygon(linha))
+    xw, xe = _cr.bounds[0] + 1.0, _cr.bounds[2] - 1.0
+    Qc = Quadro(m, np.array([C[0], yc]), (0, 1))
+    Qc.bloco(xw - C[0], xe - C[0], CH - 0.3, TOP + 1.0, -1.2, 0.0, OGA)
+    Qc.bloco(xw - C[0], xe - C[0], TOP + 1.0, TOP + 1.12, -1.25, 0.05, CAN)
+    for sp in (-6.0, 5.0):
+        Qd = Quadro(m, np.array([C[0] + sp, yc]), (0, 1))
+        Qd.bloco(-0.85, 0.85, CH, CH + 2.75, 0.0, 0.12, CAN)
+        Qd.vao(1.2, CH, 2.0, 0.13, SOM)
+    # chão do pátio
+    pt = shapely.Polygon(linha).buffer(-0.7).intersection(shapely.box(-1e3, yc, 1e3, 1e3))
+    if pt.geom_type == "Polygon":
+        q = np.array(pt.exterior.coords)[:-1]
+        if area(q) < 0:
+            q = q[::-1]
+        m.face([(*p, CH + 0.02) for p in q], CHAO_P)
+    # portal na frente reta, com frontão e cartela (fotografias)
+    meio = np.array([C[0], yf])
     nf = np.array([0.0, 1.0])
     g = float(cota_t(*(meio + nf * 3)))
+    g = min(max(g, CH - 0.4), CH)
     Q = Quadro(m, meio + nf * 0.02, nf)
-    Q.bloco(-2.3, 2.3, g - 0.3, g + 0.25, 0.0, 0.9, CAN)            # degrau
-    Q.vao(1.5, g + 0.25, 2.4, 0.01, SOM, reto=True)
+    Q.bloco(-2.3, 2.3, g - 0.3, g + 0.18, 0.0, 0.9, CAN)            # degrau
+    Q.vao(1.6, g + 0.18, 2.5, 0.01, SOM, reto=True)
+    Q.vao(1.6, g + 0.18, 2.5, -0.64, SOM, reto=True)
     for sg in (-1, 1):                                                # ombreiras e pilastras
-        s0, s1 = sorted((sg * 0.75, sg * 1.15))
-        Q.bloco(s0, s1, g + 0.25, g + 2.85, 0.0, 0.16, CAN)
-        s0, s1 = sorted((sg * 1.15, sg * 1.65))
-        Q.bloco(s0, s1, g + 0.25, g + 3.2, 0.0, 0.3, CAN)
-    for k_ in range(1, 6):                                            # grade de ferro da porta
-        Q.bloco(-0.75 + 0.25 * k_ - 0.02, -0.75 + 0.25 * k_ + 0.02, g + 0.25, g + 2.65, 0.05, 0.08, FER)
-    Q.bloco(-0.75, 0.75, g + 2.65, g + 2.85, 0.0, 0.16, CAN)          # verga
-    Q.bloco(-1.85, 1.85, g + 3.2, g + 3.55, 0.0, 0.42, CAN)           # entablamento
-    Q.bloco(-1.05, 1.05, g + 3.55, g + 4.55, 0.0, 0.2, CAN)           # cartela com a inscrição
-    Q.bloco(-0.9, 0.9, g + 3.7, g + 4.4, 0.2, 0.24, LIS)
-    zf = g + 3.55
-    Q.placa([(-1.95, zf), (1.95, zf), (0.0, zf + 1.6)], 0.0, 0.25, CAN)   # frontão
+        s0, s1 = sorted((sg * 0.8, sg * 1.2))
+        Q.bloco(s0, s1, g + 0.18, g + 2.9, 0.0, 0.16, CAN)
+        s0, s1 = sorted((sg * 1.2, sg * 1.7))
+        Q.bloco(s0, s1, g + 0.18, g + 3.25, 0.0, 0.3, CAN)
+    for k_ in range(1, 7):                                            # grade de ferro, aberta
+        Q.bloco(-0.8 + 0.23 * k_ - 0.02, -0.8 + 0.23 * k_ + 0.02, g + 0.18, g + 2.7, 0.05, 0.08, FER)
+    Q.bloco(-0.8, 0.8, g + 2.7, g + 2.9, 0.0, 0.16, CAN)              # verga
+    Q.bloco(-1.9, 1.9, g + 3.25, g + 3.6, 0.0, 0.42, CAN)             # entablamento
+    Q.bloco(-1.1, 1.1, g + 3.6, g + 4.6, 0.0, 0.2, CAN)               # cartela com a inscrição
+    Q.bloco(-0.95, 0.95, g + 3.75, g + 4.45, 0.2, 0.24, LIS)
+    zf = g + 3.6
+    Q.placa([(-2.0, zf), (2.0, zf), (0.0, zf + 1.65)], 0.0, 0.25, CAN)   # frontão
     for sg in (-1, 1):
-        Q.placa([(sg * 2.05, zf - 0.02), (sg * 1.85, zf - 0.02), (0.0, zf + 1.55), (0.0, zf + 1.8)], 0.0, 0.42, CAN)
+        Q.placa([(sg * 2.1, zf - 0.02), (sg * 1.9, zf - 0.02), (0.0, zf + 1.6), (0.0, zf + 1.85)], 0.0, 0.42, CAN)
     Q.escudo(0.0, zf + 0.25, 0.55, 0.62, 0.25, 0.36, CAN, coroa=True)
-    pinaculo(Q, 0.0, zf + 1.75, 0.2, esc=0.9, tipo="bola")
-    Q.bloco(-4.6, -3.2, g + 1.2, g + 2.0, 0.0, 0.08, LIS)              # lápide à esquerda (fotografia)
-    # sineira: corpo amarelo com cunhais de pedra, varanda, vão de arco com o sino e remate recortado
-    cs = np.array([C[0], yc - 1.7])
-    Qs = Quadro(m, cs + nf * 0.7, nf)
-    zb = TOP + hp
-    Qs.bloco(-1.35, 1.35, TOP - 0.5, zb + 0.8, -1.4, 0.0, OGA)
-    Qs.vao(0.12, zb - 0.3, 0.5, 0.01, SOM, reto=True)
-    Qs.bloco(-1.5, 1.5, zb + 0.8, zb + 0.95, -1.55, 0.35, CAN)         # varanda
-    for k_ in range(7):
-        Qs.bloco(-1.4 + 0.46 * k_ - 0.02, -1.4 + 0.46 * k_ + 0.02, zb + 0.95, zb + 1.7, 0.27, 0.31, FER)
-    Qs.bloco(-1.5, 1.5, zb + 1.7, zb + 1.75, 0.25, 0.33, FER)
-    wv, za = 0.95, zb + 0.85
-    hn = 1.35
-    top = [(-1.25, za), (-wv / 2, za), (-wv / 2, za + hn)]
+    pinaculo(Q, 0.0, zf + 1.8, 0.2, esc=0.9, tipo="bola")
+    Q.bloco(-5.4, -3.6, g + 1.1, g + 2.0, 0.0, 0.08, LIS)              # lápide à esquerda (fotografia)
+    # sineira: corpo amarelo, varanda, vão de arco alto com o sino, cornija e remate bolboso com pináculo
+    cs = np.array([C[0], yc - 0.2])
+    Qs = Quadro(m, cs, nf)
+    zb = TOP + 1.12
+    Qs.bloco(-1.45, 1.45, TOP - 0.5, zb + 0.9, -2.2, 0.0, OGA)
+    Qs.bloco(-1.6, 1.6, zb + 0.9, zb + 1.05, -2.3, 0.4, CAN)          # varanda
+    for k_ in range(8):
+        Qs.bloco(-1.5 + 0.43 * k_ - 0.02, -1.5 + 0.43 * k_ + 0.02, zb + 1.05, zb + 1.8, 0.32, 0.36, FER)
+    Qs.bloco(-1.6, 1.6, zb + 1.8, zb + 1.85, 0.3, 0.38, FER)
+    wv, za = 1.2, zb + 1.0
+    hn = 2.0
+    top = [(-1.35, za), (-wv / 2, za), (-wv / 2, za + hn)]
     top += [(-wv / 2 * math.cos(math.pi * k / 12), za + hn + wv / 2 * math.sin(math.pi * k / 12)) for k in range(1, 12)]
-    top += [(wv / 2, za + hn), (wv / 2, za), (1.25, za), (1.25, za + 2.5), (-1.25, za + 2.5)]
-    for d0, d1 in ((-0.18, 0.0), (-1.4, -1.22)):
+    top += [(wv / 2, za + hn), (wv / 2, za), (1.35, za), (1.35, za + 3.3), (-1.35, za + 3.3)]
+    for d0, d1 in ((-0.2, 0.0), (-2.2, -2.0)):
         Qs.placa(top, d0, d1, OGA)
     for sg in (-1, 1):
-        s0, s1 = sorted((sg * 1.25, sg * 1.1))
-        Qs.bloco(s0, s1, za, za + 2.5, -1.22, -0.18, OGA)
-    Qs.arco_sz(0.0, wv / 2, wv / 2 + 0.16, za + hn, 0.0, 0.06, CAN, k=12, aduelas=True)
+        s0, s1 = sorted((sg * 1.35, sg * 1.15))
+        Qs.bloco(s0, s1, za, za + 3.3, -2.0, -0.2, OGA)
+    Qs.arco_sz(0.0, wv / 2, wv / 2 + 0.17, za + hn, 0.0, 0.07, CAN, k=12, aduelas=True)
     for sg in (-1, 1):
-        s0, s1 = sorted((sg * wv / 2, sg * (wv / 2 + 0.16)))
-        Qs.bloco(s0, s1, za, za + hn, 0.0, 0.06, CAN)
-    sino(m, Qs.p(0, 0, -0.7)[:2], za + 0.6, r=0.32)
-    zt = za + 2.5
-    Qs.bloco(-1.4, 1.4, zt, zt + 0.2, -1.5, 0.1, CAN)                  # cornija
-    # remate recortado em volutas com pináculo (fotografias)
-    rem = [(-1.15, zt + 0.2), (1.15, zt + 0.2), (1.0, zt + 0.55), (0.55, zt + 0.7), (0.42, zt + 1.15), (0.0, zt + 1.35),
-           (-0.42, zt + 1.15), (-0.55, zt + 0.7), (-1.0, zt + 0.55)]
-    Qs.placa(rem, -1.2, -0.2, OGA)
-    Qs.bloco(-0.25, 0.25, zt + 1.35, zt + 1.55, -0.95, -0.45, CAN)
-    Qs.esfera(0.0, zt + 1.75, -0.7, 0.2, CAN)
-    MEDIDAS["fortim"] = {"raio": R, "terrapleno": TOP, "parapeito": TOP + hp, "sineira": zt + 1.95, "porta": g}
+        s0, s1 = sorted((sg * wv / 2, sg * (wv / 2 + 0.17)))
+        Qs.bloco(s0, s1, za, za + hn, 0.0, 0.07, CAN)
+    Qs.bloco(-0.75, 0.75, za - 0.08, za + 0.04, -0.2, 0.1, CAN)        # peitoril
+    sino(m, Qs.p(0, 0, -1.1)[:2], za + 0.8, r=0.36)
+    zt = za + 3.3
+    Qs.bloco(-1.5, 1.5, zt, zt + 0.22, -2.35, 0.15, CAN)               # cornija
+    # remate bolboso (perfil em S) com pináculo, como na fotografia
+    rem = [(-1.3, zt + 0.22), (1.3, zt + 0.22), (1.2, zt + 0.6), (0.85, zt + 0.95), (0.55, zt + 1.15), (0.4, zt + 1.5),
+           (0.25, zt + 1.75), (0.0, zt + 1.85), (-0.25, zt + 1.75), (-0.4, zt + 1.5), (-0.55, zt + 1.15), (-0.85, zt + 0.95),
+           (-1.2, zt + 0.6)]
+    for d0, d1 in ((-2.1, -0.1),):
+        Qs.placa(rem, d0, d1, OGA)
+    Qs.bloco(-0.2, 0.2, zt + 1.85, zt + 2.05, -1.3, -0.9, CAN)
+    Qs.esfera(0.0, zt + 2.25, -1.1, 0.2, CAN)
+    MEDIDAS["fortim"] = {"raio": R, "terrapleno": TOP, "parapeito": TOP + hp, "sineira": round(zt + 2.45, 1), "porta": g}
     return linha
 
 
@@ -1663,6 +1773,50 @@ def palmeira(x, y, z, alt):
             MF.append([o + 1, o + 2, o + 5, o + 4])
 
 
+RELVADOS = []
+# relvados com lancil branco (fotografias: em frente do Fortim e ao longo da muralha da costa, até ao cruzeiro)
+_costa = shapely.LineString([(12.0, -44.0), (14.0, -36.0), (24.0, -28.0), (45.0, -1.0)])
+_faixa = shapely.Polygon(list(_costa.offset_curve(3.6).coords) + list(_costa.offset_curve(9.5).coords)[::-1]).buffer(0)
+for _corte in (shapely.box(-1e3, -1e3, 1e3, -33.0), shapely.box(-1e3, -31.0, 1e3, -13.0), shapely.box(-1e3, -11.0, 1e3, 1e3)):
+    _pp = _faixa.intersection(_corte)
+    if _pp.area > 10:
+        RELVADOS.append(_pp)
+RELVADOS += [shapely.Polygon([(-28.0, -47.5), (-13.2, -47.5), (-13.2, -33.0), (-31.0, -33.0)]),
+             shapely.Polygon([(-7.8, -47.5), (4.0, -47.5), (8.0, -42.0), (8.0, -33.0), (-7.8, -33.0)])]
+
+
+def relvados(m):
+    """Relva (malha que segue o terreno, 5 cm acima) e lancil branco de 0,2 × 0,12 m à volta."""
+    from scipy.spatial import Delaunay
+    area_ = 0.0
+    for poly in RELVADOS:
+        poly = poly.buffer(0)
+        if poly.geom_type != "Polygon":
+            continue
+        area_ += poly.area
+        borda = densificar(np.array(poly.exterior.coords)[:-1], 1.0, True)
+        x0, y0, x1, y1 = poly.bounds
+        gx, gy = np.meshgrid(np.arange(x0, x1, 1.0), np.arange(y0, y1, 1.0))
+        gx, gy = gx.ravel(), gy.ravel()
+        k = shapely.contains_xy(poly.buffer(-0.4), gx, gy)
+        pts = np.vstack([borda, np.column_stack([gx[k], gy[k]])])
+        zz = cota_t(pts[:, 0], pts[:, 1]) + 0.06
+        tri = Delaunay(pts).simplices
+        cen = pts[tri].mean(1)
+        tri = tri[shapely.contains_xy(poly, cen[:, 0], cen[:, 1])]
+        for t in tri:
+            a, b, c_ = pts[t]
+            if (b - a)[0] * (c_ - a)[1] - (b - a)[1] * (c_ - a)[0] < 0:
+                t = t[::-1]
+            m.face([(*pts[i], zz[i]) for i in t], 1)
+        anel = np.vstack([borda, borda[:1]])
+        if area(borda) < 0:
+            anel = anel[::-1]
+        zb = cota_t(anel[:, 0], anel[:, 1])
+        varrer(m, anel, [(0.0, zb - 0.1), (0.0, zb + 0.12), (0.2, zb + 0.12), (0.2, zb - 0.1)], 0, fechar=False)
+    MEDIDAS["relvados"] = round(area_)
+
+
 def rochedo(x, y, z, r, achata, semente):
     """Penedo de calcário: icosaedro deformado, mais claro em cima e escuro e molhado abaixo da linha de água."""
     v0, f0 = ICO[2]
@@ -1769,8 +1923,8 @@ def textura_terreno():
     out = out * (1 - 0.3 * verde) + (out * np.array([0.9, 1.1, 0.82])) * 0.3 * verde
     cinza = out.mean(-1, keepdims=True)
     out = cinza + (out - cinza) * 1.35
-    out = out * np.array([1.0, 0.97, 0.90])
-    return np.clip(out * 0.84, 0, 1)
+    out = out * np.array([1.0, 0.985, 0.95])
+    return np.clip(out * 0.86, 0, 1)
 
 
 def construir_terreno():
@@ -1790,6 +1944,35 @@ def construir_terreno():
     za = amostra(MDT, X + nq[0] * 3.6, Y + nq[1] * 3.6)
     zb = amostra(MDT, X - nq[0] * 3.6, Y - nq[1] * 3.6)
     Z = np.where(caixa, np.minimum(Z, (za + zb) / 2 - 0.4), Z)
+    # debaixo dos arcos: o chão do fosso desce, para os vãos ficarem abertos como na fotografia
+    sob = (s_ > 0.5) & (s_ < L - 0.5) & (np.abs(d_) < PONTE["largura"] / 2 + 0.3)
+    rampa = np.clip((np.minimum(s_, L - s_) - 0.3) / 1.2, 0, 1)
+    Z = np.where(sob, np.minimum(Z, 4.6 - 1.4 * rampa + 6.0 * (1 - rampa)), Z)
+    # pátio do Fortim, entre o terrapleno e a frente: plano, à cota da praça
+    C_f, R_f = FORTIM["c"], FORTIM["r"]
+    patio = (((X - C_f[0]) ** 2 + (Y - C_f[1]) ** 2 < (R_f + 0.3) ** 2) | ((np.abs(X - C_f[0] + 0.25) < 7.0) & (Y < FORTIM["frente"] + 0.3))) \
+        & (Y > FORTIM["corda"] - 0.5) & (Y < FORTIM["frente"] + 0.3)
+    Z = np.where(patio, np.minimum(Z, FORTIM["chao"] - 0.05), Z)
+    # em frente das escarpas de alvenaria da costa, o terreno desce ao pé do pano (o MDT faz uma rampa)
+    for es in ESCARPAS:
+        lin, nout, pe, alto = es["linha"], es["nout"], es["pe"], es["alto"]
+        for i in range(len(lin) - 1):
+            if not (alto[i] and alto[i + 1]):
+                continue
+            quad = shapely.Polygon([lin[i] - nout[i] * 0.3, lin[i + 1] - nout[i + 1] * 0.3,
+                                    lin[i + 1] + nout[i + 1] * 3.4, lin[i] + nout[i] * 3.4])
+            if not quad.is_valid or quad.area < 0.05:
+                continue
+            x0, y0, x1, y1 = quad.bounds
+            c0, c1 = np.searchsorted(LXS, [x0, x1])
+            r0, r1 = np.searchsorted(LYS, [y0, y1])
+            sx, sy = X[r0:r1 + 1, c0:c1 + 1], Y[r0:r1 + 1, c0:c1 + 1]
+            if sx.size == 0:
+                continue
+            k_ = shapely.contains_xy(quad, sx, sy)
+            zp = 0.5 * (pe[i] + pe[i + 1])
+            blk = Z[r0:r1 + 1, c0:c1 + 1]
+            blk[k_] = np.minimum(blk[k_], zp)
     ZTER[:] = [Z]
     dentro_ = shapely.contains_xy(CONTORNO, X + LPASSO / 2, Y + LPASSO / 2)[:-1, :-1]
     usados = np.zeros(X.shape, bool)
@@ -1821,7 +2004,7 @@ def construir_terreno():
     faces = [list(p.vertices) for p in me2.polygons]
     cen = np.array([co[f].mean(0) for f in faces])
     em_plat = shapely.contains_xy(PLAT_UNIAO, cen[:, 0], cen[:, 1]) if PLAT_UNIAO is not None else np.zeros(len(faces), bool)
-    ingreme = (nrm[:, 2] < 0.64) & ~em_plat
+    ingreme = ((nrm[:, 2] < 0.64) | shapely.contains_xy(GULLY, cen[:, 0], cen[:, 1])) & ~em_plat
     for nome, sel, mat in (("Terreno", ~ingreme, "terreno"), ("Terreno_rocha", ingreme, "rocha")):
         fs = [faces[i] for i in np.nonzero(sel)[0]]
         usa = np.unique(np.concatenate(fs))
@@ -1907,6 +2090,9 @@ material("ocre", (1, 1, 1), 0.85, imagem("ocre", textura_reboco((0.91, 0.70, 0.2
 material("ocre_gasto", (1, 1, 1), 0.88, imagem("ocre_gasto", textura_reboco((0.89, 0.68, 0.27), semente=31, gasto=0.6)))
 material("terraco", (1, 1, 1), 0.9, imagem("terraco", textura_lajes() * np.array([0.92, 0.92, 0.93])))
 material("chao", (1, 1, 1), 0.95)
+_yy, _xx = np.mgrid[0:256, 0:256] / 256
+_f = fbm(_xx * 8, _yy * 8, 1.0, 77)
+material("relva", (1, 1, 1), 0.95, imagem("relva", np.stack([0.24 + 0.06 * _f, 0.38 + 0.08 * _f, 0.15 + 0.03 * _f], -1)))
 TEX_R, ALT_R = textura_rocha()
 material("rocha", (1, 1, 1), 0.92, imagem("rocha", TEX_R), normal=imagem("rocha_normal", normais(ALT_R, 3.0)), forca=1.2)
 TEX_TELHA, ALT_TELHA = textura_telha()
@@ -1937,14 +2123,15 @@ for p in PLAT["plataformas"]:
     plataforma(p, m)
 PLAT_UNIAO = shapely.union_all(PLAT_SHP + [shapely.Point(*FORTIM["c"]).buffer(FORTIM["r"] + 0.5)]) if PLAT_SHP else None
 _dentro_plat = shapely.contains_xy(PLAT_UNIAO, XG, YG)
+print("parapeitos e escarpas…")
+mq = Malha()
+n_merl, cands = parapeitos(mq)
 print("terreno…")
 construir_terreno()
 ob = m.objeto("Muralhas", "muralhas", MAT_PLAT, GRUPOS["Muralhas"], uv=None, recalc=False)
 uv_misto(ob, 4.0, planta=(CHAO_,))
 
-print("parapeitos e guaritas…")
-mq = Malha()
-n_merl, cands = parapeitos(mq)
+print("guaritas…")
 mq.objeto("Parapeitos", "muralhas", ["alvenaria", "ocre_gasto", "cantaria", "ocre"], GRUPOS["Muralhas"], uv=3.0)
 GUAR = escolher_guaritas(cands)
 mg = Malha()
@@ -1988,6 +2175,11 @@ for nm_ in ("terreno", "chao"):
     ti.extension = "EXTEND"
     mt.node_tree.links.new(ti.outputs["Color"], mt.node_tree.nodes["Principled BSDF"].inputs["Base Color"])
 # o terrapleno do fortim usa a mesma textura do chão (material "chao")
+
+print("relvados…")
+mr_ = Malha()
+relvados(mr_)
+obr = mr_.objeto("Relvados", "vegetacao", ["cal", "relva"], GRUPOS["Vegetacao"], uv=4.0)
 
 print("rochedos…")
 MV, MF, MC = [], [], []

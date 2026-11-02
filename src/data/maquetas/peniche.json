@@ -2,7 +2,7 @@
   "monumento": "peniche",
   "titulo": "Fortaleza de Peniche",
   "variante": "estado-atual",
-  "versao": "0.1 provisória",
+  "versao": "0.2 provisória",
   "data": "2026-11-02",
   "origem": {
     "lat": 39.353123,
@@ -36,12 +36,13 @@
   },
   "limitacoes": [
     "Não foi usada planta cotada. Os terraplenos e os edifícios são a classe 6 da nuvem de pontos, partidos pelos degraus do MDS e com o topo triangulado sobre o MDS de 50 cm (erro esperado de 0,5 a 1 m em planta e de 0,3 m na vertical). Por baixo deles o MDT é interpolado, por isso os panos que descem para o mar são tirados do relevo e não de uma medição da face.",
-    "Os parapeitos da costa vêm classificados como solo; foram traçados pelo relevo local do MDS (mais de 0,45 m acima da envolvente). A altura segue o LiDAR; os merlões ficam onde o LiDAR mostra dentes, espaçados a 3,2 m, e são amarelos junto ao mar e de pedra para o lado da vila, como nas fotografias. As canhoneiras e as banquetas não se modelam um a um.",
+    "Por baixo dos parapeitos da costa há uma escarpa de alvenaria em talude, do chão de dentro até ao pé medido 2 a 3,6 m para fora (no máximo 9 m); o terreno à frente desce ao pé do pano e, por baixo, fica a rocha. Os panos das plataformas foram endireitados (contorno simplificado a 0,75 m, coroamento filtrado ao longo do pano) e levam cordão de pedra quando passam de 3,5 m. Os parapeitos da costa vêm classificados como solo; foram traçados pelo relevo local do MDS (mais de 0,45 m acima da envolvente). A altura segue o LiDAR; os merlões ficam onde o LiDAR mostra dentes, espaçados a 3,2 m, e são amarelos junto ao mar e de pedra para o lado da vila, como nas fotografias. As canhoneiras e as banquetas não se modelam um a um.",
     "As guaritas ficam nos ângulos salientes com mais de 45° e desnível de mais de 5 m: saem 10, mais a da porta. A forma segue a fotografia de uma guarita; não se mediu cada uma.",
-    "O Fortim Redondo tem o raio, o terrapleno e o parapeito medidos no LiDAR; o portal (frontão triangular, cartela e armas), a sineira com varanda e o sino seguem as fotografias e a descrição do MNRL, com medidas aproximadas.",
-    "A ponte de quatro arcos, a porta com guarita e o túnel seguem a fotografia, com o tabuleiro e o vão medidos no LiDAR. Os vãos dos arcos são aproximados.",
+    "O Fortim Redondo tem o raio, o terrapleno, o pátio da frente e o parapeito medidos no LiDAR: o círculo do lado do mar, dois panos retos para a praça e a frente reta com o portal; o terrapleno só ocupa a parte sul e entre ele e a frente há um pátio à cota da praça. A altura da sineira passa um pouco a do MDS (o pináculo, fino, não aparece); o portal (frontão triangular, cartela e armas), a sineira com varanda e o sino seguem as fotografias e a descrição do MNRL, com medidas aproximadas.",
+    "A ponte de quatro arcos, a porta com guarita e o túnel seguem a fotografia, com o tabuleiro e o vão medidos no LiDAR. Os vãos dos arcos são aproximados. Debaixo da ponte o MDT é interpolado (o tabuleiro é classe 6): o chão foi rebaixado para os arcos ficarem abertos, e o fundo do fosso é rocha.",
     "Os pavilhões da prisão (o atual museu) e a torre branca têm a pegada e a altura medidas no MDS. As janelas, a platibanda e o topo amarelo são tipos lidos nas fotografias, não um levantamento de cada fachada. A capela de Santa Bárbara, as casamatas e os quartéis do lado da vila não são peças próprias.",
     "O mar é um plano a 0,4 m de altitude (nível médio), com o fundo rebaixado para dar a cor da água mais funda; a espuma marca a linha da costa. As marés, as ondas e os rochedos submersos não estão medidos; os rochedos à tona vêm da nuvem de pontos e têm forma esquemática.",
+    "Os relvados com lancil branco em frente do Fortim e ao longo da muralha da costa seguem as fotografias (na ortoimagem de junho de 2024 a relva está seca); a forma é aproximada.",
     "O casario da vila é feito de volumes simples a partir do OpenStreetMap, com a altura medida no MDS. O terreno é o MDT simplificado para 320 mil triângulos, com as arribas a textura de calcário em estratos. As árvores e as palmeiras estão nas posições medidas, com forma esquemática."
   ],
   "distancia": 700,
@@ -62,7 +63,7 @@
       "estado": "estado-atual",
       "confianca": "alta",
       "descricao": "Baluarte circular de muralha em talude caiada de amarelo-ocre, com cordão de pedra, parapeito com merlões e canhoneiras virado ao mar. Do lado de dentro, o portal setecentista de cantaria com frontão triangular, cartela com inscrição e armas, e por cima a sineira com varanda (2.ª metade do séc. XVIII).",
-      "medidas": "Raio 12.6 m; terrapleno à cota 17.1 m, parapeito a 18.5 m, sineira a 23.8 m.",
+      "medidas": "Raio 11.8 m; terrapleno à cota 17.1 m, parapeito a 18.5 m, sineira a 24.9 m.",
       "fontes": [
         "lidar",
         "mnrl",
@@ -70,9 +71,9 @@
       ],
       "resumo": "O baluarte redondo, o núcleo de 1557–1558",
       "ancora": [
-        -11.0,
+        -10.5,
         27.5,
-        57.5
+        59.0
       ]
     },
     {
@@ -140,7 +141,7 @@
       "estado": "estado-atual",
       "confianca": "média",
       "descricao": "Terraplenos e panos em talude da fortaleza abaluartada de 1642–1645, com parapeitos de merlões amarelos sobre a arriba do lado do mar e de alvenaria de pedra do lado da vila.",
-      "medidas": "53 troços de parapeito (1629 m) e 109 merlões.",
+      "medidas": "52 troços de parapeito (1596 m) e 99 merlões.",
       "fontes": [
         "lidar",
         "fotos"
@@ -178,7 +179,7 @@
       "estado": "estado-atual",
       "confianca": "média",
       "descricao": "O Atlântico à volta da ponta de Peniche, com a água turquesa nos baixios e mais escura no fundo, espuma junto à costa e os rochedos de calcário.",
-      "medidas": "Nível a 0.4 m; 315 rochedos.",
+      "medidas": "Nível a 0.4 m; 318 rochedos.",
       "fontes": [
         "lidar",
         "orto",
@@ -217,7 +218,7 @@
       "estado": "estado-atual",
       "confianca": "alta",
       "descricao": "Terreno do LiDAR com a cor da nuvem de pontos e as arribas de calcário em estratos.",
-      "medidas": "11.6 ha; 320 mil triângulos.",
+      "medidas": "11.6 ha; 319 mil triângulos.",
       "fontes": [
         "lidar",
         "orto"
