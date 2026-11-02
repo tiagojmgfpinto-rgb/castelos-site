@@ -1,0 +1,241 @@
+{
+  "monumento": "peniche",
+  "titulo": "Fortaleza de Peniche",
+  "variante": "estado-atual",
+  "versao": "0.1 provisória",
+  "data": "2026-11-02",
+  "origem": {
+    "lat": 39.353123,
+    "lon": -9.381143,
+    "nota": "Ponto central da fortaleza (PT-TM06 −107575, −34245). Eixos da maqueta: x para este, y para norte (no visor, -z é o norte), em metros à escala 1:1; as cotas são altitudes."
+  },
+  "fontes": {
+    "lidar": {
+      "titulo": "DGT, LiDAR 2024: MDT e MDS de 50 cm e nuvem de pontos classificada com cor, folha 092266 (CC BY 4.0). Terraplenos, parapeitos, merlões, cotas, alturas e pegadas medidas.",
+      "url": "https://cdd.dgterritorio.gov.pt"
+    },
+    "orto": {
+      "titulo": "Ortoimagem de 50 cm feita com a cor dos pontos do LiDAR 2024 da DGT (CC BY 4.0). Cor do chão, dos terraplenos e das arribas.",
+      "url": "https://cdd.dgterritorio.gov.pt"
+    },
+    "osm": {
+      "titulo": "OpenStreetMap (ODbL), via Overture Maps 2026-10-21.0: edifícios e ruas da envolvente",
+      "url": "https://www.openstreetmap.org/#map=18/39.3531/-9.3811"
+    },
+    "mnrl": {
+      "titulo": "Catarina Oliveira, «O Fortim do Redondo», Museu Nacional Resistência e Liberdade, 2020: planta circular, portal setecentista com frontão e cartela, sineira com varanda",
+      "url": "https://www.mnresistencialiberdade.gov.pt/wp-content/uploads/2020/08/4-O-Fortim-do-Redondo_Catarina-Oliveira26.08.2020.pdf"
+    },
+    "wikipedia": {
+      "titulo": "Wikipedia, «Peniche Fortress»: cronologia da construção, ampliação de 1642–1645 e prisão política",
+      "url": "https://en.wikipedia.org/wiki/Peniche_Fortress"
+    },
+    "fotos": {
+      "titulo": "Fotografias da fortaleza (vistas aéreas, ponte de arcos, Fortim Redondo, guarita, muralha costeira) fornecidas pelo autor do projeto como referência, novembro de 2026"
+    }
+  },
+  "limitacoes": [
+    "Não foi usada planta cotada. Os terraplenos e os edifícios são a classe 6 da nuvem de pontos, partidos pelos degraus do MDS e com o topo triangulado sobre o MDS de 50 cm (erro esperado de 0,5 a 1 m em planta e de 0,3 m na vertical). Por baixo deles o MDT é interpolado, por isso os panos que descem para o mar são tirados do relevo e não de uma medição da face.",
+    "Os parapeitos da costa vêm classificados como solo; foram traçados pelo relevo local do MDS (mais de 0,45 m acima da envolvente). A altura segue o LiDAR; os merlões ficam onde o LiDAR mostra dentes, espaçados a 3,2 m, e são amarelos junto ao mar e de pedra para o lado da vila, como nas fotografias. As canhoneiras e as banquetas não se modelam um a um.",
+    "As guaritas ficam nos ângulos salientes com mais de 45° e desnível de mais de 5 m: saem 10, mais a da porta. A forma segue a fotografia de uma guarita; não se mediu cada uma.",
+    "O Fortim Redondo tem o raio, o terrapleno e o parapeito medidos no LiDAR; o portal (frontão triangular, cartela e armas), a sineira com varanda e o sino seguem as fotografias e a descrição do MNRL, com medidas aproximadas.",
+    "A ponte de quatro arcos, a porta com guarita e o túnel seguem a fotografia, com o tabuleiro e o vão medidos no LiDAR. Os vãos dos arcos são aproximados.",
+    "Os pavilhões da prisão (o atual museu) e a torre branca têm a pegada e a altura medidas no MDS. As janelas, a platibanda e o topo amarelo são tipos lidos nas fotografias, não um levantamento de cada fachada. A capela de Santa Bárbara, as casamatas e os quartéis do lado da vila não são peças próprias.",
+    "O mar é um plano a 0,4 m de altitude (nível médio), com o fundo rebaixado para dar a cor da água mais funda; a espuma marca a linha da costa. As marés, as ondas e os rochedos submersos não estão medidos; os rochedos à tona vêm da nuvem de pontos e têm forma esquemática.",
+    "O casario da vila é feito de volumes simples a partir do OpenStreetMap, com a altura medida no MDS. O terreno é o MDT simplificado para 320 mil triângulos, com as arribas a textura de calcário em estratos. As árvores e as palmeiras estão nas posições medidas, com forma esquemática."
+  ],
+  "distancia": 700,
+  "placas": [
+    "fortim",
+    "ponte",
+    "porta",
+    "prisao",
+    "muralhas",
+    "guaritas",
+    "mar"
+  ],
+  "elementos": [
+    {
+      "id": "fortim",
+      "nome": "Fortim Redondo",
+      "grupo": "Fortificação",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Baluarte circular de muralha em talude caiada de amarelo-ocre, com cordão de pedra, parapeito com merlões e canhoneiras virado ao mar. Do lado de dentro, o portal setecentista de cantaria com frontão triangular, cartela com inscrição e armas, e por cima a sineira com varanda (2.ª metade do séc. XVIII).",
+      "medidas": "Raio 12.6 m; terrapleno à cota 17.1 m, parapeito a 18.5 m, sineira a 23.8 m.",
+      "fontes": [
+        "lidar",
+        "mnrl",
+        "fotos"
+      ],
+      "resumo": "O baluarte redondo, o núcleo de 1557–1558",
+      "ancora": [
+        -11.0,
+        27.5,
+        57.5
+      ]
+    },
+    {
+      "id": "ponte",
+      "nome": "Ponte de arcos",
+      "grupo": "Fortificação",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Ponte de quatro arcos de volta perfeita, caiada de amarelo, sobre o fosso de água do mar, que leva à porta da fortaleza do lado da vila.",
+      "medidas": "Comprimento 30.1 m; tabuleiro a 10.8 m; 4 arcos.",
+      "fontes": [
+        "lidar",
+        "fotos"
+      ],
+      "resumo": "Ponte amarela sobre o fosso de água do mar",
+      "ancora": [
+        64.1,
+        16.8,
+        -64.2
+      ]
+    },
+    {
+      "id": "porta",
+      "nome": "Porta da ponte",
+      "grupo": "Fortificação",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Porta em arco de pedra no topo da ponte, com uma guarita por cima, e o túnel que atravessa a muralha.",
+      "medidas": "Largura e altura aproximadas, a partir da fotografia.",
+      "fontes": [
+        "fotos",
+        "lidar"
+      ],
+      "resumo": "A entrada pela ponte, com guarita",
+      "ancora": [
+        61.6,
+        24.4,
+        -50.7
+      ]
+    },
+    {
+      "id": "prisao",
+      "nome": "Pavilhões da prisão e torre",
+      "grupo": "Edifícios",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Os pavilhões brancos da prisão política (1934–1974), hoje o Museu Nacional Resistência e Liberdade, com o topo sudeste pintado de amarelo e a torre branca a norte.",
+      "medidas": "Pegadas e alturas medidas no MDS de 50 cm; torre com c. 36 m de altitude no topo.",
+      "fontes": [
+        "lidar",
+        "fotos",
+        "wikipedia"
+      ],
+      "resumo": "A prisão política, hoje museu",
+      "ancora": [
+        5.0,
+        34.0,
+        -45.0
+      ]
+    },
+    {
+      "id": "muralhas",
+      "nome": "Muralhas e terraplenos",
+      "grupo": "Fortificação",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Terraplenos e panos em talude da fortaleza abaluartada de 1642–1645, com parapeitos de merlões amarelos sobre a arriba do lado do mar e de alvenaria de pedra do lado da vila.",
+      "medidas": "53 troços de parapeito (1629 m) e 109 merlões.",
+      "fontes": [
+        "lidar",
+        "fotos"
+      ],
+      "resumo": "Os panos e parapeitos sobre a arriba",
+      "ancora": [
+        -95.0,
+        30.0,
+        -22.0
+      ]
+    },
+    {
+      "id": "guaritas",
+      "nome": "Guaritas",
+      "grupo": "Fortificação",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Guaritas de pedra nos ângulos salientes, com mísula, corpo com seteiras e cúpula.",
+      "medidas": "10 nos salientes, mais a da porta.",
+      "fontes": [
+        "fotos",
+        "lidar"
+      ],
+      "resumo": "Guaritas de pedra nos salientes",
+      "ancora": [
+        -64.0,
+        27.5,
+        -18.5
+      ]
+    },
+    {
+      "id": "mar",
+      "nome": "Mar e rochedos",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "O Atlântico à volta da ponta de Peniche, com a água turquesa nos baixios e mais escura no fundo, espuma junto à costa e os rochedos de calcário.",
+      "medidas": "Nível a 0.4 m; 315 rochedos.",
+      "fontes": [
+        "lidar",
+        "orto",
+        "fotos"
+      ],
+      "resumo": "O mar que cerca a fortaleza",
+      "ancora": [
+        40.0,
+        6.0,
+        70.0
+      ]
+    },
+    {
+      "id": "vila",
+      "nome": "Vila de Peniche",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "baixa",
+      "descricao": "Casario da vila junto à fortaleza, em volumes simples.",
+      "medidas": "36 edifícios, alturas do MDS.",
+      "fontes": [
+        "osm",
+        "lidar"
+      ],
+      "resumo": "As casas da vila, em volumes simples",
+      "ancora": [
+        60.0,
+        24.0,
+        -125.0
+      ]
+    },
+    {
+      "id": "terreno",
+      "nome": "Terreno e arribas",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Terreno do LiDAR com a cor da nuvem de pontos e as arribas de calcário em estratos.",
+      "medidas": "11.6 ha; 320 mil triângulos.",
+      "fontes": [
+        "lidar",
+        "orto"
+      ],
+      "resumo": "O chão e as arribas medidos no LiDAR"
+    },
+    {
+      "id": "vegetacao",
+      "nome": "Vegetação",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Árvores e palmeiras nas posições medidas na nuvem de pontos.",
+      "medidas": "23 árvores e 4 palmeiras.",
+      "fontes": [
+        "lidar"
+      ],
+      "resumo": "Árvores e palmeiras"
+    }
+  ]
+}
