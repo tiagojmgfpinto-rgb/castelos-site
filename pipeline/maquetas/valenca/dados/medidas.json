@@ -1,0 +1,170 @@
+{
+ "escarpas": {
+  "panos": 88,
+  "comprimento": 7142.2,
+  "altura_p50": 7.3,
+  "altura_p90": 12.2,
+  "altura_max": 17.1
+ },
+ "guaritas": 37,
+ "terreno": {
+  "vertices": 152293,
+  "triangulos": 300000,
+  "area_ha": 30.8
+ },
+ "porta_coroada": {
+  "soleira": 73.4,
+  "topo_muralha": 80.4,
+  "altura_frontaria": 10.4,
+  "ponte": 0.0
+ },
+ "porta_revelim": {
+  "soleira": 71.4,
+  "topo_muralha": 76.2,
+  "altura_frontaria": 5.6,
+  "ponte": 0.0
+ },
+ "porta_revelim_fora": {
+  "soleira": 67.9,
+  "topo_muralha": 76.8,
+  "altura_frontaria": 5.2,
+  "ponte": 0.0
+ },
+ "porta_meio": {
+  "soleira": 70.9,
+  "topo_muralha": 77.4,
+  "altura_frontaria": 8.5,
+  "ponte": 0.0
+ },
+ "porta_meio_sul": {
+  "soleira": 70.5,
+  "topo_muralha": 77.9,
+  "altura_frontaria": 5.2,
+  "ponte": 0.0
+ },
+ "portas_sol": {
+  "soleira": 59.2,
+  "topo_muralha": 69.7,
+  "altura_frontaria": 8.5,
+  "ponte": 0.0
+ },
+ "portas_sol_dentro": {
+  "soleira": 62.9,
+  "topo_muralha": 69.6,
+  "altura_frontaria": 5.2,
+  "ponte": 0.0
+ },
+ "porta_gaviarra": {
+  "soleira": 44.5,
+  "topo_muralha": 48.3,
+  "altura_frontaria": 8.5,
+  "ponte": 0.0
+ },
+ "porta_gaviarra_dentro": {
+  "soleira": 54.9,
+  "topo_muralha": 62.5,
+  "altura_frontaria": 5.2,
+  "ponte": 0.0
+ },
+ "igreja_anjos": {
+  "faces": 2749
+ },
+ "igreja_misericordia": {
+  "faces": 2696
+ },
+ "igreja_estevao": {
+  "faces": 3159
+ },
+ "capela_bom_jesus": {
+  "faces": 909
+ },
+ "capela_encontro": {
+  "faces": 399
+ },
+ "vila": {
+  "edificios": 98,
+  "do_osm": 62,
+  "do_lidar": 36,
+  "medidos": 406,
+  "recusas": {
+   "fora": 319,
+   "evitar": 31,
+   "escarpa": 19
+  }
+ },
+ "vegetacao": {
+  "arvores": 665
+ },
+ "ancoras": {
+  "porta_coroada": [
+   -3.0,
+   84.4,
+   327.0
+  ],
+  "porta_revelim": [
+   0.3,
+   82.4,
+   377.4
+  ],
+  "porta_meio": [
+   79.2,
+   81.9,
+   60.0
+  ],
+  "portas_sol": [
+   154.2,
+   70.2,
+   34.6
+  ],
+  "porta_gaviarra": [
+   72.4,
+   55.5,
+   -318.2
+  ],
+  "igreja_anjos": [
+   18.2,
+   85.5,
+   -256.3
+  ],
+  "igreja_misericordia": [
+   4.8,
+   82.0,
+   -277.2
+  ],
+  "igreja_estevao": [
+   95.5,
+   92.0,
+   -145.4
+  ],
+  "capela_bom_jesus": [
+   16.0,
+   88.0,
+   207.6
+  ],
+  "capela_encontro": [
+   27.5,
+   82.0,
+   284.5
+  ],
+  "estatua": [
+   31.9,
+   80.5,
+   215.0
+  ],
+  "escarpas": [
+   -40.0,
+   87.5,
+   300.0
+  ],
+  "guaritas": [
+   11.6,
+   75.7,
+   407.7
+  ],
+  "vila": [
+   55.0,
+   84.1,
+   -200.0
+  ]
+ }
+}
