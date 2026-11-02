@@ -8,8 +8,8 @@
  },
  "guaritas": 24,
  "terreno": {
-  "vertices": 151370,
-  "triangulos": 300000,
+  "vertices": 151369,
+  "triangulos": 299999,
   "area_ha": 45.9
  },
  "passadico": 356.9,
@@ -60,10 +60,10 @@
   "faces": 364
  },
  "vila": {
-  "edificios": 480,
+  "edificios": 477,
   "do_osm": 428,
-  "do_lidar": 52,
-  "medidos": 965,
+  "do_lidar": 49,
+  "medidos": 957,
   "recusas": {
    "fora": 524,
    "evitar": 22,
