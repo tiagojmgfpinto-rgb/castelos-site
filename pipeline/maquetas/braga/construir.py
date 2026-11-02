@@ -44,7 +44,7 @@ CLS = LID["classe"]
 LXS = np.linspace(-MEIO_L, MEIO_L, MDT.shape[1])
 PT = np.load(AQUI / "dados" / "torre.npz")["pontos"]
 
-MEIO = 32.0  # a maqueta: quadrado de 64 m centrado na torre (envolvente mínima)
+MEIO = 22.0  # a maqueta: quadrado de 44 m centrado na torre (envolvente mínima, pedido do Tiago)
 rng = np.random.default_rng(1300)
 
 # ---------------------------------------------------------------- referencial da torre (medido no LiDAR)
@@ -311,25 +311,25 @@ def normais(alt, forca):
 
 
 def textura_cantaria_torre(n=1024, metros=6.0, semente=1300, fiada=(0.30, 0.48), comp=(0.55, 1.6), liquen=0.80, tinta=(1.0, 1.0, 1.0)):
-    """Cantaria da torre (6 m por repetição), medida nas fotografias: aparelho em fiadas horizontais de
-    0,30 a 0,48 m (média 0,38 m, pela periodicidade das juntas na fotografia da face sul), silhares de 0,55
-    a 1,6 m de comprido, bem esquadriados, com juntas finas (1 a 2 cm) e as arestas gastas. Granito
-    cinzento-bege (mediana 149/137/117 na fotografia ao sol), com silhares rosados e cor de mel espalhados,
-    alguns cinzentos escuros, líquenes claros e manchas de humidade. Devolve a cor e o relevo."""
+    """Cantaria de granito da torre (6 m por repetição), medida nas fotografias: aparelho em fiadas
+    horizontais de 0,30 a 0,48 m (média 0,38 m, pela periodicidade das juntas na fotografia da face sul),
+    silhares de 0,55 a 1,6 m, bem esquadriados, com juntas finas e as arestas gastas.
+    Granito cinzento do Minho, de grão médio: a cor de fundo é um cinzento ligeiramente quente (mediana
+    149/137/117 nas fotografias ao sol, que inclui as manchas de óxido); a diferença entre silhares é pequena
+    (cinzento mais claro ou mais escuro, alguns tingidos de ocre pelo óxido de ferro, raros rosados) e o
+    grão vê-se de perto: pintas escuras de biotite e claras de feldspato. Escorrências verticais escuras e
+    líquenes claros. Devolve a cor e o relevo."""
     r = np.random.default_rng(semente)
     m_px = n / metros
     paleta = np.array([
-        (0.62, 0.57, 0.49),  # bege acinzentado (a maioria)
-        (0.70, 0.64, 0.54),  # bege claro
-        (0.55, 0.53, 0.49),  # cinzento
-        (0.44, 0.42, 0.39),  # cinzento escuro, gasto
-        (0.68, 0.53, 0.46),  # rosado
-        (0.64, 0.48, 0.42),  # rosado escuro
-        (0.70, 0.58, 0.43),  # cor de mel
+        (0.585, 0.555, 0.505),  # cinzento do granito, quente (a maioria)
+        (0.645, 0.615, 0.560),  # cinzento claro
+        (0.480, 0.460, 0.425),  # cinzento escuro, gasto e sujo
+        (0.610, 0.555, 0.470),  # tingido de ocre (óxido de ferro)
+        (0.570, 0.500, 0.415),  # ocre-acastanhado
+        (0.600, 0.540, 0.500),  # rosado ténue
     ])
-    prob = np.array([0.38, 0.17, 0.20, 0.08, 0.08, 0.03, 0.06])
-    tex = np.zeros((n, n, 3))
-    alt = np.zeros((n, n))
+    prob = np.array([0.42, 0.16, 0.18, 0.15, 0.05, 0.04])
     cel = np.zeros((n, n), int)
     cores = []
     y = 0.0
@@ -347,41 +347,46 @@ def textura_cantaria_torre(n=1024, metros=6.0, semente=1300, fiada=(0.30, 0.48),
                 wf = r.uniform(0.35, 0.5) * m_px
             xs = (np.arange(int(round(x)), int(round(x + wf)))) % n
             cel[y0:y1, xs] = k
-            cores.append(paleta[r.choice(len(paleta), p=prob)] * r.uniform(0.78, 1.16))  # silhares de tons bem diferentes
+            cores.append(paleta[r.choice(len(paleta), p=prob)] * r.uniform(0.85, 1.12))
             k += 1
             x += wf
         y += hf
     cores = np.array(cores)
-    cores = cores * 0.75 + np.array([0.60, 0.54, 0.46]) * 0.25  # medido: mediana 142-150/122-138/113-120, desvio c. 35  # o granito é baço: as cores dos silhares são suaves
-    tex = cores[cel]
-    # juntas: onde a célula muda (com um pouco de irregularidade nas arestas)
     yy, xx = np.mgrid[0:n, 0:n]
-    wx = ((fbm(xx, yy, 0.2 * m_px, semente + 3) - 0.5) * 0.05 * m_px).astype(int)
-    wy = ((fbm(xx, yy, 0.2 * m_px, semente + 4) - 0.5) * 0.04 * m_px).astype(int)
+    wx = ((fbm(xx, yy, 0.2 * m_px, semente + 3) - 0.5) * 0.04 * m_px).astype(int)
+    wy = ((fbm(xx, yy, 0.2 * m_px, semente + 4) - 0.5) * 0.03 * m_px).astype(int)
     celw = cel[(yy + wy) % n, (xx + wx) % n]
     tex = cores[celw]
     borda = np.zeros((n, n), bool)
     for dy, dx in ((0, 1), (1, 0), (0, -1), (-1, 0)):
         borda |= celw != np.roll(np.roll(celw, dy, 0), dx, 1)
     dist = ndi.distance_transform_edt(~borda) / m_px  # metros até à junta
-    junta = dist < 0.006
-    gasto = np.clip(dist / 0.05, 0, 1)  # arestas arredondadas, gastas
+    junta = dist < 0.005
+    gasto = np.clip(dist / 0.04, 0, 1)  # arestas arredondadas, gastas
     alt = np.sqrt(gasto) * (~junta)
-    tex = tex * (0.80 + 0.20 * alt[..., None])
-    tex = np.where(junta[..., None], np.array([0.36, 0.33, 0.30]), tex)
-    # manchas dentro de cada silhar e grão do granito
-    tex = tex * (0.86 + 0.26 * fbm(xx, yy, 0.35 * m_px, semente + 5))[..., None]
-    pint = ndi.gaussian_filter(r.random((n, n)), 0.7, mode="wrap")
-    pint = (pint - pint.mean()) / pint.std()
-    tex = tex * (1 + 0.06 * pint[..., None])
-    tex = np.where((pint < -2.4)[..., None], tex * 0.7, tex)
-    tex = np.where((pint > 2.2)[..., None], tex * 0.7 + 0.25, tex)
-    # líquenes claros e manchas escuras de humidade, de vez em quando
+    tex = tex * (0.88 + 0.12 * alt[..., None])
+    # juntas: argamassa cinzenta, pouco contrastada (no granito as juntas quase não se notam ao longe)
+    tex = np.where(junta[..., None], tex * 0.62 + np.array([0.40, 0.39, 0.37]) * 0.38, tex)
+    # manchas suaves dentro de cada silhar
+    tex = tex * (0.92 + 0.16 * fbm(xx, yy, 0.30 * m_px, semente + 5))[..., None]
+    # grão do granito: pintas escuras (biotite) e claras (feldspato, quartzo), de 1 a 2 píxeis (6 a 12 mm)
+    g1 = ndi.gaussian_filter(r.random((n, n)), 0.6, mode="wrap")
+    g1 = (g1 - g1.mean()) / g1.std()
+    g2 = r.random((n, n))
+    tex = tex * (1 + 0.05 * g1[..., None])
+    tex = np.where((g2 < 0.045)[..., None], tex * 0.62, tex)
+    tex = np.where((g2 > 0.93)[..., None], tex * 0.80 + 0.17, tex)
+    # óxido: manchas ocre que passam de um silhar a outro
+    ox = np.clip((fbm(xx, yy, 0.6 * m_px, semente + 8) - 0.58) * 3.0, 0, 1)[..., None]
+    tex = tex * (1 - 0.30 * ox) + np.array([0.60, 0.50, 0.38]) * 0.30 * ox
+    # escorrências verticais escuras (água da chuva), esticadas na vertical
+    esc = fbm(xx * 6.0, yy * 0.25, 0.9 * m_px, semente + 9)
+    esc = np.clip((esc - 0.55) * 2.2, 0, 1)[..., None]
+    tex = tex * (1 - 0.20 * esc)
+    # líquenes claros, de vez em quando
     liq = fbm(xx, yy, 0.25 * m_px, semente + 6)
-    tex = np.where((liq > liquen)[..., None], tex * 0.55 + np.array([0.80, 0.80, 0.74]) * 0.45, tex)
-    hum = np.clip((fbm(xx, yy, 1.2 * m_px, semente + 7) - 0.55) * 2.5, 0, 1)[..., None]
-    tex = tex * (1 - 0.22 * hum)
-    return np.clip(tex * np.array(tinta), 0, 1), ndi.gaussian_filter(alt, 0.8) + 0.08 * pint
+    tex = np.where((liq > liquen)[..., None], tex * 0.60 + np.array([0.78, 0.78, 0.73]) * 0.40, tex)
+    return np.clip(tex * np.array(tinta), 0, 1), ndi.gaussian_filter(alt, 0.8) + 0.05 * g1
 
 
 def textura_telha(n=256, metros=2.0):
@@ -435,14 +440,14 @@ for g in ["Terreno", "Torre", "Envolvente", "Vegetacao"]:
     e.parent = RAIZ_OB
     GRUPOS[g] = e
 
-TEX_T, ALT_T = textura_cantaria_torre()
+TEX_T, ALT_T = textura_cantaria_torre(tinta=(1.03, 1.0, 0.95))
 material("cantaria", (1, 1, 1), 0.9, imagem("cantaria", TEX_T), normal=imagem("cantaria_normal", normais(ALT_T, 3.0)),
          forca=0.8, escala=0.5, vcor=True)
 # a escada: silhares maiores (fiadas de c. 0,5 m), granito mais claro e cinzento, com mais líquenes (fotografias)
-TEX_E, ALT_E = textura_cantaria_torre(semente=1400, fiada=(0.42, 0.58), comp=(0.7, 1.5), liquen=0.70, tinta=(1.04, 1.06, 1.10))
+TEX_E, ALT_E = textura_cantaria_torre(semente=1400, fiada=(0.42, 0.58), comp=(0.7, 1.5), liquen=0.70, tinta=(1.04, 1.04, 1.05))
 material("cantaria_escada", (1, 1, 1), 0.9, imagem("cantaria_escada", TEX_E), normal=imagem("cantaria_escada_normal", normais(ALT_E, 3.0)),
          forca=0.8, escala=0.5, vcor=True)
-material("cantaria_lisa", (0.62, 0.59, 0.52), 0.85)
+material("cantaria_lisa", (0.60, 0.585, 0.55), 0.85)
 material("sombra", (0.07, 0.065, 0.06), 1.0)
 material("vitral", (1, 1, 1), 0.3, imagem("vitral", textura_vitral()))
 material("madeira", (0.24, 0.16, 0.10), 0.8)
@@ -451,15 +456,13 @@ material("ferro", (0.13, 0.13, 0.14), 0.45)
 TEX_TELHA, ALT_TELHA = textura_telha()
 material("telha", (1, 1, 1), 0.8, imagem("telha", TEX_TELHA * np.array([0.74, 0.42, 0.28])),
          normal=imagem("telha_normal", normais(ALT_TELHA, 2.0)), forca=0.6)
-material("telha_viz", (1, 1, 1), 0.85, imagem("telha_v", TEX_TELHA * np.array([0.72, 0.44, 0.32])),
-         normal=imagem("telha_v_normal", normais(ALT_TELHA, 2.0)), forca=0.5)
 TEX_CUB, ALT_CUB = textura_cubos()
 material("cubos", (1, 1, 1), 0.92, imagem("cubos", TEX_CUB), normal=imagem("cubos_normal", normais(ALT_CUB, 1.5)), forca=0.5)
 material("lajes", (0.66, 0.64, 0.60), 0.9)
+material("granito_padrao", (0.66, 0.65, 0.61), 0.8)
 material("asfalto", (0.30, 0.30, 0.31), 0.95)
-material("cal", (0.92, 0.91, 0.87), 0.85)
-material("creme", (0.90, 0.84, 0.70), 0.85)
-material("granito_viz", (0.62, 0.60, 0.56), 0.9)
+# casas vizinhas: um só cinzento claro, sem cor nem textura, para o destaque ficar todo na torre
+material("cinza_viz", (0.74, 0.74, 0.73), 0.9)
 material("base", (0.33, 0.26, 0.20), 0.95)
 material("arvore", (1, 1, 1), 0.9, None, vcor=True)
 
@@ -974,7 +977,7 @@ def construir_envolvente():
     quad_ = shapely.box(-MEIO + 0.3, -MEIO + 0.3, MEIO - 0.3, MEIO - 0.3)
     torre_pl = shapely.Polygon([W(-A - 1.5, -B - 1.5), W(E_U2 + 0.3, -B - 1.5), W(E_U2 + 0.3, B + 1.5), W(-A - 1.5, B + 1.5)])
     m = Malha()
-    mats = ["cal", "creme", "granito_viz", "telha_viz"]
+    mats = ["cinza_viz"]
     n = 0
     for f in F["edificios"]:
         g = shapely.geometry.shape(f["geometria"])
@@ -1011,13 +1014,13 @@ def construir_envolvente():
             base = np.array(p.exterior.coords)[:-1]
             if shapely.Polygon(base).exterior.is_ccw is False:
                 base = base[::-1]
-            cor = mats.index(["cal", "cal", "cal", "creme", "granito_viz"][n % 5])
+            cor = 0
             m.prisma(base, chao - 0.5, cornija, cor, topo=False)
             # telhado: recuo da planta até ao cume (águas a c. 28°)
             rec = (cume - cornija) / math.tan(math.radians(28))
             top = p.buffer(-rec, join_style="mitre")
             if top.is_empty or top.geom_type != "Polygon" or rec < 0.3:
-                m.face([(*q, cornija) for q in base], mats.index("telha_viz"))
+                m.face([(*q, cornija) for q in base], 0)
             else:
                 # águas: liga cada vértice ao ponto mais próximo do contorno recuado
                 tb = np.array(top.exterior.coords)[:-1]
@@ -1035,8 +1038,8 @@ def construir_envolvente():
                         seq.append(k)
                     if len(seq) > len(tb):
                         seq = [ja, jb]
-                    m.face([(*a, cornija), (*b, cornija)] + [(*tb[s], cume) for s in seq[::-1]], mats.index("telha_viz"))
-                m.face([(*q, cume) for q in tb], mats.index("telha_viz"))
+                    m.face([(*a, cornija), (*b, cornija)] + [(*tb[s], cume) for s in seq[::-1]], 0)
+                m.face([(*q, cume) for q in tb], 0)
             n += 1
     print("casas", n)
     return m.objeto("envolvente", "envolvente", mats, GRUPOS["Envolvente"], uv=2.0)
@@ -1064,6 +1067,8 @@ def construir_arvores():
             continue
         zt, zc = MDT[r, c], MDS[r, c]
         alt = zc - zt
+        if abs(np.array([x, y]) @ EU) < A + 2.5 and abs(np.array([x, y]) @ EV) < B + 2.5:
+            continue  # pontos do alto da torre classificados como vegetação: não é árvore
         rad = float(np.clip(np.sqrt(veg[max(r - 12, 0):r + 13, max(c - 12, 0):c + 13].sum() * 0.25 / math.pi), 1.5, 6.0))
         for (dx, dy, dz, s) in ((0, 0, -0.35, 1.0), (0.4, 0.2, -0.5, 0.7), (-0.35, -0.3, -0.55, 0.7), (0.1, -0.4, -0.3, 0.6)):
             b = len(V)
@@ -1098,6 +1103,39 @@ def construir_arvores():
     ob.parent = GRUPOS["Vegetacao"]
 
 
+# Padrão em coluna junto à face norte (fotografia de 2006 da face norte; LiDAR): pedestal baixo quadrado,
+# fuste cilíndrico de granito liso, bloco cúbico em cima e cruz de ferro de braços abertos. Fica 1,1 m a poente
+# do cunhal noroeste e 1,4 m à frente da face norte (cinco pontos do LiDAR a 193,4 m, 2,1 m acima do chão, que
+# são o topo do bloco). As proporções vêm da fotografia, à escala dessa altura: c. 2,5 m até ao alto da cruz.
+PAD_U, PAD_V = -6.1, 6.4
+
+
+def padrao():
+    m = Malha()
+    mats = ["granito_padrao", "ferro"]
+    c = W(PAD_U, PAD_V)
+    z0 = float(cota(c[0], c[1]))
+    u, v = PAD_U, PAD_V
+    z = z0 - 0.15
+    m.caixa_uv(u - 0.36, u + 0.36, v - 0.36, v + 0.36, z, z0 + 0.13, 0)          # pedestal
+    m.caixa_uv(u - 0.20, u + 0.20, v - 0.20, v + 0.20, z0 + 0.13, z0 + 0.19, 0)  # plinto do fuste
+    m.cilindro(c, 0.135, z0 + 0.19, z0 + 0.25, 0, k=16, r1=0.115)               # base moldada
+    m.cilindro(c, 0.110, z0 + 0.25, z0 + 1.63, 0, k=16, r1=0.100)               # fuste, um pouco afunilado
+    m.cilindro(c, 0.100, z0 + 1.63, z0 + 1.69, 0, k=16, r1=0.135)               # colarinho
+    m.caixa_uv(u - 0.17, u + 0.17, v - 0.17, v + 0.17, z0 + 1.69, z0 + 2.06, 0)  # bloco cúbico
+    m.caixa_uv(u - 0.19, u + 0.19, v - 0.19, v + 0.19, z0 + 2.06, z0 + 2.11, 0)  # laje de remate
+    # cruz de ferro de braços abertos, no plano paralelo à face norte (de frente para quem vem do largo)
+    zc0, zc1 = z0 + 2.11, z0 + 2.47
+    m.caixa_uv(u - 0.018, u + 0.018, v - 0.012, v + 0.012, zc0, zc1, 1)
+    za = zc0 + 0.23
+    m.caixa_uv(u - 0.11, u + 0.11, v - 0.012, v + 0.012, za - 0.018, za + 0.018, 1)
+    for su in (-1, 1):  # pontas alargadas dos braços
+        m.caixa_uv(u + su * 0.11 - 0.015, u + su * 0.11 + 0.015, v - 0.012, v + 0.012, za - 0.045, za + 0.045, 1)
+    m.caixa_uv(u - 0.045, u + 0.045, v - 0.012, v + 0.012, zc1 - 0.03, zc1, 1)
+    m.caixa_uv(u - 0.045, u + 0.045, v - 0.012, v + 0.012, zc0, zc0 + 0.03, 1)
+    return m.objeto("padrao", "padrao", mats, GRUPOS["Torre"], uv=1.0)
+
+
 # ---------------------------------------------------------------- construção
 
 print("terreno…")
@@ -1105,6 +1143,7 @@ construir_terreno(None)
 print("torre…")
 torre()
 escada()
+padrao()
 print("envolvente…")
 construir_envolvente()
 construir_arvores()
@@ -1132,9 +1171,10 @@ def _olhar(u, v, up=0.35):
 
 MEDIDAS["ancoras"] = {"torre": _anc(0, 0, 219.5), "balcoes": _anc(-A - 0.3, -B - 0.3, 217.6),
                       "janela_geminada": _anc(GEM_S, -B - 0.3, 213.6), "porta": _anc(A + 0.6, -1.15, 200.8),
-                      "escada": _anc(3.0, -B - 0.7, 196.0)}
+                      "escada": _anc(3.0, -B - 0.7, 196.0),
+                      "padrao": _anc(PAD_U, PAD_V, CHAO + 2.9)}
 MEDIDAS["olhar"] = {"janela_geminada": _olhar(0, -1), "porta": _olhar(1, -0.25), "escada": _olhar(0.3, -1, 0.5),
-                    "balcoes": _olhar(-0.7, -0.7, 0.3)}
+                    "balcoes": _olhar(-0.7, -0.7, 0.3), "padrao": _olhar(-0.2, 1, 0.25)}
 (AQUI / "dados" / "medidas.json").write_text(json.dumps(MEDIDAS, ensure_ascii=False, indent=1))
 print(MEDIDAS)
 
@@ -1239,7 +1279,7 @@ if "--vistas" in sys.argv:
         return tuple(d_ * ult)
 
     # capa: do lado da praça (sudeste), do alto, como o visor abre
-    vista("capa", (30, -62), 236, (0.8, -1.0), 204, lente=50, res=(1280, 800), destino=SAIDA / "capa.jpg")
+    vista("capa", (26, -48), 246, (0.8, -1.0), 203.5, lente=42, res=(1280, 800), destino=SAIDA / "capa.jpg")
     if "--capa" not in sys.argv:
         # fotografia 3 (face sul de frente, ao fundo da rua)
         vista("f3_sul", livre((-0.02, -1), 45), CHAO + 1.6, (-0.3, 0), 204, lente=30, res=(700, 1050))
@@ -1248,7 +1288,7 @@ if "--vistas" in sys.argv:
         # fotografia 2 (da praça a sudeste, grande angular, com a escada à direita)
         vista("f2_sudeste", livre((0.25, -1), 16), CHAO + 1.6, (0.5, -2), 201, lente=14, res=(1234, 823), perto=0.5)
         # fotografia 4 (face norte, do largo)
-        vista("f4_norte", livre((0.05, 1), 34), CHAO + 1.6, (0.8, 0), 203, lente=24, res=(700, 820), perto=0.5)
+        vista("f4_norte", livre((0.05, 1), 20), CHAO + 1.6, (0.8, 0), 203, lente=24, res=(700, 820), perto=0.5)
         # fotografia 5 (a escada, do pé do portão)
         vista("f5_escada", (-0.6, -5.7), CHAO + 1.5, (5.5, -5.3), CHAO + 2.6, lente=24, perto=0.1)
         vista("nascente", (40, -6), 226, (0, -1), 204, lente=35, res=(900, 1000), perto=1)
@@ -1258,6 +1298,7 @@ if "--vistas" in sys.argv:
         vista("porta", (8.6, -3.5), 198.6, (5.2, -1.4), 198.8, lente=22, perto=0.3)
         vista("aereo", (-25, -45), 245, (0, 0), 204, lente=40, res=(1200, 900))
         vista("geminada", (GEM_S + 2.5, -16), 207, (GEM_S, -5.0), 212.6, lente=85, perto=1)
+        vista("padrao", (PAD_U - 1.5, PAD_V + 5.5), CHAO + 1.7, (PAD_U, PAD_V), CHAO + 1.6, lente=35, perto=0.2)
         vista("canto", (-9, -9), 222, (-5.2, -5.0), 215.5, lente=40, perto=1)
         # fotografia 3 de longe, com teleobjetiva (a perspetiva quase não fecha a torre); corta as casas da rua
         vista("f3_longe", (-0.3, -85), CHAO + 1.6, (-0.3, 0), 204.5, lente=70, res=(700, 1050), sem_casas=True)
