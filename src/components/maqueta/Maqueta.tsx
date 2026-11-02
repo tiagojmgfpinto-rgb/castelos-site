@@ -503,6 +503,8 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, c
   // A caixa das sombras cobre a área toda da maqueta
   const sol = area.getCenter(new THREE.Vector3());
   const meiaSombra = Math.max(area.max.x - area.min.x, area.max.z - area.min.z) / 2 + 5;
+  // maquetas grandes (a praça-forte de Valença tem quase 1 km) pedem um mapa de sombras maior
+  const mapaSombra = meiaSombra > 300 ? 4096 : 2048;
 
   return (
     <>
@@ -511,13 +513,13 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, c
         position={[sol.x - 160, centro.y + 220, sol.z - 140]}
         intensity={2.4}
         castShadow
-        shadow-mapSize={[2048, 2048]}
+        shadow-mapSize={[mapaSombra, mapaSombra]}
         shadow-camera-left={-meiaSombra}
         shadow-camera-right={meiaSombra}
         shadow-camera-top={meiaSombra}
         shadow-camera-bottom={-meiaSombra}
         shadow-camera-near={10}
-        shadow-camera-far={700}
+        shadow-camera-far={Math.max(700, 400 + 2 * meiaSombra)}
         shadow-bias={-0.0004}
         shadow-normalBias={0.6}
       >
@@ -531,7 +533,7 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, c
         enableDamping
         dampingFactor={0.08}
         minDistance={22}
-        maxDistance={560}
+        maxDistance={Math.max(560, distancia * 1.5)}
         minPolarAngle={0.08}
         maxPolarAngle={1.36}
         zoomSpeed={0.9}
