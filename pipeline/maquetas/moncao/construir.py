@@ -78,6 +78,11 @@ LXS = np.linspace(-float(LID["meiox"]), float(LID["meiox"]), MDT.shape[1])
 LYS = np.linspace(-float(LID["meioy"]), float(LID["meioy"]), MDT.shape[0])
 
 
+# tendas da feira junto ao rio (a nascente da vila): estão no ortofotomapa de 2023 e no LiDAR de 2025, mas são
+# provisórias; não entram nem como casas, nem como terrapleno, nem na cor do chão (o Tiago confirmou)
+FEIRA = shapely.Polygon([(222, 82), (332, 82), (332, 148), (222, 148)])
+
+
 def _terraplenos():
     """Em Monção os terraplenos de vários baluartes (o da Porta do Rosal, o da frente norte) vêm na classe 6
     ou 1 da nuvem de pontos e o MDT da DGT passa por baixo deles, à cota da rua. Onde a superfície sem
@@ -96,6 +101,7 @@ def _terraplenos():
             if q.is_valid:
                 pl.append(q.buffer(0.8))
     pl += [shapely.Polygon(c["planta"]).buffer(0.8) for c in json.loads((AQUI / "dados" / "casas.json").read_text())]
+    pl.append(FEIRA)
     X, Y = np.meshgrid(LXS, LYS)
     casa = shapely.contains_xy(shapely.union_all(pl), X, Y)
     alto = (sup - MDT > 0.5) & ~casa
@@ -976,6 +982,18 @@ def textura_terreno(k=2):
     sem_pontos = ((CLS == 0) & ~AGUA)[:-1, :-1][::-1]
     tc |= ndi.zoom(sem_pontos.astype(np.uint8), k, order=0).astype(bool)
     tc = ndi.binary_closing(tc, iterations=1) | tc
+    # as tendas brancas da feira: o branco (e a sua sombra) passa a ser o chão à volta
+    Xp, Yp = np.meshgrid(LXS[0] + (np.arange(W) + 0.5) / k * LPASSO, LYS[-1] - (np.arange(H) + 0.5) / k * LPASSO)
+    na_feira = shapely.contains_xy(FEIRA, Xp, Yp)
+    # (fica só a mata das bordas: verde-escuro)
+    mata = ((img[..., 1] - (img[..., 0] + img[..., 2]) / 2) > 0.02) & (img.mean(-1) < 0.33)
+    mata = ndi.binary_opening(mata, iterations=3)
+    borda = shapely.contains_xy(FEIRA.buffer(-6.0), Xp, Yp)
+    tenda = na_feira & ~(mata & ~borda)
+    tc |= tenda
+    # chão aberto à volta do recinto (nem mata, nem casas, nem tendas): a cor do terreiro
+    perto = shapely.contains_xy(FEIRA.buffer(35.0), Xp, Yp) & ~na_feira & ~tc & ~mata
+    cor_feira = np.median(img[perto], 0)
     bom = (~tc).astype(float)
     out = img.copy()
     falta = tc.copy()
@@ -993,6 +1011,11 @@ def textura_terreno(k=2):
         ok = (den[..., 0] > 0.003) & falta
         out[ok] = (num / np.maximum(den, 1e-6))[ok]
         falta &= ~ok
+    # o recinto da feira sem as tendas: terreiro de terra e erva rala, com manchas
+    yy_, xx_ = np.nonzero(tenda)
+    d_ = np.clip(ndi.distance_transform_edt(tenda)[tenda] / 24.0, 0, 1)[:, None]  # a cor da borda esbate-se
+    out[tenda] = out[tenda] * (1 - d_) + cor_feira * d_
+    out[tenda] *= (1 + 0.18 * (fbm(xx_, yy_, 40.0, 58) - 0.5) + 0.08 * (fbm(xx_, yy_, 6.0, 59) - 0.5))[:, None]
     g_ = ndi.gaussian_filter(np.random.default_rng(56).random((H, W)), 0.7)
     out[tc] *= (1 + 0.08 * (g_[tc] - g_.mean()) / g_.std())[:, None]
     # sombras dos prédios e dos muros (a imagem é de manhã): levantam-se até metade do caminho para a luz
@@ -2703,6 +2726,8 @@ for c_ in json.loads((AQUI / "dados" / "casas.json").read_text()):
     poly = np.array(c_["planta"], float)
     if area(poly) < 0:
         poly = poly[::-1]
+    if FEIRA.contains(shapely.Point(poly.mean(0))):
+        continue  # tendas da feira
     if not livre(poly):
         continue
     for pp in partir(poly):
