@@ -2,7 +2,7 @@
  "escarpas": {
   "panos": 88,
   "comprimento": 7142.2,
-  "altura_p50": 7.3,
+  "altura_p50": 7.4,
   "altura_p90": 12.2,
   "altura_max": 17.1
  },
@@ -37,9 +37,9 @@
   "ponte": 0.0
  },
  "porta_meio_sul": {
-  "soleira": 70.5,
-  "topo_muralha": 77.9,
-  "altura_frontaria": 5.2,
+  "soleira": 71.8,
+  "topo_muralha": 77.6,
+  "altura_frontaria": 7.4,
   "ponte": 0.0
  },
  "portas_sol": {
@@ -55,7 +55,7 @@
   "ponte": 0.0
  },
  "porta_gaviarra": {
-  "soleira": 44.5,
+  "soleira": 44.3,
   "topo_muralha": 48.3,
   "altura_frontaria": 8.5,
   "ponte": 0.0
@@ -73,22 +73,22 @@
   "faces": 2696
  },
  "igreja_estevao": {
-  "faces": 3159
+  "faces": 3248
  },
  "capela_bom_jesus": {
-  "faces": 909
+  "faces": 1342
  },
  "capela_encontro": {
   "faces": 399
  },
  "vila": {
-  "edificios": 98,
-  "do_osm": 62,
+  "edificios": 99,
+  "do_osm": 63,
   "do_lidar": 36,
-  "medidos": 406,
+  "medidos": 410,
   "recusas": {
    "fora": 319,
-   "evitar": 31,
+   "evitar": 29,
    "escarpa": 19
   }
  },
@@ -117,9 +117,9 @@
    34.6
   ],
   "porta_gaviarra": [
-   72.4,
-   55.5,
-   -318.2
+   73.6,
+   55.3,
+   -319.0
   ],
   "igreja_anjos": [
    18.2,
@@ -132,9 +132,9 @@
    -277.2
   ],
   "igreja_estevao": [
-   95.5,
+   93.2,
    92.0,
-   -145.4
+   -145.5
   ],
   "capela_bom_jesus": [
    16.0,
