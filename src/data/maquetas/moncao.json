@@ -38,7 +38,7 @@
     "A Igreja Matriz e a Igreja da Misericórdia têm pegada, cumeeira e torre medidas no MDS; as fachadas seguem as fotografias, com medidas aproximadas. A fachada da Misericórdia está virada a norte, para o largo, como no ortofotomapa e no Street View. As outras igrejas e capelas da vila entram como casas.",
     "A ponte pedonal da EN202 tem o tabuleiro e o vão medidos no MDS; a estrutura metálica e as silhuetas de castelo no guarda-corpo seguem a fotografia.",
     "O rio Minho é um plano a 3,0 m de altitude onde o LiDAR não tem pontos, com o fundo rebaixado para dar a cor da água funda; as ilhas de areia vêm do MDT. O nível muda com a maré e as cheias.",
-    "O casario é feito de volumes simples a partir do OpenStreetMap e do LiDAR, com a altura medida no MDS. O terreno é o MDT simplificado para 300 mil triângulos. As árvores estão nas posições medidas, com forma esquemática."
+    "O casario é feito de volumes simples a partir do OpenStreetMap e do LiDAR, com a altura medida no MDS. O terreno é o MDT simplificado para 300 mil triângulos. As árvores estão nas posições medidas, com forma esquemática. O chão é a ortoimagem do LiDAR a 25 cm com os pavimentos por cima: as ruas do OSM com a largura da classe, em asfalto ou em granito conforme a cor de cada troço na ortoimagem (o asfalto sai neutro, o granito bege); os largos abertos da vila em cubos de granito, como no Street View; as ruas pedonais em lajeado; a relva onde a ortoimagem é verde ou nos jardins do OSM. Os passeios e as passadeiras não se desenham."
   ],
   "distancia": 1000,
   "placas": [
