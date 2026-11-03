@@ -53,7 +53,7 @@
   ],
   "cume_nave": 390.5,
   "cornija": 386.2,
-  "frontao": 391.7,
+  "frontao": 390.7,
   "cruz": 393.0,
   "capela_mor": [
    9.7,
@@ -65,13 +65,9 @@
  },
  "terreno": {
   "m2": {
-   "erva": 9450,
-   "relva": 1574,
-   "rocha_t": 5419,
-   "terra": 102,
-   "asfalto": 731,
-   "calcada": 0,
-   "terreiro": 725
+   "granito": 7500,
+   "terreiro": 1166,
+   "patio": 189
   }
  },
  "casas": {
