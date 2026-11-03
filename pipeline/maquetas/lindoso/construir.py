@@ -42,8 +42,8 @@ from scipy.spatial import cKDTree
 AQUI = Path(__file__).resolve().parent
 RAIZ = AQUI.parents[2]
 sys.path.insert(0, str(AQUI))
-from comum import (ALA_OESTE, ALA_SUL, CORREDOR, LAT0, LON0, MEIA_TORRE, PASSAGEM_SUL, PORTA_NORTE,  # noqa: E402
-                   ROT_TORRE, TORRE_DA_PORTA, ZONA_CASTELO, _bloco)
+from comum import (ALA_OESTE, ALA_SUL, CORREDOR, LAT0, LON0, MEIA_TORRE, PASSAGEM_SUL, PORTA_CERCA_SUL,  # noqa: E402
+                   PORTA_NORTE, POSTIGO, ROT_TORRE, TORRE_DA_PORTA, ZONA_CASTELO, _bloco)
 
 _cfg = RAIZ / "src" / "data" / "maquetas" / "lindoso.json"
 CFG = json.loads(_cfg.read_text()) if _cfg.exists() else {"origem": {"lat": LAT0, "lon": LON0}, "variante": "estado-atual", "versao": "0.1"}
@@ -803,6 +803,8 @@ TEX, ALT = textura_rocha()
 material("rocha", (1, 1, 1), 0.85, imagem("rocha", TEX), normal=imagem("rocha_n", normais(ALT, 2.0)), forca=0.6)
 material("terreiro", (0.62, 0.60, 0.55), 0.95)
 material("verde_viz", (0.48, 0.54, 0.38), 0.95)
+material("hera", (0.13, 0.24, 0.09), 0.9)
+material("chapa", (0.30, 0.31, 0.32), 0.55)
 material("asfalto", (0.33, 0.33, 0.34), 0.95)
 # casas vizinhas: um só cinzento claro, sem cor nem textura, para o destaque ficar todo no castelo e nos espigueiros
 material("cinza_viz", (0.74, 0.74, 0.73), 0.9)
@@ -1084,8 +1086,10 @@ def torre_porta():
 
 
 def porta_norte():
-    """Porta Norte (fotografia com a torre por trás): vão em arco de volta perfeita com aduelas de granito, portão de
-    grade de ferro e estrado de madeira à frente; atravessa a ponta poente da cortina norte."""
+    """Porta Norte (fotografia e Street View, de dentro do revelim): vão em arco de 1,5 × 2,4 m aberto num rebaixo
+    da cantaria onde a ponte levadiça encaixa quando sobe, entre duas pilastras e com um lintel por cima; os dois
+    braços de madeira da levadiça saem por rasgos acima do arco e as correntes descem às pontas do tabuleiro, que
+    está baixado sobre o fosso. Atravessa a cortina norte da muralha abaluartada, que segue dos dois lados."""
     c = np.array(PORTA_NORTE["c"])
     az = math.radians(PORTA_NORTE["az"])
     t = np.array([math.sin(az), math.cos(az)])
@@ -1096,48 +1100,177 @@ def porta_norte():
     blk = shapely.Polygon([f.xy(s0, 0), f.xy(s1, 0), f.xy(s1, -2 * meia), f.xy(s0, -2 * meia)])
     z_topo = max(topo_em(blk.buffer(-0.2), 85), 464.0)
     chao_f, chao_d = 461.0, 461.8
-    m = Malha(["alvenaria", "muro_topo", "intradorso", "calcada", "cantaria_lisa", "madeira", "ferro"])
-    passagem(m, f, s0, s1, 2 * meia, chao_f - 1.0, z_topo, 1.7, 2.75, chao_f + 0.25, chao_d, mat="alvenaria",
+    soleira = chao_f + 0.25
+    W_V, H_V = 1.5, 2.4                      # vão
+    R0, R1, H_R, P_R = -0.95, 0.95, 2.65, 0.18  # rebaixo da levadiça (largura, altura, fundo)
+    m = Malha(["alvenaria", "muro_topo", "intradorso", "calcada", "cantaria_lisa", "madeira", "ferro", "sombra"])
+    fr = Plano(f.xy(0, -P_R), t, n=n)       # face do rebaixo
+    passagem(m, fr, s0, s1, 2 * meia - P_R, chao_f - 1.0, z_topo, W_V, H_V, soleira, chao_d, mat="alvenaria",
              mat_topo="muro_topo")
-    aduelas(m, f, 0.0, 1.7, chao_f + 0.25, chao_f + 0.25 + 2.75, 0.30, 0.05, n=11)
-    # grade de ferro no vão, recuada 0,25 m
-    r = 0.85
-    zc = chao_f + 0.25 + 2.75 - r
-    for s in np.arange(-r + 0.1, r - 0.05, 0.14):
-        ztop = zc + math.sqrt(max(r * r - s * s, 0)) - 0.03
-        m.barra(f.p(s, -0.25, chao_f + 0.27), f.p(s, -0.25, ztop), 0.012, 6, k=4)
-    for z in (chao_f + 0.4, chao_f + 1.3, zc):
-        w = r if z <= zc else 0.5
-        m.barra(f.p(-w + 0.02, -0.25, z), f.p(w - 0.02, -0.25, z), 0.02, 6, k=4)
-    # estrado de madeira à frente da porta (fotografia), sobre o chão de fora
-    m.caixa_face(f, -1.25, 1.25, 0.0, 1.5, chao_f + 0.05, chao_f + 0.25, 5)
-    for s in (-1.1, 1.1):
-        for d in (0.15, 1.35):
-            m.caixa_face(f, s - 0.06, s + 0.06, d - 0.06, d + 0.06, chao_f - 0.6, chao_f + 0.05, 5)
+    aduelas(m, fr, 0.0, W_V, soleira, soleira + H_V, 0.26, 0.04, n=11)
+    # pilastras e lintel de cantaria à volta do rebaixo, rentes à face do muro
+    for a_, b_ in ((s0, R0), (R1, s1)):
+        m.caixa_face(f, a_, b_, -P_R, 0.0, chao_f - 1.0, z_topo, "alvenaria", topo=False)
+    m.caixa_face(f, R0, R1, -P_R, 0.0, soleira + H_R, z_topo, "alvenaria", topo=False)
+    m.caixa_face(f, R0, R1, -P_R, 0.0, chao_f - 1.0, soleira, "cantaria_lisa", topo=False)
+    # remate do lintel: cornija saliente por cima da porta (a caixa de cima na fotografia)
+    m.caixa_face(f, s0 - 0.08, s1 + 0.08, -0.1, 0.12, z_topo - 0.05, z_topo + 0.22, "muro_topo")
+    # braços da levadiça: saem por dois rasgos do lintel e avançam 1,6 m; correntes às pontas do tabuleiro
+    z_b = soleira + 3.25
+    L_T = 2.5                                # tabuleiro (= altura do rebaixo menos a soleira)
+    for sb in (-0.72, 0.72):
+        m.caixa_face(f, sb - 0.11, sb + 0.11, -0.02, 0.005, z_b - 0.13, z_b + 0.13, "sombra", topo=False)
+        m.caixa_face(f, sb - 0.08, sb + 0.08, -0.6, 1.6, z_b - 0.09, z_b + 0.09, "madeira", fundo=True)
+        m.barra(f.p(sb, 1.52, z_b - 0.09), f.p(sb * 1.15, L_T - 0.08, soleira + 0.12), 0.018, "ferro", k=4)
+    # grade de ferro no vão, recuada 0,3 m
+    r = W_V / 2
+    zc = soleira + H_V - r
+    for sg in np.arange(-r + 0.1, r - 0.05, 0.14):
+        ztop = zc + math.sqrt(max(r * r - sg * sg, 0)) - 0.03
+        m.barra(fr.p(sg, -0.3, soleira + 0.02), fr.p(sg, -0.3, ztop), 0.012, "ferro", k=4)
+    for z in (soleira + 0.15, soleira + 1.2, zc):
+        m.barra(fr.p(-r + 0.02, -0.3, z), fr.p(r - 0.02, -0.3, z), 0.02, "ferro", k=4)
+    # fosso por baixo do tabuleiro, com as paredes de cantaria, e o tabuleiro de pranchas baixado sobre ele
+    F0, F1, FD = -1.0, 1.0, chao_f - 1.1
+    m.face([f.p(F0, 0.0, FD), f.p(F1, 0.0, FD), f.p(F1, L_T + 0.1, FD), f.p(F0, L_T + 0.1, FD)][::-1], "sombra")
+    for sf in (F0, F1):
+        m.face([f.p(sf, 0.0, FD), f.p(sf, L_T + 0.1, FD), f.p(sf, L_T + 0.1, chao_f), f.p(sf, 0.0, chao_f)][:: 1 if sf < 0 else -1], "cantaria_lisa")
+    m.face([f.p(F0, L_T + 0.1, FD), f.p(F1, L_T + 0.1, FD), f.p(F1, L_T + 0.1, chao_f), f.p(F0, L_T + 0.1, chao_f)][::-1], "cantaria_lisa")
+    for k_ in range(9):
+        a_ = -0.9 + k_ * 0.2
+        m.caixa_face(f, a_ + 0.01, a_ + 0.19, 0.0, L_T, soleira - 0.08, soleira, "madeira", fundo=True)
+    for d_ in (0.25, L_T - 0.25):
+        m.caixa_face(f, -0.95, 0.95, d_ - 0.07, d_ + 0.07, soleira - 0.2, soleira - 0.08, "madeira", fundo=True)
     m.objeto("porta_norte", "porta_norte", GRUPOS["Muralhas"], uv=3.0, vcor=patine_muro)
-    MEDIDAS["porta_norte"] = {"topo": round(z_topo, 2), "vao": [1.7, 2.75], "chao_fora": chao_f, "chao_dentro": chao_d}
+    MEDIDAS["porta_norte"] = {"topo": round(z_topo, 2), "vao": [W_V, H_V], "chao_fora": chao_f, "chao_dentro": chao_d,
+                              "levadica": {"tabuleiro": [1.8, L_T], "fosso_fundo": round(FD, 2)}}
     return f
 
 
+def _tufo(m, c, r, achat, mat, k=7, seed=0):
+    """Tufo de folhagem: esfera grosseira (anéis × segmentos) achatada segundo o vetor achat (3D, |achat| = fator)."""
+    rng = np.random.default_rng(seed)
+    c = np.asarray(c, float)
+    na = unit(achat)
+    fa = float(np.linalg.norm(achat))
+    aneis = []
+    for i in range(1, 4):
+        th = math.pi * i / 4
+        an = []
+        for j in range(k):
+            ph = 2 * math.pi * (j + 0.5 * (i % 2)) / k
+            v = np.array([math.sin(th) * math.cos(ph), math.sin(th) * math.sin(ph), math.cos(th)])
+            v = v - na * np.dot(v, na) * (1 - fa)
+            an.append(c + v * r * (0.85 + 0.3 * rng.random()))
+        aneis.append(an)
+    topo = c + np.array([0, 0, 1.0]) * r * (1 - (1 - fa) * abs(na[2]))
+    fundo = c - np.array([0, 0, 1.0]) * r * (1 - (1 - fa) * abs(na[2]))
+    for j in range(k):
+        jj = (j + 1) % k
+        m.face([topo, aneis[0][j], aneis[0][jj]][::-1], mat)
+        for i in range(2):
+            m.face([aneis[i][j], aneis[i + 1][j], aneis[i + 1][jj], aneis[i][jj]], mat)
+        m.face([fundo, aneis[2][jj], aneis[2][j]][::-1], mat)
+
+
+def hera():
+    """A hera que cobre a cortina a sudoeste da Porta Norte (Street View): tufos de folhagem verde-escura pela face de
+    fora e por cima do muro, a descer mais junto à porta."""
+    reg = next((r for r in MUR if r.get("hera")), None)
+    if reg is None:
+        return
+    m = Malha(["hera"])
+    c = np.array(PORTA_NORTE["c"])
+    az = math.radians(PORTA_NORTE["az"])
+    t = np.array([math.sin(az), math.cos(az)])
+    n = np.array([-t[1], t[0]])
+    z_t = float(np.median(reg["aneis"][0]["topo"]))
+    f = Plano(c + n * 1.0, t, n=n)
+    rng = np.random.default_rng(5)
+    k = 0
+    for sv in np.arange(-6.8, PORTA_NORTE["s0"] - 0.2, 0.45):
+        desce = 1.0 + 2.2 * max(0.0, 1 - (PORTA_NORTE["s0"] - sv) / 5.0)   # mais densa junto à porta
+        for zv in np.arange(z_t + 0.2, z_t - desce, -0.5):
+            if rng.random() < 0.15:
+                continue
+            p_ = f.p(sv + rng.uniform(-0.2, 0.2), 0.05 + 0.15 * rng.random(), zv + rng.uniform(-0.2, 0.2))
+            _tufo(m, p_, 0.32 + 0.22 * rng.random(), np.array([*n, 0.0]) * 0.55, 0, seed=k)
+            k += 1
+        for dv in (-0.6, -1.4):
+            p_ = f.p(sv + rng.uniform(-0.2, 0.2), dv, z_t + 0.1)
+            _tufo(m, p_, 0.35 + 0.2 * rng.random(), np.array([0, 0, 0.6]), 0, seed=k)
+            k += 1
+    m.objeto("hera_porta_norte", "vegetacao", GRUPOS["Vegetacao"], uv=1.0)
+
+
+def face_muro(o, nrm):
+    """Ponto da face de fora do muro traçado (POL_MUROS) na normal que passa por o."""
+    d_ = np.arange(-2.5, 2.5, 0.02)
+    q = np.asarray(o) + np.outer(d_, nrm)
+    dentro = shapely.contains_xy(POL_MUROS, q[:, 0], q[:, 1])
+    return q[np.nonzero(dentro)[0].max()] + np.asarray(nrm) * 0.01 if dentro.any() else np.asarray(o, float)
+
+
 def postigo():
-    """Porta da traição: arco estreito na face de fora da cerca NO, c. 2,5 m a SO do cunhal oeste da torre
-    (fotografia). Vão de 0,8 × 1,9 m, emparedado ao fundo."""
-    # a face de fora da cerca a NO corre na direção da face NNO da torre (u), recuada para a lice
-    t = unit(W(1, 0))
-    nrm = unit(W(0, 1))
-    o = np.array((-10.1, 1.2))
-    # chão e face do muro medidos: procura a face (o salto do MDS) ao longo da normal
-    d_ = np.arange(-2.0, 2.01, 0.1)
-    zs = superficie(o[0] + nrm[0] * d_, o[1] + nrm[1] * d_)
-    k = int(np.argmax(np.diff(zs) < -1.5)) if np.any(np.diff(zs) < -1.5) else 20
-    o = o + nrm * d_[k]
-    f = Plano(o, -t, n=nrm)
-    ch = float(cota(*(o + nrm * 1.0)))
-    m = Malha(["cantaria_lisa", "sombra", "madeira"])
-    vao(m, f, 0.0, 0.8, ch, ch + 1.9, 0.6, arco=True, mat_lado="cantaria_lisa", mat_fundo="sombra", d0=0.02)
-    aduelas(m, f, 0.0, 0.8, ch, ch + 1.9, 0.22, 0.04, n=7, d0=0.02)
-    m.objeto("postigo", "postigo", GRUPOS["Muralhas"], uv=2.0)
-    MEDIDAS["postigo"] = {"centro": [round(float(o[0]), 2), round(float(o[1]), 2)], "chao": round(ch, 2), "vao": [0.8, 1.9]}
+    """Porta da traição (Street View e fotografia): arco estreito de 0,9 × 2,2 m na face de fora do troço noroeste da
+    cerca, a 1,5 m do cunhal oeste da torre, emparedado ao fundo, e a rampa metálica com guarda que sobe até ele da
+    lice, encostada à face (o LiDAR mostra-a como uma faixa 0,3–0,6 m acima da lice)."""
+    o = np.array(POSTIGO["o"])
+    t = unit(POSTIGO["t"])
+    nrm = np.array([t[1], -t[0]])  # para fora (noroeste)
+    w, h = POSTIGO["vao"]
+    o = face_muro(o, nrm)
+    f = Plano(o, -t, n=nrm)                 # s cresce para a torre
+    ch_l = float(cota(*(o + nrm * 1.8)))    # chão da lice
+    ch = ch_l + 0.55                         # soleira, no topo da rampa
+    m = Malha(["cantaria_lisa", "sombra", "madeira", "ferro", "chapa", "muro_medieval"])
+    # o muro traçado é maciço: o vão desenha-se para fora da face (ombreiras de 0,3 m) com o fundo escuro rente a ela
+    vao(m, f, 0.0, w, ch, ch + h, 0.3, arco=True, mat_lado="muro_medieval", mat_fundo="sombra", d0=0.31)
+    aduelas(m, f, 0.0, w, ch, ch + h, 0.24, 0.04, n=7, d0=0.31)
+    m.caixa_face(f, -w / 2 - 0.24, w / 2 + 0.24, 0.0, 0.31, ch - 0.1, ch, "cantaria_lisa", topo=True)
+    # rampa: patamar à porta e um lanço que desce ao longo da face, para longe da torre
+    L, Lp, Wr = POSTIGO["rampa"], 1.2, 1.2
+    D0 = 0.34                                # a rampa fica à frente das ombreiras
+    z_fim = float(cota(*(o + t * (L + Lp) + nrm * 1.8)))
+    z_p = ch - 0.05
+    m.caixa_face(f, -0.7, 0.7, D0, D0 + Wr, z_p - 0.06, z_p, "chapa", fundo=True)                 # patamar
+    p0, p1 = -0.7, -0.7 - L
+    m.face([f.p(p0, D0, z_p), f.p(p1, D0, z_fim), f.p(p1, D0 + Wr, z_fim), f.p(p0, D0 + Wr, z_p)][::-1], "chapa")
+    m.face([f.p(p0, D0, z_p - 0.06), f.p(p1, D0, z_fim - 0.06), f.p(p1, D0 + Wr, z_fim - 0.06), f.p(p0, D0 + Wr, z_p - 0.06)], "chapa")
+    m.face([f.p(p0, D0 + Wr, z_p - 0.06), f.p(p1, D0 + Wr, z_fim - 0.06), f.p(p1, D0 + Wr, z_fim), f.p(p0, D0 + Wr, z_p)][::-1], "chapa")
+    # guarda: prumos, corrimão e duas travessas do lado de fora
+    for sk in [0.7, p0] + list(np.linspace(p0, p1, int(L / 1.1) + 2)[1:]):
+        zk = z_p if sk >= p0 else z_p + (z_fim - z_p) * (p0 - sk) / L
+        m.barra(f.p(sk, D0 + Wr - 0.03, zk), f.p(sk, D0 + Wr - 0.03, zk + 1.0), 0.02, "ferro", k=4)
+    for zz in (1.0, 0.55):
+        m.barra(f.p(0.7, D0 + Wr - 0.03, z_p + zz), f.p(p0, D0 + Wr - 0.03, z_p + zz), 0.018, "ferro", k=4)
+        m.barra(f.p(p0, D0 + Wr - 0.03, z_p + zz), f.p(p1, D0 + Wr - 0.03, z_fim + zz), 0.018, "ferro", k=4)
+    m.objeto("postigo", "postigo", GRUPOS["Muralhas"], uv=3.0, vcor=patine_muro)
+    MEDIDAS["postigo"] = {"centro": [round(float(o[0]), 2), round(float(o[1]), 2)], "chao": round(ch, 2), "vao": [w, h],
+                          "rampa_m": L}
+    return o, ch
+
+
+def porta_cerca_sul():
+    """Porta pequena na base da cerca sul, a c. 4,5 m do cunhal sudoeste, ao lado da ala sul do museu (fotografia de
+    drone de sul e Street View): vão retangular de 0,9 × 1,7 m com ombreiras e padieira de granito, porta de
+    madeira recuada."""
+    o0 = np.array(PORTA_CERCA_SUL["o"])
+    t = unit(PORTA_CERCA_SUL["t"])
+    nrm = np.array([t[1], -t[0]])            # para fora (sul)
+    o = face_muro(o0, nrm)
+    f = Plano(o, t, n=nrm)
+    w, h = PORTA_CERCA_SUL["vao"]
+    ch = float(cota(*(o + nrm * 1.0))) + 0.05
+    m = Malha(["cantaria_lisa", "sombra", "madeira", "muro_medieval"])
+    # o muro traçado é maciço: o vão desenha-se para fora da face (0,3 m) com o fundo escuro rente a ela
+    vao(m, f, 0.0, w, ch, ch + h, 0.3, arco=False, mat_lado="muro_medieval", mat_fundo="sombra", d0=0.31)
+    for a_, b_ in ((-w / 2 - 0.3, -w / 2), (w / 2, w / 2 + 0.3)):
+        m.caixa_face(f, a_, b_, 0.0, 0.33, ch, ch + h, "muro_medieval")                                # ombreiras
+    m.caixa_face(f, -w / 2 - 0.35, w / 2 + 0.35, 0.0, 0.35, ch + h, ch + h + 0.42, "muro_medieval")   # padieira
+    m.caixa_face(f, -w / 2 - 0.1, w / 2 + 0.1, 0.0, 0.45, ch - 0.15, ch, "cantaria_lisa")             # soleira
+    m.objeto("porta_cerca_sul", "cerca", GRUPOS["Muralhas"], uv=3.0, vcor=patine_muro)
+    MEDIDAS["porta_cerca_sul"] = {"centro": [round(float(o[0]), 2), round(float(o[1]), 2)], "chao": round(ch, 2), "vao": [w, h]}
     return o, ch
 
 
@@ -1505,6 +1638,9 @@ def construir_terreno(esp):
     Z = np.where(banda, np.minimum(Z, np.maximum(zmin, Z - 1.2)), Z)
     # debaixo dos muros finos o MDT também sobe: as quadrículas que os atravessam espetavam erva pelas faces
     Z = np.where(mur, np.minimum(Z, ndi.minimum_filter(zl, size=9)), Z)
+    # fosso da ponte levadiça, à frente da Porta Norte (o tabuleiro está por cima)
+    fosso = shapely.Polygon([F_PN.xy(-1.0, 0.0), F_PN.xy(1.0, 0.0), F_PN.xy(1.0, 2.6), F_PN.xy(-1.0, 2.6)]).buffer(0.2)
+    Z = np.where(shapely.contains(fosso, pts_all).reshape(X.shape), np.minimum(Z, MEDIDAS["porta_norte"]["levadica"]["fosso_fundo"]), Z)
     ny, nx = X.shape
     V = np.stack([X.ravel(), Y.ravel(), Z.ravel()], 1)
     idx = np.arange(ny * nx).reshape(ny, nx)
@@ -1735,7 +1871,9 @@ torre()
 bandeira()
 F_PORTA, Z_PORTA = torre_porta()
 F_PN = porta_norte()
+hera()
 PG_O, PG_Z = postigo()
+porta_cerca_sul()
 guaritas()
 print("museu…")
 museu()
@@ -1779,7 +1917,7 @@ MEDIDAS["olhar"] = {
     "cerca": _olhar(-1, 0.1, 0.35),
     "porta_sul": _olhar(*F_PORTA.n, 0.25),
     "porta_norte": _olhar(*F_PN.n, 0.2),
-    "postigo": _olhar(*W(0, 1), 0.2),
+    "postigo": _olhar(-0.57, 0.82, 0.2),
     "guaritas": _olhar(0.7, -0.7, 0.3),
     "baluartes": _olhar(1, 0.2, 0.5),
     "museu": _olhar(0.3, 1, 0.6),
@@ -1873,7 +2011,14 @@ if "--vistas" in sys.argv:
         # d0492f83: Porta Norte de frente, com a torre por trás
         _pn = F_PN.xy(0.0, 0.0)
         _ln = unit(_pn)
-        vista("d049_porta_norte", tuple(_pn + _ln * 4.2), 462.4, tuple(_pn - _ln * 2.0), 467.2, lente=24, res=(780, 1040), perto=0.3)
+        vista("d049_porta_norte", tuple(_pn + _ln * 6.5), 462.8, tuple(_pn - _ln * 2.0), 467.2, lente=24, res=(780, 1040), perto=0.3)
+        # Street View do Tiago: a Porta Norte de dentro do revelim, a rampa da porta da traição e a cerca sul
+        vista("sv_porta_norte", tuple(F_PN.xy(0.0, 7.0)), 463.4, tuple(F_PN.xy(0.0, -8.0)), 466.0, lente=16, res=(1400, 660), perto=0.3)
+        vista("sv_postigo", (-22.0, 13.0), 472.0, (-9.0, 0.5), 464.0, lente=22, res=(1400, 620), perto=0.3)
+        vista("sv_cerca_sul", (-12.0, -50.0), 471.0, (-3.0, -31.5), 464.0, lente=22, res=(1400, 630), perto=0.3)
+        vista("perto_postigo", (-12.4, 3.4), 464.6, (-7.6, 1.6), 463.6, lente=18, res=(1000, 700), perto=0.2)
+        vista("perto_porta_sul", (-5.2, -34.6), 464.6, (-7.0, -31.8), 463.4, lente=18, res=(1000, 700), perto=0.2)
+        vista("ar_oeste", (-48.0, -2.0), 485.0, (-4.0, -6.0), 463.0, lente=30, res=(1300, 800))
         # image 8: cunhal SE com a guarita, de baixo
         g0 = MEDIDAS["guaritas"][0]
         vista("guarita_se", (g0[0] - 3.0, g0[1] - 12.0), 462.5, (g0[0] - 2.0, g0[1]), 468.0, lente=24, res=(1000, 700), perto=0.3)
