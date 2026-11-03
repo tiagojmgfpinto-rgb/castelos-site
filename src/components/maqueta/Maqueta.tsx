@@ -128,6 +128,7 @@ export default function Maqueta({ url, capa, dados, provisoria, onVoltarMapa }: 
               placas={placas}
               distancia={dados.distancia ?? 300}
               direcao={dados.direcao}
+              sol={dados.sol}
               distanciaMinima={dados.distanciaMinima ?? 22}
               camadaPlacas={camadaPlacas}
               pausa={pausa}
@@ -218,7 +219,7 @@ function FichaElemento({ e, dados, onFechar }: { e: ElementoMaqueta; dados: Dado
   );
 }
 
-function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, direcao, distanciaMinima, camadaPlacas, pausa, terreno, pedidoEnquadrar, bussola, escala, escalaTexto, onCarregada }: {
+function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, direcao, sol, distanciaMinima, camadaPlacas, pausa, terreno, pedidoEnquadrar, bussola, escala, escalaTexto, onCarregada }: {
   url: string;
   elementos: Map<string, ElementoMaqueta>;
   sel: string | null;
@@ -228,6 +229,7 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, d
   placas: ElementoMaqueta[];
   distancia: number;
   direcao?: [number, number, number];
+  sol?: [number, number, number];
   distanciaMinima: number;
   camadaPlacas: React.RefObject<HTMLDivElement | null>;
   pausa: React.RefObject<boolean>;
@@ -378,9 +380,9 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, d
     if (!a || !controlos.current) return;
     const olhar = sel ? elementos.get(sel)?.olhar : undefined;
     const dir = olhar ? new THREE.Vector3(...olhar).normalize() : camera.position.clone().sub(controlos.current.target).normalize();
-    const dist = THREE.MathUtils.clamp(a.raio * 3.6, 60, 260);
+    const dist = THREE.MathUtils.clamp(a.raio * 3.6, Math.min(60, distancia * 0.6), 260);
     objetivo.current = { alvo: a.centro.clone(), pos: a.centro.clone().addScaledVector(dir, dist) };
-  }, [sel, alvos, porElemento, camera, elementos]);
+  }, [sel, alvos, porElemento, camera, elementos, distancia]);
 
   useEffect(() => {
     CAMADAS_TERRENO.forEach((n) => {
@@ -434,8 +436,11 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, d
       if (camera.position.distanceTo(o.pos) < 0.3 && c.target.distanceTo(o.alvo) < 0.1) objetivo.current = null;
     }
     // manter o alvo dentro da maqueta
-    c.target.x = THREE.MathUtils.clamp(c.target.x, area.min.x + 40, area.max.x - 40);
-    c.target.z = THREE.MathUtils.clamp(c.target.z, area.min.z + 40, area.max.z - 40);
+    // (a margem de 40 m não cabe nas maquetas pequenas, como a torre de Braga com 44 m: aí usa-se um quarto da largura)
+    const mx = Math.min(40, (area.max.x - area.min.x) / 4);
+    const mz = Math.min(40, (area.max.z - area.min.z) / 4);
+    c.target.x = THREE.MathUtils.clamp(c.target.x, area.min.x + mx, area.max.x - mx);
+    c.target.z = THREE.MathUtils.clamp(c.target.z, area.min.z + mz, area.max.z - mz);
     c.target.y = THREE.MathUtils.clamp(c.target.y, centro.y - 40, centro.y + 40);
     if (bussola.current) bussola.current.style.transform = `rotate(${THREE.MathUtils.radToDeg(c.getAzimuthalAngle())}deg)`;
     if (escala.current) {
@@ -507,7 +512,10 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, d
   };
 
   // A caixa das sombras cobre a área toda da maqueta
-  const sol = area.getCenter(new THREE.Vector3());
+  const solC = area.getCenter(new THREE.Vector3());
+  // posição do sol: por omissão de noroeste; uma maqueta pode pedir outra direção (a torre de Braga tem as
+  // faces principais a sul e a nascente, que de noroeste ficavam sempre na sombra)
+  const solD = sol ? new THREE.Vector3(...sol).normalize().multiplyScalar(300) : new THREE.Vector3(-160, 220, -140);
   const meiaSombra = Math.max(area.max.x - area.min.x, area.max.z - area.min.z) / 2 + 5;
   // maquetas grandes (a praça-forte de Valença tem quase 1 km) pedem um mapa de sombras maior
   const mapaSombra = meiaSombra > 300 ? 4096 : 2048;
@@ -516,7 +524,7 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, d
     <>
       <hemisphereLight args={["#f6f0e2", "#7d6b50", 1.25]} />
       <directionalLight
-        position={[sol.x - 160, centro.y + 220, sol.z - 140]}
+        position={[solC.x + solD.x, centro.y + solD.y, solC.z + solD.z]}
         intensity={2.4}
         castShadow
         shadow-mapSize={[mapaSombra, mapaSombra]}
@@ -529,7 +537,7 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, d
         shadow-bias={-0.0004}
         shadow-normalBias={0.6}
       >
-        <object3D attach="target" position={[sol.x, centro.y, sol.z]} />
+        <object3D attach="target" position={[solC.x, centro.y, solC.z]} />
       </directionalLight>
       <directionalLight position={[centro.x + 200, centro.y + 120, centro.z + 160]} intensity={0.35} />
       <primitive object={scene} onClick={clicar} onPointerMissed={() => setSel(null)} />

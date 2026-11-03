@@ -46,6 +46,7 @@
   ],
   "distancia": 68,
   "distanciaMinima": 10,
+  "sol": [0.55, 0.7, 0.45],
   "direcao": [
     0.42,
     0.62,

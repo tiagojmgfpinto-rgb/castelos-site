@@ -31,6 +31,8 @@ export interface DadosMaqueta {
   distancia?: number;
   /** Direção inicial da câmara (x este, y para cima, z sul), por omissão de sudoeste. */
   direcao?: [number, number, number];
+  /** Direção de onde vem o sol (x para este, y para cima, z para sul); por omissão, de noroeste. */
+  sol?: [number, number, number];
   /** Distância mínima da câmara ao alvo, em metros (por omissão 22); menor nas maquetas pequenas. */
   distanciaMinima?: number;
   elementos: ElementoMaqueta[];
