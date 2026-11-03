@@ -310,7 +310,7 @@ def normais(alt, forca):
     return nv * 0.5 + 0.5
 
 
-def textura_cantaria_torre(n=1024, metros=6.0, semente=1300, fiada=(0.30, 0.48), comp=(0.55, 1.6), liquen=0.80, tinta=(1.0, 1.0, 1.0)):
+def textura_cantaria_torre(n=1024, metros=6.0, semente=1300, fiada=(0.30, 0.48), comp=(0.55, 1.6), liquen=0.80, tinta=(1.0, 1.0, 1.0), sat=1.0):
     """Cantaria de granito da torre (6 m por repetição), medida nas fotografias: aparelho em fiadas
     horizontais de 0,30 a 0,48 m (média 0,38 m, pela periodicidade das juntas na fotografia da face sul),
     silhares de 0,55 a 1,6 m, bem esquadriados, com juntas finas e as arestas gastas.
@@ -386,6 +386,10 @@ def textura_cantaria_torre(n=1024, metros=6.0, semente=1300, fiada=(0.30, 0.48),
     # líquenes claros, de vez em quando
     liq = fbm(xx, yy, 0.25 * m_px, semente + 6)
     tex = np.where((liq > liquen)[..., None], tex * 0.60 + np.array([0.78, 0.78, 0.73]) * 0.40, tex)
+    # saturação: o visor (three.js, sem a transformação de cor do Cycles) mostra as cores tal como estão na
+    # textura; o granito da torre visto ao natural é cinzento, com o tom quente só nas manchas de óxido
+    lum = (tex @ np.array([0.30, 0.59, 0.11]))[..., None]
+    tex = lum + sat * (tex - lum)
     return np.clip(tex * np.array(tinta), 0, 1), ndi.gaussian_filter(alt, 0.8) + 0.05 * g1
 
 
@@ -440,14 +444,14 @@ for g in ["Terreno", "Torre", "Envolvente", "Vegetacao"]:
     e.parent = RAIZ_OB
     GRUPOS[g] = e
 
-TEX_T, ALT_T = textura_cantaria_torre(tinta=(1.03, 1.0, 0.95))
+TEX_T, ALT_T = textura_cantaria_torre(tinta=(1.08, 1.07, 1.05), sat=0.45)
 material("cantaria", (1, 1, 1), 0.9, imagem("cantaria", TEX_T), normal=imagem("cantaria_normal", normais(ALT_T, 3.0)),
          forca=0.8, escala=0.5, vcor=True)
 # a escada: silhares maiores (fiadas de c. 0,5 m), granito mais claro e cinzento, com mais líquenes (fotografias)
-TEX_E, ALT_E = textura_cantaria_torre(semente=1400, fiada=(0.42, 0.58), comp=(0.7, 1.5), liquen=0.70, tinta=(1.04, 1.04, 1.05))
+TEX_E, ALT_E = textura_cantaria_torre(semente=1400, fiada=(0.42, 0.58), comp=(0.7, 1.5), liquen=0.70, tinta=(1.05, 1.05, 1.04), sat=0.45)
 material("cantaria_escada", (1, 1, 1), 0.9, imagem("cantaria_escada", TEX_E), normal=imagem("cantaria_escada_normal", normais(ALT_E, 3.0)),
          forca=0.8, escala=0.5, vcor=True)
-material("cantaria_lisa", (0.60, 0.585, 0.55), 0.85)
+material("cantaria_lisa", (0.60, 0.59, 0.57), 0.85)
 material("sombra", (0.07, 0.065, 0.06), 1.0)
 material("vitral", (1, 1, 1), 0.3, imagem("vitral", textura_vitral()))
 material("madeira", (0.24, 0.16, 0.10), 0.8)
