@@ -456,7 +456,7 @@ def textura_relva(n=512, metros=8.0, semente=7):
     g = fbm(xx, yy, 1.2 * m_px, semente)
     g2 = fbm(xx, yy, 0.15 * m_px, semente + 5)
     base = np.array([0.36, 0.46, 0.22])
-    amarelo = np.array([0.55, 0.55, 0.30])
+    amarelo = np.array([0.47, 0.52, 0.27])
     t = np.clip((g - 0.45) * 2.5, 0, 1)[..., None]
     tex = base * (1 - t) + amarelo * t
     tex = tex * (0.85 + 0.3 * g2[..., None])
@@ -704,14 +704,14 @@ def textura_lajes(n=512, metros=2.0, semente=31):
 
 
 def textura_erva(n=512, metros=8.0, semente=17):
-    """Erva seca do monte dos espigueiros (julho): palha, verde apagado e terra."""
+    """Erva do monte dos espigueiros: verde vivo com manchas mais amareladas (Street View e fotografias de drone)."""
     m_px = n / metros
     yy, xx = np.mgrid[0:n, 0:n]
     g = fbm(xx, yy, 1.5 * m_px, semente)
     g2 = fbm(xx, yy, 0.12 * m_px, semente + 5)
-    palha = np.array([0.55, 0.50, 0.37])  # ortofotomapa: monte de erva seca, castanho-azeitona
-    verde = np.array([0.40, 0.42, 0.27])
-    t = np.clip((g - 0.42) * 2.2, 0, 1)[..., None]
+    palha = np.array([0.47, 0.50, 0.29])  # manchas amareladas
+    verde = np.array([0.30, 0.45, 0.19])
+    t = np.clip((g - 0.30) * 2.2, 0, 1)[..., None]
     tex = palha * (1 - t) + verde * t
     tex = tex * (0.82 + 0.36 * g2[..., None])
     return np.clip(tex, 0, 1), g2
@@ -993,10 +993,11 @@ POL_MUROS = shapely.union_all([poligono_muro(r).buffer(0) for r in MUR])
 
 def muros():
     """Os muros como o LiDAR os mede: topo triangulado (Delaunay restringida à planta) com a cota medida em cada
-    vértice, faces a prumo até abaixo do chão de fora. Dois objetos: a cerca medieval (topo acima de 465,8 m) e a
-    muralha abaluartada."""
+    vértice, faces a prumo até abaixo do chão de fora. Dois objetos: a cerca medieval e a muralha abaluartada, que o
+    tracar.py traça à parte (topo acima ou abaixo de 466 m), para o topo não fazer rampas de uma para a outra."""
     mm = {True: Malha(["muro_medieval", "alvenaria", "muro_topo", "erva"]), False: Malha(["muro_medieval", "alvenaria", "muro_topo", "erva"])}
     for reg in MUR:
+        med = bool(reg.get("medieval", np.mean(reg["aneis"][0]["topo"]) > ALTO_MEDIEVAL))
         pol = poligono_muro(reg).buffer(0)
         if pol.geom_type != "Polygon":
             continue
@@ -1010,11 +1011,8 @@ def muros():
             if not shapely.Polygon(cs).exterior.is_ccw:
                 cs = cs[::-1]
             _, j = kd.query(cs)
-            # os terraplenos dos baluartes (topo largo) têm erva; o alto dos muros e o adarve, lajes
-            largo = pol.exterior.distance(shapely.Point(cs.mean(0))) > 1.7 and all(
-                shapely.LinearRing(h).distance(shapely.Point(cs.mean(0))) > 1.7 for h in pol.interiors)
             zt = ts[j]
-            mm[bool(zt.mean() > ALTO_MEDIEVAL)].face([(x, y, z) for (x, y), z in zip(cs, zt)], 3 if largo else 2)
+            mm[med].face([(x, y, z) for (x, y), z in zip(cs, zt)], 2)
         for a in reg["aneis"]:
             c = np.array(a["contorno"])
             tp = np.array(a["topo"])
@@ -1022,8 +1020,7 @@ def muros():
             n = len(c)
             for i in range(n):
                 j = (i + 1) % n
-                alto = bool((tp[i] + tp[j]) / 2 > ALTO_MEDIEVAL)
-                mm[alto].face([(*c[i], ch[i]), (*c[j], ch[j]), (*c[j], tp[j]), (*c[i], tp[i])], 0 if alto else 1)
+                mm[med].face([(*c[i], ch[i]), (*c[j], ch[j]), (*c[j], tp[j]), (*c[i], tp[i])], 0 if med else 1)
     ob = mm[True].objeto("cerca_medieval", "cerca", GRUPOS["Muralhas"], uv=3.0, vcor=patine_muro)
     mm[False].objeto("muralha_abaluartada", "baluartes", GRUPOS["Muralhas"], uv=3.0, vcor=patine_muro)
     MEDIDAS["muros"] = {"regioes": len(MUR), "area_m2": round(POL_MUROS.area),
@@ -1318,7 +1315,7 @@ def lista_espigueiros():
             continue
         r = np.array(g.minimum_rotated_rectangle.exterior.coords)[:4]
         e = [np.linalg.norm(r[1] - r[0]), np.linalg.norm(r[2] - r[1])]
-        if min(e) > 3.2 or g.area > 40 or max(e) < 2.6:
+        if min(e) > 2.9 or g.area > 40 or max(e) < 3.4:  # o que é mais curto ou mais largo são arrumos
             continue
         k = int(np.argmax(e))
         d = r[k + 1] - r[k]
@@ -1343,6 +1340,9 @@ def lista_espigueiros():
         pc = c + t * np.linspace(-e["L"] / 2, e["L"] / 2, 7)[:, None]
         zc = cota(pc[:, 0], pc[:, 1])
         e["chao_min"], e["chao_max"] = float(zc.min()), float(zc.max())
+        # o cume dos espigueiros fica a 3,3–3,8 m do chão; onde o MDS dá mais é uma árvore ou uma casa por cima
+        if not (2.9 <= e["cume"] - e["chao_max"] <= 4.3):
+            e["cume"] = e["chao_max"] + 3.55
     return lst
 
 
@@ -1491,6 +1491,9 @@ def construir_terreno(esp):
     exc = shapely.contains(excl.buffer(0.5), pts_all).reshape(X.shape)
     # plataformas dos baluartes (terraplenos que o MDT não tem como chão): o LiDAR das classes solo e muros
     zs = ndi.median_filter(superficie(X, Y), 3)
+    # junto aos muros, o LiDAR apanha o topo do muro: aí fica o mais baixo à volta (faz dentes de erva pelas faces acima)
+    perto = ndi.binary_dilation(mur, iterations=3)
+    zs = np.where(perto, ndi.minimum_filter(np.where(mur, 1e4, zs), size=5), zs)
     plat = zona & ~mur & ~exc & (zs - Z > 0.6)
     plat = ndi.binary_opening(plat, iterations=1)
     Z = np.where(plat, zs, Z)
@@ -1500,6 +1503,8 @@ def construir_terreno(esp):
     zl = np.where(mur, 1e4, Z)
     zmin = ndi.minimum_filter(zl, size=5)
     Z = np.where(banda, np.minimum(Z, np.maximum(zmin, Z - 1.2)), Z)
+    # debaixo dos muros finos o MDT também sobe: as quadrículas que os atravessam espetavam erva pelas faces
+    Z = np.where(mur, np.minimum(Z, ndi.minimum_filter(zl, size=9)), Z)
     ny, nx = X.shape
     V = np.stack([X.ravel(), Y.ravel(), Z.ravel()], 1)
     idx = np.arange(ny * nx).reshape(ny, nx)
@@ -1521,7 +1526,8 @@ def construir_terreno(esp):
     rel = ndi.gaussian_filter(MDT - ndi.gaussian_filter(MDT, 3.0), 0.7)
     rl = amostra(rel, LX0, LY0, LP, cx[:, 0], cx[:, 1])
     mi_[verde] = 1
-    mi_[(rl > 0.12) | (cinza & (rl > 0.0))] = 2
+    # só os afloramentos claros: com o limiar baixo o monte ficava salpicado de cinzento
+    mi_[ndi.binary_opening(((rl > 0.22) | (cinza & (rl > 0.12))).reshape(ny - 1, nx - 1)).ravel()] = 2
     asf, trilho = caminhos()
     if not trilho.is_empty:
         mi_[shapely.contains(trilho, pts)] = 3
@@ -1590,6 +1596,10 @@ def _casa(m, p):
     chao = float(np.percentile(zt, 10))
     cume = float(np.percentile(zs, 92))
     cornija = float(np.percentile(zs, 25))
+    # onde há uma árvore por cima o MDS dá a copa: os arrumos pequenos ficam com 4 m e nenhum telhado passa de 4 m
+    if p.area < 20:
+        cume, cornija = min(cume, chao + 4.0), min(cornija, chao + 2.8)
+    cume = min(cume, cornija + 4.0)
     if cume - chao < 2.5:
         return False
     cornija = min(max(cornija, chao + 2.6), cume - 0.4)

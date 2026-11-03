@@ -30,6 +30,7 @@ from scipy import ndimage as ndi
 from skimage.morphology import remove_small_holes, remove_small_objects
 
 AQUI = Path(__file__).resolve().parent
+ALTO = 466.0  # topo acima disto: cerca medieval
 sys.path.insert(0, str(AQUI))
 from comum import EXCLUIR_MUROS, ZONA_CASTELO  # noqa: E402
 
@@ -92,9 +93,21 @@ def main():
     M = ndi.binary_opening(M, iterations=1)
     M = remove_small_holes(M, max_size=16)
     M = remove_small_objects(M, max_size=48)
+    # a cerca medieval (topo acima de 466 m) e a muralha abaluartada (abaixo) traçam-se à parte: juntas, o topo
+    # triangulado fazia rampas entre os 471 m da cerca e os 464 m dos baluartes
+    alto = M & (ndi.median_filter(zf, 5) > ALTO)
+    alto = remove_small_objects(remove_small_holes(ndi.binary_opening(alto, iterations=1), max_size=16), max_size=48)
+    baixo = remove_small_objects(ndi.binary_opening(M & ~alto, iterations=1), max_size=48)
     pols = []
-    for geo, val in features.shapes(M.astype(np.uint8), mask=M, transform=tr):
+    formas = [(g_, True) for g_, _ in features.shapes(alto.astype(np.uint8), mask=alto, transform=tr)] + \
+             [(g_, False) for g_, _ in features.shapes(baixo.astype(np.uint8), mask=baixo, transform=tr)]
+    for geo, e_alto in formas:
         g = shapely.geometry.shape(geo).buffer(0)
+        if not e_alto:
+            # terraplenos dos baluartes: o miolo largo é chão (o construir.py levanta-o ao LiDAR); o muro fica na orla
+            miolo = g.buffer(-1.7, join_style="mitre").buffer(0.2, join_style="mitre")
+            if not miolo.is_empty:
+                g = g.difference(miolo)
         g = g.buffer(0.35, join_style="mitre").buffer(-0.5, join_style="mitre").buffer(0.15, join_style="mitre")
         for q in (g.geoms if g.geom_type == "MultiPolygon" else [g]):
             if q.area < 3:
@@ -111,12 +124,12 @@ def main():
             if q2.geom_type != "Polygon" or q2.area < 3:
                 continue
             q2 = shapely.geometry.polygon.orient(q2, 1)  # exterior anti-horário, furos horários
-            pols.append([np.array(q2.exterior.coords)[:-1]] + [np.array(h.coords)[:-1] for h in q2.interiors])
+            pols.append(([np.array(q2.exterior.coords)[:-1]] + [np.array(h.coords)[:-1] for h in q2.interiors], e_alto))
     out = []
-    for i, aneis in enumerate(pols):
-        reg = {"id": "", "aneis": [], "area": round(float(shapely.Polygon(aneis[0], aneis[1:]).area), 1)}
+    for aneis, e_alto in pols:
+        reg = {"id": "", "aneis": [], "area": round(float(shapely.Polygon(aneis[0], aneis[1:]).area), 1), "medieval": e_alto}
         for c in aneis:
-            reg["aneis"].append(medir_anel(c))
+            reg["aneis"].append(medir_anel(c, e_alto))
         a0 = reg["aneis"][0]
         if np.median(np.array(a0["topo"]) - np.array(a0["chao"])) < 0.9:
             continue  # pedras e muretes com menos de 0,9 m acima do chão de fora
@@ -131,7 +144,7 @@ def main():
               max(max(a["topo"]) for a in e["aneis"]))
 
 
-def medir_anel(c):
+def medir_anel(c, e_alto):
     """Topo e chão de fora em cada vértice de um anel (o exterior anti-horário ou um furo horário: o "fora" fica
     sempre à direita do sentido do anel)."""
     if True:
@@ -152,8 +165,9 @@ def medir_anel(c):
             fora = np.array([c[k] + nrm[k] * d for d in np.arange(0.6, 2.01, 0.2)])
             chao.append(float(amostra(MDT, LX0, LY0, LP, fora[:, 0], fora[:, 1]).min()))
         topo = np.array(topo)
-        # topo plano por troços: mediana com os vizinhos (o LiDAR tem ervas e pedras soltas no alto dos muros)
-        tm = np.array([np.median(topo[[(k - 1) % n, k, (k + 1) % n]]) for k in range(n)])
+        # topo plano por troços: mediana com os 3 vizinhos de cada lado (o LiDAR tem ervas e pedras soltas no alto dos muros)
+        tm = np.array([np.median(topo[[(k + j) % n for j in range(-3, 4)]]) for k in range(n)])
+        tm = np.maximum(tm, ALTO + 0.3) if e_alto else np.minimum(tm, ALTO)
         return {"contorno": np.round(c, 2).tolist(), "topo": np.round(tm, 2).tolist(), "chao": np.round(chao, 2).tolist()}
 
 
