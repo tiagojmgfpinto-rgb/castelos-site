@@ -1,0 +1,381 @@
+{
+  "monumento": "melgaco",
+  "titulo": "Castelo e muralha de Melgaço",
+  "variante": "estado-atual",
+  "versao": "0.1 provisória",
+  "data": "2026-11-03",
+  "origem": {
+    "lat": 42.114413,
+    "lon": -8.25979,
+    "nota": "Centro da torre de menagem (LiDAR). Eixos da maqueta: x para este, y para norte (PT-TM06 menos a origem), no visor -z é o norte, em metros à escala 1:1; as cotas são altitudes."
+  },
+  "fontes": {
+    "lidar": {
+      "titulo": "DGT, LiDAR 2025: MDT e MDS de 50 cm e nuvem de pontos classificada, folha 189572 (CC BY 4.0). Planta e cotas da torre, da cerca (estação a cada 2°), das escadas, da barbacã, da muralha da vila (estação a cada metro) e da Porta de Baixo.",
+      "url": "https://cdd.dgterritorio.gov.pt"
+    },
+    "orto": {
+      "titulo": "DGT, Ortofotomapa 2021, 25 cm (CC BY 4.0). Conferência da planta, telhado da torre, cisterna, relvado e afloramentos do pátio.",
+      "url": "https://cdd.dgterritorio.gov.pt"
+    },
+    "geoportal": {
+      "titulo": "Câmara Municipal de Melgaço, Geoportal: ortofotomapas e cartografia 1:2000 (conferência da planta da cerca, da barbacã e da muralha).",
+      "url": "https://geotools.cm-melgaco.pt/geoportal?webepl"
+    },
+    "osm": {
+      "titulo": "OpenStreetMap (ODbL), via Overture Maps 2026-10-21.0: plantas das casas, ruas, cisterna, torres e portas da muralha (Porta de Baixo, Porta da Rua do Carvalho).",
+      "url": "https://www.openstreetmap.org/#map=19/42.11441/-8.25979"
+    },
+    "wiki": {
+      "titulo": "Wikipédia — Castelo de Melgaço (história, torre pentagonal, porta da traição, cisterna)",
+      "url": "https://pt.wikipedia.org/wiki/Castelo_de_Melga%C3%A7o"
+    },
+    "fotos": {
+      "titulo": "Fotografias do castelo e da Porta de Baixo enviadas pelo autor do projeto, novembro de 2026 (drone de sul, aérea de sudoeste, torre de baixo, porta e escada da torre, pátio, entrada e barbacã do alto da torre, Porta de Baixo de frente e de lado)"
+    }
+  },
+  "limitacoes": [
+    "Não foi usada planta cotada. A planta e as cotas vêm da nuvem de pontos do LiDAR de 2025 (pontos de solo, edifícios e muros, sem vegetação, em células de 25 cm): a cerca foi medida numa estação a cada 2° à volta do pátio (face de dentro, face de fora, adarve, parapeito e chão dos dois lados) e a muralha da vila numa estação a cada metro ao longo de um eixo desenhado sobre o relevo. O LiDAR quase não tem pontos nas faces dos muros; o erro esperado em planta é de 0,2 a 0,4 m.",
+    "A espessura da cerca foi limitada a 2,1–3,1 m onde a torre pentagonal, a plataforma noroeste e a barbacã se colam ao muro. O topo do muro é plano em cada grau, por isso as escadas do adarve (a sueste e a poente) ficam em degraus de c. 0,1 a 0,2 m; o número real de degraus não se conhece.",
+    "Torre: planta de 8,8 m de corpo e 9,6 m no parapeito, rodada 26,7°; soleira das ameias a 208,55 m, merlões a 209,35 m com pontas a 210,25 m, telhado de quatro águas entre 207,7 e 208,9 m (LiDAR). A cachorrada (oito mísulas de três fiadas por face e uma em cada cunhal), os seis merlões por face e o soco seguem a fotografia de baixo. As seteiras das faces sul, nascente e poente e a fresta por cima da porta são estimativas de posição e altura.",
+    "A porta da torre (face NNO, soleira a 195,75 m, 1,0 × 2,2 m) e a escada metálica (de u 5,35 a 0,25, com patamar até u -1,4) estão na posição do LiDAR; os degraus, os prumos e a guarda são esquemáticos. A orientação foi conferida com a fotografia tirada do pátio a norte (a escada sobe da esquerda para a direita até à porta).",
+    "Escadas em V: o LiDAR mede uma faixa de c. 1 m encostada à face de dentro, com degraus de 191 a 195,5 m, a norte (pé a 346°) e a nordeste (pé a 53°). As portas da traição ao pé de cada V (arco de 1,2 × 2,3 m) estão nas fotografias; a de nordeste é certa, a de norte é provável. A Wikipédia refere uma porta da traição a norte.",
+    "A entrada a sul é uma passagem aberta no muro (LiDAR e fotografia do alto da torre). A barbacã em U, o pátio a 187,7 m e as duas arcadas do muro sul seguem o LiDAR e essa fotografia; as arcadas (1,3 × 2,05 m) e a sua profundidade são estimativas. A Wikipédia põe o portão principal a oeste; não se encontrou vestígio dele no LiDAR.",
+    "Muralha da vila: topo medido no LiDAR, de 194,5 m junto ao castelo a 184,4 m junto à Porta de Baixo, sem ameias (não as tem hoje). As casas encostadas à muralha ficam como volumes cinzentos. A Porta de Baixo tem as medidas da fotografia de frente, à escala da altura do LiDAR (7,0 m do chão de fora ao topo); a passagem coberta tem c. 4,5 m. A Porta da Rua do Carvalho só vem do OSM: o LiDAR não vê a passagem e não há fotografia, por isso o arco (2,6 × 3,4 m) é uma estimativa.",
+    "A pedra é feita por texturas tiradas das fotografias: cantaria regular de granito cinzento-dourado na torre (fiadas de 0,34 a 0,50 m) e na Porta de Baixo, alvenaria em fiadas mais pequenas e mais cinzenta na cerca e na muralha, com líquenes brancos. O relvado e os afloramentos de granito do pátio seguem o relevo do MDT.",
+    "As casas à volta são volumes simples, num só cinzento, para dar a escala sem tirar destaque ao monumento (plantas do OSM e, onde faltam, manchas de edifícios do LiDAR; cornija e cume medidos no MDS). As árvores estão nas posições do LiDAR (julho, com folha), com copas esquemáticas; tiraram-se as que caíam sobre o monumento.",
+    "O Google Street View não estava acessível a partir desta sessão; a conferência foi feita com as fotografias enviadas, o ortofotomapa de 2021 e o geoportal da Câmara."
+  ],
+  "distancia": 150,
+  "distanciaMinima": 12,
+  "direcao": [
+    0.48,
+    0.58,
+    0.66
+  ],
+  "sol": [
+    -0.38,
+    0.74,
+    0.55
+  ],
+  "placas": [
+    "torre",
+    "coroamento",
+    "porta_torre",
+    "escadas",
+    "torres_cerca",
+    "cisterna",
+    "porta_castelo",
+    "muralha",
+    "porta_baixo",
+    "porta_carvalho"
+  ],
+  "elementos": [
+    {
+      "id": "torre",
+      "nome": "Torre de Menagem",
+      "grupo": "Torre",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Torre quadrangular de cantaria de granito, isolada no meio do pátio, rodada c. 27° em relação ao norte. Tem um soco saliente junto ao chão e seteiras estreitas; por dentro do parapeito, um telhado de quatro águas. Foi quase toda reconstruída no século XX e é hoje núcleo museológico.",
+      "medidas": "Corpo de c. 8,8 × 8,8 m; soleira das ameias a 208,55 m, c. 18,4 m acima do pátio a sul (190,2 m) (LiDAR 2025).",
+      "fontes": [
+        "lidar",
+        "orto",
+        "fotos",
+        "wiki"
+      ],
+      "resumo": "Torre quadrangular no meio do pátio",
+      "ancora": [
+        0.0,
+        212.5,
+        0.0
+      ]
+    },
+    {
+      "id": "coroamento",
+      "nome": "Merlões e matacães",
+      "grupo": "Torre",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "O parapeito sai c. 0,4 m para fora sobre uma cachorrada corrida de mísulas de três fiadas, com os matacães abertos entre elas, para atirar sobre o pé da torre. Por cima, seis merlões por face, contando os dos cunhais, com remate em pirâmide.",
+      "medidas": "Parapeito de 9,6 m de lado; merlões de 0,75 m (0,9 m nos cunhais) e ameias de 0,96 m; pontas a c. 210,3 m (LiDAR e fotografia).",
+      "fontes": [
+        "lidar",
+        "fotos"
+      ],
+      "resumo": "Cachorrada com matacães e merlões piramidais",
+      "ancora": [
+        -2.2,
+        210.6,
+        6.7
+      ],
+      "olhar": [
+        -0.31,
+        0.2,
+        0.95
+      ]
+    },
+    {
+      "id": "porta_torre",
+      "nome": "Porta alta e escada",
+      "grupo": "Torre",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "A entrada é alta, na face voltada a norte-noroeste, em arco de volta perfeita com aduelas. Sobe-se por uma escada metálica moderna encostada à face, com patamar à frente da porta.",
+      "medidas": "Soleira a c. 195,75 m, 4,6 m acima do pátio; a escada vence c. 4,4 m em 5,1 m (LiDAR).",
+      "fontes": [
+        "lidar",
+        "fotos"
+      ],
+      "resumo": "Porta a 4,6 m do chão, escada metálica",
+      "ancora": [
+        -2.7,
+        199.0,
+        -4.2
+      ],
+      "olhar": [
+        -0.45,
+        0.3,
+        -0.89
+      ]
+    },
+    {
+      "id": "cerca",
+      "nome": "Cerca oval",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Muro de granito em fiadas à volta de um pátio oval. O adarve é largo e alto de noroeste a nascente, com parapeito a norte, e mais baixo a sul e a poente; degraus no alto do muro ligam os troços.",
+      "medidas": "C. 60,6 × 49,5 m por fora; muro de 2 a 3 m; adarve a 196,1–196,6 m a norte e nascente e a c. 192,2 m a sul e poente (LiDAR).",
+      "fontes": [
+        "lidar",
+        "orto",
+        "geoportal",
+        "fotos"
+      ],
+      "resumo": "Cerca oval à volta do pátio",
+      "ancora": [
+        -25.6,
+        196.0,
+        -13.4
+      ]
+    },
+    {
+      "id": "escadas",
+      "nome": "Escadas em V e portas da traição",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Na face de dentro, a norte e a nordeste, dois pares de lanços de escada sobem em V até ao adarve. Ao pé de cada V uma porta pequena em arco atravessa o muro: as portas da traição.",
+      "medidas": "Lanços de c. 1 m de largura, do pátio (189,7 e 190,6 m) ao adarve (c. 196 m); portas de c. 1,2 × 2,3 m (LiDAR e fotografias).",
+      "fontes": [
+        "lidar",
+        "fotos",
+        "wiki"
+      ],
+      "resumo": "Escadas encostadas ao muro e portas da traição",
+      "ancora": [
+        16.2,
+        197.5,
+        -10.6
+      ],
+      "olhar": [
+        -0.82,
+        0.3,
+        0.57
+      ]
+    },
+    {
+      "id": "torres_cerca",
+      "nome": "Torre pentagonal e cunhal noroeste",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "A sudeste, uma torre de planta pentagonal sai do muro para o lado da vila, com parapeito nos lados de fora; a Wikipédia chama-lhe a torre principal. No cunhal noroeste, uma plataforma alta com parapeito a poente liga a cerca à muralha da vila.",
+      "medidas": "Torre pentagonal com topo a 196,3 m e parapeitos a 197,3 m, c. 8 m acima da rua; plataforma noroeste a 195,5 m (LiDAR).",
+      "fontes": [
+        "lidar",
+        "orto",
+        "wiki",
+        "fotos"
+      ],
+      "resumo": "Torre pentagonal a sudeste, plataforma a noroeste",
+      "ancora": [
+        28.0,
+        199.0,
+        14.5
+      ],
+      "olhar": [
+        0.86,
+        0.35,
+        0.51
+      ]
+    },
+    {
+      "id": "cisterna",
+      "nome": "Cisterna",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Cisterna retangular de granito a norte da torre, um pouco acima do chão do pátio, coberta de lajes em duas águas baixas.",
+      "medidas": "C. 7 × 6,5 m; bordos a 191,8 m e cumeeira a 192,2 m (LiDAR; planta do OSM).",
+      "fontes": [
+        "lidar",
+        "orto",
+        "osm",
+        "wiki"
+      ],
+      "resumo": "Cisterna a norte da torre",
+      "ancora": [
+        -6.2,
+        193.6,
+        -21.5
+      ]
+    },
+    {
+      "id": "porta_castelo",
+      "nome": "Entrada e barbacã",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "A entrada do pátio é uma passagem aberta na cerca, a sul. Dá para o pátio de uma barbacã em U, com duas arcadas no muro sul, que sai para nascente, para a rua.",
+      "medidas": "Passagem de c. 1,3 m; pátio da barbacã a 187,7 m; muros da barbacã a c. 190,9 m (LiDAR e fotografia).",
+      "fontes": [
+        "lidar",
+        "fotos",
+        "osm"
+      ],
+      "resumo": "Passagem a sul e barbacã com duas arcadas",
+      "ancora": [
+        -3.0,
+        192.8,
+        31.0
+      ],
+      "olhar": [
+        0.0,
+        0.8,
+        -1.0
+      ]
+    },
+    {
+      "id": "muralha",
+      "nome": "Muralha da vila",
+      "grupo": "Muralha_vila",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Muralha que D. Afonso III mandou fazer à volta da vila entre 1245 e 1263. Sai do cunhal noroeste do castelo para poente, ao longo da rua, e desce depois para sul até à Porta de Baixo, com casas encostadas por dentro.",
+      "medidas": "C. 100 m modelados; 3 a 3,8 m de espessura; topo de 194,5 m junto ao castelo a 184,4 m na Porta de Baixo, até 9 m acima do chão de fora a poente (LiDAR).",
+      "fontes": [
+        "lidar",
+        "orto",
+        "geoportal",
+        "osm",
+        "wiki"
+      ],
+      "resumo": "Muralha de D. Afonso III, 1245–1263",
+      "ancora": [
+        -68.6,
+        191.1,
+        -32.4
+      ],
+      "olhar": [
+        0.2,
+        0.35,
+        -0.98
+      ]
+    },
+    {
+      "id": "porta_baixo",
+      "nome": "Porta de Baixo",
+      "grupo": "Muralha_vila",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Porta da muralha da vila, num bloco de cantaria mais largo que o muro. Por fora tem um arco de volta perfeita com duas arquivoltas e impostas salientes e, no alto, as cinco mísulas de um matacão, que sobem um pouco acima do topo.",
+      "medidas": "Bloco de c. 9,8 m de largura e 7,0 m de altura; vão de c. 2,3 × 3,7 m; chão de fora a 177,4 m (LiDAR e fotografias).",
+      "fontes": [
+        "lidar",
+        "fotos",
+        "osm"
+      ],
+      "resumo": "Arco de duas arquivoltas com matacão",
+      "ancora": [
+        -98.0,
+        186.2,
+        21.5
+      ],
+      "olhar": [
+        -1.0,
+        0.2,
+        0.08
+      ]
+    },
+    {
+      "id": "porta_carvalho",
+      "nome": "Porta da Rua do Carvalho",
+      "grupo": "Muralha_vila",
+      "estado": "estado-atual",
+      "confianca": "baixa",
+      "descricao": "Passagem da muralha norte para a Rua do Carvalho, registada no OpenStreetMap. Sem fotografia: o arco é uma estimativa.",
+      "medidas": "Rua a c. 185,0 m dos dois lados; muralha a c. 190 m; arco estimado de 2,6 × 3,4 m.",
+      "fontes": [
+        "osm",
+        "lidar"
+      ],
+      "resumo": "Passagem na muralha norte (estimativa)",
+      "ancora": [
+        -48.7,
+        191.8,
+        -30.7
+      ],
+      "olhar": [
+        0.0,
+        0.3,
+        -1.0
+      ]
+    },
+    {
+      "id": "terreno",
+      "nome": "Terreno, pátio e ruas",
+      "grupo": "Terreno",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "O relevo do LiDAR, com o relvado e os afloramentos de granito do pátio, o carreiro da entrada, as ruas de calçada e os quintais.",
+      "medidas": "MDT de 50 cm (LiDAR 2025); do pátio a 191 m à rua de fora da Porta de Baixo a 177 m.",
+      "fontes": [
+        "lidar",
+        "orto",
+        "osm"
+      ],
+      "resumo": "Relevo, pátio relvado e ruas"
+    },
+    {
+      "id": "envolvente",
+      "nome": "Casas da vila",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "baixa",
+      "descricao": "As casas à volta do castelo e encostadas à muralha, em volumes simples e num só cinzento, só para dar a escala.",
+      "medidas": "Plantas do OSM e do LiDAR; cornijas e cumes medidos no MDS de 50 cm.",
+      "fontes": [
+        "osm",
+        "lidar"
+      ],
+      "resumo": "Volumes simples das casas à volta"
+    },
+    {
+      "id": "vegetacao",
+      "nome": "Árvores",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "baixa",
+      "descricao": "As árvores à volta do castelo, nas posições e com as alturas do LiDAR; copas esquemáticas.",
+      "medidas": "LiDAR 2025 (julho).",
+      "fontes": [
+        "lidar",
+        "orto"
+      ],
+      "resumo": "Árvores à volta do castelo"
+    }
+  ]
+}
