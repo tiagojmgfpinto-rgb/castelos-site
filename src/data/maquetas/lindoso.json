@@ -1,0 +1,364 @@
+{
+  "monumento": "lindoso",
+  "titulo": "Castelo de Lindoso e espigueiros",
+  "variante": "estado-atual",
+  "versao": "0.1 provisória",
+  "data": "2026-11-03",
+  "origem": {
+    "lat": 41.867167,
+    "lon": -8.199305,
+    "nota": "Centro da torre de menagem (LiDAR). Eixos da maqueta: x para este, y para norte (PT-TM06 menos a origem), no visor -z é o norte, em metros à escala 1:1; as cotas são altitudes."
+  },
+  "fontes": {
+    "lidar": {
+      "titulo": "DGT, LiDAR 2025: MDT e MDS de 50 cm e nuvem de pontos classificada, folha 194545 (CC BY 4.0). Planta e cotas da torre, dos muros (traçados nos pontos de solo, edifícios e muros, em células de 25 cm), dos edifícios do museu e dos espigueiros.",
+      "url": "https://cdd.dgterritorio.gov.pt"
+    },
+    "orto": {
+      "titulo": "DGT, Ortofotomapa 2021, 25 cm (CC BY 4.0). Conferência da planta, dos telhados, do pátio e do monte dos espigueiros.",
+      "url": "https://cdd.dgterritorio.gov.pt"
+    },
+    "geoportal": {
+      "titulo": "Município de Ponte da Barca, plataforma de informação geográfica: imagem de satélite e ortofotomapas 2021 e 2023 (conferência da planta dos baluartes, do museu e da eira).",
+      "url": "https://pontedabarca.city-platform.com/v2/app?a=pdm"
+    },
+    "osm": {
+      "titulo": "OpenStreetMap (ODbL), via Overture Maps 2026-10-21.0: plantas dos espigueiros e das casas, ruas.",
+      "url": "https://www.openstreetmap.org/#map=19/41.86717/-8.19930"
+    },
+    "wiki": {
+      "titulo": "Wikipédia — Castelo de Lindoso (história, portas, revelim, guaritas)",
+      "url": "https://pt.wikipedia.org/wiki/Castelo_de_Lindoso"
+    },
+    "fotos": {
+      "titulo": "Fotografias do castelo e dos espigueiros enviadas pelo autor do projeto, novembro de 2026 (drone de sul, aéreas, torre do pátio, Porta Norte, porta da traição, pátio e museu, guarita do cunhal sueste, espigueiros)"
+    }
+  },
+  "limitacoes": [
+    "Não foi usada planta cotada. A planta dos muros foi traçada no LiDAR de 2025: são as células com mais de 0,7 m de relevo local (num disco de 3 m) e mais de 0,9 m acima do MDT, para as lices e o pátio ficarem de fora; o contorno foi alisado e simplificado a 0,45 m. O topo de cada muro tem a cota medida em cada vértice e as faces descem a prumo até ao chão. O LiDAR quase não tem pontos nas faces; o erro esperado em planta é de 0,3 a 0,5 m, e os muros não têm o talude nem o cordão que alguns troços possam ter.",
+    "Os terraplenos largos dos baluartes ficaram como parte do muro, com o topo em erva; os pequenos muros de pedra solta do monte não foram modelados. Escadas para os adarves não se veem no LiDAR e não foram feitas.",
+    "Torre: planta de 10,5 m, rodada 64,25° (faces a ENE, NNO, OSO e SSE); soleira das ameias a 473,45 m, pontas dos merlões a 475,23 m e telhado de quatro águas com o vértice a 474,96 m (LiDAR). Os sete merlões por face com remate piramidal e a janela da face SSE, com portadas verdes, seguem as fotografias. A porta na face OSO e as seteiras são estimativas de posição.",
+    "A Porta Norte está onde o LiDAR mostra o bloco mais alto na ponta poente da cortina norte, de frente para a face NNO da torre, como na fotografia; o vão (1,7 × 2,75 m), o portão de grade e o estrado de madeira são da fotografia, à escala da altura do muro. A torre da porta a sul, com a passagem em arco de volta perfeita (2,0 × 3,2 m), tem planta e topo do LiDAR; a profundidade da passagem é estimada. A porta da traição ao pé da torre é da fotografia, com a posição estimada.",
+    "As guaritas redondas (cunhal sueste da cerca e ponta do baluarte poente) seguem as fotografias; o diâmetro (1,25 m) e a altura são estimativas.",
+    "Museu: plantas do LiDAR e do satélite, cornijas e cumes do LiDAR. Portas, janelas e a galeria envidraçada são esquemáticas.",
+    "Espigueiros: 66 (65 com a planta do OSM e os restantes do LiDAR), com o comprimento, a largura, a orientação e a altura do cume medidos. Os pés, as mesas, as grades de madeira, as empenas, a porta em arco, o telhado de lajes, a cruz e o pináculo são iguais em todos e seguem as fotografias; o número de pés e de esteios depende do comprimento. As portas foram postas, alternadamente, num topo ou no outro. Alguns espigueiros fora da área da maqueta ou escondidos por árvores podem faltar.",
+    "A pedra é feita por texturas tiradas das fotografias: cantaria de granito cinzento em fiadas na torre e na cerca medieval, alvenaria mais miúda na muralha abaluartada, granito liquenado nos espigueiros. O pátio é relvado; o monte tem erva seca e afloramentos de granito onde o MDT e o ortofotomapa os mostram.",
+    "As casas à volta são volumes simples, num só cinzento, para dar a escala sem tirar destaque ao castelo e aos espigueiros (plantas do OSM e, onde faltam, do LiDAR; cornija e cume medidos no MDS). As árvores estão nas posições do LiDAR (julho), com copas esquemáticas.",
+    "O Google Street View não chega ao interior do castelo nem à eira; a conferência foi feita com as fotografias enviadas, o ortofotomapa de 2021 e a imagem de satélite da plataforma do Município de Ponte da Barca."
+  ],
+  "distancia": 170,
+  "distanciaMinima": 12,
+  "direcao": [
+    -0.42,
+    0.62,
+    0.66
+  ],
+  "sol": [
+    -0.38,
+    0.74,
+    0.55
+  ],
+  "placas": [
+    "torre",
+    "coroamento",
+    "cerca",
+    "porta_sul",
+    "porta_norte",
+    "postigo",
+    "guaritas",
+    "baluartes",
+    "museu",
+    "espigueiros"
+  ],
+  "elementos": [
+    {
+      "id": "torre",
+      "nome": "Torre de Menagem",
+      "grupo": "Torre",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Torre quadrangular de cantaria de granito no canto norte da cerca medieval, com a face NNO para fora. Tem uma janela com portadas verdes na face voltada ao pátio e seteiras estreitas; por dentro do parapeito, um telhado de quatro águas de telha. É do tempo de D. Afonso III e D. Dinis, restaurada pela DGEMN a partir dos anos 1940.",
+      "medidas": "Planta de 10,5 × 10,5 m; soleira das ameias a 473,45 m, c. 10,9 m acima do pátio (LiDAR 2025).",
+      "fontes": [
+        "lidar",
+        "orto",
+        "fotos",
+        "wiki"
+      ],
+      "resumo": "Torre quadrangular no canto norte da cerca",
+      "ancora": [
+        0.0,
+        476.4,
+        0.0
+      ]
+    },
+    {
+      "id": "coroamento",
+      "nome": "Merlões",
+      "grupo": "Torre",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Sete merlões por face, contando os dos cunhais, com remate em pirâmide, sobre o parapeito; a bandeira nacional no mastro do lado norte.",
+      "medidas": "Pontas dos merlões a c. 475,23 m (LiDAR e fotografias).",
+      "fontes": [
+        "lidar",
+        "fotos"
+      ],
+      "resumo": "Sete merlões piramidais por face",
+      "ancora": [
+        7.8,
+        474.9,
+        2.7
+      ],
+      "olhar": [
+        0.94,
+        0.25,
+        0.33
+      ]
+    },
+    {
+      "id": "cerca",
+      "nome": "Cerca medieval",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Muros altos de cantaria de granito à volta do pátio, com adarve no alto. A torre de menagem fica no canto norte e a torre da porta a sul.",
+      "medidas": "Topo a 467–471,2 m, c. 6 m acima do pátio (LiDAR).",
+      "fontes": [
+        "lidar",
+        "orto",
+        "geoportal",
+        "fotos"
+      ],
+      "resumo": "Cerca de D. Afonso III e D. Dinis",
+      "ancora": [
+        -13.5,
+        469.0,
+        14.0
+      ],
+      "olhar": [
+        -1.0,
+        0.35,
+        -0.1
+      ]
+    },
+    {
+      "id": "porta_sul",
+      "nome": "Torre da porta",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "A sul, uma torre saliente da cerca guarda a entrada, uma passagem em arco de volta perfeita que segue pela cerca até ao pátio. A Wikipédia refere uma ponte levadiça de madeira nesta porta.",
+      "medidas": "Topo a 471,09 m; vão de c. 2,0 × 3,2 m (LiDAR e fotografia).",
+      "fontes": [
+        "lidar",
+        "fotos",
+        "wiki"
+      ],
+      "resumo": "Entrada sul em arco",
+      "ancora": [
+        8.7,
+        472.1,
+        33.6
+      ],
+      "olhar": [
+        0.02,
+        0.25,
+        1.0
+      ]
+    },
+    {
+      "id": "porta_norte",
+      "nome": "Porta Norte",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Porta em arco de volta perfeita, com aduelas de granito e portão de grade, na ponta poente da cortina norte, de frente para a torre de menagem. À frente tem um estrado de madeira.",
+      "medidas": "Vão de c. 1,7 × 2,75 m; muro com o topo a 466,33 m; chão de fora a c. 461 m (LiDAR e fotografia).",
+      "fontes": [
+        "lidar",
+        "fotos",
+        "wiki"
+      ],
+      "resumo": "Porta norte junto à torre",
+      "ancora": [
+        -1.8,
+        467.3,
+        -11.8
+      ],
+      "olhar": [
+        -0.5,
+        0.2,
+        -0.87
+      ]
+    },
+    {
+      "id": "postigo",
+      "nome": "Porta da traição",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Pequena porta em arco na face de fora da cerca, ao pé da torre de menagem, para sair para a lice sem passar pelas portas.",
+      "medidas": "Vão de c. 0,8 × 1,9 m (fotografia; posição estimada).",
+      "fontes": [
+        "fotos"
+      ],
+      "resumo": "Postigo ao pé da torre",
+      "ancora": [
+        -9.9,
+        465.2,
+        -0.8
+      ],
+      "olhar": [
+        -0.43,
+        0.2,
+        -0.9
+      ]
+    },
+    {
+      "id": "guaritas",
+      "nome": "Guaritas",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Guaritas redondas de pedra com cúpula, assentes em mísulas nos cunhais: uma no cunhal sueste da cerca, com uma gárgula por baixo, e outra na ponta do baluarte poente.",
+      "medidas": "C. 1,25 m de diâmetro (estimativa a partir das fotografias).",
+      "fontes": [
+        "fotos",
+        "wiki"
+      ],
+      "resumo": "Guaritas com cúpula nos cunhais",
+      "ancora": [
+        19.1,
+        474.6,
+        29.9
+      ],
+      "olhar": [
+        0.71,
+        0.3,
+        0.71
+      ]
+    },
+    {
+      "id": "baluartes",
+      "nome": "Muralha abaluartada",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Na Guerra da Restauração a cerca medieval foi envolvida por uma muralha abaluartada de planta estrelada, com baluartes nos cunhais, lices entre as duas cercas e um revelim a norte. As obras acabaram por volta de 1666 e o revelim principal por volta de 1720.",
+      "medidas": "Muros de 1,2 a 2 m de espessura, com o topo a 462–465 m, 2 a 4 m acima das lices e do campo (LiDAR).",
+      "fontes": [
+        "lidar",
+        "orto",
+        "geoportal",
+        "wiki",
+        "fotos"
+      ],
+      "resumo": "Fortificação do século XVII",
+      "ancora": [
+        32.0,
+        466.0,
+        -0.0
+      ],
+      "olhar": [
+        0.98,
+        0.5,
+        -0.2
+      ]
+    },
+    {
+      "id": "museu",
+      "nome": "Edifícios do museu",
+      "grupo": "Museu",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Duas alas de paredes rebocadas a branco e telhados de quatro águas, encostadas à cerca poente e à cerca sul, ligadas por uma galeria envidraçada. Ocupam o lugar das antigas casas do alcaide e da guarnição.",
+      "medidas": "Cumes a 467,25 m (ala poente) e 466,34 m (ala sul) (LiDAR).",
+      "fontes": [
+        "lidar",
+        "orto",
+        "fotos"
+      ],
+      "resumo": "Museu no pátio",
+      "ancora": [
+        -4.0,
+        467.3,
+        24.0
+      ],
+      "olhar": [
+        0.29,
+        0.6,
+        -0.96
+      ]
+    },
+    {
+      "id": "espigueiros",
+      "nome": "Espigueiros",
+      "grupo": "Espigueiros",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Na eira comunitária a sul e sudoeste do castelo juntam-se mais de cinquenta espigueiros de granito, levantados do chão sobre pés com mesas para guardar o milho dos ratos. Têm grades de ripas de madeira nos lados, empenas de granito com uma porta pequena, telhado de lajes e uma cruz num dos topos.",
+      "medidas": "66 espigueiros modelados, de c. 3 a 12 m de comprimento; cumes 3,3 a 3,8 m acima do chão (LiDAR e OSM).",
+      "fontes": [
+        "lidar",
+        "osm",
+        "orto",
+        "fotos"
+      ],
+      "resumo": "Eira com mais de 50 espigueiros",
+      "ancora": [
+        -56.0,
+        458.6,
+        107.2
+      ],
+      "olhar": [
+        0.2,
+        0.45,
+        0.98
+      ]
+    },
+    {
+      "id": "terreno",
+      "nome": "Terreno, pátio e eira",
+      "grupo": "Terreno",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "O relevo do LiDAR, com o pátio relvado, as lices, o monte de erva seca com os afloramentos de granito e as ruas.",
+      "medidas": "MDT de 50 cm (LiDAR 2025), com os terraplenos dos baluartes do MDS.",
+      "fontes": [
+        "lidar",
+        "orto",
+        "osm"
+      ],
+      "resumo": "Relevo, pátio, eira e ruas"
+    },
+    {
+      "id": "envolvente",
+      "nome": "Casas da aldeia",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "baixa",
+      "descricao": "As casas à volta do castelo e da eira, em volumes simples e num só cinzento, só para dar a escala.",
+      "medidas": "Plantas do OSM e do LiDAR; cornijas e cumes medidos no MDS de 50 cm.",
+      "fontes": [
+        "osm",
+        "lidar"
+      ],
+      "resumo": "Volumes simples das casas à volta"
+    },
+    {
+      "id": "vegetacao",
+      "nome": "Árvores",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "baixa",
+      "descricao": "As árvores à volta do castelo e da eira, nas posições e com as alturas do LiDAR; copas esquemáticas.",
+      "medidas": "LiDAR 2025 (julho).",
+      "fontes": [
+        "lidar",
+        "orto"
+      ],
+      "resumo": "Árvores à volta"
+    }
+  ]
+}
