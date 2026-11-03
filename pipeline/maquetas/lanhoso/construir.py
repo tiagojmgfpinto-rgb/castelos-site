@@ -1,0 +1,1951 @@
+"""Constrói a maqueta 3D do Castelo de Lanhoso e do Santuário de Nossa Senhora do Pilar (estado atual) em Blender
+e exporta-a para public/maquetas/lanhoso/lanhoso.glb (glTF binário com Draco).
+
+Corre com o módulo bpy (Blender 5.2) instalado em Python 3.13:
+    pip install bpy==5.2.3 numpy scipy shapely pillow rasterio
+    python pipeline/maquetas/lanhoso/construir.py            # GLB
+    python pipeline/maquetas/lanhoso/construir.py --vistas   # GLB + capa + vistas de verificação
+
+Dados (em dados/): lidar.npz, superficie.npz e torre.npz (lidar.py: LiDAR 2025 da DGT, folha 187514),
+orto.jpg (ortofoto.py: ortofotomapa 2021 da DGT), fontes.json (recolher.py: OSM via Overture).
+As plantas da torre, da cerca, da porta e do santuário estão em comum.py (medidas no LiDAR, ver o LEIAME).
+
+O que se modela, e de onde vem:
+- a torre de menagem (10,45 × 10,3 m, faces a 73,25° e 343,25°), com as cotas do LiDAR e o coroamento das
+  fotografias: oito merlões de remate piramidal alto por face, contando os dos cunhais, alguns com seteira em
+  arco; o adarve de tábuas por dentro do parapeito e o telhado de quatro águas de telha; a porta alta em arco de
+  volta perfeita na face NNO, a 387,7 m, com a escada de pedra encostada à face e o corrimão de ferro; seteiras;
+- a porta do castelo a poente: dois torreões com merlões e, entre eles, recuado, o muro com o arco ogival e as
+  portas de madeira verde, a escadaria de granito que sobe da encosta e o penedo encostado ao torreão sul;
+- a cerca: a muralha poente com merlões, o canto noroeste, a muralha norte com parapeito, o baluarte nordeste, a
+  muralha nascente com o banco por dentro, o terraço do pátio e as escadas para os adarves; o muro fino a sudeste;
+- o santuário de Nossa Senhora do Pilar (1680) a sul: nave, capela-mor e sacristia com as cotas do LiDAR, a
+  fachada das fotografias (frontão, cruz, pináculos, nicho com a imagem, janelas e porta), cornijas ameadas,
+  telhados de telha, o adro e as escadas;
+- o terreno do LiDAR com o grande afloramento de granito do Monte de Lanhoso, o terreiro, a relva e as árvores
+  (nenhuma a atravessar o monumento); as casas à volta (poucas) em volumes simples de um só cinzento.
+Coordenadas da cena: x para este, y para norte (PT-TM06 menos a origem), z = altitude, em metros (1:1).
+O glTF converte para y para cima (-z é o norte no visor).
+"""
+import json
+import math
+import sys
+from pathlib import Path
+
+import bpy  # noqa: I001 (o bpy tem de vir antes do bmesh)
+import bmesh
+import numpy as np
+import shapely
+from PIL import Image
+from scipy import ndimage as ndi
+from scipy.spatial import cKDTree
+
+AQUI = Path(__file__).resolve().parent
+RAIZ = AQUI.parents[2]
+sys.path.insert(0, str(AQUI))
+import comum as C  # noqa: E402
+
+_cfg = RAIZ / "src" / "data" / "maquetas" / "lanhoso.json"
+CFG = json.loads(_cfg.read_text()) if _cfg.exists() else {"origem": {"lat": C.LAT0, "lon": C.LON0}, "variante": "estado-atual", "versao": "0.1"}
+F = json.loads((AQUI / "dados" / "fontes.json").read_text())
+SAIDA = RAIZ / "public" / "maquetas" / "lanhoso"
+LID = np.load(AQUI / "dados" / "lidar.npz")
+LP, LX0, LY0 = float(LID["passo"]), float(LID["x0"]), float(LID["y0"])
+MDT = LID["mdt"] / 100.0 + float(LID["base"])
+MDS = LID["mds"] / 100.0 + float(LID["base"])
+CLS = LID["classe"]
+SUPF = np.load(AQUI / "dados" / "superficie.npz")
+SP, SX0, SY0 = float(SUPF["passo"]), float(SUPF["x0"]), float(SUPF["y0"])
+SUP = SUPF["z"] / 100.0 + float(SUPF["base"])
+ORTO = np.asarray(Image.open(AQUI / "dados" / "orto.jpg").convert("RGB"), float) / 255.0  # 25 cm, norte em cima
+OX0, OY1, OP = C.X0, C.Y1, 0.25
+
+# a maqueta: 150 × 120 m, do castelo ao adro do santuário (a sul acaba no limite da folha do LiDAR)
+X0, X1, Y0, Y1 = -70.0, 80.0, -63.0, 57.0
+rng = np.random.default_rng(1121)  # 1121: Tratado de Lanhoso
+
+EU = np.array(C.EU)
+EV = np.array(C.EV)
+AU, AV = C.MEIA_U, C.MEIA_V
+
+
+def W(u, v):
+    """Ponto do referencial da torre (u, v) para a cena (x este, y norte)."""
+    return EU * u + EV * v
+
+
+def WL(pts):
+    return [tuple(W(*p)) for p in pts]
+
+
+# ---------------------------------------------------------------- utilidades
+def unit(v):
+    v = np.asarray(v, float)
+    return v / max(np.linalg.norm(v), 1e-9)
+
+
+def amostra(G, x0, y0, p, x, y, ordem=1):
+    xa, ya = np.atleast_1d(np.asarray(x, float)), np.atleast_1d(np.asarray(y, float))
+    r = ndi.map_coordinates(G, [(ya - y0) / p, (xa - x0) / p], order=ordem, mode="nearest")
+    return r if np.ndim(x) else float(r[0])
+
+
+def cota(x, y):
+    """Chão (MDT de 50 cm)."""
+    return amostra(MDT, LX0, LY0, LP, x, y)
+
+
+def superficie(x, y):
+    """O ponto mais alto das classes solo, edifícios e muros (sem vegetação), em células de 25 cm."""
+    return amostra(SUP, SX0, SY0, SP, x, y, ordem=0)
+
+
+# ---------------------------------------------------------------- ruído
+# ---------------------------------------------------------------- ruído
+
+def ruido(x, y, escala, semente):
+    g = np.random.default_rng(semente).random((64, 64))
+    u, v = np.asarray(x) / escala, np.asarray(y) / escala
+    i, j = np.floor(u).astype(int), np.floor(v).astype(int)
+    fu, fv = u - i, v - j
+    fu, fv = fu * fu * (3 - 2 * fu), fv * fv * (3 - 2 * fv)
+    a, b = g[i % 64, j % 64], g[(i + 1) % 64, j % 64]
+    c, d = g[i % 64, (j + 1) % 64], g[(i + 1) % 64, (j + 1) % 64]
+    return (a * (1 - fu) + b * fu) * (1 - fv) + (c * (1 - fu) + d * fu) * fv
+
+
+def fbm(x, y, escala, semente, oit=4):
+    s, amp, tot = 0.0, 1.0, 0.0
+    for o in range(oit):
+        s = s + amp * ruido(x, y, escala / 2**o, semente + o)
+        tot += amp
+        amp *= 0.5
+    return s / tot
+
+
+# ---------------------------------------------------------------- malhas
+# ---------------------------------------------------------------- malhas
+
+MATS = {}
+
+
+def uv_mundo(ob, escala):
+    """UV em metros: faces horizontais em planta, verticais ao longo da face (as fiadas seguem a cota)."""
+    me = ob.data
+    if not me.uv_layers:
+        me.uv_layers.new(name="UVMap")
+    n_l = len(me.loops)
+    co = np.empty(len(me.vertices) * 3)
+    me.vertices.foreach_get("co", co)
+    co = co.reshape(-1, 3)
+    vi = np.empty(n_l, int)
+    me.loops.foreach_get("vertex_index", vi)
+    nrm = np.empty(len(me.polygons) * 3)
+    me.polygons.foreach_get("normal", nrm)
+    nrm = nrm.reshape(-1, 3)
+    lt = np.empty(len(me.polygons), int)
+    me.polygons.foreach_get("loop_total", lt)
+    pol = np.repeat(np.arange(len(me.polygons)), lt)
+    n = nrm[pol]
+    p = co[vi]
+    hz = np.abs(n[:, 2]) > 0.7
+    h = np.maximum(np.hypot(n[:, 0], n[:, 1]), 1e-6)
+    u = np.where(hz, p[:, 0], (p[:, 0] * -n[:, 1] + p[:, 1] * n[:, 0]) / h)
+    v = np.where(hz, p[:, 1], p[:, 2])
+    me.uv_layers.active.data.foreach_set("uv", (np.stack([u, v], 1) / escala).ravel().astype(np.float32))
+
+
+class Malha:
+    """Acumula vértices e faces (com material por face) para um objeto."""
+
+    def __init__(self, mats):
+        self.v, self.f, self.m = [], [], []
+        self.mats = list(mats)
+
+    def i(self, nome):
+        return self.mats.index(nome)
+
+    def face(self, pts, mat=0):
+        if isinstance(mat, str):
+            mat = self.i(mat)
+        b = len(self.v)
+        self.v.extend([tuple(map(float, p)) for p in pts])
+        self.f.append(list(range(b, b + len(pts))))
+        self.m.append(mat)
+
+    def prisma(self, base, z0, z1, mat=0, topo=True, fundo=False, mat_topo=None):
+        n = len(base)
+        for i in range(n):
+            a, b = base[i], base[(i + 1) % n]
+            za0 = z0[i] if np.ndim(z0) else z0
+            zb0 = z0[(i + 1) % n] if np.ndim(z0) else z0
+            za1 = z1[i] if np.ndim(z1) else z1
+            zb1 = z1[(i + 1) % n] if np.ndim(z1) else z1
+            self.face([(a[0], a[1], za0), (b[0], b[1], zb0), (b[0], b[1], zb1), (a[0], a[1], za1)], mat)
+        if topo:
+            self.face([(p[0], p[1], z1[i] if np.ndim(z1) else z1) for i, p in enumerate(base)], mat if mat_topo is None else mat_topo)
+        if fundo:
+            self.face([(p[0], p[1], z0[i] if np.ndim(z0) else z0) for i, p in reversed(list(enumerate(base)))], mat)
+
+    def caixa_uv(self, u0, u1, v0, v1, z0, z1, mat=0, topo=True, fundo=False):
+        """Caixa alinhada com a torre (limites em u e v)."""
+        q = [W(u0, v0), W(u1, v0), W(u1, v1), W(u0, v1)]
+        self.prisma(q, z0, z1, mat, topo=topo, fundo=fundo)
+
+    def caixa_face(self, f, s0, s1, d0, d1, z0, z1, mat=0, topo=True, fundo=False):
+        """Caixa encostada a um plano f: de s0 a s1 ao longo, de d0 a d1 para fora."""
+        q = [f.xy(s0, d0), f.xy(s1, d0), f.xy(s1, d1), f.xy(s0, d1)]
+        self.prisma(q, z0, z1, mat, topo=topo, fundo=fundo)
+
+    def piramide(self, base, z0, zp, mat=0):
+        c = np.mean(base, 0)
+        n = len(base)
+        for i in range(n):
+            a, b = base[i], base[(i + 1) % n]
+            self.face([(a[0], a[1], z0), (b[0], b[1], z0), (c[0], c[1], zp)], mat)
+
+    def cilindro(self, c, r, z0, z1, mat=0, k=12, topo=True, r1=None):
+        r1 = r if r1 is None else r1
+        a = np.linspace(0, 2 * math.pi, k, endpoint=False)
+        b0 = [(c[0] + r * math.cos(t), c[1] + r * math.sin(t), z0) for t in a]
+        b1 = [(c[0] + r1 * math.cos(t), c[1] + r1 * math.sin(t), z1) for t in a]
+        for i in range(k):
+            j = (i + 1) % k
+            self.face([b0[i], b0[j], b1[j], b1[i]], mat)
+        if topo and r1 > 0.01:
+            self.face(b1, mat)
+
+    def barra(self, p0, p1, r, mat=0, k=6):
+        """Barra (tubo) de p0 a p1 (3D), de secção poligonal."""
+        p0, p1 = np.asarray(p0, float), np.asarray(p1, float)
+        ax = unit(p1 - p0)
+        a1 = unit(np.cross(ax, [0, 0, 1] if abs(ax[2]) < 0.9 else [1, 0, 0]))
+        a2 = np.cross(ax, a1)
+        ang = np.linspace(0, 2 * math.pi, k, endpoint=False)
+        c0 = [p0 + r * (math.cos(t) * a1 + math.sin(t) * a2) for t in ang]
+        c1 = [p1 + r * (math.cos(t) * a1 + math.sin(t) * a2) for t in ang]
+        for i in range(k):
+            j = (i + 1) % k
+            self.face([c0[i], c0[j], c1[j], c1[i]], mat)
+
+    def objeto(self, nome, elemento, pai, uv=3.0, liso=False, vcor=None, recalc=True):
+        me = bpy.data.meshes.new(nome)
+        me.from_pydata(self.v, [], self.f)
+        me.update()
+        for m in self.mats:
+            me.materials.append(MATS[m])
+        me.polygons.foreach_set("material_index", self.m)
+        bm = bmesh.new()
+        bm.from_mesh(me)
+        bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=0.002)
+        if recalc:
+            bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        bm.to_mesh(me)
+        bm.free()
+        if liso:
+            me.shade_smooth()
+        ob = bpy.data.objects.new(nome, me)
+        bpy.context.scene.collection.objects.link(ob)
+        if elemento:
+            ob["elemento"] = elemento
+        ob.parent = pai
+        if uv:
+            uv_mundo(ob, uv)
+        if vcor is not None:  # cor por vértice (patine da pedra), multiplicada pela textura
+            co = np.empty(len(me.vertices) * 3)
+            me.vertices.foreach_get("co", co)
+            cv = vcor(co.reshape(-1, 3))
+            at = me.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
+            at.data.foreach_set("color", np.concatenate([cv, np.ones((len(cv), 1))], 1).astype(np.float32).ravel())
+        return ob
+
+
+def malha_rapida(nome, V, Fq, mat, pai, elemento=None):
+    me = bpy.data.meshes.new(nome)
+    me.vertices.add(len(V))
+    me.vertices.foreach_set("co", V.astype(np.float32).ravel())
+    me.loops.add(Fq.size)
+    me.loops.foreach_set("vertex_index", Fq.astype(np.int32).ravel())
+    me.polygons.add(len(Fq))
+    me.polygons.foreach_set("loop_start", (np.arange(len(Fq)) * 4).astype(np.int32))
+    me.update(calc_edges=True)
+    me.materials.append(MATS[mat])
+    ob = bpy.data.objects.new(nome, me)
+    bpy.context.scene.collection.objects.link(ob)
+    if elemento:
+        ob["elemento"] = elemento
+    ob.parent = pai
+    return ob
+
+
+# ---------------------------------------------------------------- materiais e texturas
+
+def imagem(nome, arr):
+    h, w, _ = arr.shape
+    img = bpy.data.images.new(nome, w, h, alpha=False)
+    rgba = np.concatenate([arr, np.ones((h, w, 1))], 2).astype(np.float32)
+    img.pixels.foreach_set(rgba.ravel())
+    img.file_format = "JPEG"
+    img.pack()
+    return img
+
+
+# ---------------------------------------------------------------- materiais e texturas
+def material(nome, cor, rug=0.9, tex=None, vcor=False, normal=None, forca=1.0, escala=None):
+    mt = bpy.data.materials.new(nome)
+    mt.use_nodes = True
+    nt = mt.node_tree
+    bsdf = nt.nodes["Principled BSDF"]
+    mapa = None
+    if escala is not None:
+        uvn = nt.nodes.new("ShaderNodeUVMap")
+        mapa = nt.nodes.new("ShaderNodeMapping")
+        mapa.inputs["Scale"].default_value = (escala, escala, 1.0)
+        nt.links.new(uvn.outputs["UV"], mapa.inputs["Vector"])
+    if normal is not None:
+        normal.colorspace_settings.name = "Non-Color"
+        tn = nt.nodes.new("ShaderNodeTexImage")
+        tn.image = normal
+        if mapa is not None:
+            nt.links.new(mapa.outputs["Vector"], tn.inputs["Vector"])
+        nm = nt.nodes.new("ShaderNodeNormalMap")
+        nm.inputs["Strength"].default_value = forca
+        nt.links.new(tn.outputs["Color"], nm.inputs["Color"])
+        nt.links.new(nm.outputs["Normal"], bsdf.inputs["Normal"])
+    bsdf.inputs["Base Color"].default_value = (*[c ** 2.2 for c in cor], 1)
+    bsdf.inputs["Roughness"].default_value = rug
+    if tex is not None:
+        ti = nt.nodes.new("ShaderNodeTexImage")
+        ti.image = tex
+        if mapa is not None:
+            nt.links.new(mapa.outputs["Vector"], ti.inputs["Vector"])
+        if vcor:
+            va = nt.nodes.new("ShaderNodeVertexColor")
+            va.layer_name = "Col"
+            mix = nt.nodes.new("ShaderNodeMix")
+            mix.data_type = "RGBA"
+            mix.blend_type = "MULTIPLY"
+            mix.inputs["Factor"].default_value = 1.0
+            nt.links.new(ti.outputs["Color"], mix.inputs[6])
+            nt.links.new(va.outputs["Color"], mix.inputs[7])
+            nt.links.new(mix.outputs[2], bsdf.inputs["Base Color"])
+        else:
+            nt.links.new(ti.outputs["Color"], bsdf.inputs["Base Color"])
+    elif vcor:
+        va = nt.nodes.new("ShaderNodeVertexColor")
+        va.layer_name = "Col"
+        nt.links.new(va.outputs["Color"], bsdf.inputs["Base Color"])
+    MATS[nome] = mt
+    return mt
+
+
+def normais(alt, forca):
+    gx = (np.roll(alt, -1, 1) - np.roll(alt, 1, 1)) * forca
+    gy = (np.roll(alt, -1, 0) - np.roll(alt, 1, 0)) * forca
+    nv = np.stack([-gx, -gy, np.ones_like(alt)], 2)
+    nv /= np.linalg.norm(nv, axis=2, keepdims=True)
+    return nv * 0.5 + 0.5
+
+
+def textura_cantaria(n=1024, metros=6.0, semente=1170, fiada=(0.30, 0.48), comp=(0.55, 1.6), liquen=0.80,
+                     tinta=(1.0, 1.0, 1.0), paleta=None, prob=None, junta_m=0.005, irregular=0.0, var=(0.86, 1.12),
+                     liq_forca=0.55):
+    """Aparelho de granito em fiadas (6 m por repetição): silhares de fiada e comprimento dados, juntas finas,
+    arestas gastas, grão de biotite e feldspato, manchas de óxido, escorrências e líquenes. Com irregular > 0
+    as juntas verticais inclinam e as fiadas ondulam (alvenaria da cerca e da muralha). Devolve a cor e o relevo."""
+    r = np.random.default_rng(semente)
+    m_px = n / metros
+    if paleta is None:
+        # granito de Melgaço nas fotografias: cinzento quente, dourado ao sol, com silhares mais claros e outros
+        # tingidos de ocre (óxido de ferro)
+        paleta = np.array([
+            (0.600, 0.565, 0.500),  # cinzento-dourado (a maioria)
+            (0.660, 0.630, 0.570),  # claro
+            (0.500, 0.475, 0.430),  # escuro, gasto
+            (0.640, 0.565, 0.460),  # ocre
+            (0.575, 0.505, 0.420),  # ocre-acastanhado
+            (0.560, 0.555, 0.535),  # cinzento frio
+        ])
+        prob = [0.40, 0.16, 0.16, 0.15, 0.05, 0.08]
+    prob = np.array(prob) / np.sum(prob)
+    cel = np.zeros((n, n), int)
+    cores = []
+    y = 0.0
+    k = 0
+    while y < n - 1:
+        hf = r.uniform(*fiada) * m_px
+        if y + hf > n - fiada[0] * 0.6 * m_px:
+            hf = n - y
+        y0, y1 = int(round(y)), int(round(y + hf))
+        x = r.uniform(0, 1.0) * m_px
+        x_ini = x
+        while x < x_ini + n:
+            wf = r.uniform(*comp) * m_px
+            xs = (np.arange(int(round(x)), int(round(x + wf)))) % n
+            cel[y0:y1, xs] = k
+            cores.append(paleta[r.choice(len(paleta), p=prob)] * r.uniform(*var))
+            k += 1
+            x += wf
+        y += hf
+    cores = np.array(cores)
+    yy, xx = np.mgrid[0:n, 0:n]
+    amp = 0.04 + irregular
+    wx = ((fbm(xx, yy, 0.2 * m_px, semente + 3) - 0.5) * amp * m_px).astype(int)
+    wy = ((fbm(xx, yy, 0.2 * m_px, semente + 4) - 0.5) * (0.03 + irregular * 0.6) * m_px).astype(int)
+    celw = cel[(yy + wy) % n, (xx + wx) % n]
+    tex = cores[celw]
+    borda = np.zeros((n, n), bool)
+    for dy, dx in ((0, 1), (1, 0), (0, -1), (-1, 0)):
+        borda |= celw != np.roll(np.roll(celw, dy, 0), dx, 1)
+    dist = ndi.distance_transform_edt(~borda) / m_px
+    junta = dist < junta_m
+    gasto = np.clip(dist / (0.04 + irregular * 0.5), 0, 1)
+    alt = np.sqrt(gasto) * (~junta)
+    tex = tex * (0.86 + 0.14 * alt[..., None])
+    tex = np.where(junta[..., None], tex * 0.55 + np.array([0.36, 0.35, 0.33]) * 0.45, tex)
+    tex = tex * (0.92 + 0.16 * fbm(xx, yy, 0.30 * m_px, semente + 5))[..., None]
+    g1 = ndi.gaussian_filter(r.random((n, n)), 0.6, mode="wrap")
+    g1 = (g1 - g1.mean()) / g1.std()
+    g2 = r.random((n, n))
+    tex = tex * (1 + 0.05 * g1[..., None])
+    tex = np.where((g2 < 0.045)[..., None], tex * 0.62, tex)
+    tex = np.where((g2 > 0.93)[..., None], tex * 0.80 + 0.17, tex)
+    ox = np.clip((fbm(xx, yy, 0.6 * m_px, semente + 8) - 0.58) * 3.0, 0, 1)[..., None]
+    tex = tex * (1 - 0.30 * ox) + np.array([0.62, 0.50, 0.36]) * 0.30 * ox
+    esc = fbm(xx * 6.0, yy * 0.25, 0.9 * m_px, semente + 9)
+    esc = np.clip((esc - 0.55) * 2.2, 0, 1)[..., None]
+    tex = tex * (1 - 0.22 * esc)
+    # líquenes: manchas brancas acinzentadas (muito visíveis nas fotografias, sobretudo na torre e no alto
+    # dos muros) e algumas amarelo-esverdeadas
+    liq = fbm(xx, yy, 0.25 * m_px, semente + 6)
+    tex = np.where((liq > liquen)[..., None], tex * (1 - liq_forca) + np.array([0.86, 0.86, 0.82]) * liq_forca, tex)
+    liq2 = fbm(xx, yy, 0.18 * m_px, semente + 11)
+    tex = np.where((liq2 > liquen + 0.04)[..., None], tex * 0.6 + np.array([0.66, 0.66, 0.42]) * 0.4, tex)
+    return np.clip(tex * np.array(tinta), 0, 1), ndi.gaussian_filter(alt, 0.8) + 0.05 * g1
+
+
+def textura_telha(n=256, metros=2.0):
+    yy, xx = np.mgrid[0:n, 0:n] / n * metros
+    onda = 0.5 + 0.5 * np.cos(2 * math.pi * xx / 0.22)
+    fiada = (yy % 0.42) / 0.42
+    v = 0.78 + 0.22 * onda - 0.18 * (fiada > 0.9)
+    g = fbm(xx * 8, yy * 8, 1.0, 77)
+    v = v * (0.9 + 0.2 * g)
+    return np.repeat(v[..., None], 3, 2).clip(0, 1), onda - 0.4 * (fiada > 0.9)
+
+
+def textura_cubos(n=1024, metros=8.0, semente=91, base=(0.58, 0.57, 0.54)):
+    """Calçada de cubos de granito (cubos de c. 10 cm, juntas de areia)."""
+    r = np.random.default_rng(semente)
+    m_px = n / metros
+    yy, xx = np.mgrid[0:n, 0:n]
+    c = 0.105 * m_px
+    gi = (xx // c).astype(int) + 1000 * ((yy + (xx // (3 * c)).astype(int) % 2 * c * 0.5) // c).astype(int)
+    tom = r.uniform(0.85, 1.12, gi.max() + 1)[gi]
+    fx, fy = (xx % c) / c, ((yy + (xx // (3 * c)).astype(int) % 2 * c * 0.5) % c) / c
+    junta = (fx < 0.12) | (fy < 0.12)
+    tex = np.array(base) * tom[..., None] * (0.9 + 0.2 * fbm(xx, yy, 1.5 * m_px, semente + 1))[..., None]
+    tex = np.where(junta[..., None], np.array([0.40, 0.38, 0.35]), tex)
+    return np.clip(tex, 0, 1), (~junta).astype(float)
+
+
+def textura_relva(n=512, metros=8.0, semente=7):
+    """Relvado do recinto (fotografias: verde médio, com manchas amareladas e terra à vista nos carreiros)."""
+    m_px = n / metros
+    yy, xx = np.mgrid[0:n, 0:n]
+    g = fbm(xx, yy, 1.2 * m_px, semente)
+    g2 = fbm(xx, yy, 0.15 * m_px, semente + 5)
+    base = np.array([0.36, 0.46, 0.22])
+    amarelo = np.array([0.55, 0.55, 0.30])
+    t = np.clip((g - 0.45) * 2.5, 0, 1)[..., None]
+    tex = base * (1 - t) + amarelo * t
+    tex = tex * (0.85 + 0.3 * g2[..., None])
+    pinta = np.random.default_rng(semente).random((n, n))
+    tex = np.where((pinta > 0.9)[..., None], tex * 1.15, tex)
+    return np.clip(tex, 0, 1), g2
+
+
+def textura_rocha(n=512, metros=6.0, semente=13):
+    """Afloramentos de granito do recinto: cinzento claro, gasto, com líquenes e fendas."""
+    m_px = n / metros
+    yy, xx = np.mgrid[0:n, 0:n]
+    g = fbm(xx, yy, 0.8 * m_px, semente)
+    tex = np.array([0.60, 0.58, 0.54]) * (0.8 + 0.4 * g)[..., None]
+    fenda = np.abs(fbm(xx, yy, 1.5 * m_px, semente + 3) - 0.5) < 0.012
+    tex = np.where(fenda[..., None], tex * 0.55, tex)
+    liq = fbm(xx, yy, 0.2 * m_px, semente + 6)
+    tex = np.where((liq > 0.66)[..., None], tex * 0.5 + 0.42, tex)
+    return np.clip(tex, 0, 1), g
+
+
+# ---------------------------------------------------------------- planos e vãos
+# ---------------------------------------------------------------- planos e vãos
+
+class Plano:
+    """Plano vertical: o = ponto de origem (x, y), t = eixo ao longo, n = normal para fora (por omissão, à
+    esquerda de t). p(s, d, z): s ao longo, d para fora (negativo = para dentro da parede)."""
+
+    def __init__(self, o, t, n=None, meia=None):
+        self.o = np.asarray(o, float)
+        self.t = unit(t)
+        self.n = unit(n) if n is not None else np.array([-self.t[1], self.t[0]])
+        self.meia = meia
+
+    def xy(self, s, d):
+        return self.o + self.t * s + self.n * d
+
+    def p(self, s, d, z):
+        q = self.xy(s, d)
+        return (q[0], q[1], z)
+
+
+
+
+
+
+def quad(m, f, s0, s1, z0, z1, d=0.0, mat=0):
+    m.face([f.p(s0, d, z0), f.p(s1, d, z0), f.p(s1, d, z1), f.p(s0, d, z1)], mat)
+
+
+def arco_pts(sc, zc, r, k=10, a0=0.0, a1=math.pi):
+    return [(sc + r * math.cos(a), zc + r * math.sin(a)) for a in np.linspace(a0, a1, k + 1)]
+
+
+def parede(m, f, s0, s1, z0, z1, vaos, mat=0, passo_z=1.5, d=0.0):
+    """Plano da face entre s0..s1 e z0..z1, com vãos retangulares ou em arco abertos.
+    vaos: lista de (sa, sb, za, zb, arco); arco=True: zb é o fecho do arco de volta perfeita."""
+    ss = sorted({s0, s1, *[v_[0] for v_ in vaos], *[v_[1] for v_ in vaos]})
+    ss = [s for s in ss if s0 <= s <= s1]
+    for a, b in zip(ss[:-1], ss[1:]):
+        sm = (a + b) / 2
+        cort = sorted([(v_[2], v_[3]) for v_ in vaos if v_[0] <= sm <= v_[1]])
+        zs = [z0]
+        for za, zb in cort:
+            zs += [za, zb]
+        zs.append(z1)
+        for za, zb in zip(zs[0::2], zs[1::2]):
+            if zb - za < 1e-4:
+                continue
+            nz = max(1, int(math.ceil((zb - za) / passo_z)))
+            for i in range(nz):
+                quad(m, f, a, b, za + (zb - za) * i / nz, za + (zb - za) * (i + 1) / nz, d=d, mat=mat)
+    for sa, sb, za, zb, arco in vaos:
+        if not arco:
+            continue
+        r = (sb - sa) / 2
+        zc = zb - r
+        pts = arco_pts((sa + sb) / 2, zc, r, 12)
+        meio = len(pts) // 2
+        m.face([f.p(s, d, z) for s, z in pts[:meio + 1]] + [f.p(sb, d, zb)], mat)
+        m.face([f.p(s, d, z) for s, z in pts[meio:]] + [f.p(sa, d, zb)], mat)
+
+
+def contorno_vao(sc, w, za, zb, arco=True, k=12):
+    r = w / 2
+    sa, sb = sc - r, sc + r
+    c = [(sa, za), (sb, za)]
+    if arco:
+        c += arco_pts(sc, zb - r, r, k)
+    else:
+        c += [(sb, zb), (sa, zb)]
+    return c
+
+
+def vao(m, f, sc, w, za, zb, prof, arco=True, mat_lado="cantaria_torre", mat_fundo="sombra", k=12, d0=0.0):
+    """Ombreiras, soleira e intradorso do vão (para dentro da parede até prof) e o fundo."""
+    contorno = contorno_vao(sc, w, za, zb, arco, k)
+    pts = contorno + [contorno[0]]
+    for (s1, z1), (s2, z2) in zip(pts[:-1], pts[1:]):
+        m.face([f.p(s1, d0, z1), f.p(s2, d0, z2), f.p(s2, d0 - prof, z2), f.p(s1, d0 - prof, z1)], mat_lado)
+    m.face([f.p(s, d0 - prof, z) for s, z in contorno], mat_fundo)
+    return contorno
+
+
+def aduelas(m, f, sc, w, za, zb, larg, sal, n=9, mat="cantaria_lisa", ombreiras=True, d0=0.0):
+    """Aduelas do arco (e ombreiras de cantaria), ligeiramente salientes da face."""
+    r = w / 2
+    zc = zb - r
+    R = r + larg
+    for i in range(n):
+        a0, a1 = math.pi * i / n, math.pi * (i + 1) / n
+        g = 0.010
+        pts = [(sc + r * math.cos(a0 + g), zc + r * math.sin(a0 + g)), (sc + R * math.cos(a0 + g), zc + R * math.sin(a0 + g)),
+               (sc + R * math.cos(a1 - g), zc + R * math.sin(a1 - g)), (sc + r * math.cos(a1 - g), zc + r * math.sin(a1 - g))]
+        m.face([f.p(s, d0 + sal, z) for s, z in pts], mat)
+        for (s1, z1), (s2, z2) in zip(pts, pts[1:] + pts[:1]):
+            m.face([f.p(s1, d0, z1), f.p(s2, d0, z2), f.p(s2, d0 + sal, z2), f.p(s1, d0 + sal, z1)], mat)
+    if ombreiras:
+        for s0, s1 in ((sc - r - larg, sc - r), (sc + r, sc + r + larg)):
+            hz = zc - za
+            k = max(1, int(round(hz / 0.45)))
+            for j in range(k):
+                z0_, z1_ = za + hz * j / k + 0.008, za + hz * (j + 1) / k - 0.008
+                m.caixa_face(f, s0, s1, d0, d0 + sal, z0_, z1_, mat)
+
+
+def passagem(m, f, s0, s1, prof, z_base, z_topo, w, alt, chao_f, chao_d, mat="muro", mat_topo="muro_topo",
+             mat_intra="intradorso", degrau=None, arco_dentro=None, topo=True, lados=True):
+    """Bloco de muro com uma passagem em arco de volta perfeita, de lado a lado. f: plano da face de fora (d = 0,
+    normal para fora); o bloco vai de s0 a s1 ao longo e de d = 0 a d = -prof; o eixo da passagem é s = 0.
+    w, alt: largura e altura (do chão ao fecho) do vão; chao_f, chao_d: chão da passagem fora e dentro.
+    degrau = (w2, alt2, p2): arquivolta de fora mais larga (w2 × alt2) até p2 de profundidade.
+    arco_dentro = (w3, alt3): vão da face de dentro, se for diferente."""
+    k = 14
+
+    def face_com_vao(d, ww, aa, chao):
+        r = ww / 2
+        zap = chao + aa
+        zs = zap - r
+        # faixas dos lados, do pé ao topo
+        quad(m, f, s0, -r, z_base, z_topo, d=d, mat=mat)
+        quad(m, f, r, s1, z_base, z_topo, d=d, mat=mat)
+        if chao > z_base + 0.01:
+            quad(m, f, -r, r, z_base, chao, d=d, mat=mat)
+        # por cima do arco: duas metades, do arranque ao fecho e até ao topo
+        pts = arco_pts(0.0, zs, r, k)
+        meio = len(pts) // 2
+        m.face([f.p(s, d, z) for s, z in pts[:meio + 1]] + [f.p(0.0, d, z_topo), f.p(r, d, z_topo)], mat)
+        m.face([f.p(s, d, z) for s, z in pts[meio:]] + [f.p(-r, d, z_topo), f.p(0.0, d, z_topo)], mat)
+        return contorno_vao(0.0, ww, chao, zap, True, k)
+
+    def forro(c_a, d_a, c_b, d_b):
+        pa, pb = c_a + [c_a[0]], c_b + [c_b[0]]
+        for i in range(len(c_a)):
+            (sa1, za1), (sa2, za2) = pa[i], pa[i + 1]
+            (sb1, zb1), (sb2, zb2) = pb[i], pb[i + 1]
+            mt = mat_intra if i > 0 else "calcada"
+            m.face([f.p(sa1, d_a, za1), f.p(sa2, d_a, za2), f.p(sb2, d_b, zb2), f.p(sb1, d_b, zb1)], mt)
+
+    if degrau is None:
+        c_fora = face_com_vao(0.0, w, alt, chao_f)
+        d_ini = 0.0
+    else:
+        w2, alt2, p2 = degrau
+        c2 = face_com_vao(0.0, w2, alt2, chao_f)
+        chao_p = chao_f + (chao_d - chao_f) * p2 / prof
+        c2b = contorno_vao(0.0, w2, chao_p, chao_p + alt2, True, k)
+        forro(c2, 0.0, c2b, -p2)
+        # face do degrau (entre a arquivolta e o vão), a p2 de profundidade
+        c_fora = contorno_vao(0.0, w, chao_p, chao_p + alt, True, k)
+        for i in range(len(c2b)):
+            j = (i + 1) % len(c2b)
+            if i == 0:
+                continue
+            m.face([f.p(*_sd(c2b[i], -p2)), f.p(*_sd(c2b[j], -p2)), f.p(*_sd(c_fora[j], -p2)), f.p(*_sd(c_fora[i], -p2))], mat)
+        d_ini = -p2
+    if arco_dentro is None:
+        c_dentro = face_com_vao(-prof, w, alt, chao_d)
+        forro(c_fora, d_ini, c_dentro, -prof)
+    else:
+        w3, alt3 = arco_dentro
+        c_d = face_com_vao(-prof, w3, alt3, chao_d)
+        c_m = contorno_vao(0.0, w, chao_d, chao_d + alt, True, k)
+        forro(c_fora, d_ini, c_m, -prof + 0.4)
+        forro(c_m, -prof + 0.4, c_d, -prof)  # abre em derrame para o arco de dentro
+    if topo:
+        m.face([f.p(s0, 0, z_topo), f.p(s1, 0, z_topo), f.p(s1, -prof, z_topo), f.p(s0, -prof, z_topo)], mat_topo)
+    if lados:
+        for s_ in (s0, s1):
+            m.face([f.p(s_, 0, z_base), f.p(s_, -prof, z_base), f.p(s_, -prof, z_topo), f.p(s_, 0, z_topo)], mat)
+
+
+def _sd(sz, d):
+    return (sz[0], d, sz[1])
+
+
+def textura_erva(n=512, metros=8.0, semente=17):
+    """Erva seca do monte dos espigueiros (julho): palha, verde apagado e terra."""
+    m_px = n / metros
+    yy, xx = np.mgrid[0:n, 0:n]
+    g = fbm(xx, yy, 1.5 * m_px, semente)
+    g2 = fbm(xx, yy, 0.12 * m_px, semente + 5)
+    palha = np.array([0.55, 0.50, 0.37])  # ortofotomapa: monte de erva seca, castanho-azeitona
+    verde = np.array([0.40, 0.42, 0.27])
+    t = np.clip((g - 0.42) * 2.2, 0, 1)[..., None]
+    tex = palha * (1 - t) + verde * t
+    tex = tex * (0.82 + 0.36 * g2[..., None])
+    return np.clip(tex, 0, 1), g2
+
+
+def textura_terra(n=512, metros=6.0, semente=23):
+    m_px = n / metros
+    yy, xx = np.mgrid[0:n, 0:n]
+    g = fbm(xx, yy, 0.6 * m_px, semente)
+    tex = np.array([0.60, 0.52, 0.42]) * (0.85 + 0.3 * g)[..., None]
+    pedra = np.random.default_rng(semente).random((n, n)) > 0.985
+    tex = np.where(ndi.binary_dilation(pedra, iterations=2)[..., None], tex * 1.15, tex)
+    return np.clip(tex, 0, 1), g
+
+
+
+# ---------------------------------------------------------------- utilidades de Lanhoso
+
+def orientar(pts, ref):
+    """Põe a face com a normal para o lado de ref (vetor 3D)."""
+    p = np.asarray(pts, float)
+    nrm = np.zeros(3)
+    for i in range(len(p)):
+        a, b = p[i], p[(i + 1) % len(p)]
+        nrm += np.cross(a, b)
+    return list(pts) if np.dot(nrm, ref) >= 0 else list(pts)[::-1]
+
+
+def painel(m, f, contorno, furos=(), mat=0, d=0.0):
+    """Face plana do plano f (em s, z, a d para fora), com furos; triangulada (Delaunay restringida)."""
+    pol = shapely.Polygon(contorno, [h for h in furos if len(h) >= 3])
+    if not pol.is_valid:
+        pol = pol.buffer(0)
+    ref = np.array([f.n[0], f.n[1], 0.0])
+    geoms = pol.geoms if hasattr(pol, "geoms") else [pol]
+    for g in geoms:
+        for t in shapely.constrained_delaunay_triangles(g).geoms:
+            cs = np.array(t.exterior.coords)[:3]
+            if shapely.Polygon(cs).area < 1e-6:
+                continue
+            m.face(orientar([f.p(s, d, z) for s, z in cs], ref), mat)
+
+
+def tunel(m, f, contorno, d0, d1, mat, ref_dentro=True):
+    """Faces laterais de um vão (o contorno em s, z), de d0 a d1."""
+    pts = list(contorno) + [contorno[0]]
+    for (s1, z1), (s2, z2) in zip(pts[:-1], pts[1:]):
+        m.face([f.p(s1, d0, z1), f.p(s2, d0, z2), f.p(s2, d1, z2), f.p(s1, d1, z1)], mat)
+
+
+def ogiva(sc, w, za, h_arranque, k=8, raio=0.8):
+    """Contorno de um vão em arco quebrado (ogival): de za ao arranque h_arranque acima, e o arco com raio = raio × w
+    (de baixo à esquerda, no sentido anti-horário)."""
+    r = raio * w
+    sa, sb = sc - w / 2, sc + w / 2
+    zs = za + h_arranque
+    th = math.acos((w / 2 - r) / r)
+    out = [(sa, za), (sb, za), (sb, zs)]
+    # arco direito: centro em (sb - r, zs), do ângulo 0 a th
+    for a in np.linspace(0, th, k + 1)[1:]:
+        out.append((sb - r + r * math.cos(a), zs + r * math.sin(a)))
+    # arco esquerdo: centro em (sa + r, zs), de pi - th a pi
+    for a in np.linspace(math.pi - th, math.pi, k + 1)[1:]:
+        out.append((sa + r + r * math.cos(a), zs + r * math.sin(a)))
+    return out
+
+
+def redondo(sc, w, za, h_arranque, k=10):
+    r = w / 2
+    zs = za + h_arranque
+    out = [(sc - r, za), (sc + r, za)]
+    out += [(sc + r * math.cos(a), zs + r * math.sin(a)) for a in np.linspace(0, math.pi, k + 1)]
+    return out
+
+
+def reto(sc, w, za, zb):
+    return [(sc - w / 2, za), (sc + w / 2, za), (sc + w / 2, zb), (sc - w / 2, zb)]
+
+
+def ccw(pts):
+    pts = [tuple(map(float, p)) for p in pts]
+    return pts if shapely.Polygon(pts).exterior.is_ccw else pts[::-1]
+
+
+def anel_aduelas(m, f, contorno_arco, larg, sal, mat, d0=0.0, n=None):
+    """Aduelas à volta da parte curva de um vão: blocos entre o contorno e o contorno afastado larg para fora."""
+    c = np.array(contorno_arco, float)
+    cen = c.mean(0)
+    seg = []
+    for i in range(len(c) - 1):
+        a, b = c[i], c[i + 1]
+        t = unit(b - a)
+        nn = np.array([t[1], -t[0]])
+        if np.dot(nn, (a + b) / 2 - cen) < 0:
+            nn = -nn
+        seg.append((a, b, nn))
+    for i, (a, b, nn) in enumerate(seg):
+        na = nn if i == 0 else unit(nn + seg[i - 1][2])
+        nb = nn if i == len(seg) - 1 else unit(nn + seg[i + 1][2])
+        g = 0.006
+        a2, b2 = a + (b - a) * g / max(np.linalg.norm(b - a), 1e-6) * 2, b - (b - a) * g / max(np.linalg.norm(b - a), 1e-6) * 2
+        q = [a2, b2, b2 + nb * larg, a2 + na * larg]
+        m.face(orientar([f.p(s, d0 + sal, z) for s, z in q], np.array([f.n[0], f.n[1], 0])), mat)
+        for p1, p2 in zip(q, q[1:] + q[:1]):
+            m.face([f.p(p1[0], d0, p1[1]), f.p(p2[0], d0, p2[1]), f.p(p2[0], d0 + sal, p2[1]), f.p(p1[0], d0 + sal, p1[1])], mat)
+
+
+def degraus(m, p0, p1, larg, z0, z1, n, mat, mat_espelho=None, fundo=None, lado=0.0):
+    """Escada reta de p0 (cota z0) a p1 (z1), com n degraus de largura larg (eixo p0-p1). Cada degrau é um bloco
+    do fundo (fundo, ou z0 - 0,5) ao cobertor."""
+    p0, p1 = np.asarray(p0, float), np.asarray(p1, float)
+    t = unit(p1 - p0)
+    nn = np.array([-t[1], t[0]])
+    L = float(np.linalg.norm(p1 - p0))
+    zf = (min(z0, z1) - 0.6) if fundo is None else fundo
+    for i in range(n):
+        a = p0 + t * L * i / n
+        b = p0 + t * L * (i + 1) / n
+        zt = z0 + (z1 - z0) * (i + 1) / n
+        base = [a - nn * larg / 2 + nn * lado, b - nn * larg / 2 + nn * lado, b + nn * larg / 2 + nn * lado, a + nn * larg / 2 + nn * lado]
+        m.prisma(ccw(base), zf, zt, mat, mat_topo=mat)
+
+
+def corrimao(m, pts3, alt=0.95, mat="ferro", passo=1.1):
+    """Corrimão de ferro: prumos e duas barras ao longo de uma linha 3D (o pé dos prumos)."""
+    pts3 = [np.asarray(p, float) for p in pts3]
+    tot = []
+    for a, b in zip(pts3[:-1], pts3[1:]):
+        L = np.linalg.norm(b - a)
+        k = max(1, int(math.ceil(L / passo)))
+        for i in range(k):
+            tot.append(a + (b - a) * i / k)
+    tot.append(pts3[-1])
+    for p in tot:
+        m.barra(p, p + np.array([0, 0, alt]), 0.022, mat, k=5)
+    for h in (alt, alt * 0.5):
+        for a, b in zip(pts3[:-1], pts3[1:]):
+            m.barra(a + np.array([0, 0, h]), b + np.array([0, 0, h]), 0.02, mat, k=5)
+
+
+def merlao(m, base, z0, z1, zp, mat, seteira=None):
+    """Merlão: prisma de z0 a z1 e remate piramidal até zp; seteira = (plano, s, z) de um vão em arco na face."""
+    base = ccw(base)
+    m.prisma(base, z0, z1, mat, topo=False)
+    m.piramide(base, z1, zp, mat)
+
+
+def parapeito(m, linha, pol, z0, z_sill, esp, mat, mat_topo, ameias=None, fechado=False):
+    """Parapeito ao longo de uma linha (x, y) do bordo de fora de um muro (pol), para dentro com a espessura esp, do
+    adarve z0 ao peitoril z_sill; ameias = dict(larg, passo, z1, zp, seteiras) põe os merlões por cima."""
+    pts = [np.asarray(p, float) for p in linha]
+    if fechado:
+        pts = pts + [pts[0]]
+    segs = []
+    for a, b in zip(pts[:-1], pts[1:]):
+        t = unit(b - a)
+        nn = np.array([-t[1], t[0]])
+        if not pol.buffer(0.05).contains(shapely.Point(*((a + b) / 2 + nn * 0.3))):
+            nn = -nn
+        segs.append((a, b, t, nn))
+    for i, (a, b, t, nn) in enumerate(segs):
+        na = nn if i == 0 and not fechado else unit(nn + segs[i - 1][2 + 1]) if True else nn
+        # junta em esquadria com o troço anterior e o seguinte
+        n_ant = segs[i - 1][3] if (i > 0 or fechado) else nn
+        n_seg = segs[(i + 1) % len(segs)][3] if (i < len(segs) - 1 or fechado) else nn
+        ma = unit(nn + n_ant)
+        mb = unit(nn + n_seg)
+        ka = esp / max(np.dot(ma, nn), 0.3)
+        kb = esp / max(np.dot(mb, nn), 0.3)
+        q = [a, b, b + mb * kb, a + ma * ka]
+        m.prisma(ccw(q), z0, z_sill, mat, mat_topo=mat_topo)
+    if not ameias:
+        return 0
+    # merlões: os dos cantos e, entre eles, ao passo dado
+    w, passo = ameias["larg"], ameias["passo"]
+    n_m = 0
+    cantos = [pts[0]] + [s[1] for s in segs]
+    for i, (a, b, t, nn) in enumerate(segs):
+        L = float(np.linalg.norm(b - a))
+        k = max(1, int(round((L - w) / passo)))
+        ss = np.linspace(w / 2, L - w / 2, k + 1)
+        if i > 0 or fechado:
+            ss = ss[1:]  # o do canto já vem do troço anterior
+        for j, s in enumerate(ss):
+            c = a + t * s
+            base = [c - t * w / 2, c + t * w / 2, c + t * w / 2 + nn * esp, c - t * w / 2 + nn * esp]
+            merlao(m, base, z_sill, ameias["z1"], ameias["zp"], mat)
+            n_m += 1
+            st = ameias.get("seteiras")
+            if st and (j % st == 1) and 0.2 < s < L - 0.2:
+                # seteira em arco no pé do merlão, para fora (fotografias: buraco escuro de c. 0,2 × 0,35 m)
+                f = Plano(c, t, n=-nn)
+                cont = redondo(0.0, 0.2, z_sill + 0.05, 0.22, k=6)
+                m.face(orientar([f.p(s_, 0.01, z_) for s_, z_ in cont], np.array([-nn[0], -nn[1], 0])), "sombra")
+    return n_m
+
+
+# ---------------------------------------------------------------- materiais
+
+for _ob in list(bpy.data.objects):  # a cena de arranque do bpy traz um cubo, uma luz e uma câmara
+    bpy.data.objects.remove(_ob)
+RAIZ_OB = bpy.data.objects.new("Castelo_Lanhoso", None)
+bpy.context.scene.collection.objects.link(RAIZ_OB)
+RAIZ_OB["origem_lat"], RAIZ_OB["origem_lon"] = CFG["origem"]["lat"], CFG["origem"]["lon"]
+RAIZ_OB["variante"] = CFG["variante"]
+RAIZ_OB["versao"] = CFG["versao"]
+GRUPOS = {}
+# "Muralhas_grupo" é o que o visor enquadra ao abrir; o terreno chama-se "Terreno"
+for g in ["Terreno", "Torre", "Muralhas", "Santuario", "Envolvente", "Vegetacao"]:
+    e = bpy.data.objects.new(g + "_grupo", None)
+    bpy.context.scene.collection.objects.link(e)
+    e.parent = RAIZ_OB
+    GRUPOS[g] = e
+
+# Granito de Lanhoso nas fotografias (drone de 2018 ao sol, porta ao sol, pátio com tempo encoberto): cinzento
+# claro e frio, de grão médio, com muitos líquenes brancos e cinzentos e manchas verdes de musgo nas juntas baixas;
+# silhares grandes em fiadas de 0,30 a 0,45 m na torre; a cerca e os torreões em silhares mais irregulares.
+PAL_T = np.array([(0.600, 0.595, 0.570), (0.660, 0.655, 0.630), (0.530, 0.525, 0.505), (0.615, 0.590, 0.545),
+                  (0.570, 0.570, 0.560)])
+TEX, ALT = textura_cantaria(semente=1121, fiada=(0.30, 0.46), comp=(0.50, 1.25), liquen=0.70, paleta=PAL_T,
+                            prob=[0.42, 0.18, 0.16, 0.10, 0.14], var=(0.93, 1.07), liq_forca=0.50, tinta=(1.0, 1.0, 0.99))
+material("cantaria_torre", (1, 1, 1), 0.9, imagem("cantaria_torre", TEX), normal=imagem("cantaria_torre_n", normais(ALT, 3.0)),
+         forca=0.8, escala=0.5, vcor=True)
+TEX, ALT = textura_cantaria(semente=1128, fiada=(0.26, 0.50), comp=(0.40, 1.30), liquen=0.66, paleta=PAL_T,
+                            prob=[0.40, 0.16, 0.20, 0.10, 0.14], junta_m=0.010, irregular=0.04, var=(0.90, 1.09),
+                            liq_forca=0.50, tinta=(1.0, 1.0, 0.985))
+material("muro", (1, 1, 1), 0.92, imagem("muro", TEX), normal=imagem("muro_n", normais(ALT, 3.2)), forca=0.9, escala=0.5, vcor=True)
+TEX, ALT = textura_cantaria(semente=1129, fiada=(0.35, 0.70), comp=(0.40, 0.95), liquen=0.62, paleta=PAL_T,
+                            prob=[0.38, 0.18, 0.18, 0.12, 0.14], junta_m=0.016, irregular=0.07, var=(0.92, 1.07),
+                            liq_forca=0.42, tinta=(0.99, 1.01, 0.96))
+material("muro_topo", (1, 1, 1), 0.95, imagem("muro_topo", TEX), normal=imagem("muro_topo_n", normais(ALT, 3.5)), forca=1.0, escala=0.5, vcor=True)
+# santuário: cantaria de granito mais regular e mais clara (fachada de 1680, fotografia de frente)
+PAL_I = np.array([(0.640, 0.635, 0.610), (0.690, 0.685, 0.660), (0.585, 0.580, 0.560), (0.650, 0.630, 0.590)])
+TEX, ALT = textura_cantaria(semente=1680, fiada=(0.32, 0.42), comp=(0.6, 1.2), liquen=0.80, paleta=PAL_I,
+                            prob=[0.45, 0.25, 0.18, 0.12], junta_m=0.004, var=(0.96, 1.04), liq_forca=0.35)
+material("cantaria_igreja", (1, 1, 1), 0.88, imagem("cantaria_igreja", TEX), normal=imagem("cantaria_igreja_n", normais(ALT, 2.0)),
+         forca=0.5, escala=0.5, vcor=True)
+material("cantaria_lisa", (0.47, 0.465, 0.445), 0.85)
+material("intradorso", (0.36, 0.355, 0.34), 0.95)
+material("sombra", (0.05, 0.05, 0.05), 1.0)
+material("madeira", (0.30, 0.22, 0.15), 0.8)
+material("madeira_verde", (0.14, 0.36, 0.32), 0.7)   # portas da porta do castelo (fotografias: verde-azulado)
+material("madeira_igreja", (0.34, 0.20, 0.13), 0.7)  # porta do santuário (fotografia: castanha)
+material("tabuado", (0.52, 0.48, 0.42), 0.85)       # adarve da torre (fotografia de drone: tábuas cinzentas)
+material("ferro", (0.14, 0.14, 0.15), 0.5)
+material("vidro", (0.16, 0.19, 0.21), 0.2)
+material("imagem", (0.86, 0.85, 0.82), 0.6)          # imagem de Nossa Senhora no nicho
+material("bandeira_verde", (0.0, 0.40, 0.18), 0.8)
+material("bandeira_vermelha", (0.80, 0.08, 0.10), 0.8)
+TEX, ALT = textura_telha()
+# telhado da torre: telha castanho-avermelhada (fotografia de drone); santuário: telha alaranjada
+material("telha_torre", (1, 1, 1), 0.8, imagem("telha_torre", TEX * np.array([0.50, 0.29, 0.22])), normal=imagem("telha_n", normais(ALT, 2.0)), forca=0.6)
+material("telha", (1, 1, 1), 0.8, imagem("telha", TEX * np.array([0.84, 0.47, 0.30])), normal=imagem("telha_n2", normais(ALT, 2.0)), forca=0.6)
+TEX, ALT = textura_cubos(base=(0.62, 0.61, 0.58))
+material("calcada", (1, 1, 1), 0.92, imagem("calcada", TEX), normal=imagem("calcada_n", normais(ALT, 1.5)), forca=0.5)
+TEX, ALT = textura_relva()
+material("relva", (1, 1, 1), 0.95, imagem("relva", TEX), normal=imagem("relva_n", normais(ALT, 1.0)), forca=0.4)
+TEX, ALT = textura_erva()
+material("erva", (1, 1, 1), 0.95, imagem("erva", TEX * np.array([0.86, 1.02, 0.78])), normal=imagem("erva_n", normais(ALT, 1.0)), forca=0.4)
+TEX, ALT = textura_terra()
+material("terra", (1, 1, 1), 0.95, imagem("terra", TEX), normal=imagem("terra_n", normais(ALT, 1.0)), forca=0.4)
+TEX, ALT = textura_rocha(semente=17)
+material("rocha", (1, 1, 1), 0.85, imagem("rocha", TEX), normal=imagem("rocha_n", normais(ALT, 2.0)), forca=0.6, vcor=True)
+# lajes de granito do monte (ortofotomapa e fotografias aéreas: cinzento claro rosado, com escorrências)
+material("rocha_t", (1, 1, 1), 0.85, imagem("rocha_t", np.clip(TEX * np.array([1.02, 0.98, 0.95]), 0, 1)), normal=imagem("rocha_tn", normais(ALT, 1.5)), forca=0.5)
+material("terreiro", (0.46, 0.45, 0.43), 0.95)       # terreiro do santuário (fotografias: saibro e lajeado cinzentos)
+material("asfalto", (0.36, 0.36, 0.37), 0.95)
+material("cinza_viz", (0.74, 0.74, 0.73), 0.9)       # casas vizinhas: um só cinzento claro
+material("base", (0.33, 0.26, 0.20), 0.95)
+material("arvore", (1, 1, 1), 0.9, None, vcor=True)
+
+MEDIDAS = {}
+
+
+def patine_torre(co):
+    """A cantaria escurece um pouco para o alto (líquenes) e junto ao chão (musgo e salpicos)."""
+    z = co[:, 2]
+    x, y = co[:, 0], co[:, 1]
+    g = fbm(x * 0.7 + 300, y * 0.7 + z * 0.6, 4.0, 77)
+    v = 0.92 + 0.16 * g
+    t = np.clip((z - 386.0) / 9.0, 0, 1)
+    pe = np.clip(1 - (z - 383.0) / 1.6, 0, 1) * 0.16
+    c = np.stack([v * (1 - 0.05 * t), v * (1 - 0.04 * t), v * (1 - 0.05 * t)], 1)
+    return np.clip(c * (1 - pe)[:, None] * np.array([0.97, 1.0, 0.96])[None, :] ** pe[:, None], 0, 1)
+
+
+def patine_muro(co):
+    x, y, z = co[:, 0], co[:, 1], co[:, 2]
+    g = fbm(x + 500, y + 500 + z * 0.7, 6.0, 31)
+    v = 0.86 + 0.26 * g
+    pe = np.clip(1 - (z - cota(x, y)) / 1.4, 0, 1) * 0.16
+    c = np.stack([v * 0.99, v * (1.0 + 0.015 * (g - 0.5)), v * 0.97], 1)
+    return np.clip(c * (1 - pe)[:, None], 0, 1)
+
+
+def patine_igreja(co):
+    x, y, z = co[:, 0], co[:, 1], co[:, 2]
+    g = fbm(x * 0.5 + 900, y * 0.5 + z * 0.5, 5.0, 53)
+    v = 0.94 + 0.12 * g
+    pe = np.clip(1 - (z - 377.0) / 1.5, 0, 1) * 0.12
+    return np.clip(np.stack([v, v, v * 0.98], 1) * (1 - pe)[:, None], 0, 1)
+
+
+# ---------------------------------------------------------------- torre de menagem
+
+PT = np.load(AQUI / "dados" / "torre.npz")["pontos"]
+_u, _v = PT[:, :2] @ EU, PT[:, :2] @ EV
+_alto = (PT[:, 2] > 392.5) & ~np.isin(PT[:, 3], (3, 4, 5, 7))
+_anel = _alto & ((np.abs(_u) > AU - 0.75) | (np.abs(_v) > AV - 0.75)) & (np.abs(_u) < AU + 0.1) & (np.abs(_v) < AV + 0.1)
+_cent = _alto & (np.abs(_u) < 0.6) & (np.abs(_v) < 0.6)
+_zs = PT[_anel, 2]
+Z_ADARVE = round(float(np.median(_zs[(_zs > 393.5) & (_zs < 394.1)])), 2)    # tábuas do adarve (moda a 393,75)
+Z_SILL = round(float(np.median(_zs[(_zs > 394.4) & (_zs < 395.0)])), 2)      # peitoril das ameias (394,7)
+Z_PONTA = round(float(np.percentile(_zs, 98.5)), 2)                            # pontas dos merlões (396,3)
+Z_MERLAO = round(float(np.median(_zs[(_zs > 395.4) & (_zs < 395.85)])), 2)    # alto do corpo dos merlões
+Z_CUME = round(float(np.percentile(PT[_cent, 2], 90)), 2)                      # vértice do telhado (395,6)
+CHAO_T = {}
+for _nm, (_a, _b) in {"ENE": (1, 0), "NNO": (0, 1), "OSO": (-1, 0), "SSE": (0, -1)}.items():
+    _s = (PT[:, 3] == 2) & ((_a * _u > AU + 0.4) & (_a * _u < AU + 2.0) & (np.abs(_v) < AV - 1) if _a else
+                            (_b * _v > AV + 0.4) & (_b * _v < AV + 2.0) & (np.abs(_u) < AU - 1))
+    CHAO_T[_nm] = round(float(np.percentile(PT[_s, 2], 30)), 2)
+ESP_PAR = 0.70           # espessura do parapeito (fotografia de drone)
+N_MERL = 8               # merlões por face, contando os dos cunhais (fotografia de drone)
+LM = 0.72                # largura dos merlões
+Z_PORTA = 387.73         # soleira da porta da face NNO = patamar da escada (LiDAR)
+print("torre: adarve", Z_ADARVE, "peitoril", Z_SILL, "merlões", Z_MERLAO, Z_PONTA, "cume", Z_CUME, "chão", CHAO_T)
+
+
+def faces_torre():
+    """Planos das quatro faces: s ao longo da face, da esquerda para a direita de quem olha de fora."""
+    return {
+        "NNO": (Plano(W(0, AV), -EU, n=EV), AU, lambda u, v: -u),
+        "SSE": (Plano(W(0, -AV), EU, n=-EV), AU, lambda u, v: u),
+        "ENE": (Plano(W(AU, 0), EV, n=EU), AV, lambda u, v: v),
+        "OSO": (Plano(W(-AU, 0), -EV, n=-EU), AV, lambda u, v: -v),
+    }
+
+
+# vãos da torre (posição ao longo da face em u ou v; cotas absolutas)
+# NNO: porta alta em arco de volta perfeita no meio da face (fotografias de norte e de nascente; LiDAR: patamar
+#      de 387,73 m entre u -1,0 e 1,0), seteira alta por cima
+# ENE, SSE, OSO: seteiras estreitas e altas (desenho do Município e fotografias), posições estimadas
+VAOS_T = {
+    "NNO": [("porta", 0.0, 1.05, Z_PORTA, 1.65), ("seteira", 0.0, 0.14, 391.2, 1.05)],
+    "ENE": [("seteira", 1.2, 0.14, 388.6, 1.1), ("seteira", -1.6, 0.16, 391.0, 1.2)],
+    "SSE": [("seteira", 1.4, 0.14, 389.2, 1.1), ("janela", -2.0, 0.55, 391.3, 0.8)],
+    "OSO": [("seteira", 0.6, 0.14, 389.6, 1.2)],
+}
+
+
+def torre():
+    m = Malha(["cantaria_torre", "cantaria_lisa", "sombra", "madeira_verde", "tabuado", "telha_torre", "ferro", "intradorso"])
+    z0 = min(CHAO_T.values()) - 1.0
+    fs = faces_torre()
+    for nome, (f, meia, s_de) in fs.items():
+        furos, extra = [], []
+        for tipo, pos, w, za, h in VAOS_T[nome]:
+            s = s_de(pos, pos) if nome in ("NNO", "SSE") else s_de(pos, pos)
+            s = -pos if nome == "NNO" else (pos if nome in ("SSE", "ENE") else -pos)
+            if tipo == "porta":
+                c = redondo(s, w, za, h, k=12)
+            elif tipo == "janela":
+                c = reto(s, w, za, za + h)
+            else:
+                c = redondo(s, w, za, h - w / 2, k=4)
+            furos.append(c)
+            extra.append((tipo, s, w, za, h, c))
+        painel(m, f, [(-meia, z0), (meia, z0), (meia, Z_SILL), (-meia, Z_SILL)], furos, 0)
+        for tipo, s, w, za, h, c in extra:
+            prof = 0.9 if tipo == "porta" else 0.7
+            tunel(m, f, c, 0.0, -prof, "cantaria_lisa" if tipo != "seteira" else "intradorso")
+            painel(m, f, c, (), "madeira_verde" if tipo == "porta" else "sombra", d=-prof)
+            if tipo == "porta":
+                arco = [p for p in c if p[1] >= za + h - 1e-6]
+                anel_aduelas(m, f, arco, 0.34, 0.04, "cantaria_lisa")
+                # ombreiras de cantaria
+                for s0_, s1_ in ((s - w / 2 - 0.30, s - w / 2), (s + w / 2, s + w / 2 + 0.30)):
+                    for j in range(3):
+                        za_, zb_ = za + h * j / 3 + 0.01, za + h * (j + 1) / 3 - 0.01
+                        m.caixa_face(f, s0_, s1_, 0.0, 0.04, za_, zb_, 1)
+                # soleira saliente
+                m.caixa_face(f, s - w / 2 - 0.2, s + w / 2 + 0.2, 0.0, 0.12, za - 0.12, za, 1)
+    # parapeito: face de dentro, peitoril, adarve de tábuas
+    ri_u, ri_v = AU - ESP_PAR, AV - ESP_PAR
+    q_in = [W(-ri_u, -ri_v), W(ri_u, -ri_v), W(ri_u, ri_v), W(-ri_u, ri_v)]
+    q_out = [W(-AU, -AV), W(AU, -AV), W(AU, AV), W(-AU, AV)]
+    for i in range(4):
+        a, b, c_, d = q_out[i], q_out[(i + 1) % 4], q_in[(i + 1) % 4], q_in[i]
+        m.face(orientar([(*a, Z_SILL), (*b, Z_SILL), (*c_, Z_SILL), (*d, Z_SILL)], np.array([0, 0, 1.0])), 1)
+        m.face(orientar([(*d, Z_ADARVE), (*c_, Z_ADARVE), (*c_, Z_SILL), (*d, Z_SILL)], -np.array([*unit((a + b) / 2), 0])), 0)
+    # adarve de tábuas (anel entre o parapeito e o beiral do telhado)
+    rb_u, rb_v = ri_u - 0.95, ri_v - 0.95
+    q_b = [W(-rb_u, -rb_v), W(rb_u, -rb_v), W(rb_u, rb_v), W(-rb_u, rb_v)]
+    for i in range(4):
+        a, b, c_, d = q_in[i], q_in[(i + 1) % 4], q_b[(i + 1) % 4], q_b[i]
+        m.face(orientar([(*a, Z_ADARVE), (*b, Z_ADARVE), (*c_, Z_ADARVE), (*d, Z_ADARVE)], np.array([0, 0, 1.0])), 4)
+    # merlões: oito por face, os dos cunhais no canto
+    nm = 0
+    for nome, (f, meia, _) in fs.items():
+        L = 2 * meia
+        passo = (L - LM) / (N_MERL - 1)
+        for k in range(N_MERL):
+            if k == N_MERL - 1:
+                continue  # o do cunhal da direita é o da esquerda da face seguinte
+            s0 = -meia + k * passo
+            base = [f.xy(s0, 0.0), f.xy(s0 + LM, 0.0), f.xy(s0 + LM, -ESP_PAR), f.xy(s0, -ESP_PAR)]
+            if k == 0:  # cunhal: merlão quadrado
+                base = [f.xy(s0, 0.0), f.xy(s0 + ESP_PAR, 0.0), f.xy(s0 + ESP_PAR, -ESP_PAR), f.xy(s0, -ESP_PAR)]
+            merlao(m, base, Z_SILL, Z_MERLAO, Z_PONTA, 0)
+            nm += 1
+            if k in (2, 5):  # seteira em arco no pé de alguns merlões (fotografia de drone)
+                sc = s0 + LM / 2
+                cont = redondo(sc, 0.2, Z_SILL + 0.08, 0.22, k=6)
+                m.face(orientar([f.p(s_, 0.012, z_) for s_, z_ in cont], np.array([f.n[0], f.n[1], 0])), 2)
+    # telhado de quatro águas de telha por dentro do adarve, com o rufo de cumeeira
+    beiral = [W(-rb_u, -rb_v), W(rb_u, -rb_v), W(rb_u, rb_v), W(-rb_u, rb_v)]
+    zb = Z_ADARVE + 0.08
+    m.piramide([np.array(p) for p in beiral], zb, Z_CUME, 5)
+    for p in beiral:
+        m.barra((*p, zb + 0.05), (0.0, 0.0, Z_CUME + 0.05), 0.07, 5, k=5)   # telhões das arestas
+    m.cilindro((W(1.4, -1.2)[0], W(1.4, -1.2)[1]), 0.18, zb + 0.6, zb + 0.95, 2, k=10)  # chaminé de ventilação
+    ob = m.objeto("torre_menagem", "torre", GRUPOS["Torre"], uv=3.0, vcor=patine_torre)
+    MEDIDAS["torre"] = {"lado_u": round(2 * AU, 2), "lado_v": round(2 * AV, 2), "azimute_faces": [C.ROT_TORRE, (C.ROT_TORRE + 270) % 360],
+                        "chao": CHAO_T, "adarve": Z_ADARVE, "peitoril": Z_SILL, "merlao": Z_MERLAO, "pontas": Z_PONTA,
+                        "cume": Z_CUME, "porta": Z_PORTA, "merloes_por_face": N_MERL, "merloes": nm,
+                        "altura_nno": round(Z_PONTA - CHAO_T["NNO"], 2)}
+    return ob
+
+
+def bandeira():
+    """Mastro com a bandeira nacional junto ao parapeito SSE, à direita do meio (fotografia de drone)."""
+    m = Malha(["ferro", "bandeira_verde", "bandeira_vermelha"])
+    p = W(2.6, -AV + ESP_PAR + 0.25)
+    m.cilindro(p, 0.04, Z_ADARVE, 400.8, 0, k=8)
+    d = unit(W(1, 0))
+    h0, h1 = 399.6, 400.7
+    Lb = 1.65
+    for (a, b, mt) in ((0.0, 0.4, 1), (0.4, 1.0, 2)):
+        pa, pb = p + d * Lb * a, p + d * Lb * b
+        m.face([(*pa, h0), (*pb, h0), (*pb, h1), (*pa, h1)], mt)
+        m.face([(*pa, h1), (*pb, h1), (*pb, h0), (*pa, h0)], mt)
+    m.objeto("bandeira", "torre", GRUPOS["Torre"], uv=None, recalc=False)
+
+
+def escada_torre():
+    """Escada de pedra encostada à face NNO, a subir de nascente para poente até ao patamar da porta (LiDAR: do
+    pátio a 382,9 m em u 6,0 ao patamar de 387,73 m em u 1,0; patamar até u -1,0), com corrimão de ferro."""
+    m = Malha(["muro_topo", "muro", "ferro"])
+    v0, v1 = AV, AV + 0.92
+    vc = (v0 + v1) / 2
+    z_pe = CHAO_T["NNO"] - 0.25
+    n = 19
+    degraus(m, W(6.05, vc), W(1.0, vc), v1 - v0, z_pe + (Z_PORTA - z_pe) / n * 0, Z_PORTA, n, 0, fundo=z_pe - 0.8)
+    # patamar
+    m.prisma(ccw([W(-1.0, v0), W(1.0, v0), W(1.0, v1), W(-1.0, v1)]), z_pe - 0.8, Z_PORTA, 1, mat_topo=0)
+    # corrimão pelo lado de fora (fotografia do pátio)
+    pts = [(*W(6.0, v1 - 0.06), z_pe + 0.3), (*W(1.0, v1 - 0.06), Z_PORTA), (*W(-1.0, v1 - 0.06), Z_PORTA)]
+    corrimao(m, pts, alt=0.95, mat=2)
+    m.objeto("escada_torre", "escada_torre", GRUPOS["Torre"], uv=1.5, vcor=patine_muro)
+    MEDIDAS["escada_torre"] = {"degraus": n, "pe": round(z_pe, 2), "patamar": Z_PORTA, "largura": round(v1 - v0, 2)}
+
+
+# ---------------------------------------------------------------- cerca
+
+POL = {k: shapely.Polygon(WL(v)).buffer(0) for k, v in (("torreao_sul", C.TORREAO_SUL), ("torreao_norte", C.TORREAO_NORTE),
+                                                         ("muro_porta", C.MURO_PORTA), ("cerca", C.CERCA), ("muro_se", C.MURO_SE))}
+POL_TORRE = shapely.Polygon(WL([(-AU, -AV), (AU, -AV), (AU, AV), (-AU, AV)]))
+POL_MON = shapely.union_all(list(POL.values()) + [POL_TORRE])
+
+
+def chao_min(pol, folga=1.5):
+    b = pol.buffer(folga)
+    xs, ys = np.array(b.exterior.coords).T
+    return float(np.min(cota(xs, ys)))
+
+
+def prisma_pol(m, pol, z0, z1, mat, mat_topo):
+    pol = shapely.geometry.polygon.orient(pol, 1)
+    m.prisma(list(np.array(pol.exterior.coords)[:-1]), z0, z1, mat, mat_topo=mat_topo)
+
+
+def cerca():
+    """A cerca como prismas das plantas do LiDAR até ao adarve, e os parapeitos e merlões por cima:
+    - torreões da porta e muro da porta: topo a 387,58 m, merlões nos três lados de fora (fotografias da porta);
+    - muralha poente: adarve a 386,95 m, merlões pelo lado de fora (fotografias do adarve e de norte);
+    - muralha norte e baluarte NE: adarve a 386,35 m e parapeito liso de 0,9 m pelo lado de fora (LiDAR: 387,3);
+    - muralha nascente: adarve a 386,0 m e rebordo baixo (LiDAR: 386,4)."""
+    m = Malha(["muro", "muro_topo", "cantaria_lisa", "sombra"])
+    amei_torreoes = {"larg": 0.70, "passo": 1.30, "z1": 389.25, "zp": 389.95, "seteiras": 3}
+    amei_poente = {"larg": 0.70, "passo": 1.30, "z1": 388.65, "zp": 389.30, "seteiras": 3}
+    zb = {}
+    for k in POL:
+        zb[k] = chao_min(POL[k]) - 0.8
+    # ---- torreões e muro da porta
+    for k in ("torreao_sul", "torreao_norte", "muro_porta"):
+        prisma_pol(m, POL[k], zb[k], C.Z_TORREOES, 0, 1)
+    n_m = 0
+    # torreão sul: merlões a poente, a sul e a norte (para a passagem)
+    ts = C.TORREAO_SUL
+    n_m += parapeito(m, WL([(-5.22, 2.55), (-11.75, 2.55), (-11.75, 6.1), (-7.3, 6.1)]), POL["torreao_sul"], C.Z_TORREOES, 388.55, 0.62, 0, 1, amei_torreoes)
+    n_m += parapeito(m, WL([(-7.3, 8.3), (-11.35, 8.45), (-11.35, 11.2), (-10.6, 12.05), (-6.85, 12.0)]), POL["torreao_norte"], C.Z_TORREOES, 388.55, 0.62, 0, 1, amei_torreoes)
+    # muro da porta: um merlão a meio, por cima do arco (fotografias de frente), e o parapeito
+    n_m += parapeito(m, WL([(-7.3, 6.1), (-7.3, 8.3)]), POL["muro_porta"], C.Z_TORREOES, 388.55, 0.62, 0, 1, None)
+    fpm = Plano(W(-7.3, 7.2), EV, n=-EU)
+    merlao(m, [fpm.xy(-0.4, 0), fpm.xy(0.4, 0), fpm.xy(0.4, -0.62), fpm.xy(-0.4, -0.62)], 388.55, 389.3, 389.95, 0)
+    m.face(orientar([fpm.p(s_, 0.012, z_) for s_, z_ in redondo(0.0, 0.18, 388.65, 0.25, k=6)], np.array([-EU[0], -EU[1], 0])), 3)
+    n_m += 1
+    # ---- cerca (muralhas poente, norte, nascente e baluarte), em troços com o adarve de cada um
+    cer = POL["cerca"]
+    troco = {
+        "poente": (shapely.Polygon(WL([(-8, 11.9), (-3.0, 11.9), (-3.0, 20.6), (-8, 20.6)])), C.Z_POENTE),
+        "norte": (shapely.Polygon(WL([(-8, 20.6), (-3.0, 20.6), (-3.0, 18.5), (11.0, 18.5), (11.0, 24.4), (17, 18.0), (17, 31), (-8, 31)])), C.Z_NORTE),
+        "nascente": (shapely.Polygon(WL([(8.0, 18.5), (11.0, 18.5), (11.0, 24.4), (17, 18.0), (17, 2.0), (8.0, 2.0)])), C.Z_NASCENTE),
+    }
+    for nome, (corte, z) in troco.items():
+        g = cer.intersection(corte)
+        for p in (g.geoms if hasattr(g, "geoms") else [g]):
+            if p.geom_type == "Polygon" and p.area > 0.3:
+                prisma_pol(m, p, zb["cerca"], z, 0, 1)
+    # degraus entre os adarves: poente (386,95) -> norte (386,35) no canto NO
+    # parapeitos
+    n_m += parapeito(m, WL([(-6.85, 12.0), (-6.85, 15.3), (-6.45, 17.0), (-6.5, 18.4), (-6.2, 20.1)]), cer, C.Z_POENTE, 388.1, 0.65, 0, 1, amei_poente)
+    parapeito(m, WL([(-6.2, 20.1), (-4.5, 22.1), (-3.7, 22.2), (-2.3, 23.3), (0.3, 24.0), (3.5, 25.1), (6.7, 26.3), (9.0, 26.9), (10.5, 27.8), (12.3, 28.3)]),
+              cer, C.Z_NORTE, 387.25, 0.55, 0, 1, None)
+    parapeito(m, WL([(12.3, 28.3), (14.3, 24.7), (15.9, 22.7), (14.7, 21.1), (13.7, 20.9), (11.7, 18.9)]), cer, C.Z_NORTE, 386.75, 0.5, 0, 1, None)
+    parapeito(m, WL([(11.15, 18.9), (11.4, 15.2), (11.8, 13.0), (12.0, 10.7), (12.7, 8.9), (12.75, 6.1), (13.1, 5.3), (13.4, 4.2)]), cer, C.Z_NASCENTE, 386.4, 0.45, 0, 1, None)
+    # degraus do torreão norte (387,58) para o adarve poente (386,95) (fotografia do adarve)
+    for i in range(4):
+        v0 = 12.0 + i * 0.3
+        m.prisma(ccw(WL([(-6.2, v0), (-4.9, v0), (-4.9, v0 + 0.3), (-6.2, v0 + 0.3)])), C.Z_POENTE - 0.3, C.Z_TORREOES - (i + 1) * 0.63 / 4.2, 1, mat_topo=1)
+    # muro fino a sudeste, do cunhal NE da torre ao cunhal SE da cerca, com o capeamento
+    prisma_pol(m, POL["muro_se"], zb["muro_se"], C.Z_MURO_SE, 0, 2)
+    ob = m.objeto("cerca", "cerca", GRUPOS["Muralhas"], uv=3.0, vcor=patine_muro)
+    MEDIDAS["cerca"] = {"area_m2": round(POL_MON.area - POL_TORRE.area, 1), "merloes": n_m,
+                        "adarves": {"torreoes": C.Z_TORREOES, "poente": C.Z_POENTE, "norte": C.Z_NORTE, "nascente": C.Z_NASCENTE}}
+    return ob
+
+
+def terraco():
+    """Terraço de 384,1 m por dentro da muralha norte e banco ao longo da nascente; plataforma de lajes ao pé da
+    face OSO da torre (384,0) e os alicerces a sul da torre (383,3), todos do LiDAR; e as escadas do pátio."""
+    m = Malha(["muro", "muro_topo", "relva", "cantaria_lisa", "ferro"])
+    p = shapely.Polygon(WL(C.TERRACO)).buffer(0).difference(POL["cerca"].buffer(-0.02))
+    for g in (p.geoms if hasattr(p, "geoms") else [p]):
+        if g.area > 0.5:
+            prisma_pol(m, g, chao_min(g, 0.5) - 0.6, C.Z_TERRACO, 0, 2)
+    oso = shapely.Polygon(WL(C.TERRACO_OSO))
+    prisma_pol(m, oso, chao_min(oso, 0.8) - 0.6, 384.0, 0, 1)
+    al = shapely.Polygon(WL(C.ALICERCES))
+    prisma_pol(m, al, chao_min(al, 0.8) - 0.4, 383.3, 0, 1)
+    # muretes dos alicerces (fotografias de nascente: compartimentos de pedra a sul da torre)
+    for a, b in (((-1.2, -7.6), (6.6, -7.6)), ((2.6, -9.3), (2.6, -5.9))):
+        pa, pb = np.array(W(*a)), np.array(W(*b))
+        t = unit(pb - pa)
+        nn = np.array([-t[1], t[0]]) * 0.25
+        m.prisma(ccw([pa - nn, pb - nn, pb + nn, pa + nn]), 383.0, 383.75, 0, mat_topo=1)
+    # escadas (posições estimadas onde o LiDAR mostra os degraus ou os patamares)
+    # pátio -> terraço norte (degraus com corrimão nas fotografias de norte)
+    degraus(m, W(3.0, 16.9), W(3.0, 19.45), 1.1, 382.3, C.Z_TERRACO, 10, 3)
+    # terraço -> adarve norte, encostada à face de dentro da muralha (LiDAR: degraus a 385,6–386,0 em u -2)
+    degraus(m, W(0.6, 19.15), W(-3.0, 19.15), 0.85, C.Z_TERRACO, C.Z_NORTE, 13, 3)
+    # pátio -> banco nascente -> adarve nascente (LiDAR: rampa de degraus a v 6 entre 384,1 e 386,0)
+    degraus(m, W(7.1, 4.95), W(8.6, 4.95), 0.8, 382.85, C.Z_TERRACO, 7, 3)
+    degraus(m, W(9.1, 5.55), W(11.25, 5.55), 0.8, C.Z_TERRACO, C.Z_NASCENTE, 10, 3)
+    # pátio -> terraço, ao longo da muralha poente (LiDAR: patamar de 383,8 m em u -4)
+    degraus(m, W(-3.8, 12.6), W(-3.8, 17.4), 0.9, 382.95, C.Z_TERRACO, 7, 3)
+    corrimao(m, [(*W(3.6, 16.9), 382.4), (*W(3.6, 19.45), C.Z_TERRACO)], alt=0.9, mat=4)
+    m.objeto("terracos", "cerca", GRUPOS["Muralhas"], uv=2.0, vcor=patine_muro)
+
+
+# ---------------------------------------------------------------- porta do castelo
+
+def porta():
+    """A porta, entre os torreões, no muro recuado (u -7,3 a -5,1): arco quebrado de 1,55 m de vão com aduelas, a
+    porta de duas folhas de madeira verde abertas para dentro, e por dentro um arco mais largo (fotografias de fora
+    e de dentro). Soleira a 383,1 m (LiDAR)."""
+    m = Malha(["muro", "cantaria_lisa", "intradorso", "madeira_verde", "ferro", "sombra", "muro_topo"])
+    z_sol = 383.1
+    fo = Plano(W(-7.3, 7.2), EV, n=-EU)           # face de fora do muro da porta (s = v - 7,2)
+    fi = Plano(W(-5.1, 7.2), -EV, n=EU)           # face de dentro (s = -(v - 7,2))
+    w_o, h_o = 1.55, 1.75                          # vão de fora: largura e arranque do arco (fecho a c. 386,0)
+    w_i, h_i = 2.15, 1.85                          # arco de dentro
+    c_o = ogiva(0.0, w_o, z_sol, h_o, k=8, raio=0.85)
+    c_i = ogiva(0.0, w_i, z_sol, h_i, k=8, raio=0.8)
+    meia = 1.1
+    zt = C.Z_TORREOES
+    painel(m, fo, [(-meia, z_sol - 1.2), (meia, z_sol - 1.2), (meia, zt), (-meia, zt)], [c_o], 0)
+    painel(m, fi, [(-meia, z_sol - 1.2), (meia, z_sol - 1.2), (meia, zt), (-meia, zt)], [c_i], 0)
+    # o vão de fora tem 0,7 m de fundo; a seguir abre para o arco de dentro (derrame)
+    prof = 2.2
+    tunel(m, fo, c_o, 0.0, -0.7, 2)
+    # degrau entre os dois contornos, a 0,7 m: face de muro com o furo do vão de fora
+    c_i_espelho = [(-s, z) for s, z in c_i]
+    c_i_fo = [(s, z) for s, z in c_i]  # o mesmo contorno visto da face de fora (simétrico)
+    painel(m, Plano(fo.xy(0, -0.7), -fo.t, n=fo.n * -1.0), [(s, z) for s, z in c_i_espelho], [[(-s, z) for s, z in c_o]], 0)
+    tunel(m, fo, c_i_fo, -0.7, -prof, 2)
+    # chão da passagem (lajes)
+    m.face(orientar([(*fo.xy(-w_i / 2, -0.7), z_sol), (*fo.xy(w_i / 2, -0.7), z_sol), (*fo.xy(w_i / 2, -prof), z_sol), (*fo.xy(-w_i / 2, -prof), z_sol)], np.array([0, 0, 1.0])), 6)
+    m.face(orientar([(*fo.xy(-w_o / 2, 0), z_sol), (*fo.xy(w_o / 2, 0), z_sol), (*fo.xy(w_o / 2, -0.7), z_sol), (*fo.xy(-w_o / 2, -0.7), z_sol)], np.array([0, 0, 1.0])), 6)
+    # aduelas do arco de fora
+    arco_o = [p for p in c_o if p[1] >= z_sol + h_o - 1e-6]
+    anel_aduelas(m, fo, arco_o, 0.36, 0.05, 1)
+    for s0_, s1_ in ((-w_o / 2 - 0.32, -w_o / 2), (w_o / 2, w_o / 2 + 0.32)):
+        for j in range(4):
+            za_, zb_ = z_sol + h_o * j / 4 + 0.01, z_sol + h_o * (j + 1) / 4 - 0.01
+            m.caixa_face(fo, s0_, s1_, 0.0, 0.05, za_, zb_, 1)
+    # impostas
+    for s_ in (-w_o / 2 - 0.36, w_o / 2):
+        m.caixa_face(fo, s_, s_ + 0.36, 0.0, 0.09, z_sol + h_o - 0.14, z_sol + h_o, 1)
+    # portas abertas para dentro, encostadas ao derrame
+    for lado in (-1, 1):
+        s_ = lado * (w_i / 2 - 0.08)
+        a = fo.xy(s_, -0.75)
+        b = fo.xy(s_, -0.75 - w_o / 2)
+        hh = h_o + 0.55
+        q = [(*a, z_sol + 0.02), (*b, z_sol + 0.02), (*b, z_sol + hh), (*a, z_sol + hh)]
+        nn = unit(np.cross(np.array(q[1]) - np.array(q[0]), np.array(q[2]) - np.array(q[0])))
+        off = np.array([*(fo.t * lado * -0.06), 0])
+        q2 = [tuple(np.array(p) + off) for p in q]
+        m.prisma(ccw([a, b, b + fo.t * -lado * 0.06, a + fo.t * -lado * 0.06]), z_sol + 0.02, z_sol + hh, 3, mat_topo=3)
+        # travessas em X (fotografia de dentro)
+        for (s1, z1), (s2, z2) in (((0.0, 0.1), (1.0, 0.9)), ((0.0, 0.9), (1.0, 0.1))):
+            p1 = a + (b - a) * s1 - fo.t * lado * 0.065
+            p2 = a + (b - a) * s2 - fo.t * lado * 0.065
+            m.barra((*p1, z_sol + hh * z1), (*p2, z_sol + hh * z2), 0.04, 3, k=4)
+    m.objeto("porta", "porta", GRUPOS["Muralhas"], uv=2.5, vcor=patine_muro)
+    MEDIDAS["porta"] = {"soleira": z_sol, "vao_fora": [w_o, round(c_o[len(c_o) // 2 + 4][1] - z_sol, 2)], "vao_dentro": w_i}
+    return fo, z_sol
+
+
+def escadaria_porta(z_sol):
+    """Escadaria de granito da encosta para a porta, entre os torreões (LiDAR: de 380,55 m em u -15,5 a 383,1 m na
+    soleira; fotografias: lanço de baixo mais largo, patamar e lanço de cima), e o penedo arredondado encostado ao
+    torreão sul (fotografias; LiDAR: o alto do penedo a 385,9 m)."""
+    m = Malha(["muro_topo", "rocha"])
+    vc = 7.35
+    degraus(m, W(-15.6, vc), W(-12.4, vc), 2.4, 380.55, 381.65, 5, 0, fundo=379.6)
+    m.prisma(ccw(WL([(-12.4, vc - 1.2), (-11.0, vc - 1.2), (-11.0, vc + 1.2), (-12.4, vc + 1.2)])), 379.8, 381.65, 0, mat_topo=0)
+    degraus(m, W(-11.0, vc), W(-7.3, vc), 1.7, 381.65, z_sol, 8, 0, fundo=380.8)
+    m.objeto("escadaria_porta", "porta", GRUPOS["Muralhas"], uv=1.5, vcor=patine_muro)
+    # penedo: elipsoide deformado
+    bm = bmesh.new()
+    bmesh.ops.create_icosphere(bm, subdivisions=3, radius=1.0)
+    c = np.array([*W(-10.3, 5.55), 383.9])
+    for vt in bm.verts:
+        p = np.array(vt.co[:])
+        r = 1.0 + 0.08 * math.sin(3 * p[0] + 1.3) * math.cos(2 * p[1]) + 0.05 * math.sin(5 * p[2])
+        q = p * r * np.array([2.1, 1.35, 1.5])
+        # rodar para o eixo da muralha
+        ang = math.radians(90 - C.ROT_TORRE)
+        x_ = q[0] * math.cos(ang) - q[1] * math.sin(ang)
+        y_ = q[0] * math.sin(ang) + q[1] * math.cos(ang)
+        vt.co = (c[0] + x_, c[1] + y_, c[2] + max(q[2], -1.4))
+    me = bpy.data.meshes.new("penedo")
+    bm.to_mesh(me)
+    bm.free()
+    me.materials.append(MATS["rocha"])
+    me.shade_smooth()
+    ob = bpy.data.objects.new("penedo", me)
+    bpy.context.scene.collection.objects.link(ob)
+    ob["elemento"] = "porta"
+    ob.parent = GRUPOS["Muralhas"]
+    uv_mundo(ob, 2.0)
+    co = np.empty(len(me.vertices) * 3)
+    me.vertices.foreach_get("co", co)
+    co = co.reshape(-1, 3)
+    g = fbm(co[:, 0] * 2 + 50, co[:, 1] * 2 + co[:, 2], 1.5, 9)
+    cv = np.stack([0.80 + 0.25 * g, 0.84 + 0.25 * g, 0.74 + 0.2 * g], 1)  # musgo esverdeado por cima (fotografias)
+    cv = np.where((co[:, 2] > c[2] + 0.6)[:, None], cv * np.array([0.85, 1.0, 0.75]), cv)
+    at = me.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
+    at.data.foreach_set("color", np.concatenate([np.clip(cv, 0, 1), np.ones((len(cv), 1))], 1).astype(np.float32).ravel())
+
+
+# ---------------------------------------------------------------- santuário
+
+_ai = math.radians(C.IGREJA_AZ)
+ES = np.array([math.sin(_ai), math.cos(_ai)])     # ao longo da nave, para norte (altar-mor)
+EQ = np.array([math.cos(_ai), -math.sin(_ai)])    # para ENE
+IC = np.array(C.IGREJA_C)
+
+
+def S(s, q):
+    return IC + ES * s + EQ * q
+
+
+def SL(pts):
+    return [tuple(S(*p)) for p in pts]
+
+
+def telhado_2aguas(m, s0, s1, q_meia, z_beir, z_cume, mat, beir=0.35, empena=(True, True)):
+    """Duas águas ao longo de s, com beiral; e os oitões (empenas) nas pontas."""
+    for lado in (-1, 1):
+        a = S(s0 - 0.15, 0.0)
+        b = S(s1 + 0.15, 0.0)
+        c_ = S(s1 + 0.15, lado * (q_meia + beir))
+        d = S(s0 - 0.15, lado * (q_meia + beir))
+        zb = z_beir - beir * (z_cume - z_beir) / q_meia
+        m.face(orientar([(*a, z_cume), (*b, z_cume), (*c_, zb), (*d, zb)], np.array([0, 0, 1.0])), mat)
+        m.face(orientar([(*a, z_cume - 0.12), (*b, z_cume - 0.12), (*c_, zb - 0.12), (*d, zb - 0.12)], np.array([0, 0, -1.0])), mat)
+        m.face([(*d, zb - 0.12), (*c_, zb - 0.12), (*c_, zb), (*d, zb)], mat)
+    m.barra((*S(s0 - 0.15, 0), z_cume + 0.04), (*S(s1 + 0.15, 0), z_cume + 0.04), 0.09, mat, k=5)
+
+
+def ameias_cornija(m, s0, s1, q, z, passo=0.85, mat=0):
+    """Cornija ameada (fotografias de nascente): pequenos merlões piramidais sobre a cornija."""
+    n = max(2, int(round((s1 - s0) / passo)))
+    for s in np.linspace(s0 + 0.2, s1 - 0.2, n + 1):
+        base = SL([(s - 0.16, q - 0.16), (s + 0.16, q - 0.16), (s + 0.16, q + 0.16), (s - 0.16, q + 0.16)])
+        m.prisma(ccw(base), z, z + 0.28, mat, topo=False)
+        m.piramide([np.array(p) for p in ccw(base)], z + 0.28, z + 0.62, mat)
+
+
+def santuario():
+    """O Santuário de Nossa Senhora do Pilar (1680), com as medidas do LiDAR: nave de 19,2 × 10,8 m (paredes), cume
+    a 390,5 m e beirais a c. 386,5 m; capela-mor a norte (7 × 9,7 m, cume a 386,6 m) com telhado de três águas;
+    sacristia a poente da capela-mor (água única de 383,7 a 381,6 m); adro a sul com escadas. A fachada sul segue a
+    fotografia de frente: cunhais em pilastra com pináculos, frontão triangular com a cruz, nicho com a imagem
+    entre as duas janelas de cima, porta ao meio e duas janelas de baixo."""
+    m = Malha(["cantaria_igreja", "cantaria_lisa", "telha", "sombra", "vidro", "madeira_igreja", "imagem", "ferro"])
+    z_chao = 377.95                      # adro e soleira (LiDAR)
+    z_fund = 376.0
+    s_f, s_n = -9.6, 9.6                 # fachada e parede norte da nave
+    qm = 5.4                             # meia largura da nave (paredes)
+    z_corn = 386.2
+    # ---- fachada (sul) e paredes da nave, com os vãos
+    ff = Plano(S(s_f, 0), EQ, n=-ES)     # fachada: s = q
+    furos = [reto(0.0, 1.7, z_chao, z_chao + 3.1), reto(-3.0, 1.0, 379.5, 380.9), reto(3.0, 1.0, 379.5, 380.9),
+             reto(-3.0, 1.0, 382.7, 384.0), reto(3.0, 1.0, 382.7, 384.0), redondo(0.0, 0.95, 381.75, 1.25, k=10)]
+    painel(m, ff, [(-qm, z_fund), (qm, z_fund), (qm, z_corn), (-qm, z_corn)], furos, 0)
+    for i, c in enumerate(furos):
+        prof = 0.35 if i else 0.5
+        tunel(m, ff, c, 0.0, -prof, 1)
+        painel(m, ff, c, (), 5 if i == 0 else (6 if i == 5 else 4), d=-prof)
+        sa = min(p[0] for p in c) - 0.18
+        sb = max(p[0] for p in c) + 0.18
+        za = min(p[1] for p in c)
+        zb = max(p[1] for p in c)
+        if i < 5:  # molduras de cantaria
+            m.caixa_face(ff, sa, sb, 0.0, 0.06, zb, zb + 0.18, 1)
+            m.caixa_face(ff, sa, sa + 0.18, 0.0, 0.06, za, zb, 1)
+            m.caixa_face(ff, sb - 0.18, sb, 0.0, 0.06, za, zb, 1)
+            if i:
+                m.caixa_face(ff, sa - 0.05, sb + 0.05, 0.0, 0.1, za - 0.12, za, 1)
+    # cornija da porta e moldura do nicho (fotografia: um retábulo de pedra à volta do nicho)
+    m.caixa_face(ff, -1.25, 1.25, 0.0, 0.2, z_chao + 3.25, z_chao + 3.45, 1)
+    m.caixa_face(ff, -0.9, 0.9, 0.0, 0.08, 381.55, 383.55, 1)
+    m.caixa_face(ff, -0.55, 0.55, 0.0, 0.1, 383.55, 383.95, 1)
+    # a imagem no nicho
+    pi = ff.xy(0.0, -0.25)
+    m.cilindro(pi, 0.2, 381.8, 382.75, 6, k=8, r1=0.14)
+    m.cilindro(pi, 0.11, 382.75, 383.0, 6, k=8)
+    # pilastras dos cunhais, embasamento e cornija
+    for sgn in (-1, 1):
+        m.caixa_face(ff, sgn * qm - (0.75 if sgn > 0 else 0), sgn * qm + (0.0 if sgn > 0 else 0.75), 0.0, 0.14, z_fund, z_corn, 1)
+    m.caixa_face(ff, -qm, qm, 0.0, 0.1, z_fund, z_chao + 0.45, 1)
+    # paredes laterais e de trás da nave
+    fe = Plano(S(0, qm), ES, n=EQ)       # nascente (s = s da nave)
+    fw = Plano(S(0, -qm), -ES, n=-EQ)    # poente (s = -s)
+    fn = Plano(S(s_n, 0), -EQ, n=ES)     # norte (s = -q)
+    furos_e = [reto(-4.2, 1.3, 378.1, 380.9), reto(-6.0, 0.95, 383.0, 384.6), reto(1.5, 0.95, 383.0, 384.6), reto(6.0, 0.95, 383.0, 384.6)]
+    furos_w = [reto(-(-6.0), 0.95, 383.0, 384.6), reto(-1.5, 0.95, 383.0, 384.6), reto(-6.0, 0.95, 383.0, 384.6)]
+    for f, fur in ((fe, furos_e), (fw, furos_w)):
+        painel(m, f, [(s_f, z_fund), (s_n, z_fund), (s_n, z_corn), (s_f, z_corn)] if f is fe else [(-s_n, z_fund), (-s_f, z_fund), (-s_f, z_corn), (-s_n, z_corn)], fur, 0)
+        for j, c in enumerate(fur):
+            tunel(m, f, c, 0.0, -0.35, 1)
+            painel(m, f, c, (), 5 if (f is fe and j == 0) else 4, d=-0.35)
+            sa, sb = min(p[0] for p in c) - 0.15, max(p[0] for p in c) + 0.15
+            za, zb = min(p[1] for p in c), max(p[1] for p in c)
+            m.caixa_face(f, sa, sb, 0.0, 0.05, zb, zb + 0.15, 1)
+            m.caixa_face(f, sa, sa + 0.15, 0.0, 0.05, za, zb, 1)
+            m.caixa_face(f, sb - 0.15, sb, 0.0, 0.05, za, zb, 1)
+    painel(m, fn, [(-qm, z_fund), (qm, z_fund), (qm, z_corn), (-qm, z_corn)], [], 0)
+    # cornija corrida e pilastras dos cunhais das paredes laterais
+    for sgn in (-1, 1):
+        q0, q1 = (qm, qm + 0.3) if sgn > 0 else (-qm - 0.3, -qm)
+        m.prisma(ccw(SL([(s_f - 0.3, q0), (s_n + 0.3, q0), (s_n + 0.3, q1), (s_f - 0.3, q1)])), z_corn - 0.25, z_corn + 0.1, 1, mat_topo=1)
+        ameias_cornija(m, s_f, s_n, sgn * (qm + 0.12), z_corn + 0.1, mat=1)
+        for s_ in (s_f, s_n - 0.7):
+            m.prisma(ccw(SL([(s_, sgn * qm - 0.01), (s_ + 0.7, sgn * qm - 0.01), (s_ + 0.7, sgn * (qm + 0.14)), (s_, sgn * (qm + 0.14))])), z_fund, z_corn - 0.25, 1, mat_topo=1)
+    m.prisma(ccw(SL([(s_f - 0.3, -qm - 0.3), (s_f + 0.01, -qm - 0.3), (s_f + 0.01, qm + 0.3), (s_f - 0.3, qm + 0.3)])), z_corn - 0.25, z_corn + 0.1, 1, mat_topo=1)
+    # ---- telhado da nave
+    z_cume = 390.5
+    telhado_2aguas(m, s_f + 0.05, s_n, qm + 0.3, z_corn + 0.12, z_cume, 2, beir=0.15)
+    # oitão norte (parede acima da cornija, até ao telhado)
+    m.face(orientar([(*S(s_n, -qm), z_corn), (*S(s_n, qm), z_corn), (*S(s_n, 0), z_cume - 0.1)], np.array([*ES, 0])), 0)
+    # frontão da fachada: tímpano, cornijas inclinadas, cruz e pináculos
+    z_ap = 391.7
+    m.face(orientar([(*S(s_f, -qm), z_corn + 0.1), (*S(s_f, qm), z_corn + 0.1), (*S(s_f, 0), z_ap)], np.array([*-ES, 0])), 0)
+    m.face(orientar([(*S(s_f + 0.6, -qm), z_corn + 0.1), (*S(s_f + 0.6, qm), z_corn + 0.1), (*S(s_f + 0.6, 0), z_ap)], np.array([*ES, 0])), 0)
+    for sgn in (-1, 1):
+        a, b = np.array([*S(s_f - 0.12, sgn * (qm + 0.2)), z_corn + 0.1]), np.array([*S(s_f - 0.12, 0), z_ap + 0.12])
+        m.barra(a, b, 0.17, 1, k=4)
+        # pináculos dos cunhais (fotografia): pedestal, bola e agulha
+        p = S(s_f + 0.2, sgn * (qm - 0.35))
+        m.prisma(ccw(SL([(s_f, sgn * (qm - 0.7)), (s_f + 0.55, sgn * (qm - 0.7)), (s_f + 0.55, sgn * qm), (s_f, sgn * qm)])), z_corn + 0.1, z_corn + 0.75, 1, mat_topo=1)
+        m.cilindro(p, 0.22, z_corn + 0.75, z_corn + 1.25, 1, k=10, r1=0.24)
+        m.cilindro(p, 0.24, z_corn + 1.25, z_corn + 1.5, 1, k=10, r1=0.05)
+        m.cilindro(p, 0.05, z_corn + 1.5, z_corn + 2.0, 1, k=6, r1=0.0)
+    # oculo / nicho do frontão, cruz
+    pc = S(s_f - 0.05, 0)
+    m.prisma(ccw(SL([(s_f - 0.1, -0.25), (s_f + 0.3, -0.25), (s_f + 0.3, 0.25), (s_f - 0.1, 0.25)])), z_ap - 0.05, z_ap + 0.3, 1, mat_topo=1)
+    m.prisma(ccw(SL([(s_f, -0.07), (s_f + 0.14, -0.07), (s_f + 0.14, 0.07), (s_f, 0.07)])), z_ap + 0.3, 393.0, 1, mat_topo=1)
+    m.prisma(ccw(SL([(s_f, -0.36), (s_f + 0.14, -0.36), (s_f + 0.14, 0.36), (s_f, 0.36)])), 392.45, 392.6, 1, mat_topo=1)
+    # ---- capela-mor
+    s_c0, s_c1, qc = s_n, 19.3, 3.5
+    z_cc, z_ccume = 384.45, 386.6
+    m.prisma(ccw(SL([(s_c0 - 0.2, -qc), (s_c1, -qc), (s_c1, qc), (s_c0 - 0.2, qc)])), z_fund, z_cc, 0, mat_topo=0)
+    fc = Plano(S(14.5, qc), ES, n=EQ)
+    for s_ in (12.2, 16.6):
+        c = reto(s_, 0.85, 381.6, 383.0)
+        painel(m, fc, c, (), 4, d=0.02)
+        m.caixa_face(fc, s_ - 0.58, s_ + 0.58, 0.0, 0.06, 383.0, 383.15, 1)
+    m.prisma(ccw(SL([(s_c0, -qc - 0.25), (s_c1 + 0.25, -qc - 0.25), (s_c1 + 0.25, qc + 0.25), (s_c0, qc + 0.25)])), z_cc - 0.2, z_cc + 0.08, 1, mat_topo=1)
+    for sgn in (-1, 1):
+        ameias_cornija(m, s_c0 + 0.3, s_c1, sgn * (qc + 0.1), z_cc + 0.08, mat=1)
+    # telhado: duas águas com a ponta norte de três águas (fotografia de nascente)
+    hw = qc + 0.45
+    zb = z_cc + 0.05
+    k = 2.2
+    pa = S(s_c0, 0)
+    pr = S(s_c1 + 0.45 - k, 0)
+    cs = [S(s_c0, -hw), S(s_c1 + 0.45, -hw), S(s_c1 + 0.45, hw), S(s_c0, hw)]
+    for f_ in ([(*cs[0], zb), (*cs[1], zb), (*pr, z_ccume), (*pa, z_ccume)], [(*cs[1], zb), (*cs[2], zb), (*pr, z_ccume)],
+               [(*cs[2], zb), (*cs[3], zb), (*pa, z_ccume), (*pr, z_ccume)]):
+        m.face(orientar(f_, np.array([0, 0, 1.0])), 2)
+    m.face(orientar([(*cs[3], zb), (*cs[0], zb), (*pa, z_ccume)], np.array([*-ES, 0])), 0)
+    m.barra((*pa, z_ccume + 0.04), (*pr, z_ccume + 0.04), 0.08, 2, k=5)
+    # ---- sacristia (a poente da capela-mor, água única)
+    s_s0, s_s1, q_s0, q_s1 = 11.6, 18.6, -8.6, -qc
+    m.prisma(ccw(SL([(s_s0, q_s0), (s_s1, q_s0), (s_s1, q_s1), (s_s0, q_s1)])), z_fund, 381.3, 0, topo=False)
+    for s_ in (s_s0, s_s1):
+        m.face(orientar([(*S(s_, q_s0), 381.3), (*S(s_, q_s1), 381.3), (*S(s_, q_s1), 383.45)], np.array([*(ES if s_ > 15 else -ES), 0])), 0)
+    m.face(orientar([(*S(s_s0 - 0.3, q_s0 - 0.35), 381.15), (*S(s_s1 + 0.3, q_s0 - 0.35), 381.15), (*S(s_s1 + 0.3, q_s1), 383.6), (*S(s_s0 - 0.3, q_s1), 383.6)], np.array([0, 0, 1.0])), 2)
+    m.face(orientar([(*S(s_s0 - 0.3, q_s0 - 0.35), 381.03), (*S(s_s1 + 0.3, q_s0 - 0.35), 381.03), (*S(s_s1 + 0.3, q_s1), 383.48), (*S(s_s0 - 0.3, q_s1), 383.48)], np.array([0, 0, -1.0])), 2)
+    fsw = Plano(S(15.0, q_s0), -ES, n=-EQ)
+    for s_ in (-13.3, -16.6):
+        painel(m, fsw, reto(s_, 0.7, 379.5, 380.6), (), 4, d=0.02)
+    m.objeto("santuario", "santuario", GRUPOS["Santuario"], uv=3.0, vcor=patine_igreja)
+    # ---- adro e escadas (LiDAR: adro a 377,95 m de s -9,6 a -13,4; degraus para sul até 377,2 m)
+    ma = Malha(["muro_topo", "calcada"])
+    adro = SL([(-13.4, -3.6), (s_f + 0.05, -3.6), (s_f + 0.05, 4.6), (-13.4, 4.6)])
+    ma.prisma(ccw(adro), 376.0, z_chao, 0, mat_topo=1)
+    degraus(ma, S(-14.6, 0.5), S(-13.4, 0.5), 8.2, 377.2, z_chao - 0.25, 3, 0, fundo=376.0)
+    # degraus da porta lateral nascente (fotografia de nascente)
+    pd = S(-4.2, qm)
+    degraus(ma, S(-4.2, qm + 1.25), S(-4.2, qm + 0.02), 1.9, float(cota(*S(-4.2, qm + 1.5))), 378.1, 3, 0, fundo=376.4)
+    ma.objeto("adro", "santuario", GRUPOS["Santuario"], uv=1.5, vcor=patine_muro)
+    MEDIDAS["santuario"] = {"nave": [round(s_n - s_f, 2), 2 * qm], "cume_nave": z_cume, "cornija": z_corn, "frontao": z_ap,
+                            "cruz": 393.0, "capela_mor": [round(s_c1 - s_c0, 2), 2 * qc], "cume_capela": z_ccume,
+                            "adro": z_chao, "azimute_eixo": round(C.IGREJA_AZ % 360, 2)}
+
+
+# ---------------------------------------------------------------- marcos do terreiro
+
+def marcos():
+    """Marcos de granito (pilaretes) no terreiro à frente do castelo (fotografias de nascente)."""
+    m = Malha(["cantaria_lisa"])
+    for p in ((-2.5, -12.5), (-0.5, -14.5), (1.8, -16.3), (4.2, -17.8), (-4.6, -10.6)):
+        z = float(cota(*p))
+        m.cilindro(p, 0.13, z - 0.2, z + 0.85, 0, k=8)
+        m.cilindro(p, 0.13, z + 0.85, z + 1.0, 0, k=8, r1=0.04)
+    m.objeto("marcos", "terreno", GRUPOS["Terreno"], uv=1.0)
+
+
+# ---------------------------------------------------------------- terreno, envolvente e árvores
+
+# o pátio, por dentro da cerca (u, v): entre a torre, a muralha poente, o terraço norte e o banco nascente
+PATIO = WL([(-5.1, 5.15), (-5.1, 12.0), (-4.3, 13.0), (-4.3, 17.6), (-1.0, 18.4), (2.0, 19.3), (4.2, 20.0),
+            (7.6, 19.9), (8.4, 18.2), (8.5, 5.2), (9.0, 4.6), (10.3, 3.9), (5.22, 3.9), (5.22, 5.15)])
+# o santuário (nave, capela-mor, sacristia, adro e escadas), para tirar casas e árvores de cima dele
+POL_IGREJA = shapely.Polygon(SL([(-15.0, -9.2), (19.8, -9.2), (19.8, 7.0), (-15.0, 7.0)]))
+
+
+def construir_terreno():
+    passo = 0.5
+    xs = np.arange(X0, X1 + 1e-6, passo)
+    ys = np.arange(Y0, Y1 + 1e-6, passo)
+    X, Y = np.meshgrid(xs, ys)
+    Z = cota(X, Y)
+    pts_all = shapely.points(X.ravel(), Y.ravel())
+    mur = shapely.contains(POL_MON.buffer(0.2), pts_all).reshape(X.shape)
+    # junto às faces dos muros e da torre o MDT sobe para o topo (interpolação por baixo do muro): baixa-se o chão
+    # até 1,5 m das faces para o mínimo das células à volta que não são muro
+    banda = ndi.binary_dilation(mur, iterations=3) & ~mur
+    zl = np.where(mur, 1e4, Z)
+    zmin = ndi.minimum_filter(zl, size=5)
+    Z = np.where(banda, np.minimum(Z, np.maximum(zmin, Z - 1.5)), Z)
+    ny, nx = X.shape
+    V = np.stack([X.ravel(), Y.ravel(), Z.ravel()], 1)
+    idx = np.arange(ny * nx).reshape(ny, nx)
+    Fq = np.stack([idx[:-1, :-1].ravel(), idx[:-1, 1:].ravel(), idx[1:, 1:].ravel(), idx[1:, :-1].ravel()], 1)
+    mats = ["erva", "relva", "rocha_t", "terra", "asfalto", "calcada", "terreiro"]
+    ob = malha_rapida("Terreno", V, Fq, mats[0], GRUPOS["Terreno"], "terreno")
+    for mt in mats[1:]:
+        ob.data.materials.append(MATS[mt])
+    cx = V[Fq].mean(1)
+    pts = shapely.points(cx[:, 0], cx[:, 1])
+    mi_ = np.zeros(len(Fq), np.int32)
+    ci = np.clip(((cx[:, 0] - OX0) / OP).astype(int), 0, ORTO.shape[1] - 1)
+    ri = np.clip(((OY1 - cx[:, 1]) / OP).astype(int), 0, ORTO.shape[0] - 1)
+    o = ndi.uniform_filter(ORTO, size=(7, 7, 1))[ri, ci]
+    verde = (o[:, 1] > o[:, 0] * 1.03) & (o[:, 1] > o[:, 2] * 1.06)
+    sat = o.max(1) - o.min(1)
+    cinza = (sat < 0.08) & (o.mean(1) > 0.40)
+    # afloramentos de granito: relevo local positivo do MDT, ou pedra clara no ortofotomapa em encosta
+    rel = ndi.gaussian_filter(MDT - ndi.gaussian_filter(MDT, 3.0), 0.7)
+    rl = amostra(rel, LX0, LY0, LP, cx[:, 0], cx[:, 1])
+    gy, gx = np.gradient(ndi.gaussian_filter(MDT, 1.0), LP)
+    decl = np.degrees(np.arctan(np.hypot(gx, gy)))
+    dc = amostra(decl, LX0, LY0, LP, cx[:, 0], cx[:, 1])
+    mi_[verde] = 1
+    claro = (sat < 0.11) & (o.mean(1) > 0.42) & ~verde
+    mi_[(claro & (dc > 8)) | (o.mean(1) > 0.55) | (rl > 0.6)] = 2
+    # terreiro de saibro/lajeado à frente do castelo e do santuário, e a estrada de nascente (cinzento e plano)
+    zona_t = shapely.Polygon([(-16, 2), (-6, -6), (-8, -26), (-6, -60), (40, -63), (38, 6), (12, 2)])
+    terreiro = cinza & (dc <= 14) & shapely.contains(zona_t, pts) & ~shapely.contains(POL_IGREJA, pts)
+    mi_[terreiro] = 6
+    asf = shapely.Polygon()
+    trilhos = []
+    for f in F["caminhos"]:
+        if f["geometria"]["type"] != "LineString":
+            continue
+        cl = f["classe"]
+        g = shapely.LineString(f["geometria"]["coordinates"])
+        if cl in ("residential", "tertiary", "unclassified", "service", "secondary"):
+            asf = asf.union(g.buffer(2.6, cap_style="flat"))
+        elif cl in ("path", "track"):
+            trilhos.append(g.buffer(0.7, cap_style="flat"))
+    if trilhos:
+        tr = shapely.union_all(trilhos).difference(zona_t)
+        mi_[shapely.contains(tr, pts) & (mi_ != 2)] = 3
+    if not asf.is_empty:
+        mi_[shapely.contains(asf, pts)] = 4
+    # pátio: relvado (fotografias de drone), com os afloramentos
+    no_patio = shapely.contains(shapely.Polygon(PATIO), pts)
+    mi_[no_patio] = 1
+    mi_[no_patio & (rl > 0.4)] = 2
+    ob.data.polygons.foreach_set("material_index", mi_)
+    uv_mundo(ob, 2.0)
+    m = Malha(["base"])
+    zb = float(Z.min()) - 1.5
+    borda = [(X[0, i], Y[0, i], Z[0, i]) for i in range(nx)] + [(X[i, -1], Y[i, -1], Z[i, -1]) for i in range(1, ny)] + \
+            [(X[-1, i], Y[-1, i], Z[-1, i]) for i in range(nx - 2, -1, -1)] + [(X[i, 0], Y[i, 0], Z[i, 0]) for i in range(ny - 2, 0, -1)]
+    for a, b in zip(borda, borda[1:] + borda[:1]):
+        m.face([(a[0], a[1], zb), (b[0], b[1], zb), b, a], 0)
+    m.objeto("base", None, GRUPOS["Terreno"], uv=None)
+    MEDIDAS["terreno"] = {"m2": {k: round(float((mi_ == i).sum()) * passo * passo) for i, k in enumerate(mats)}}
+
+
+def casas_lidar(tirar, osm):
+    """Volumes que o OSM não tem: manchas da classe 6 do LiDAR (edifícios) com mais de 2,5 m acima do chão."""
+    from rasterio import features
+    from rasterio.transform import Affine
+    h = MDS - MDT
+    ed = (CLS == 6) & (h > 2.5)
+    ed = ndi.binary_opening(ed, iterations=1)
+    lab, k = ndi.label(ed)
+    tr = Affine(LP, 0, LX0 - LP / 2, 0, LP, LY0 - LP / 2)
+    out = []
+    excl = shapely.union_all([tirar.buffer(1.5), osm.buffer(0.6)])
+    caixa = shapely.box(X0 + 0.3, Y0 + 0.3, X1 - 0.3, Y1 - 0.3)
+    for geo, val in features.shapes(lab.astype(np.int32), mask=lab > 0, transform=tr):
+        p = shapely.geometry.shape(geo).buffer(0).intersection(caixa).difference(excl)
+        for q in (p.geoms if p.geom_type in ("MultiPolygon", "GeometryCollection") else [p]):
+            if q.geom_type != "Polygon" or q.area < 12:
+                continue
+            q = q.buffer(0.4, join_style="mitre").buffer(-0.4, join_style="mitre").simplify(0.45)
+            if q.geom_type == "Polygon" and q.area >= 12:
+                out.append(q)
+    return out
+
+
+def _casa(m, p):
+    interior = p.buffer(-0.6)
+    if interior.is_empty:
+        return False
+    minx, miny, maxx, maxy = interior.bounds
+    gx, gy = np.meshgrid(np.arange(minx, maxx, 0.5), np.arange(miny, maxy, 0.5))
+    dentro = shapely.contains_xy(interior, gx.ravel(), gy.ravel())
+    if dentro.sum() < 4:
+        return False
+    zs = amostra(MDS, LX0, LY0, LP, gx.ravel()[dentro], gy.ravel()[dentro])
+    zt = amostra(MDT, LX0, LY0, LP, gx.ravel()[dentro], gy.ravel()[dentro])
+    chao = float(np.percentile(zt, 10))
+    cume = float(np.percentile(zs, 92))
+    cornija = min(max(float(np.percentile(zs, 25)), chao + 2.6), cume - 0.4)
+    if cume - chao < 2.5:
+        return False
+    base = np.array(shapely.geometry.polygon.orient(p, 1).exterior.coords)[:-1]
+    rec = (cume - cornija) / math.tan(math.radians(28))
+    top = p.buffer(-rec, join_style="mitre")
+    if top.is_empty or top.geom_type != "Polygon" or rec < 0.3 or p.convex_hull.area > 1.25 * p.area or len(base) > 14:
+        zc = cornija + 0.5 * (cume - cornija)
+        m.prisma(list(base), chao - 0.8, zc, 0)
+        return True
+    m.prisma(list(base), chao - 0.8, cornija, 0, topo=False)
+    tb = np.array(shapely.geometry.polygon.orient(top, 1).exterior.coords)[:-1]
+    _, j = cKDTree(tb).query(base)
+    for i in range(len(base)):
+        a, b = base[i], base[(i + 1) % len(base)]
+        ja, jb = j[i], j[(i + 1) % len(base)]
+        seq = [ja]
+        k = ja
+        while k != jb and len(seq) < len(tb) + 1:
+            k = (k + 1) % len(tb)
+            seq.append(k)
+        if len(seq) > len(tb):
+            seq = [ja, jb]
+        m.face([(*a, cornija), (*b, cornija)] + [(*tb[s], cume) for s in seq[::-1]], 0)
+    m.face([(*q, cume) for q in tb], 0)
+    return True
+
+
+def construir_envolvente(tirar):
+    """Os poucos edifícios à volta (casa do guarda, restaurante, anexos) em volumes simples de um só cinzento."""
+    caixa = shapely.box(X0 + 0.3, Y0 + 0.3, X1 - 0.3, Y1 - 0.3)
+    m = Malha(["cinza_viz"])
+    plantas = []
+    for f in F["edificios"]:
+        g = shapely.geometry.shape(f["geometria"])
+        if g.geom_type == "MultiPolygon":
+            g = max(g.geoms, key=lambda x: x.area)
+        if g.geom_type != "Polygon" or g.area < 6:
+            continue
+        g = g.buffer(0)
+        if g.intersection(tirar.buffer(1.0)).area > 0.3 * g.area:
+            continue  # a torre e o santuário também estão no OSM
+        g = g.intersection(caixa).difference(tirar.buffer(1.0))
+        for p in (g.geoms if g.geom_type in ("MultiPolygon", "GeometryCollection") else [g]):
+            if p.geom_type == "Polygon" and p.area >= 6:
+                plantas.append(p.simplify(0.3))
+    osm = shapely.union_all(plantas) if plantas else shapely.Polygon()
+    n_osm = len(plantas)
+    plantas += casas_lidar(tirar, osm)
+    n = sum(_casa(m, p) for p in plantas)
+    print("casas", n, "(OSM", n_osm, ")")
+    MEDIDAS["casas"] = {"total": n, "osm": n_osm}
+    if n:
+        m.objeto("envolvente", "envolvente", GRUPOS["Envolvente"], uv=2.0, recalc=False)
+
+
+def construir_arvores(tirar):
+    """Árvores: máximos locais da vegetação (classes 3 a 5) fora do monumento e do santuário; a árvore grande do
+    pátio fica, com a copa limitada para não entrar nos muros nem na torre."""
+    h = MDS - MDT
+    veg = (CLS >= 3) & (CLS <= 5) & (h > 2.0)
+    veg = ndi.binary_opening(veg, iterations=1)
+    hs = ndi.gaussian_filter(np.where(veg, h, 0.0), 1.2)
+    topo = (hs == ndi.maximum_filter(hs, size=11)) & veg & (hs > 2.5)
+    lab, k = ndi.label(topo)
+    V, Fc, Cc = [], [], []
+    bm = bmesh.new()
+    bmesh.ops.create_icosphere(bm, subdivisions=2, radius=1.0)
+    v0 = np.array([x.co[:] for x in bm.verts])
+    f0 = [[x.index for x in fa.verts] for fa in bm.faces]
+    bm.free()
+    mon_l = tirar.buffer(0.8)
+    patio = shapely.Polygon(PATIO)
+    contorno = POL_MON.boundary
+    n = 0
+    for (r, c) in ndi.center_of_mass(topo, lab, range(1, k + 1)):
+        r, c = int(round(r)), int(round(c))
+        x, y = LX0 + c * LP, LY0 + r * LP
+        if not (X0 + 2 < x < X1 - 2 and Y0 + 2 < y < Y1 - 2):
+            continue
+        pt = shapely.Point(x, y)
+        if mon_l.contains(pt):
+            continue  # pontos de vegetação sobre os muros, a torre ou o santuário: não são árvores
+        zt, zc = float(cota(x, y)), MDS[r, c]
+        alt = zc - zt
+        if alt < 2.5:
+            continue
+        rad = float(np.clip(np.sqrt(veg[max(r - 10, 0):r + 11, max(c - 10, 0):c + 11].sum() * 0.25 / math.pi), 1.3, 5.5))
+        # nenhuma copa a atravessar o monumento: raio até 0,3 m da face mais próxima
+        rad = min(rad, tirar.distance(pt) - 0.3)
+        if patio.contains(pt):
+            rad = min(rad, contorno.distance(pt) - 0.3)
+        if rad < 1.0:
+            continue
+        for (dx, dy, dz, s) in ((0, 0, -0.35, 1.0), (0.4, 0.2, -0.5, 0.7), (-0.35, -0.3, -0.55, 0.7), (0.1, -0.4, -0.3, 0.6)):
+            b = len(V)
+            pts = (v0 + rng.normal(0, 0.06, v0.shape)) * np.array([rad * s, rad * s, alt * 0.30 * s]) + np.array([x + dx * rad * 0.6, y + dy * rad * 0.6, zc + dz * alt * 0.45])
+            V.extend(map(tuple, pts))
+            Fc.extend([[b + i for i in fa] for fa in f0])
+            tt = np.clip((pts[:, 2] - zt) / alt, 0, 1)
+            Cc.extend(map(tuple, np.array([0.20, 0.31, 0.13])[None, :] * (0.55 + 0.5 * tt)[:, None]))
+        b = len(V)
+        for j in range(6):
+            a = 2 * math.pi * j / 6
+            V.append((x + 0.22 * math.cos(a), y + 0.22 * math.sin(a), zt - 0.2))
+            V.append((x + 0.16 * math.cos(a), y + 0.16 * math.sin(a), zc - alt * 0.45))
+        for j in range(6):
+            jj = (j + 1) % 6
+            Fc.append([b + 2 * j, b + 2 * jj, b + 2 * jj + 1, b + 2 * j + 1])
+        Cc.extend([(0.36, 0.30, 0.24)] * 12)
+        n += 1
+    print("árvores", n)
+    MEDIDAS["arvores"] = n
+    if not V:
+        return
+    me = bpy.data.meshes.new("arvores")
+    me.from_pydata(V, [], Fc)
+    me.update()
+    me.materials.append(MATS["arvore"])
+    at = me.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
+    at.data.foreach_set("color", np.concatenate([np.array(Cc), np.ones((len(Cc), 1))], 1).astype(np.float32).ravel())
+    me.shade_smooth()
+    ob = bpy.data.objects.new("arvores", me)
+    bpy.context.scene.collection.objects.link(ob)
+    ob["elemento"] = "vegetacao"
+    ob.parent = GRUPOS["Vegetacao"]
+
+
+def muro_terreiro():
+    """Muro baixo de pedra no bordo poente do terreiro, por cima das lajes do monte (fotografia aérea de poente e
+    ortofotomapa: a linha clara do bordo); traçado e altura (c. 0,85 m acima do terreiro) são estimativas."""
+    m = Malha(["muro", "muro_topo"])
+    linha = [(-14.5, -6.5), (-12.8, -12.0), (-11.5, -19.0), (-8.0, -21.5), (-5.0, -24.0)]
+    for a, b in zip(linha[:-1], linha[1:]):
+        g = shapely.LineString([a, b]).buffer(0.28, cap_style="flat", join_style="mitre")
+        xs, ys = np.array(g.buffer(0.8).exterior.coords).T
+        zt = float(np.max(cota(xs, ys))) + 0.85
+        z0 = float(np.min(cota(xs, ys))) - 0.6
+        prisma_pol(m, g, z0, zt, 0, 1)
+    m.objeto("muro_terreiro", "terreno", GRUPOS["Muralhas"], uv=2.0, vcor=patine_muro)
+
+
+# ---------------------------------------------------------------- construção
+
+print("torre…")
+torre()
+bandeira()
+escada_torre()
+print("cerca…")
+cerca()
+terraco()
+F_PORTA, Z_SOL = porta()
+escadaria_porta(Z_SOL)
+print("santuário…")
+santuario()
+marcos()
+muro_terreiro()
+print("terreno…")
+construir_terreno()
+TIRAR = shapely.union_all([POL_MON, POL_IGREJA, shapely.Polygon(WL([(-16.0, 2.0), (-7.0, 2.0), (-7.0, 13.0), (-16.0, 13.0)]))])
+print("envolvente…")
+construir_envolvente(TIRAR)
+construir_arvores(TIRAR)
+
+
+def _anc(x, y, z):
+    return [round(float(x), 1), round(float(z), 1), round(float(-y), 1)]
+
+
+def _olhar(x, y, up=0.35):
+    d = unit((x, y))
+    return [round(float(d[0]), 2), up, round(float(-d[1]), 2)]
+
+
+MEDIDAS["ancoras"] = {
+    "torre": _anc(0, 0, Z_PONTA + 1.2),
+    "coroamento": _anc(*W(AU + 0.6, -AV - 0.6), Z_PONTA - 0.3),
+    "porta_torre": _anc(*W(0.0, AV + 0.8), Z_PORTA + 3.0),
+    "escada_torre": _anc(*W(4.0, AV + 1.2), 386.0),
+    "porta": _anc(*W(-9.0, 7.2), 387.0),
+    "torreoes": _anc(*W(-8.5, 10.0), C.Z_TORREOES + 2.6),
+    "cerca": _anc(*W(-5.6, 18.0), C.Z_POENTE + 2.2),
+    "baluarte": _anc(*W(13.5, 24.5), C.Z_NORTE + 1.8),
+    "patio": _anc(*W(2.0, 11.0), 385.0),
+    "santuario": _anc(*IC, 393.6),
+    "fachada": _anc(*S(-9.8, 0.0), 389.0),
+}
+MEDIDAS["olhar"] = {
+    "coroamento": _olhar(*W(1, -1), 0.25),
+    "porta_torre": _olhar(*W(0.3, 1), 0.15),
+    "escada_torre": _olhar(*W(0.3, 1), 0.25),
+    "porta": _olhar(*W(-1, 0), 0.15),
+    "torreoes": _olhar(*W(-1, 0.1), 0.25),
+    "cerca": _olhar(*W(-1, 0.4), 0.3),
+    "baluarte": _olhar(*W(0.6, 1), 0.35),
+    "patio": _olhar(*W(0.1, 1), 0.7),
+    "fachada": _olhar(*(-ES), 0.15),
+}
+(AQUI / "dados" / "medidas.json").write_text(json.dumps(MEDIDAS, ensure_ascii=False, indent=1))
+print(json.dumps({k: v for k, v in MEDIDAS.items() if k not in ("ancoras", "olhar")}, ensure_ascii=False))
+
+# ---------------------------------------------------------------- exportação
+
+SAIDA.mkdir(parents=True, exist_ok=True)
+(AQUI / "saida").mkdir(exist_ok=True)
+glb = AQUI / "saida" / "lanhoso-bruto.glb"
+props = bpy.ops.export_scene.gltf.get_rna_type().properties.keys()
+opcoes = dict(filepath=str(glb), export_format="GLB", export_extras=True, export_yup=True, export_apply=True,
+              export_image_format="JPEG", export_jpeg_quality=85)
+if "export_vertex_color" in props:
+    opcoes["export_vertex_color"] = "ACTIVE"
+if "export_active_vertex_color_when_no_material" in props:
+    opcoes["export_active_vertex_color_when_no_material"] = True
+if "--sem-glb" not in sys.argv:
+    bpy.ops.export_scene.gltf(**{k: v for k, v in opcoes.items() if k in props})
+    print("GLB:", glb, round(glb.stat().st_size / 1e6, 2), "MB")
+    import subprocess  # noqa: E402
+    final = SAIDA / "lanhoso.glb"
+    subprocess.run(["npx", "-y", "@gltf-transform/cli@4.2.1", "draco", str(glb), str(final)], check=True)
+    print("GLB Draco:", final, round(final.stat().st_size / 1e3), "kB")
+if "--blend" in sys.argv:
+    bpy.ops.wm.save_as_mainfile(filepath=str(AQUI / "saida" / "lanhoso.blend"))
+
+# ---------------------------------------------------------------- capa e vistas de verificação
+
+if "--vistas" in sys.argv:
+    from mathutils import Vector
+    sc = bpy.context.scene
+    sc.render.engine = "CYCLES"
+    sc.cycles.device = "CPU"
+    sc.cycles.samples = int(next((a.split("=")[1] for a in sys.argv if a.startswith("--amostras=")), 32))
+    sc.cycles.use_denoising = True
+    sc.view_settings.view_transform = "AgX"
+    w = bpy.data.worlds.new("mundo")
+    sc.world = w
+    w.use_nodes = True
+    w.node_tree.nodes["Background"].inputs["Color"].default_value = (0.62, 0.72, 0.86, 1)
+    w.node_tree.nodes["Background"].inputs["Strength"].default_value = 0.9
+    sol = bpy.data.lights.new("sol", "SUN")
+    sol.energy = 3.4
+    sol.angle = math.radians(2)
+    so = bpy.data.objects.new("sol", sol)
+    sc.collection.objects.link(so)
+    AZ_SOL = float(next((a.split("=")[1] for a in sys.argv if a.startswith("--sol=")), 200))
+    d = Vector((math.sin(math.radians(AZ_SOL)), math.cos(math.radians(AZ_SOL)), 0)) * math.cos(math.radians(48))
+    d.z = math.sin(math.radians(48))
+    so.rotation_euler = d.to_track_quat("Z", "Y").to_euler()
+    cam = bpy.data.cameras.new("cam")
+    co = bpy.data.objects.new("cam", cam)
+    sc.collection.objects.link(co)
+    sc.camera = co
+    pasta = AQUI / "vistas"
+    pasta.mkdir(exist_ok=True)
+    SO = next((a_.split("=")[1].split(",") for a_ in sys.argv if a_.startswith("--so=")), None)
+    sc.render.image_settings.file_format = "JPEG"
+    sc.render.image_settings.quality = 86
+
+    def vista(nome, cam_xy, cam_z, alvo_xy, alvo_z, lente=35, res=(1000, 1000), destino=None, perto=0.1):
+        if SO and nome not in SO:
+            return
+        co.location = Vector((cam_xy[0], cam_xy[1], cam_z))
+        alvo = Vector((alvo_xy[0], alvo_xy[1], alvo_z))
+        co.rotation_euler = (alvo - co.location).to_track_quat("-Z", "Y").to_euler()
+        cam.type = "PERSP"
+        cam.lens = lente
+        cam.clip_start = perto
+        cam.clip_end = 3000
+        sc.render.resolution_x, sc.render.resolution_y = res
+        sc.render.filepath = str(destino or (pasta / f"{nome}.jpg"))
+        bpy.ops.render.render(write_still=True)
+        print("vista", nome)
+
+    # capa: de sueste, do alto, com o santuário à frente e o castelo atrás
+    vista("capa", (70, -80), 432, (2, -12), 384, lente=34, res=(1280, 800), destino=SAIDA / "capa.jpg")
+    if "--capa" not in sys.argv:
+        # d74a: drone a sul, por cima do santuário, a olhar para a torre
+        vista("d74a_sul", (4, -48), 410, (2, 6), 388, lente=28, res=(1200, 900))
+        # 84ef / 2a72: do terreiro a ENE, a face ENE da torre e a escada
+        vista("84ef_ene", tuple(W(26.0, 4.0)), 385.0, tuple(W(0.0, 2.0)), 390.0, lente=24, res=(1000, 750), perto=0.3)
+        # 3cd5: de norte, por fora da muralha norte
+        vista("3cd5_norte", tuple(W(2.0, 46.0)), 395.0, tuple(W(0.0, 10.0)), 386.0, lente=28, res=(1100, 750), perto=0.3)
+        # 77d45 / fa66: a porta de poente, da escadaria
+        vista("fa66_porta", tuple(W(-21.0, 6.0)), 382.6, tuple(W(-7.3, 7.2)), 385.5, lente=26, res=(900, 1000), perto=0.3)
+        # 5b79: de dentro do pátio para a porta
+        vista("5b79_patio", tuple(W(4.0, 14.0)), 385.2, tuple(W(-6.0, 7.5)), 385.0, lente=22, res=(1100, 800), perto=0.3)
+        # 8ae8: do baluarte NE para a torre
+        vista("8ae8_ne", tuple(W(12.5, 23.0)), 388.4, tuple(W(0.0, 3.0)), 389.0, lente=24, res=(1100, 750), perto=0.3)
+        # 6c4d: o adarve poente, de norte para sul
+        vista("6c4d_adarve", tuple(W(-5.5, 19.0)), 388.6, tuple(W(-6.0, 6.0)), 388.0, lente=22, res=(800, 1000), perto=0.2)
+        # 00e6: a fachada do santuário, do terreiro
+        vista("00e6_fachada", tuple(S(-30.0, 2.0)), 380.0, tuple(S(-9.6, 0.0)), 385.5, lente=28, res=(900, 1000), perto=0.3)
+        # coroamento de perto, de sudoeste
+        vista("coroamento", tuple(W(-9.0, -9.0)), 398.5, tuple(W(0.0, 0.0)), 394.5, lente=28, res=(1000, 750), perto=0.3)
+        # planta (ortográfica, norte para cima), para comparar com o ortofotomapa
+        co.location = Vector(((X0 + X1) / 2, (Y0 + Y1) / 2, 900))
+        co.rotation_euler = (0, 0, 0)
+        cam.type = "ORTHO"
+        cam.ortho_scale = X1 - X0
+        sc.render.resolution_x, sc.render.resolution_y = 1500, int(1500 * (Y1 - Y0) / (X1 - X0))
+        sc.render.filepath = str(pasta / "topo.jpg")
+        if not SO or "topo" in SO:
+            bpy.ops.render.render(write_still=True)

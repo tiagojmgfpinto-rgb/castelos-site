@@ -1,0 +1,379 @@
+{
+  "monumento": "lanhoso",
+  "titulo": "Castelo de Lanhoso e Santuário de Nossa Senhora do Pilar",
+  "variante": "estado-atual",
+  "versao": "0.1 provisória",
+  "data": "2026-11-03",
+  "origem": {
+    "lat": 41.58685,
+    "lon": -8.281361,
+    "nota": "Centro da torre de menagem (LiDAR). Eixos da maqueta: x para este, y para norte (PT-TM06 menos a origem), no visor -z é o norte, em metros à escala 1:1; as cotas são altitudes."
+  },
+  "fontes": {
+    "lidar": {
+      "titulo": "DGT, LiDAR 2025: MDT e MDS de 50 cm e nuvem de pontos classificada, folha 187514 (CC BY 4.0). Planta e cotas da torre, da cerca, dos torreões da porta, dos terraços e do santuário.",
+      "url": "https://cdd.dgterritorio.gov.pt"
+    },
+    "orto": {
+      "titulo": "DGT, Ortofotomapa 2021, 25 cm (CC BY 4.0). Conferência da planta, dos telhados, do terreiro e das lajes de granito do monte.",
+      "url": "https://cdd.dgterritorio.gov.pt"
+    },
+    "osm": {
+      "titulo": "OpenStreetMap (ODbL), via Overture Maps 2026-10-21.0: santuário, caminhos e estrada.",
+      "url": "https://www.openstreetmap.org/#map=19/41.58685/-8.28136"
+    },
+    "wiki": {
+      "titulo": "Wikipédia — Castelo de Lanhoso (história, portão de arco quebrado entre torreões ameados, merlões piramidais, porta alta da torre com escada de pedra)",
+      "url": "https://pt.wikipedia.org/wiki/Castelo_de_Lanhoso"
+    },
+    "fotos": {
+      "titulo": "Fotografias do castelo e do santuário enviadas pelo autor do projeto, novembro de 2026 (drone de sul e de poente, porta com o penedo, porta vista de dentro, adarve poente, pátio, fachada do santuário)"
+    }
+  },
+  "limitacoes": [
+    "Não foi usada planta cotada. A planta da torre, da cerca, dos torreões e dos terraços foi traçada no LiDAR de 2025 (pontos de solo e de edifício em células de 25 cm) e conferida no ortofotomapa e nas fotografias; o erro esperado em planta é de 0,3 a 0,5 m. Os adarves têm a cota medida (moda dos pontos entre os merlões) e as faces descem a prumo.",
+    "Torre: 10,44 × 10,30 m, faces a 73,25° e 343,25°; adarve a 393,80 m, peitoril das ameias a 394,73 m, pontas dos merlões a 396,29 m e vértice do telhado a 395,56 m (LiDAR). Oito merlões por face e as seteiras em alguns merlões seguem as fotografias de drone. A porta alta na face NNO tem a soleira à cota do patamar da escada no LiDAR (387,73 m); a Wikipédia diz que o arco é quebrado e as fotografias, pequenas, não chegam para o confirmar: ficou de volta perfeita. As seteiras das faces são estimativas de posição.",
+    "A porta do castelo está a poente da torre, entre os dois torreões (a Wikipédia diz 'a sul, junto à torre de menagem'); o arco quebrado, as portas verdes, o merlão sobre o arco, a escadaria e o penedo seguem as fotografias. O vão (1,55 m) e o arranque do arco são medidos à escala da escadaria; o penedo é um volume aproximado.",
+    "As escadas de pedra dos adarves e do terraço norte e o muro baixo no bordo poente do terreiro são das fotografias, com posição e altura estimadas. A barbacã a norte e o portão norte que a Wikipédia descreve não foram modelados (ficam abaixo, na encosta coberta de árvores, e não há fotografias).",
+    "Santuário: nave de 19,2 × 10,8 m e capela-mor de 9,7 × 7,0 m, cumes a 390,5 e 386,6 m e adro a 377,95 m (LiDAR). A fachada (frontão, cruz, pináculos, nicho com a imagem, janelas e porta) segue a fotografia de frente, simplificada. A torre sineira e as capelas de remate em pirâmide ficam a sul do limite da folha do LiDAR e não foram feitas.",
+    "Pedra: granito cinzento liquenado em fiadas na torre, na cerca e no santuário (fotografias). O pátio é relvado, o terreiro é de saibro e lajes cinzentas e as grandes lajes de granito do monte estão onde o ortofotomapa as mostra claras e inclinadas; o resto da encosta ficou em erva verde.",
+    "As árvores estão nas posições e com as alturas do LiDAR (julho de 2025), com copas esquemáticas e afastadas dos muros e da torre; a nascente o LiDAR tem menos árvores do que o ortofotomapa de 2021. Os poucos edifícios à volta são volumes simples de um só cinzento.",
+    "O geoportal do Município da Póvoa de Lanhoso não deixou consultar os ortofotomapas a partir daqui (acesso recusado); a conferência foi feita com o ortofotomapa de 2021 da DGT e com as fotografias enviadas. O Google Street View não chega ao interior do castelo."
+  ],
+  "distancia": 120,
+  "distanciaMinima": 10,
+  "direcao": [
+    0.55,
+    0.55,
+    0.62
+  ],
+  "sol": [
+    -0.38,
+    0.74,
+    0.55
+  ],
+  "placas": [
+    "torre",
+    "coroamento",
+    "porta_torre",
+    "escada_torre",
+    "porta",
+    "torreoes",
+    "cerca",
+    "baluarte",
+    "patio",
+    "santuario",
+    "fachada"
+  ],
+  "elementos": [
+    {
+      "id": "torre",
+      "nome": "Torre de Menagem",
+      "grupo": "Torre",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Torre quadrangular de cantaria de granito, no ponto mais alto do Monte de Lanhoso, junto à porta do castelo. Foi erguida no fim do século XII ou no início do XIII; em 1758 era o que restava do castelo. Por dentro do parapeito tem um telhado de quatro águas de telha e um adarve de tábuas.",
+      "medidas": "10,44 × 10,30 m de planta; pontas dos merlões a 396,29 m, c. 13,1 m acima do chão a norte (LiDAR 2025).",
+      "fontes": [
+        "lidar",
+        "orto",
+        "fotos",
+        "wiki"
+      ],
+      "resumo": "Torre quadrangular no alto do monte",
+      "ancora": [
+        0.0,
+        397.5,
+        0.0
+      ]
+    },
+    {
+      "id": "coroamento",
+      "nome": "Merlões",
+      "grupo": "Torre",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Oito merlões por face, contando os dos cunhais, com remate piramidal; alguns têm uma seteira em arco. A bandeira nacional fica no mastro do lado sul.",
+      "medidas": "Peitoril a 394,73 m, pontas a 396,29 m (LiDAR e fotografias de drone).",
+      "fontes": [
+        "lidar",
+        "fotos"
+      ],
+      "resumo": "Oito merlões piramidais por face",
+      "ancora": [
+        7.2,
+        396.0,
+        3.8
+      ],
+      "olhar": [
+        0.88,
+        0.25,
+        0.47
+      ]
+    },
+    {
+      "id": "porta_torre",
+      "nome": "Porta da torre",
+      "grupo": "Torre",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "A porta da torre fica alta, na face voltada ao pátio, a c. 4,5 m do chão, como era costume para a defesa; hoje tem portas de madeira.",
+      "medidas": "Soleira a 387,73 m (LiDAR).",
+      "fontes": [
+        "lidar",
+        "fotos",
+        "wiki"
+      ],
+      "resumo": "Porta alta da torre",
+      "ancora": [
+        -1.7,
+        390.7,
+        -5.7
+      ],
+      "olhar": [
+        -0.0,
+        0.15,
+        -1.0
+      ]
+    },
+    {
+      "id": "escada_torre",
+      "nome": "Escada da torre",
+      "grupo": "Torre",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Escada de pedra encostada à face da torre, a subir do pátio para a porta, com um corrimão de ferro.",
+      "medidas": "19 degraus de 382,93 a 387,73 m (LiDAR e fotografias).",
+      "fontes": [
+        "lidar",
+        "fotos",
+        "wiki"
+      ],
+      "resumo": "Escada de pedra para a porta",
+      "ancora": [
+        2.0,
+        386.0,
+        -7.2
+      ],
+      "olhar": [
+        -0.0,
+        0.25,
+        -1.0
+      ]
+    },
+    {
+      "id": "porta",
+      "nome": "Porta do castelo",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "A entrada faz-se por um arco quebrado com portas de madeira verde, recuado entre dois torreões ameados. Chega-se lá por uma escadaria de granito que sobe da encosta, com um grande penedo encostado ao torreão sul.",
+      "medidas": "Soleira a 383,10 m; vão de c. 1,55 × 3,0 m (LiDAR e fotografias).",
+      "fontes": [
+        "lidar",
+        "fotos",
+        "wiki"
+      ],
+      "resumo": "Arco quebrado entre dois torreões",
+      "ancora": [
+        -10.7,
+        387.0,
+        -4.3
+      ],
+      "olhar": [
+        -0.96,
+        0.15,
+        0.29
+      ]
+    },
+    {
+      "id": "torreoes",
+      "nome": "Torreões da porta",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Dois torreões quadrangulares guardam a porta, com merlões piramidais nos lados de fora; o do sul encosta à torre de menagem. Foram reconstruídos pela DGEMN a partir de 1938.",
+      "medidas": "Topo a 387,58 m (LiDAR).",
+      "fontes": [
+        "lidar",
+        "fotos",
+        "wiki"
+      ],
+      "resumo": "Torreões ameados da porta",
+      "ancora": [
+        -11.0,
+        390.2,
+        -7.1
+      ],
+      "olhar": [
+        -0.98,
+        0.25,
+        0.19
+      ]
+    },
+    {
+      "id": "cerca",
+      "nome": "Cerca e adarve",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "A muralha da praça de armas tem adarve com parapeito: com merlões piramidais a poente e liso a norte e a nascente. Por dentro, escadas de pedra sobem do pátio e do terraço para o adarve.",
+      "medidas": "Adarve a 386,95 m a poente, 386,35 m a norte e 386,00 m a nascente (LiDAR).",
+      "fontes": [
+        "lidar",
+        "orto",
+        "fotos",
+        "wiki"
+      ],
+      "resumo": "Muralha com adarve",
+      "ancora": [
+        -10.5,
+        389.1,
+        -15.6
+      ],
+      "olhar": [
+        -1.0,
+        0.3,
+        -0.09
+      ]
+    },
+    {
+      "id": "baluarte",
+      "nome": "Canto nordeste",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "No canto nordeste a muralha avança num ângulo saliente sobre a encosta, com vista para o vale do Ave e para a vila.",
+      "medidas": "Adarve a 386,35 m (LiDAR).",
+      "fontes": [
+        "lidar",
+        "orto",
+        "fotos"
+      ],
+      "resumo": "Ângulo saliente a nordeste",
+      "ancora": [
+        5.9,
+        388.2,
+        -27.4
+      ],
+      "olhar": [
+        0.25,
+        0.35,
+        -0.97
+      ]
+    },
+    {
+      "id": "patio",
+      "nome": "Praça de armas",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "O pátio relvado por dentro da cerca, com uma árvore grande e um terraço mais alto ao longo da muralha norte. Aqui ficavam a residência do alcaide e a cisterna.",
+      "medidas": "Pátio a 382–383 m e terraço a 384,1 m (LiDAR).",
+      "fontes": [
+        "lidar",
+        "fotos",
+        "wiki"
+      ],
+      "resumo": "Pátio por dentro da cerca",
+      "ancora": [
+        -1.3,
+        385.0,
+        -11.1
+      ],
+      "olhar": [
+        -0.19,
+        0.7,
+        -0.98
+      ]
+    },
+    {
+      "id": "santuario",
+      "nome": "Santuário de Nossa Senhora do Pilar",
+      "grupo": "Santuario",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Igreja de 1680, mandada fazer por André da Silva Machado com pedra do castelo, a sul da torre: nave, capela-mor mais baixa a norte e sacristia, de granito, com telhados de telha.",
+      "medidas": "Nave de 19,2 × 10,8 m, cume a 390,5 m (LiDAR).",
+      "fontes": [
+        "lidar",
+        "orto",
+        "fotos",
+        "wiki"
+      ],
+      "resumo": "Igreja de 1680",
+      "ancora": [
+        5.6,
+        393.6,
+        44.0
+      ]
+    },
+    {
+      "id": "fachada",
+      "nome": "Fachada do santuário",
+      "grupo": "Santuario",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Fachada virada a sul, com pilastras e pináculos nos cunhais, frontão com a cruz, o nicho com a imagem de Nossa Senhora entre as duas janelas de cima, a porta e duas janelas em baixo, e o adro com degraus.",
+      "medidas": "Frontão a c. 391,7 m e cruz a c. 393,0 m (LiDAR e fotografia).",
+      "fontes": [
+        "lidar",
+        "fotos"
+      ],
+      "resumo": "Fachada barroca a sul",
+      "ancora": [
+        6.9,
+        389.0,
+        53.7
+      ],
+      "olhar": [
+        0.13,
+        0.15,
+        0.99
+      ]
+    },
+    {
+      "id": "terreno",
+      "nome": "Monte, terreiro e pátio",
+      "grupo": "Terreno",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "O relevo do LiDAR, com as grandes lajes de granito do Monte de Lanhoso, o terreiro entre o castelo e o santuário, o pátio relvado, os marcos de granito e a estrada.",
+      "medidas": "MDT de 50 cm (LiDAR 2025).",
+      "fontes": [
+        "lidar",
+        "orto",
+        "osm"
+      ],
+      "resumo": "Relevo, lajes de granito e terreiro"
+    },
+    {
+      "id": "envolvente",
+      "nome": "Edifícios à volta",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "baixa",
+      "descricao": "Os poucos edifícios à volta, em volumes simples e num só cinzento, só para dar a escala.",
+      "medidas": "Plantas do OSM e do LiDAR; alturas do MDS.",
+      "fontes": [
+        "osm",
+        "lidar"
+      ],
+      "resumo": "Volumes simples"
+    },
+    {
+      "id": "vegetacao",
+      "nome": "Árvores",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "baixa",
+      "descricao": "As árvores do monte, nas posições e com as alturas do LiDAR; copas esquemáticas.",
+      "medidas": "LiDAR 2025 (julho).",
+      "fontes": [
+        "lidar",
+        "orto"
+      ],
+      "resumo": "Árvores do monte"
+    }
+  ]
+}
