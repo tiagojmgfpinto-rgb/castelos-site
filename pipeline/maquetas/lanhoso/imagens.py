@@ -17,7 +17,7 @@ AQUI = Path(__file__).resolve().parent
 SAIDA = AQUI.parents[2] / "public" / "imagens" / "lanhoso"
 SAIDA.mkdir(parents=True, exist_ok=True)
 
-FOTOS = {
+FOTOS = {  # já não são usadas na galeria (origem por confirmar); as da ficha vêm do Wikimedia Commons
     "d74a3f84-image.png": "torre-drone-sul",
     "image 11.png": "porta-e-penedo",
     "image 12.png": "porta-vista-de-dentro",
