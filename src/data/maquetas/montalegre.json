@@ -1,0 +1,482 @@
+{
+  "monumento": "montalegre",
+  "titulo": "Castelo de Montalegre",
+  "variante": "estado-atual",
+  "versao": "0.1 provisória",
+  "data": "2026-11-03",
+  "origem": {
+    "lat": 41.826068,
+    "lon": -7.79092,
+    "nota": "Centro da torre de menagem (LiDAR). Eixos da maqueta: x para este, y para norte (PT-TM06 menos a origem), no visor -z é o norte, em metros à escala 1:1; as cotas são altitudes."
+  },
+  "fontes": {
+    "lidar": {
+      "titulo": "DGT, LiDAR 2024: MDT e MDS de 50 cm e nuvem de pontos classificada com cor, folha 228540 (CC BY 4.0). Planta e cotas das quatro torres, da cerca, do corredor de aço, da barbacã e das ruínas.",
+      "url": "https://cdd.dgterritorio.gov.pt"
+    },
+    "orto": {
+      "titulo": "DGT, Ortofotomapa 2021, 25 cm (CC BY 4.0). Conferência da planta, dos telhados, do pátio, da cisterna e do caminho da barbacã.",
+      "url": "https://cdd.dgterritorio.gov.pt"
+    },
+    "geoportal": {
+      "titulo": "Município de Montalegre, MunWebGis: ortofotomapa de 2011 (conferência da planta antes do corredor de aço).",
+      "url": "https://sig.cm-montalegre.pt/MunWebGis/Viewer.aspx?serviceName=pdm"
+    },
+    "osm": {
+      "titulo": "OpenStreetMap (ODbL), via Overture Maps 2026-10-21.0: edifícios e ruas à volta.",
+      "url": "https://www.openstreetmap.org/#map=19/41.82607/-7.79092"
+    },
+    "wiki": {
+      "titulo": "Wikipédia — Castelo de Montalegre (história, torre de menagem de c. 27 m com balcões e merlões, cisterna no pátio, portas descritas em 1758)",
+      "url": "https://pt.wikipedia.org/wiki/Castelo_de_Montalegre"
+    },
+    "fotos": {
+      "titulo": "Fotografias do castelo enviadas pelo autor do projeto, novembro de 2026 (drone de sul, de nascente e do alto da torre sueste; de poente, de norte com o passadiço; a escada de aço da torre), usadas só como referência"
+    },
+    "sketchfab": {
+      "titulo": "Rui Oliveira, Castelo de Montalegre 2019 (Sketchfab): reconstituição de fases históricas, consultada só como referência de forma",
+      "url": "https://sketchfab.com/3d-models/castelo-de-montalegre-2019-49d4d02350d847dc98850b3a8f36ff4e"
+    }
+  },
+  "limitacoes": [
+    "Não foi usada planta cotada. As quatro torres são retângulos ajustados aos pontos do coroamento no LiDAR de 2024 e a cerca segue o perfil medido de 2,5° em 2,5° a partir do centro do pátio (face de dentro, face de fora e cota do adarve); o erro esperado em planta é de 0,3 a 0,5 m e as faces descem a prumo.",
+    "Torre de menagem: 12,10 × 12,04 m, adarve a 1037,53 m e pontas dos merlões a 1039,72 m, c. 27,3 m acima do chão (LiDAR). Os nove merlões por face, os quatro balcões com matacães e as quatro guaritas dos cunhais seguem as fotografias, com as posições dos balcões e a cota dos pisos (c. 1034 m) medidas no LiDAR; as mísulas e os matacães são esquemáticos. A face sul está tapada no LiDAR: a porta, o patamar de pedra e a escada de aço corten seguem as fotografias e a cota do patamar (1017,60 m) é estimada. As seteiras são estimativas de posição.",
+    "Torres do sul: a sueste tem onze merlões por face e telhado por dentro (pontas a 1029,80 m); a sul tem parapeito liso a 1025,95 m e a pequena de sudoeste um rebordo fino a 1023,15 m com a pirâmide baixa (LiDAR). As portas das torres sueste e sul para o adarve não se veem nas fotografias e não foram feitas; a de sudoeste segue a fotografia.",
+    "A cerca não tem merlões; os adarves altos de sul e de poente têm guarda de ferro pelo lado de fora (fotografias). A poterna junto à torre sueste e a porta em arco entre as torres sul e de sudoeste seguem as fotografias e ficaram fechadas com portas de madeira; o tamanho (1,0 × 2,0 m) é estimado.",
+    "O troço noroeste da cerca é um muro arruinado com um corredor de entrada de aço corten por cima, de cobertura plana a 1016,25 m (LiDAR: pontos de edifício avermelhados; faixa vermelha no ortofotomapa de 2021). A porta de chapa, a placa e os degraus seguem a fotografia de norte; a saída para o pátio junto à torre é estimada. O passadiço de madeira segue a faixa clara e lisa do LiDAR entre as duas ruínas em ferradura; os balizadores são esquemáticos.",
+    "A barbacã é o muro de suporte do patamar a nascente e a sul, traçado onde o MDT cai 2,5 a 4 m; o caminho lajeado claro por cima segue o ortofotomapa e a vedação de madeira a fotografia de drone de nascente. As duas linhas de muralha exteriores desenhadas por Duarte de Armas (c. 1509) já não existem e não foram feitas.",
+    "Pedra: granito cinzento em fiadas regulares nas torres e alvenaria mais miúda na cerca (fotografias). Telhados de telha vermelha. O pátio é de terra batida clara (ortofotomapa) e o resto do monte é relva. A cisterna ficou como um poço quadrado com bocal baixo.",
+    "As árvores estão nas posições e com as alturas do LiDAR, com copas esquemáticas e afastadas dos muros e das torres. Os edifícios da vila à volta são volumes simples de um só cinzento.",
+    "O Google Street View não chega ao interior do castelo; a conferência fez-se com os ortofotomapas da DGT (2021) e do geoportal da Câmara (2011) e com as fotografias. O modelo do Sketchfab de 2019 é uma reconstituição histórica e não foi usado para o estado atual."
+  ],
+  "distancia": 110,
+  "distanciaMinima": 10,
+  "direcao": [
+    -0.45,
+    0.55,
+    0.7
+  ],
+  "sol": [
+    0.34,
+    0.77,
+    0.54
+  ],
+  "placas": [
+    "torre",
+    "coroamento",
+    "balcoes",
+    "porta_torre",
+    "escada_torre",
+    "torre_se",
+    "torre_s",
+    "torre_so",
+    "cerca",
+    "corredor",
+    "passadico",
+    "cisterna",
+    "ruinas",
+    "barbaca",
+    "patio"
+  ],
+  "elementos": [
+    {
+      "id": "torre",
+      "nome": "Torre de Menagem",
+      "grupo": "Torre",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "A torre de menagem, a norte do pátio, é a mais alta do castelo: uma torre quadrangular gótica de cantaria de granito, com c. 27 m, salas abobadadas por dentro e telhado de quatro águas de telha por dentro do adarve. A obra do castelo acabou em 1331, com D. Afonso IV.",
+      "medidas": "12,10 × 12,04 m de planta; pontas dos merlões a 1039,72 m, c. 27,3 m acima do chão (LiDAR 2024).",
+      "fontes": [
+        "lidar",
+        "orto",
+        "fotos",
+        "wiki"
+      ],
+      "resumo": "Torre gótica de c. 27 m",
+      "ancora": [
+        0.0,
+        1041.2,
+        0.0
+      ]
+    },
+    {
+      "id": "coroamento",
+      "nome": "Merlões",
+      "grupo": "Torre",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Nove merlões piramidais por face, contando os dos cunhais. No alto da escada interior há uma casota de pedra, com o mastro da bandeira por cima.",
+      "medidas": "Peitoril a 1038,35 m, pontas a 1039,72 m (LiDAR e fotografias).",
+      "fontes": [
+        "lidar",
+        "fotos"
+      ],
+      "resumo": "Nove merlões piramidais por face",
+      "ancora": [
+        5.7,
+        1039.4,
+        7.4
+      ],
+      "olhar": [
+        0.61,
+        0.25,
+        0.79
+      ]
+    },
+    {
+      "id": "balcoes",
+      "nome": "Balcões e guaritas",
+      "grupo": "Torre",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Cada face tem um balcão com matacães sobre mísulas e cada cunhal uma guarita, também sobre mísulas, com dois merlões por lado. Por baixo dos matacães abriam-se os buracos para defender o pé da torre.",
+      "medidas": "Pisos a c. 1034 m e parapeitos a c. 1035,4 m (LiDAR); mísulas esquemáticas.",
+      "fontes": [
+        "lidar",
+        "fotos",
+        "wiki"
+      ],
+      "resumo": "Balcões com matacães e guaritas",
+      "ancora": [
+        -0.9,
+        1035.2,
+        7.2
+      ],
+      "olhar": [
+        -0.13,
+        0.2,
+        0.99
+      ]
+    },
+    {
+      "id": "porta_torre",
+      "nome": "Porta da torre",
+      "grupo": "Torre",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "A porta fica alta, na face voltada ao pátio, em arco de volta perfeita, sobre um patamar de pedra com cornija.",
+      "medidas": "Patamar a c. 1017,60 m, c. 5 m acima do pátio (estimado nas fotografias).",
+      "fontes": [
+        "fotos"
+      ],
+      "resumo": "Porta alta sobre o patamar",
+      "ancora": [
+        -1.4,
+        1020.2,
+        8.5
+      ],
+      "olhar": [
+        -0.13,
+        0.15,
+        0.99
+      ]
+    },
+    {
+      "id": "escada_torre",
+      "nome": "Escada de aço",
+      "grupo": "Torre",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Uma escada moderna de aço corten, com chapas cheias de guarda, sobe do pátio ao patamar da porta ao longo da face sul.",
+      "medidas": "20 degraus de c. 18 cm, de 1013,99 a 1017,60 m (estimado nas fotografias).",
+      "fontes": [
+        "fotos"
+      ],
+      "resumo": "Escada de aço corten",
+      "ancora": [
+        3.0,
+        1017.1,
+        8.0
+      ],
+      "olhar": [
+        0.33,
+        0.2,
+        0.95
+      ]
+    },
+    {
+      "id": "torre_se",
+      "nome": "Torre de sueste",
+      "grupo": "Torres",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "A maior das três torres do sul, quadrada, com onze merlões piramidais por face e telhado de telha por dentro do adarve.",
+      "medidas": "10,06 × 10,14 m; pontas dos merlões a 1029,80 m, c. 19,7 m acima do chão (LiDAR).",
+      "fontes": [
+        "lidar",
+        "orto",
+        "fotos"
+      ],
+      "resumo": "Torre quadrada com merlões",
+      "ancora": [
+        2.0,
+        1031.2,
+        46.6
+      ],
+      "olhar": [
+        0.29,
+        0.3,
+        0.96
+      ]
+    },
+    {
+      "id": "torre_s",
+      "nome": "Torre do sul",
+      "grupo": "Torres",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Torre retangular de parapeito liso, sem merlões, com o telhado de telha por dentro. Segundo a Wikipédia, a inscrição da base de uma das torres do sul regista o fim da obra em 1331 e o reparo de 1580.",
+      "medidas": "8,74 × 7,50 m; parapeito a 1025,95 m (LiDAR).",
+      "fontes": [
+        "lidar",
+        "orto",
+        "fotos",
+        "wiki"
+      ],
+      "resumo": "Torre de parapeito liso",
+      "ancora": [
+        -14.1,
+        1027.6,
+        40.6
+      ],
+      "olhar": [
+        -0.45,
+        0.3,
+        0.89
+      ]
+    },
+    {
+      "id": "torre_so",
+      "nome": "Torre pequena",
+      "grupo": "Torres",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "A mais pequena das torres, a sudoeste, com um rebordo fino e um telhado baixo em pirâmide; uma porta em arco abre para o adarve.",
+      "medidas": "5,02 × 5,82 m; rebordo a 1023,15 m (LiDAR).",
+      "fontes": [
+        "lidar",
+        "fotos"
+      ],
+      "resumo": "Torre pequena de sudoeste",
+      "ancora": [
+        -23.7,
+        1025.0,
+        27.8
+      ],
+      "olhar": [
+        -0.96,
+        0.3,
+        0.29
+      ]
+    },
+    {
+      "id": "cerca",
+      "nome": "Cerca e adarve",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "A muralha liga as quatro torres à volta da praça de armas. O adarve, sem merlões, sobe de nascente para sul; a sul e a poente tem guarda de ferro. Na base, a poterna junto à torre sueste e uma porta em arco entre as torres do sul.",
+      "medidas": "Adarve a 1016,60 m a nascente e 1019,83 m a sul (LiDAR).",
+      "fontes": [
+        "lidar",
+        "orto",
+        "fotos",
+        "wiki"
+      ],
+      "resumo": "Muralha com adarve",
+      "ancora": [
+        11.5,
+        1018.2,
+        18.4
+      ],
+      "olhar": [
+        1.0,
+        0.3,
+        -0.1
+      ]
+    },
+    {
+      "id": "corredor",
+      "nome": "Corredor de aço corten",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "No troço noroeste, onde a muralha está arruinada, a entrada faz-se hoje por um corredor coberto de aço corten, assente no muro antigo, com uma porta de chapa ao fundo do passadiço. Do adarve de poente desce para ele uma escada de aço.",
+      "medidas": "Cobertura a 1016,25 m; soleira da porta a c. 1011,86 m (LiDAR e fotografia).",
+      "fontes": [
+        "lidar",
+        "orto",
+        "fotos"
+      ],
+      "resumo": "Entrada moderna de aço",
+      "ancora": [
+        -15.4,
+        1017.8,
+        7.3
+      ],
+      "olhar": [
+        -0.2,
+        0.2,
+        -0.98
+      ]
+    },
+    {
+      "id": "passadico",
+      "nome": "Passadiço",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Um passadiço de tábuas de madeira, ladeado por balizadores baixos, atravessa o relvado de norte até à porta do corredor, entre as duas ruínas em ferradura.",
+      "medidas": "C. 21 m de comprimento e 1,5 m de largura (LiDAR e fotografia).",
+      "fontes": [
+        "lidar",
+        "fotos"
+      ],
+      "resumo": "Passadiço de madeira",
+      "ancora": [
+        -18.3,
+        1011.3,
+        -15.6
+      ],
+      "olhar": [
+        -0.2,
+        0.3,
+        -0.98
+      ]
+    },
+    {
+      "id": "cisterna",
+      "nome": "Cisterna",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "A cisterna quadrada no meio do pátio, com o bocal de pedra.",
+      "medidas": "C. 5 × 5 m (ortofotomapa e LiDAR).",
+      "fontes": [
+        "orto",
+        "lidar",
+        "wiki"
+      ],
+      "resumo": "Cisterna no meio do pátio",
+      "ancora": [
+        -9.7,
+        1012.1,
+        27.9
+      ]
+    },
+    {
+      "id": "ruinas",
+      "nome": "Ruínas em ferradura",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Dois muros baixos de pedra em ferradura, abertos a nascente, no relvado a norte da torre de menagem.",
+      "medidas": "C. 1 m de altura; 5,3 e 6 m de diâmetro (LiDAR).",
+      "fontes": [
+        "lidar",
+        "orto",
+        "fotos"
+      ],
+      "resumo": "Muros baixos a norte",
+      "ancora": [
+        -21.3,
+        1011.6,
+        -11.4
+      ]
+    },
+    {
+      "id": "barbaca",
+      "nome": "Barbacã",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "O muro de suporte que contorna o castelo a nascente e a sul, com um caminho lajeado por cima e uma vedação de madeira.",
+      "medidas": "C. 98 m de comprimento; até c. 4,6 m de altura (LiDAR).",
+      "fontes": [
+        "lidar",
+        "orto",
+        "fotos"
+      ],
+      "resumo": "Muro de suporte com caminho",
+      "ancora": [
+        17.0,
+        1015.5,
+        10.0
+      ],
+      "olhar": [
+        0.98,
+        0.4,
+        -0.2
+      ]
+    },
+    {
+      "id": "patio",
+      "nome": "Praça de armas",
+      "grupo": "Muralhas",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "O pátio de terra batida por dentro da cerca, com a cisterna no meio. Aqui ficava a casa do governador descrita em 1758.",
+      "medidas": "Pátio a 1010,5–1013,8 m (LiDAR).",
+      "fontes": [
+        "lidar",
+        "orto",
+        "wiki"
+      ],
+      "resumo": "Pátio de terra batida",
+      "ancora": [
+        -4.0,
+        1014.5,
+        22.5
+      ],
+      "olhar": [
+        0.1,
+        0.8,
+        1.0
+      ]
+    },
+    {
+      "id": "terreno",
+      "nome": "Monte e relvado",
+      "grupo": "Terreno",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "O relevo do LiDAR, com o relvado à volta do castelo, o pátio de terra batida e os caminhos lajeados.",
+      "medidas": "MDT de 50 cm (LiDAR 2024).",
+      "fontes": [
+        "lidar",
+        "orto",
+        "osm"
+      ],
+      "resumo": "Relevo e relvado"
+    },
+    {
+      "id": "envolvente",
+      "nome": "Edifícios à volta",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "baixa",
+      "descricao": "Os edifícios da vila à volta, em volumes simples e num só cinzento, só para dar a escala.",
+      "medidas": "Plantas do OSM e do LiDAR; alturas do MDS.",
+      "fontes": [
+        "osm",
+        "lidar"
+      ],
+      "resumo": "Volumes simples"
+    },
+    {
+      "id": "vegetacao",
+      "nome": "Árvores",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "baixa",
+      "descricao": "As árvores à volta do castelo, nas posições e com as alturas do LiDAR; copas esquemáticas.",
+      "medidas": "LiDAR 2024.",
+      "fontes": [
+        "lidar",
+        "orto"
+      ],
+      "resumo": "Árvores"
+    }
+  ]
+}
