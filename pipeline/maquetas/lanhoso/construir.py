@@ -994,6 +994,7 @@ for _nm, (_a, _b) in {"ENE": (1, 0), "NNO": (0, 1), "OSO": (-1, 0), "SSE": (0, -
 ESP_PAR = 0.70           # espessura do parapeito (fotografia de drone)
 N_MERL = 8               # merlões por face, contando os dos cunhais (fotografia de drone)
 LM = 0.72                # largura dos merlões
+Z_SOL_PORTA = 383.1      # soleira da porta do castelo (LiDAR)
 Z_PORTA = 387.73         # soleira da porta da face NNO = patamar da escada (LiDAR)
 print("torre: adarve", Z_ADARVE, "peitoril", Z_SILL, "merlões", Z_MERLAO, Z_PONTA, "cume", Z_CUME, "chão", CHAO_T)
 
@@ -1164,8 +1165,12 @@ def cerca():
     for k in POL:
         zb[k] = chao_min(POL[k]) - 0.8
     # ---- torreões e muro da porta
-    for k in ("torreao_sul", "torreao_norte", "muro_porta"):
+    for k in ("torreao_sul", "torreao_norte"):
         prisma_pol(m, POL[k], zb[k], C.Z_TORREOES, 0, 1)
+    # o muro da porta: as faces de fora e de dentro (com o vão) são da porta(); aqui só o alicerce e o topo
+    prisma_pol(m, POL["muro_porta"], zb["muro_porta"], Z_SOL_PORTA - 1.2, 0, 0)
+    mp = shapely.geometry.polygon.orient(POL["muro_porta"], 1)
+    m.face([(x_, y_, C.Z_TORREOES) for x_, y_ in np.array(mp.exterior.coords)[:-1]], 1)
     n_m = 0
     # torreão sul: merlões a poente, a sul e a norte (para a passagem)
     ts = C.TORREAO_SUL
@@ -1247,7 +1252,7 @@ def porta():
     porta de duas folhas de madeira verde abertas para dentro, e por dentro um arco mais largo (fotografias de fora
     e de dentro). Soleira a 383,1 m (LiDAR)."""
     m = Malha(["muro", "cantaria_lisa", "intradorso", "madeira_verde", "ferro", "sombra", "muro_topo"])
-    z_sol = 383.1
+    z_sol = Z_SOL_PORTA
     fo = Plano(W(-7.3, 7.2), EV, n=-EU)           # face de fora do muro da porta (s = v - 7,2)
     fi = Plano(W(-5.1, 7.2), -EV, n=EU)           # face de dentro (s = -(v - 7,2))
     w_o, h_o = 1.55, 1.75                          # vão de fora: largura e arranque do arco (fecho a c. 386,0)
@@ -1279,24 +1284,35 @@ def porta():
     # impostas
     for s_ in (-w_o / 2 - 0.36, w_o / 2):
         m.caixa_face(fo, s_, s_ + 0.36, 0.0, 0.09, z_sol + h_o - 0.14, z_sol + h_o, 1)
-    # portas de duas folhas de madeira verde, fechadas logo atrás do arco de fora (fotografia de frente): junta ao
-    # meio, ferragens e fechadura; por dentro, as travessas em X (fotografia de dentro)
-    dp = -0.32
-    painel(m, fo, c_o, (), 3, d=dp)
-    fo_in = Plano(fo.xy(0, dp - 0.08), -fo.t, n=-fo.n)
-    painel(m, fo_in, [(-s_, z_) for s_, z_ in c_o], (), 3)
-    z_fecho = max(z_ for _, z_ in c_o)
-    m.caixa_face(fo, -0.02, 0.02, dp, dp + 0.03, z_sol, z_fecho - 0.12, 5)
-    for k, z_ in enumerate((z_sol + 0.45, z_sol + 1.45)):
-        m.caixa_face(fo, -w_o / 2 + 0.06, w_o / 2 - 0.06, dp, dp + 0.025, z_, z_ + 0.07, 4)
-    for s_ in (-w_o / 2 + 0.2, -0.2, 0.2, w_o / 2 - 0.2):
-        m.caixa_face(fo, s_ - 0.01, s_ + 0.01, dp, dp + 0.012, z_sol + 0.05, z_sol + h_o + 0.25, 5)
-    m.caixa_face(fo, 0.06, 0.24, dp, dp + 0.04, z_sol + 1.0, z_sol + 1.32, 4)
+    # portas de duas folhas de madeira verde, abertas para dentro e encostadas às paredes da passagem (fotografia de
+    # frente fa66: vê-se a folha norte aberta e o céu pelo vão): perfil de cada folha = meio arco quebrado; ferragens
+    arco_dir = [(s_, z_) for s_, z_ in c_o if s_ > -1e-6 and z_ >= z_sol + h_o - 1e-6]
+    arco_dir.sort(key=lambda q: -q[0])
+    ss_, zz_ = np.array([q[0] for q in arco_dir])[::-1], np.array([q[1] for q in arco_dir])[::-1]
+    dp, folga, esp = -0.30, 0.05, 0.06
+    lw = w_o / 2 - folga - 0.02
     for lado in (-1, 1):
-        for (s1, z1), (s2, z2) in (((0.05, 0.15), (0.95, 1.55)), ((0.05, 1.55), (0.95, 0.15))):
-            p1 = fo.xy(lado * (w_o / 2) * s1, dp - 0.12)
-            p2 = fo.xy(lado * (w_o / 2) * s2, dp - 0.12)
-            m.barra((*p1, z_sol + z1), (*p2, z_sol + z2), 0.04, 3, k=4)
+        dobr = fo.xy(lado * (w_o / 2 - folga), dp)
+        nc = -lado * fo.t                     # para o meio da passagem
+        fl = Plano(dobr, -fo.n, n=nc)         # s' = da dobradiça para dentro do castelo
+        sp = np.linspace(0, lw, 9)
+        topo = np.interp(w_o / 2 - folga - sp, ss_, zz_) - 0.03
+        cont = [(0.0, z_sol + 0.02)] + [(float(sp[-1]), z_sol + 0.02)] + [(float(a_), float(b_)) for a_, b_ in zip(sp[::-1], topo[::-1])]
+        painel(m, fl, cont, (), 3)
+        fl_b = Plano(fl.xy(0, -esp), -fo.n, n=-nc)
+        painel(m, fl_b, cont, (), 3)
+        tunel(m, fl, cont, 0.0, -esp, 3)
+        # ferragens: duas barras, a fechadura junto ao bordo livre, a junta das tábuas
+        for z_ in (z_sol + 0.45, z_sol + 1.45):
+            m.caixa_face(fl, 0.03, lw - 0.03, 0.0, 0.022, z_, z_ + 0.07, 4)
+        for sv in (0.2, 0.4, 0.6):
+            if sv < lw - 0.05:
+                m.caixa_face(fl, sv - 0.01, sv + 0.01, 0.0, 0.01, z_sol + 0.05, float(np.interp(sv, sp, topo)) - 0.06, 5)
+        if lado > 0:
+            m.caixa_face(fl, lw - 0.2, lw - 0.04, 0.0, 0.035, z_sol + 1.0, z_sol + 1.3, 4)
+        # gonzos na parede
+        for z_ in (z_sol + 0.4, z_sol + 1.5):
+            m.caixa_face(fl, -0.02, 0.06, -esp - folga + 0.005, 0.0, z_, z_ + 0.08, 4)
     m.objeto("porta", "porta", GRUPOS["Muralhas"], uv=2.5, vcor=patine_muro)
     MEDIDAS["porta"] = {"soleira": z_sol, "vao_fora": [w_o, round(c_o[len(c_o) // 2 + 4][1] - z_sol, 2)], "vao_dentro": w_i}
     return fo, z_sol
