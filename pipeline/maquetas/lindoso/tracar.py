@@ -10,7 +10,10 @@ abaluartada, de 1,2 a 2 m de espessura, 2 a 4 m acima da lice e do campo). Aqui:
    porta e o chão (escadas e rampas ficam de fora por terem menos de 0,7 m de degrau); fecham-se buracos de
    menos de 1 m² e tiram-se manchas de menos de 3 m²;
 3. cada mancha vira um polígono (contorno alisado e simplificado a 0,45 m, ângulos com mais de 3,5 m de lado afiados);
-4. em cada vértice mede-se o topo (percentil 90 do LiDAR num raio de 0,6 m dentro do polígono) e o chão de fora
+4. a cortina a sudoeste da Porta Norte (coberta de hera, que o LiDAR classifica como vegetação) e o troço
+   noroeste da cerca (por dentro encosta-lhe o telhado do museu, e não se destaca) vêm de plantas medidas à mão
+   (comum.py); a primeira com o topo do MDS;
+5. em cada vértice mede-se o topo (percentil 90 do LiDAR num raio de 0,6 m dentro do polígono) e o chão de fora
    (o mais baixo do MDT entre 0,6 e 2,0 m para fora), para as faces descerem até ao chão.
 
 Uso:
@@ -32,7 +35,7 @@ from skimage.morphology import remove_small_holes, remove_small_objects
 AQUI = Path(__file__).resolve().parent
 ALTO = 466.0  # topo acima disto: cerca medieval
 sys.path.insert(0, str(AQUI))
-from comum import EXCLUIR_MUROS, ZONA_CASTELO  # noqa: E402
+from comum import CERCA_NO, CORTINA_PN_SO, EXCLUIR_MUROS, ZONA_CASTELO  # noqa: E402
 
 SUPF = np.load(AQUI / "dados" / "superficie.npz")
 SP, SX0, SY0 = float(SUPF["passo"]), float(SUPF["x0"]), float(SUPF["y0"])
@@ -40,6 +43,7 @@ SUP = SUPF["z"] / 100.0 + float(SUPF["base"])
 LID = np.load(AQUI / "dados" / "lidar.npz")
 LP, LX0, LY0 = float(LID["passo"]), float(LID["x0"]), float(LID["y0"])
 MDT = LID["mdt"] / 100.0 + float(LID["base"])
+MDS = LID["mds"] / 100.0 + float(LID["base"])
 
 
 def amostra(G, x0, y0, p, x, y, ordem=1):
@@ -90,12 +94,16 @@ def main():
     zona = features.rasterize([shapely.Polygon(ZONA_CASTELO)], out_shape=(ny, nx), transform=tr).astype(bool)
     excl = features.rasterize([shapely.Polygon(p) for p in EXCLUIR_MUROS], out_shape=(ny, nx), transform=tr).astype(bool)
     M = (th > 0.7) & (acima > 0.9) & zona & ~excl
+    cno = features.rasterize([shapely.Polygon(CERCA_NO)], out_shape=(ny, nx), transform=tr).astype(bool)
+    ivy = features.rasterize([shapely.Polygon(CORTINA_PN_SO).buffer(0.3)], out_shape=(ny, nx), transform=tr).astype(bool)
+    M = M & ~ivy
     M = ndi.binary_opening(M, iterations=1)
     M = remove_small_holes(M, max_size=16)
     M = remove_small_objects(M, max_size=48)
     # a cerca medieval (topo acima de 466 m) e a muralha abaluartada (abaixo) traçam-se à parte: juntas, o topo
     # triangulado fazia rampas entre os 471 m da cerca e os 464 m dos baluartes
-    alto = M & (ndi.median_filter(zf, 5) > ALTO)
+    torre = features.rasterize([shapely.Polygon(EXCLUIR_MUROS[3])], out_shape=(ny, nx), transform=tr).astype(bool)
+    alto = (M & (ndi.median_filter(zf, 5) > ALTO)) | (cno & ~torre)
     alto = remove_small_objects(remove_small_holes(ndi.binary_opening(alto, iterations=1), max_size=16), max_size=48)
     baixo = remove_small_objects(ndi.binary_opening(M & ~alto, iterations=1), max_size=48)
     pols = []
@@ -134,6 +142,11 @@ def main():
         if np.median(np.array(a0["topo"]) - np.array(a0["chao"])) < 0.9:
             continue  # pedras e muretes com menos de 0,9 m acima do chão de fora
         out.append(reg)
+    # cortina coberta de hera a sudoeste da Porta Norte: topo do MDS (todas as classes) menos c. 0,4 m de hera
+    c = np.array(CORTINA_PN_SO)
+    reg = {"id": "", "aneis": [medir_anel(c, False, grade=(MDS, LX0, LY0, LP), desconto=0.4)],
+           "area": round(float(shapely.Polygon(c).area), 1), "medieval": False, "hera": True}
+    out.append(reg)
     out.sort(key=lambda e: -e["area"])
     for i, e in enumerate(out):
         e["id"] = f"m{i:02d}"
@@ -144,7 +157,7 @@ def main():
               max(max(a["topo"]) for a in e["aneis"]))
 
 
-def medir_anel(c, e_alto):
+def medir_anel(c, e_alto, grade=None, desconto=0.0):
     """Topo e chão de fora em cada vértice de um anel (o exterior anti-horário ou um furo horário: o "fora" fica
     sempre à direita do sentido do anel)."""
     if True:
@@ -161,7 +174,8 @@ def medir_anel(c, e_alto):
         for k in range(n):
             pts = [c[k] - nrm[k] * d + np.array([dx, dy]) for d in (0.35, 0.6, 0.85) for dx in (-0.25, 0, 0.25) for dy in (-0.25, 0, 0.25)]
             pts = np.array(pts)
-            topo.append(float(np.percentile(amostra(SUP, SX0, SY0, SP, pts[:, 0], pts[:, 1], 0), 85)))
+            G, gx0, gy0, gp = grade or (SUP, SX0, SY0, SP)
+            topo.append(float(np.percentile(amostra(G, gx0, gy0, gp, pts[:, 0], pts[:, 1], 0), 60 if grade else 85)) - desconto)
             fora = np.array([c[k] + nrm[k] * d for d in np.arange(0.6, 2.01, 0.2)])
             chao.append(float(amostra(MDT, LX0, LY0, LP, fora[:, 0], fora[:, 1]).min()))
         topo = np.array(topo)
