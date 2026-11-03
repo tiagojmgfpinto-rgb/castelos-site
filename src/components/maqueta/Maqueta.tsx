@@ -116,7 +116,7 @@ export default function Maqueta({ url, capa, dados, provisoria, onVoltarMapa }: 
     <div className={`maqueta${ampliada ? " maqueta--ampliada" : ""}`} ref={caixa} tabIndex={-1}>
       <div className="maqueta-palco">
         {capa && !carregada && <img className="maqueta-capa-fundo" src={`${BASE}${capa}`} alt={`Maqueta 3D de ${dados.titulo}, vista de sudoeste`} />}
-        <Canvas shadows={{ type: THREE.PCFShadowMap }} dpr={[1, 2]} camera={{ fov: 32, near: 1, far: 4000, position: [-300, 300, 250] }} gl={{ antialias: true, alpha: true }}>
+        <Canvas shadows={{ type: THREE.PCFShadowMap }} dpr={[1, 2]} camera={{ fov: 32, near: 1, far: 4000, position: [-300, 300, 250] }} gl={{ antialias: true, alpha: true }} onCreated={({ gl }) => { gl.toneMapping = THREE.AgXToneMapping; }}>
           <Suspense fallback={null}>
             <Cena
               url={url}
@@ -522,10 +522,13 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, d
 
   return (
     <>
-      <hemisphereLight args={["#f6f0e2", "#7d6b50", 1.25]} />
+      {/* Luz igual à dos renders Cycles dos construir.py: o sol com a mesma força (3,4 a 3,6 W/m² no Cycles dá a
+          mesma radiância no three.js), o céu com a cor do "mundo" (0,80 0,76 0,68) e o chão neutro. Com o tone
+          mapping AgX (o do Cycles) as cores ficam como nos renders; o ACES do R3F escurecia e aquecia tudo. */}
+      <hemisphereLight args={["#e7e2d9", "#8a8070", 1.8]} />
       <directionalLight
         position={[solC.x + solD.x, centro.y + solD.y, solC.z + solD.z]}
-        intensity={2.4}
+        intensity={3.4}
         castShadow
         shadow-mapSize={[mapaSombra, mapaSombra]}
         shadow-camera-left={-meiaSombra}
@@ -539,7 +542,6 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, d
       >
         <object3D attach="target" position={[solC.x, centro.y, solC.z]} />
       </directionalLight>
-      <directionalLight position={[centro.x + 200, centro.y + 120, centro.z + 160]} intensity={0.35} />
       <primitive object={scene} onClick={clicar} onPointerMissed={() => setSel(null)} />
       <OrbitControls
         ref={controlos as never}
