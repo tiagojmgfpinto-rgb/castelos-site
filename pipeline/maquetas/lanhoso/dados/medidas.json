@@ -1,0 +1,186 @@
+{
+ "torre": {
+  "lado_u": 10.44,
+  "lado_v": 10.3,
+  "azimute_faces": [
+   73.25,
+   343.25
+  ],
+  "chao": {
+   "ENE": 382.97,
+   "NNO": 383.18,
+   "OSO": 383.95,
+   "SSE": 382.9
+  },
+  "adarve": 393.8,
+  "peitoril": 394.73,
+  "merlao": 395.79,
+  "pontas": 396.29,
+  "cume": 395.56,
+  "porta": 387.73,
+  "merloes_por_face": 8,
+  "merloes": 28,
+  "altura_nno": 13.11
+ },
+ "escada_torre": {
+  "degraus": 19,
+  "pe": 382.93,
+  "patamar": 387.73,
+  "largura": 0.92
+ },
+ "cerca": {
+  "area_m2": 173.6,
+  "merloes": 26,
+  "adarves": {
+   "torreoes": 387.58,
+   "poente": 386.95,
+   "norte": 386.35,
+   "nascente": 386.0
+  }
+ },
+ "porta": {
+  "soleira": 383.1,
+  "vao_fora": [
+   1.55,
+   3.0
+  ],
+  "vao_dentro": 2.15
+ },
+ "santuario": {
+  "nave": [
+   19.2,
+   10.8
+  ],
+  "cume_nave": 390.5,
+  "cornija": 386.2,
+  "frontao": 391.7,
+  "cruz": 393.0,
+  "capela_mor": [
+   9.7,
+   7.0
+  ],
+  "cume_capela": 386.6,
+  "adro": 377.95,
+  "azimute_eixo": 352.25
+ },
+ "terreno": {
+  "m2": {
+   "erva": 9450,
+   "relva": 1574,
+   "rocha_t": 5419,
+   "terra": 102,
+   "asfalto": 731,
+   "calcada": 0,
+   "terreiro": 725
+  }
+ },
+ "casas": {
+  "total": 1,
+  "osm": 1
+ },
+ "arvores": 97,
+ "ancoras": {
+  "torre": [
+   0.0,
+   397.5,
+   0.0
+  ],
+  "coroamento": [
+   7.2,
+   396.0,
+   3.8
+  ],
+  "porta_torre": [
+   -1.7,
+   390.7,
+   -5.7
+  ],
+  "escada_torre": [
+   2.0,
+   386.0,
+   -7.2
+  ],
+  "porta": [
+   -10.7,
+   387.0,
+   -4.3
+  ],
+  "torreoes": [
+   -11.0,
+   390.2,
+   -7.1
+  ],
+  "cerca": [
+   -10.5,
+   389.1,
+   -15.6
+  ],
+  "baluarte": [
+   5.9,
+   388.2,
+   -27.4
+  ],
+  "patio": [
+   -1.3,
+   385.0,
+   -11.1
+  ],
+  "santuario": [
+   5.6,
+   393.6,
+   44.0
+  ],
+  "fachada": [
+   6.9,
+   389.0,
+   53.7
+  ]
+ },
+ "olhar": {
+  "coroamento": [
+   0.88,
+   0.25,
+   0.47
+  ],
+  "porta_torre": [
+   -0.0,
+   0.15,
+   -1.0
+  ],
+  "escada_torre": [
+   -0.0,
+   0.25,
+   -1.0
+  ],
+  "porta": [
+   -0.96,
+   0.15,
+   0.29
+  ],
+  "torreoes": [
+   -0.98,
+   0.25,
+   0.19
+  ],
+  "cerca": [
+   -1.0,
+   0.3,
+   -0.09
+  ],
+  "baluarte": [
+   0.25,
+   0.35,
+   -0.97
+  ],
+  "patio": [
+   -0.19,
+   0.7,
+   -0.98
+  ],
+  "fachada": [
+   0.13,
+   0.15,
+   0.99
+  ]
+ }
+}
