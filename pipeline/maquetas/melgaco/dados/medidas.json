@@ -1,0 +1,197 @@
+{
+ "postigo_ne": {
+  "az": 53.5,
+  "chao_dentro": 189.69,
+  "chao_fora": 188.12
+ },
+ "postigo_n": {
+  "az": 346.5,
+  "chao_dentro": 190.57,
+  "chao_fora": 188.93
+ },
+ "escada_ne_39": {
+  "pe": 189.7,
+  "topo": 196.33,
+  "degraus": 24
+ },
+ "escada_ne_71": {
+  "pe": 189.7,
+  "topo": 195.87,
+  "degraus": 22
+ },
+ "escada_n_337": {
+  "pe": 190.57,
+  "topo": 196.46,
+  "degraus": 21
+ },
+ "escada_n_358": {
+  "pe": 190.57,
+  "topo": 196.09,
+  "degraus": 20
+ },
+ "torre_se": {
+  "topo": 196.3,
+  "parapeito": 197.3,
+  "chao_fora": 188.01
+ },
+ "barbaca": {
+  "topo": 190.85,
+  "patio": 187.67,
+  "entrada": 187.9
+ },
+ "muralha": {
+  "topo_inicio": 194.48,
+  "topo_fim": 184.44,
+  "comprimento": 100.0
+ },
+ "porta_carvalho": {
+  "chao_fora": 185.0,
+  "chao_dentro": 185.18,
+  "topo": 189.99,
+  "centro": [
+   -48.7,
+   30.7
+  ]
+ },
+ "porta_baixo": {
+  "chao_fora": 177.4,
+  "topo": 184.4,
+  "vao": [
+   2.3,
+   3.7
+  ],
+  "arquivolta": [
+   2.9,
+   4.0
+  ],
+  "altura_fora": 7.0
+ },
+ "casas": {
+  "total": 38,
+  "osm": 22
+ },
+ "arvores": 22,
+ "torre": {
+  "ponto_mais_alto": 209.59,
+  "planta_corpo": 8.8,
+  "planta_parapeito": 9.600000000000001,
+  "chao": {
+   "NNO": 191.1,
+   "OSO": 190.3,
+   "ENE": 190.5,
+   "SSE": 190.2
+  },
+  "altura_ate_ameias_sse": 18.35,
+  "altura_ate_pontas_sse": 20.05,
+  "azimute_faces": [
+   63.3,
+   153.3
+  ]
+ },
+ "cerca": {
+  "adarve_norte": 196.13,
+  "adarve_sul": 192.23,
+  "diametro_ns": 60.6,
+  "diametro_eo": 49.5,
+  "recinto_m2": 1888
+ },
+ "ancoras": {
+  "torre": [
+   0.0,
+   212.5,
+   0.0
+  ],
+  "coroamento": [
+   -2.2,
+   210.6,
+   6.7
+  ],
+  "porta_torre": [
+   -2.7,
+   199.0,
+   -4.2
+  ],
+  "cerca": [
+   -25.6,
+   196.0,
+   -13.4
+  ],
+  "escadas": [
+   16.2,
+   197.5,
+   -10.6
+  ],
+  "torres_cerca": [
+   28.0,
+   199.0,
+   14.5
+  ],
+  "cisterna": [
+   -6.2,
+   193.6,
+   -21.5
+  ],
+  "porta_castelo": [
+   -3.0,
+   192.8,
+   31.0
+  ],
+  "muralha": [
+   -68.6,
+   191.1,
+   -32.4
+  ],
+  "porta_baixo": [
+   -98.0,
+   186.2,
+   21.5
+  ],
+  "porta_carvalho": [
+   -48.7,
+   191.8,
+   -30.7
+  ]
+ },
+ "olhar": {
+  "coroamento": [
+   -0.31,
+   0.2,
+   0.95
+  ],
+  "porta_torre": [
+   -0.45,
+   0.3,
+   -0.89
+  ],
+  "escadas": [
+   -0.82,
+   0.3,
+   0.57
+  ],
+  "torres_cerca": [
+   0.86,
+   0.35,
+   0.51
+  ],
+  "porta_castelo": [
+   0.0,
+   0.8,
+   -1.0
+  ],
+  "muralha": [
+   0.2,
+   0.35,
+   -0.98
+  ],
+  "porta_baixo": [
+   -1.0,
+   0.2,
+   0.08
+  ],
+  "porta_carvalho": [
+   0.0,
+   0.3,
+   -1.0
+  ]
+ }
+}
