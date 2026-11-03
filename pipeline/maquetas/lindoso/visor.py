@@ -25,7 +25,7 @@ def el(i, nome, grupo, conf, desc, med, fontes, resumo):
 
 
 d = {
-    "monumento": "lindoso", "titulo": "Castelo de Lindoso e espigueiros", "variante": "estado-atual", "versao": "0.1 provisória",
+    "monumento": "lindoso", "titulo": "Castelo de Lindoso e espigueiros", "variante": "estado-atual", "versao": "0.2 provisória",
     "data": "2026-11-03",
     "origem": {"lat": 41.867167, "lon": -8.199305,
                "nota": "Centro da torre de menagem (LiDAR). Eixos da maqueta: x para este, y para norte (PT-TM06 menos a origem), no visor -z é o norte, em metros à escala 1:1; as cotas são altitudes."},
@@ -39,13 +39,13 @@ d = {
     },
     "limitacoes": [
         "Não foi usada planta cotada. A planta dos muros foi traçada no LiDAR de 2025: são as células com mais de 0,7 m de relevo local (num disco de 3 m) e mais de 0,9 m acima do MDT, para as lices e o pátio ficarem de fora; o contorno foi alisado e simplificado a 0,45 m. O topo de cada muro tem a cota medida em cada vértice e as faces descem a prumo até ao chão. O LiDAR quase não tem pontos nas faces; o erro esperado em planta é de 0,3 a 0,5 m, e os muros não têm o talude nem o cordão que alguns troços possam ter.",
-        "Os terraplenos largos dos baluartes ficaram como parte do muro, com o topo em erva; os pequenos muros de pedra solta do monte não foram modelados. Escadas para os adarves não se veem no LiDAR e não foram feitas.",
+        "A cerca medieval e a muralha abaluartada foram traçadas à parte (topo acima ou abaixo de 466 m); os terraplenos largos dos baluartes são chão, levantado ao LiDAR, e o muro fica na orla; os pequenos muros de pedra solta do monte não foram modelados. Escadas para os adarves não se veem no LiDAR e não foram feitas.",
         f"Torre: planta de {n(T['lado'])} m, rodada {n(64.25, 2)}° (faces a ENE, NNO, OSO e SSE); soleira das ameias a {n(T['soleira_ameias'], 2)} m, pontas dos merlões a {n(T['pontas_merloes'], 2)} m e telhado de quatro águas com o vértice a {n(T['cume_telhado'], 2)} m (LiDAR). Os sete merlões por face com remate piramidal e a janela da face SSE, com portadas verdes, seguem as fotografias. A porta na face OSO e as seteiras são estimativas de posição.",
         "A Porta Norte está onde o LiDAR mostra o bloco mais alto na ponta poente da cortina norte, de frente para a face NNO da torre, como na fotografia; o vão (1,7 × 2,75 m), o portão de grade e o estrado de madeira são da fotografia, à escala da altura do muro. A torre da porta a sul, com a passagem em arco de volta perfeita (2,0 × 3,2 m), tem planta e topo do LiDAR; a profundidade da passagem é estimada. A porta da traição ao pé da torre é da fotografia, com a posição estimada.",
         "As guaritas redondas (cunhal sueste da cerca e ponta do baluarte poente) seguem as fotografias; o diâmetro (1,25 m) e a altura são estimativas.",
         "Museu: plantas do LiDAR e do satélite, cornijas e cumes do LiDAR. Portas, janelas e a galeria envidraçada são esquemáticas.",
         f"Espigueiros: {E['total']} ({E['osm']} com a planta do OSM e os restantes do LiDAR), com o comprimento, a largura, a orientação e a altura do cume medidos. Os pés, as mesas, as grades de madeira, as empenas, a porta em arco, o telhado de lajes, a cruz e o pináculo são iguais em todos e seguem as fotografias; o número de pés e de esteios depende do comprimento. As portas foram postas, alternadamente, num topo ou no outro. Alguns espigueiros fora da área da maqueta ou escondidos por árvores podem faltar.",
-        "A pedra é feita por texturas tiradas das fotografias: cantaria de granito cinzento em fiadas na torre e na cerca medieval, alvenaria mais miúda na muralha abaluartada, granito liquenado nos espigueiros. O pátio é relvado; o monte tem erva seca e afloramentos de granito onde o MDT e o ortofotomapa os mostram.",
+        "A pedra é feita por texturas tiradas das fotografias: cantaria de granito cinzento em fiadas na torre e na cerca medieval, alvenaria mais miúda na muralha abaluartada, granito liquenado nos espigueiros. O pátio é relvado; o monte tem erva verde e afloramentos de granito onde o MDT e o ortofotomapa os mostram.",
         "As casas à volta são volumes simples, num só cinzento, para dar a escala sem tirar destaque ao castelo e aos espigueiros (plantas do OSM e, onde faltam, do LiDAR; cornija e cume medidos no MDS). As árvores estão nas posições do LiDAR (julho), com copas esquemáticas.",
         "O Google Street View não chega ao interior do castelo nem à eira; a conferência foi feita com as fotografias enviadas, o ortofotomapa de 2021 e a imagem de satélite da plataforma do Município de Ponte da Barca.",
     ],
@@ -87,7 +87,7 @@ d = {
 }
 d["elementos"] += [
     {"id": "terreno", "nome": "Terreno, pátio e eira", "grupo": "Terreno", "estado": "estado-atual", "confianca": "alta",
-     "descricao": "O relevo do LiDAR, com o pátio relvado, as lices, o monte de erva seca com os afloramentos de granito e as ruas.",
+     "descricao": "O relevo do LiDAR, com o pátio relvado, as lices, o monte de erva com os afloramentos de granito e as ruas.",
      "medidas": "MDT de 50 cm (LiDAR 2025), com os terraplenos dos baluartes do MDS.", "fontes": ["lidar", "orto", "osm"], "resumo": "Relevo, pátio, eira e ruas"},
     {"id": "envolvente", "nome": "Casas da aldeia", "grupo": "Envolvente", "estado": "estado-atual", "confianca": "baixa",
      "descricao": "As casas à volta do castelo e da eira, em volumes simples e num só cinzento, só para dar a escala.",
