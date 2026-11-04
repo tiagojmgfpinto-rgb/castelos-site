@@ -4,7 +4,8 @@ e o relevo sombreado do MDS, na área da maqueta.
 Uso: python3 pipeline/maquetas/montalegre/imagens.py [PASTA_DAS_FOTOS_DO_COMMONS]
      →  public/imagens/montalegre/*.jpg
 
-As fotografias enviadas, de origem por confirmar, ficam de fora (só serviram de referência para a maqueta).
+Com PASTA_DAS_FOTOS_ENVIADAS (/mnt/project-files/uploads/hearth), copia também as fotografias cedidas ao castelos.site
+(autorização do autor do projeto, 2026-11-04); o cartaz e as capturas de sites ficam de fora.
 """
 import sys
 from pathlib import Path
@@ -23,8 +24,16 @@ COMMONS = {  # ficheiro original do Commons → nome na galeria
     "Torre_de_Menagem_do_Castelo_de_Montalegre.jpg": "torre-de-menagem",
     "Castelo_de_Montalegre_2020_05.jpg": "patio-2020",
 }
+ENVIADAS = {
+    "62d1c50a-d581-4260-bcd5-6011b7a8702b": "drone-sul",
+    "4f30befa-80d5-4b31-9814-c59afcbf847b": "drone-nascente",
+    "f05bfa9d-a399-41bf-8702-a15b79c3650b": "do-alto-da-torre-sueste",
+    "05d9fb42-46e0-4fed-9495-13d2183b16c7": "passadico-norte",
+    "0e257373-bd53-4bd9-a21b-e0adaefdf1b9": "torre-e-escada",
+    "3b33ddbf-6155-42d4-b9ca-9689df52dafd": "de-poente",
+}
 for pasta in sys.argv[1:]:
-    for k, nome in COMMONS.items():
+    for k, nome in {**COMMONS, **ENVIADAS}.items():
         f = Path(pasta) / k
         if not f.exists():
             continue
