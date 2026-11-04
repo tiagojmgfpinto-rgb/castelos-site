@@ -1347,13 +1347,53 @@ def zbase(x, y):
     return float(cota(x, y)) - 0.7
 
 
+# portas na face de fora da cerca (azimute do centro do pátio): a poterna junto à torre sueste (fotografia de nascente)
+# e a porta do sul, a c. 2,3 m da torre sul, entre esta e a de sudoeste (fotografia de drone de sul)
+PORTAS_FORA_AZ = (("poterna", 137.5), ("porta_sul", 230.0))
+PORTAS_FORA = {}
+
+
+def porta_fora(m, f, prof, za, w=1.05, alt=2.05, s0=-1.1, s1=1.1, rec=0.75):
+    """Troço de muro de face plana com uma porta em arco de volta perfeita: aduelas e ombreiras de cantaria, vão
+    recuado rec e a porta de madeira com ferragens ao fundo. Encaixa no recorte que se tira à cerca (s0..s1, até
+    prof para dentro)."""
+    c = np.asarray(f.o)
+    zt = float(PF.ztopo(*c))
+    zb = zbase(*c)
+    cont = contorno_vao(0.0, w, za, za + alt, True, k=14)
+    painel(m, f, [(s0, zb), (s1, zb), (s1, zt), (s0, zt)], [cont], "muro")
+    for s_ in (s0, s1):
+        m.face([f.p(s_, 0, zb), f.p(s_, -prof, zb), f.p(s_, -prof, zt), f.p(s_, 0, zt)], "muro")
+    m.face([f.p(s0, 0, zt), f.p(s1, 0, zt), f.p(s1, -prof, zt), f.p(s0, -prof, zt)], "muro_topo")
+    # vão: intradorso, soleira de pedra e a porta ao fundo
+    tunel(m, f, cont, 0.0, -rec, "intradorso")
+    m.face([f.p(-w / 2, 0.0, za), f.p(w / 2, 0.0, za), f.p(w / 2, -rec, za), f.p(-w / 2, -rec, za)], "cantaria_lisa")
+    painel(m, f, cont, (), "madeira_porta", d=-rec)
+    for zf in (za + 0.35, za + 1.55):     # ferragens
+        quad(m, f, -w / 2 + 0.05, w / 2 - 0.05, zf, zf + 0.07, d=-rec + 0.012, mat="ferro")
+    for k_ in range(1, 5):                # juntas das tábuas
+        sk = -w / 2 + w * k_ / 5
+        top = za + alt - w / 2 + math.sqrt(max((w / 2) ** 2 - sk ** 2, 0)) - 0.03
+        quad(m, f, sk - 0.008, sk + 0.008, za + 0.02, top, d=-rec + 0.008, mat="sombra")
+    # aduelas do arco e ombreiras, um pouco salientes
+    anel_aduelas(m, f, [p for p in cont if p[1] >= za + alt - w / 2 - 1e-6], 0.30, 0.035, "cantaria_lisa")
+    for sg in (-1, 1):
+        for i in range(4):
+            z0 = za + i * (alt - w / 2) / 4
+            z1 = za + (i + 1) * (alt - w / 2) / 4 - 0.012
+            larg = 0.30 if i % 2 == 0 else 0.22
+            sa, sb = sorted((sg * w / 2, sg * (w / 2 + larg)))
+            m.caixa_face(f, sa, sb, 0.0, 0.035, z0, z1, mat="cantaria_lisa")
+    return [round(float(c[0]), 2), round(float(c[1]), 2), round(za, 2)]
+
+
 def cerca():
     """A cerca (LiDAR: perfil por azimute do centro do pátio, faces de dentro e de fora do topo e cota do adarve):
     - a nascente, entre a torre de menagem e a torre sueste, o adarve a 1016,6 m sobe em rampa para 1019,7–1020,1 m;
     - a sul e a poente, entre as três torres, a 1019,5–1019,8 m, com guarda de ferro pelo lado de fora (fotografias);
     - entre a torre pequena e o troço noroeste, a escada de aço desce do adarve (1019,4) para o corredor (1016,25);
     - poterna em arco na base da face de fora, junto à torre sueste, e porta em arco entre a torre sul e a de sudoeste."""
-    m = Malha(["muro", "muro_topo", "cantaria_lisa", "sombra", "madeira_porta"])
+    m = Malha(["muro", "muro_topo", "cantaria_lisa", "sombra", "madeira_porta", "intradorso", "ferro"])
     pl = PF.planta(passo=1.0)
     tor = shapely.union_all([p.buffer(-0.06) for p in POL_TORRES.values()])
     pedra = pl.difference(setor(*AZ_NO)).difference(tor)
@@ -1361,6 +1401,22 @@ def cerca():
     T_se = Torre("se")
     f_se, meia = T_se.faces()["-u"]
     pedra = pedra.difference(shapely.Polygon([f_se.xy(-meia + 0.7, -0.1), f_se.xy(meia - 0.7, -0.1), f_se.xy(meia - 0.7, 1.2), f_se.xy(-meia + 0.7, 1.2)]))
+    # portas de fora (fotografias de nascente e de sul): o muro é curvo, por isso cada porta tem um troço de face
+    # plana (tangente à face de fora no eixo da porta), com o vão recuado e a porta de madeira lá dentro
+    for nome, az in PORTAS_FORA_AZ:
+        ro = float(np.interp(az, PF.A, PF.ROUT))
+        ri = float(np.interp(az, PF.A, PF.RIN))
+        c = np.array(PF.ponto(az, ro))
+        t = unit(np.array(PF.ponto(az + 0.5, ro)) - np.array(PF.ponto(az - 0.5, ro)))
+        n = np.array([t[1], -t[0]])
+        if np.dot(n, c - np.array(C.CENTRO_PATIO)) < 0:
+            n = -n
+        f = Plano(c, t, n=n)
+        prof = max(1.0, min(1.6, ro - ri - 0.5))
+        # soleira ao nível do chão de fora (o mais baixo à frente do vão)
+        za = min(float(cota(*f.xy(s_, d_))) for s_ in (-0.5, 0.0, 0.5) for d_ in (0.6, 1.2, 2.0)) + 0.03
+        PORTAS_FORA[nome] = (f, prof, za)
+        pedra = pedra.difference(shapely.Polygon([f.xy(-1.1, -prof), f.xy(1.1, -prof), f.xy(1.1, 1.0), f.xy(-1.1, 1.0)]))
     for p in (pedra.geoms if hasattr(pedra, "geoms") else [pedra]):
         if p.geom_type == "Polygon" and p.area > 0.2:
             prisma_z(m, p.simplify(0.02), zbase, PF.ztopo, 0, 1)
@@ -1368,7 +1424,9 @@ def cerca():
     portas = {}
     # de fora: poterna junto à torre sueste e porta do sul; de dentro (fotografia de 2022 do alto da torre): o arco
     # da poterna, na face de dentro da cerca, encostado à torre sueste
-    for nome, az, lado in (("poterna", 137.5, 1), ("porta_sul", 222.0, 1), ("poterna_dentro", 146.0, -1)):
+    for nome, (f, prof, za) in PORTAS_FORA.items():
+        portas[nome] = porta_fora(m, f, prof, za)
+    for nome, az, lado in (("poterna_dentro", 146.0, -1),):
         ro = float(np.interp(az, PF.A, PF.ROUT if lado > 0 else PF.RIN))
         p0, p1 = np.array(PF.ponto(az - 1.2, ro)), np.array(PF.ponto(az + 1.2, ro))
         t = unit(p1 - p0)
@@ -1415,7 +1473,9 @@ def cerca():
     e.objeto("escada_adarve", "cerca", GRUPOS["Muralhas"], uv=1.0)
     MEDIDAS["cerca"] = {"area_m2": round(pedra.area, 1), "adarves": {"nascente": 1016.6, "sueste": 1020.08, "sul": 1019.83, "poente": 1019.48, "corredor_no": Z_CORTEN},
                         "portas": portas}
-    return pedra
+    # o recorte das portas conta como muro para o relevo (que não pode subir dentro do vão)
+    return shapely.union_all([pedra] + [shapely.Polygon([f.xy(-1.1, -prof), f.xy(1.1, -prof), f.xy(1.1, 0.0), f.xy(-1.1, 0.0)])
+                                        for f, prof, _ in PORTAS_FORA.values()])
 
 
 def corredor_corten():
@@ -1435,7 +1495,18 @@ def corredor_corten():
         ri = float(np.interp(az, PF.A, PF.RIN))
         return float(cota(*PF.ponto(az, ri - 1.5))) + 0.55
 
-    prisma_z(m, base.simplify(0.02), zbase, z_muro, 0, 1)
+    # porta de chapa ao fundo do passadiço, à face do muro de pedra (fotografia de norte: o muro interrompe-se dos
+    # dois lados da porta, que desce até ao degrau)
+    az = AZ_PORTA
+    ro0 = float(np.interp(az, PF.A, PF.ROUT))
+    c = np.array(PF.ponto(az, ro0 + 0.13))
+    t = unit(np.array(PF.ponto(az + 0.5, ro0)) - np.array(PF.ponto(az - 0.5, ro0)))
+    nf = unit(c - np.array(C.CENTRO_PATIO))
+    fp = Plano(c, -t if np.cross(np.append(t, 0), np.append(nf, 0))[2] < 0 else t, n=nf)
+    base = base.difference(shapely.Polygon([fp.xy(-0.68, -0.45), fp.xy(0.68, -0.45), fp.xy(0.68, 0.6), fp.xy(-0.68, 0.6)]))
+    for g in (base.geoms if hasattr(base, "geoms") else [base]):
+        if g.area > 0.05:
+            prisma_z(m, g.simplify(0.02), zbase, z_muro, 0, 1)
     caixa = pl.buffer(-0.05, join_style="mitre")
     prisma_z(m, caixa.simplify(0.02), lambda x, y: z_muro(x, y) - 0.05, lambda x, y: Z_CORTEN, 2, 2)
     # juntas verticais das chapas (frisos escuros a cada 1,2 m), dos dois lados
@@ -1450,19 +1521,17 @@ def corredor_corten():
             zb = z_muro(x, y)
             m.face(orientar([f.p(-0.025, 0, zb), f.p(0.025, 0, zb), f.p(0.025, 0, Z_CORTEN - 0.05), f.p(-0.025, 0, Z_CORTEN - 0.05)], np.array([*f.n, 0])), 3)
     # porta de chapa (fechada) ao fundo do passadiço, com a placa branca à direita
-    az = AZ_PORTA
-    ro = float(np.interp(az, PF.A, PF.ROUT)) - 0.05
-    c = np.array(PF.ponto(az, ro))
-    t = unit(np.array(PF.ponto(az + 0.5, ro)) - np.array(PF.ponto(az - 0.5, ro)))
-    nf = unit(c - np.array(C.CENTRO_PATIO))
-    f = Plano(c, -t if np.cross(np.append(t, 0), np.append(nf, 0))[2] < 0 else t, n=nf)
     z_sol = Z_SOLEIRA
-    m.caixa_face(f, -0.62, 0.62, 0.0, 0.035, z_sol, z_sol + 2.35, 3, fundo=False)
-    m.caixa_face(f, -0.52, 0.52, 0.035, 0.05, z_sol + 0.1, z_sol + 2.25, 2)
-    m.caixa_face(f, 0.62, 0.66, 0.0, 0.06, z_sol, z_sol + 2.35, 6)
-    m.caixa_face(f, -0.66, -0.62, 0.0, 0.06, z_sol, z_sol + 2.35, 6)
-    s_placa = 1.9 if f.t @ unit(np.array(PF.ponto(az - 5, ro)) - c) > 0 else -1.9
-    m.caixa_face(f, s_placa - 0.55, s_placa + 0.55, 0.0, 0.03, z_sol + 1.0, z_sol + 1.75, 5)
+    # o vão no muro de pedra: chão de granito e, ao fundo, a porta (chapa escura com almofada corten)
+    m.caixa_face(fp, -0.68, 0.68, -0.45, 0.05, zbase(*c), z_sol, 4)
+    m.caixa_face(fp, -0.62, 0.62, -0.20, -0.15, z_sol, z_sol + 2.35, 3, fundo=False)
+    m.caixa_face(fp, -0.52, 0.52, -0.15, -0.135, z_sol + 0.1, z_sol + 2.25, 2)
+    m.caixa_face(fp, 0.62, 0.68, -0.20, -0.10, z_sol, z_sol + 2.35, 6)
+    m.caixa_face(fp, -0.68, -0.62, -0.20, -0.10, z_sol, z_sol + 2.35, 6)
+    # placa branca na chapa, à direita da porta
+    fc = Plano(fp.xy(0, -0.17), fp.t, n=fp.n)
+    s_placa = 1.9 if fp.t @ unit(np.array(PF.ponto(az - 5, ro0)) - c) > 0 else -1.9
+    m.caixa_face(fc, s_placa - 0.55, s_placa + 0.55, 0.0, 0.03, z_sol + 1.3, z_sol + 2.0, 5)
     # saída para o pátio no topo nascente do corredor, junto à torre (fotografias de nascente e de drone)
     az_i = 340.0
     ri = float(np.interp(az_i, PF.A, PF.RIN)) + 0.05
@@ -1473,19 +1542,19 @@ def corredor_corten():
     m.face(orientar([fi.p(s_, 0.012, z_) for s_, z_ in reto(0.0, 1.4, zi, zi + 2.4)], np.array([*fi.n, 0])), 6)
     m.caixa_face(fi, -0.75, 0.75, 0.0, 0.04, zi + 2.4, zi + 2.48, 3)
     # degraus de granito do passadiço para a soleira
-    zc = float(cota(*f.xy(0, 1.6)))
-    for i in range(3):
-        d0 = 1.35 - i * 0.42
-        m.caixa_face(f, -0.85, 0.85, d0 - 0.42, d0, zc - 0.3, zc + (z_sol - zc) * (i + 1) / 3, 4)
+    zc = float(cota(*fp.xy(0, 1.6)))
+    for i in range(2):
+        d0 = 1.30 - i * 0.62
+        m.caixa_face(fp, -0.85, 0.85, d0 - 0.62, d0, zc - 0.3, zc + (z_sol - zc) * (i + 1) / 2, 4)
     m.objeto("corredor_corten", "corredor", GRUPOS["Muralhas"], uv=2.0, vcor=patine_muro)
     MEDIDAS["corredor"] = {"cobertura": Z_CORTEN, "soleira": round(z_sol, 2), "area_m2": round(pl.area, 1),
                            "porta": [round(float(c[0]), 2), round(float(c[1]), 2)]}
-    return base, f
+    return base, fp
 
 
 # porta do corredor e passadiço (fotografia de norte: o passadiço chega a direito de norte à porta)
 AZ_PORTA = 323.0
-Z_SOLEIRA = float(cota(*PF.ponto(AZ_PORTA, float(np.interp(AZ_PORTA, PF.A, PF.ROUT)) + 1.5))) + 0.5
+Z_SOLEIRA = float(cota(*PF.ponto(AZ_PORTA, float(np.interp(AZ_PORTA, PF.A, PF.ROUT)) + 1.5))) + 0.3
 PASSADICO = [(-18.3, 15.6), (-16.3, -4.5)]   # faixa de pontos mais claros e lisos do LiDAR entre as ruínas
 
 
@@ -1640,6 +1709,12 @@ def construir_terreno(mon, cist, caminho):
     zl = np.where(mur, 1e4, Z)
     zmin = ndi.minimum_filter(zl, size=5)
     Z = np.where(banda, np.minimum(Z, np.maximum(zmin, Z - 1.5)), Z)
+    # à frente das portas de fora, o chão desce à soleira (rampa suave para fora e para os lados)
+    for f, _, za in PORTAS_FORA.values():
+        dx, dy = X - f.o[0], Y - f.o[1]
+        s_, d_ = dx * f.t[0] + dy * f.t[1], dx * f.n[0] + dy * f.n[1]
+        lim = za - 0.03 + 0.35 * np.maximum(d_ - 1.2, 0) + 0.6 * np.maximum(np.abs(s_) - 0.8, 0)
+        Z = np.where((d_ > -1.8) & (d_ < 5.0) & (np.abs(s_) < 3.0) & (~mur | (np.abs(s_) < 1.2)), np.minimum(Z, lim), Z)
     ny, nx = X.shape
     V = np.stack([X.ravel(), Y.ravel(), Z.ravel()], 1)
     idx = np.arange(ny * nx).reshape(ny, nx)
@@ -2031,6 +2106,17 @@ if "--vistas" in sys.argv:
         vista("f05_torre_se", (2.0, -46.0), 1031.3, (-14, -12), 1016, lente=22, res=(1000, 750), perto=0.3)
         # foto de 2022 (Google Maps): do alto da torre de menagem para sul, sobre o pátio e as três torres
         vista("gm_torre_sul", (-2.5, -7.5), 1050.0, (-6.0, -34.0), 1012.0, lente=22, res=(923, 690), perto=0.3)
+        # as duas entradas de fora, de perto (fotografias de nascente e de sul)
+        for nome_p, (px, py, pz) in MEDIDAS["cerca"]["portas"].items():
+            if nome_p.endswith("dentro"):
+                continue
+            n_p = np.array([px, py]) - np.array(C.CENTRO_PATIO)
+            n_p = n_p / np.linalg.norm(n_p)
+            cx, cy = px + n_p[0] * 9.0, py + n_p[1] * 9.0
+            vista(nome_p + "_fora", (cx, cy), chao(cx, cy), (px, py), pz + 1.2, lente=28, res=(1000, 750), perto=0.3)
+        px, py = MEDIDAS["corredor"]["porta"]
+        vista("porta_corredor_fora", (px - 2.0, py + 8.0), chao(px - 2.0, py + 8.0), (px, py), MEDIDAS["corredor"]["soleira"] + 1.2,
+              lente=28, res=(1000, 750), perto=0.3)
         # coroamento da torre de menagem de perto, de sudoeste
         vista("coroamento", tuple(TM.W(-10.0, -12.0)), 1042.0, (0.0, 0.0), 1036.0, lente=30, res=(1000, 750), perto=0.3)
         # planta (ortográfica, norte para cima), para comparar com o ortofotomapa
