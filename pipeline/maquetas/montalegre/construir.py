@@ -1260,7 +1260,9 @@ def bandeira(p):
         m.face([(*pa, h1), (*pb, h1), (*pb, h0), (*pa, h0)], mt)
     pc = p + d * Lb * 0.4
     for s in (1, -1):
-        m.cilindro((pc[0] - TM.ev[0] * 0.012 * s, pc[1] - TM.ev[1] * 0.012 * s), 0.16, 1043.04, 1043.36, 3, k=10)
+        disco = [(pc[0] + d[0] * 0.16 * math.cos(a) - TM.ev[0] * 0.004 * s, pc[1] + d[1] * 0.16 * math.cos(a) - TM.ev[1] * 0.004 * s, 1043.2 + 0.16 * math.sin(a))
+                 for a in np.linspace(0, 2 * math.pi, 12, endpoint=False)]
+        m.face(disco if s > 0 else disco[::-1], 3)
     m.objeto("bandeira", "torre", GRUPOS["Torre"], uv=None, recalc=False)
 
 
@@ -1315,14 +1317,19 @@ def torre_simples(nome, elemento, z_sill, esp, z_adarve, telh, merl=None, vaos=N
 
 
 def torres_sul():
-    # torre sueste: a maior das três, com onze merlões por face (LiDAR: pontas a 1029,8 m)
+    # torre sueste: a maior das três, com onze merlões por face (LiDAR: pontas a 1029,8 m); na face do pátio, uma
+    # porta alta para o adarve e uma porta em arco ao nível do pátio (fotografia do alto da torre de menagem, 2022)
+    f_se, _ = Torre("se").faces()["-u"]
+    z_se = float(cota(*f_se.xy(0.3, 1.5)))
     torre_simples("se", "torre_se", 1028.45, 0.75, 1027.55, (1.5, 1027.62, 1029.2),
                   merl=dict(n=11, larg=0.56, z1=1029.2, zp=1029.8),
                   vaos={"+u": [("seteira", 0.8, 0.14, 1019.5, 0.95)], "+v": [("seteira", -1.0, 0.14, 1021.0, 0.95), ("seteira", 2.0, 0.14, 1015.0, 0.95)],
-                        "-v": [("seteira", 1.6, 0.14, 1023.4, 0.9)]})
+                        "-v": [("seteira", 1.6, 0.14, 1023.4, 0.9)],
+                        "-u": [("porta", 1.3, 0.9, 1020.1, 1.95), ("porta", 0.2, 0.95, z_se, 2.0), ("seteira", -2.2, 0.14, 1023.6, 0.9)]})
     # torre sul: parapeito liso e telhado por dentro (LiDAR: topo a 1025,95 m)
     torre_simples("s", "torre_s", 1025.95, 0.5, 1024.9, (0.65, 1025.08, 1026.3, 0.12),
-                  vaos={"+u": [("seteira", 0.0, 0.14, 1016.8, 1.0), ("seteira", -1.2, 0.14, 1022.2, 0.9)], "-v": [("seteira", 0.5, 0.14, 1019.0, 0.9)]})
+                  vaos={"+u": [("seteira", 0.0, 0.14, 1016.8, 1.0), ("seteira", -1.2, 0.14, 1022.2, 0.9)], "-v": [("seteira", 0.5, 0.14, 1019.0, 0.9)],
+                        "+v": [("porta", 0.0, 0.9, 1019.83, 2.0)]})   # porta em arco para o adarve, na face NE (fotografia de 2022)
     # torre pequena de sudoeste: rebordo fino e pirâmide baixa; porta em arco para o adarve (fotografia)
     torre_simples("so", "torre_so", 1023.15, 0.3, 1022.85, (0.32, 1022.9, 1023.7, 0.1),
                   vaos={"+v": [("porta", -0.3, 0.8, 1019.45, 1.9)], "-v": [("seteira", 0.0, 0.14, 1021.2, 0.85)],
@@ -1350,17 +1357,23 @@ def cerca():
     pl = PF.planta(passo=1.0)
     tor = shapely.union_all([p.buffer(-0.06) for p in POL_TORRES.values()])
     pedra = pl.difference(setor(*AZ_NO)).difference(tor)
+    # a face da torre sueste voltada ao pátio desce até ao chão (fotografia de 2022): nada de muro à frente dela
+    T_se = Torre("se")
+    f_se, meia = T_se.faces()["-u"]
+    pedra = pedra.difference(shapely.Polygon([f_se.xy(-meia + 0.7, -0.1), f_se.xy(meia - 0.7, -0.1), f_se.xy(meia - 0.7, 1.2), f_se.xy(-meia + 0.7, 1.2)]))
     for p in (pedra.geoms if hasattr(pedra, "geoms") else [pedra]):
         if p.geom_type == "Polygon" and p.area > 0.2:
             prisma_z(m, p.simplify(0.02), zbase, PF.ztopo, 0, 1)
     # portas em arco na base da face de fora (fotografias de nascente e de sul): recuadas, com portas de madeira
     portas = {}
-    for nome, az in (("poterna", 137.5), ("porta_sul", 222.0)):
-        ro = float(np.interp(az, PF.A, PF.ROUT))
+    # de fora: poterna junto à torre sueste e porta do sul; de dentro (fotografia de 2022 do alto da torre): o arco
+    # da poterna, na face de dentro da cerca, encostado à torre sueste
+    for nome, az, lado in (("poterna", 137.5, 1), ("porta_sul", 222.0, 1), ("poterna_dentro", 146.0, -1)):
+        ro = float(np.interp(az, PF.A, PF.ROUT if lado > 0 else PF.RIN))
         p0, p1 = np.array(PF.ponto(az - 1.2, ro)), np.array(PF.ponto(az + 1.2, ro))
         t = unit(p1 - p0)
         c = (p0 + p1) / 2
-        f = Plano(c, t, n=unit(c - np.array(C.CENTRO_PATIO)))
+        f = Plano(c, t, n=lado * unit(c - np.array(C.CENTRO_PATIO)))
         za = float(cota(*f.xy(0, 1.0)))
         cont = redondo(0.0, 1.0, za, 1.5, k=10)
         tunel(m, f, cont, 0.02, -0.55, 2)
@@ -1514,6 +1527,15 @@ def cisterna():
     b = np.array(inn.exterior.coords)[:-1]
     m.face(orientar([(x, y, zc - 1.6) for x, y in b], np.array([0, 0, 1.0])), 2)
     m.objeto("cisterna", "cisterna", GRUPOS["Muralhas"], uv=2.0, vcor=patine_muro)
+    # grade de ferro por cima do bocal (fotografia de 2022)
+    g = Malha(["ferro"])
+    x0_, y0_, x1_, y1_ = inn.bounds
+    zg = zc + 0.5
+    for x in np.arange(x0_ + 0.2, x1_ - 0.05, 0.25):
+        g.barra((x, y0_ - 0.1, zg), (x, y1_ + 0.1, zg), 0.025, 0, k=4)
+    for y in np.arange(y0_ + 0.2, y1_ - 0.05, 0.25):
+        g.barra((x0_ - 0.1, y, zg + 0.03), (x1_ + 0.1, y, zg + 0.03), 0.025, 0, k=4)
+    g.objeto("cisterna_grade", "cisterna", GRUPOS["Muralhas"], uv=None)
     MEDIDAS["cisterna"] = {"lado": 5.0, "bocal": round(zc + 0.55, 2)}
     return q
 
@@ -1659,7 +1681,8 @@ def construir_terreno(mon, cist, caminho):
     terra = _srgb((150, 134, 108))[None, None, :] * (0.85 + 0.3 * g2)[..., None]
     lajes = _srgb((196, 192, 182))[None, None, :] * (0.92 + 0.12 * g2)[..., None]
     w_p = np.clip((ndi.gaussian_filter(patio.astype(float), 1.0) - 0.2) / 0.6, 0, 1)
-    rala = np.clip((g - 0.62) / 0.15, 0, 1) * 0.6 * w_p
+    # pátio: relva com manchas de terra (fotografias de 2022; o ortofotomapa de 2021 mostra mais terra)
+    rala = np.clip((fbm(Xv * 0.5 + 11, Yv * 0.5, 4.0, 81) - 0.36) / 0.14, 0, 1) * w_p
     cor = relva * (1 - w_p[..., None]) + terra * w_p[..., None]
     cor = cor * (1 - rala[..., None]) + relva * rala[..., None]
     w_l = np.clip((ndi.gaussian_filter(claro.astype(float), 0.6) - 0.25) / 0.5, 0, 1)
@@ -2006,6 +2029,8 @@ if "--vistas" in sys.argv:
         vista("4f30_nascente", (62, -62), 1050, (-3, -22), 1016, lente=30, res=(1000, 750))
         # f05: do alto da torre sueste para noroeste
         vista("f05_torre_se", (2.0, -46.0), 1031.3, (-14, -12), 1016, lente=22, res=(1000, 750), perto=0.3)
+        # foto de 2022 (Google Maps): do alto da torre de menagem para sul, sobre o pátio e as três torres
+        vista("gm_torre_sul", (-2.5, -7.5), 1050.0, (-6.0, -34.0), 1012.0, lente=22, res=(923, 690), perto=0.3)
         # coroamento da torre de menagem de perto, de sudoeste
         vista("coroamento", tuple(TM.W(-10.0, -12.0)), 1042.0, (0.0, 0.0), 1036.0, lente=30, res=(1000, 750), perto=0.3)
         # planta (ortográfica, norte para cima), para comparar com o ortofotomapa
