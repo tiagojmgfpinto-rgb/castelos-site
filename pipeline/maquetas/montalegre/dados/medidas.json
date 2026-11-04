@@ -63,7 +63,7 @@
   "altura": 14.6
  },
  "cerca": {
-  "area_m2": 156.6,
+  "area_m2": 150.4,
   "adarves": {
    "nascente": 1016.6,
    "sueste": 1020.08,
@@ -73,14 +73,14 @@
   },
   "portas": {
    "poterna": [
-    10.89,
-    -38.75,
-    1011.66
+    10.9,
+    -38.76,
+    1011.48
    ],
    "porta_sul": [
-    -15.69,
-    -35.48,
-    1009.68
+    -17.31,
+    -33.67,
+    1009.59
    ],
    "poterna_dentro": [
     7.46,
@@ -91,15 +91,15 @@
  },
  "corredor": {
   "cobertura": 1016.25,
-  "soleira": 1011.86,
+  "soleira": 1011.66,
   "area_m2": 40.4,
   "porta": [
-   -15.79,
-   -6.85
+   -15.9,
+   -6.71
   ]
  },
  "passadico": {
-  "comprimento": 21.3,
+  "comprimento": 21.1,
   "largura": 1.5
  },
  "cisterna": {

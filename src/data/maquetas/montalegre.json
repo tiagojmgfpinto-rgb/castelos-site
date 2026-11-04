@@ -2,7 +2,7 @@
   "monumento": "montalegre",
   "titulo": "Castelo de Montalegre",
   "variante": "estado-atual",
-  "versao": "0.2 provisória",
+  "versao": "0.3 provisória",
   "data": "2026-11-04",
   "origem": {
     "lat": 41.826068,
@@ -42,7 +42,7 @@
     "Não foi usada planta cotada. As quatro torres são retângulos ajustados aos pontos do coroamento no LiDAR de 2024 e a cerca segue o perfil medido de 2,5° em 2,5° a partir do centro do pátio (face de dentro, face de fora e cota do adarve); o erro esperado em planta é de 0,3 a 0,5 m e as faces descem a prumo.",
     "Torre de menagem: 12,10 × 12,04 m, adarve a 1037,53 m e pontas dos merlões a 1039,72 m, c. 27,3 m acima do chão (LiDAR). Os nove merlões por face, os quatro balcões com matacães e as quatro guaritas dos cunhais seguem as fotografias, com as posições dos balcões e a cota dos pisos (c. 1034 m) medidas no LiDAR; as mísulas e os matacães são esquemáticos. A face sul está tapada no LiDAR: a porta, o patamar de pedra e a escada de aço corten seguem as fotografias e a cota do patamar (1017,60 m) é estimada. As seteiras são estimativas de posição.",
     "Torres do sul: a sueste tem onze merlões por face e telhado por dentro (pontas a 1029,80 m); a sul tem parapeito liso a 1025,95 m e a pequena de sudoeste um rebordo fino a 1023,15 m com a pirâmide baixa (LiDAR). As portas seguem a fotografia de 2022 tirada do alto da torre de menagem: na torre de sueste, uma porta alta para o adarve e outra em arco ao nível do pátio; nas torres do sul e de sudoeste, portas em arco para o adarve. O tamanho das portas (c. 0,9 × 2,0 m) é estimado.",
-    "A cerca não tem merlões; os adarves altos de sul e de poente têm guarda de ferro pelo lado de fora (fotografias). A poterna junto à torre sueste (com o arco de dentro, encostado à torre) e a porta em arco entre as torres sul e de sudoeste seguem as fotografias e ficaram fechadas com portas de madeira; o tamanho (1,0 × 2,0 m) é estimado. A cisterna tem a grade de ferro da fotografia de 2022.",
+    "A cerca não tem merlões; os adarves altos de sul e de poente têm guarda de ferro pelo lado de fora (fotografias). A poterna junto à torre sueste (com o arco de dentro, encostado à torre) e a porta em arco entre as torres sul e de sudoeste, a c. 2,3 m da torre sul, seguem as fotografias de drone: troço de face plana, aduelas e ombreiras de cantaria, vão recuado e porta de madeira, com o chão à cota da soleira; o tamanho (1,05 × 2,05 m) é estimado. A porta do corredor de aço fica no vão do muro de pedra, com dois degraus de granito. A cisterna tem a grade de ferro da fotografia de 2022.",
     "O troço noroeste da cerca é um muro arruinado com um corredor de entrada de aço corten por cima, de cobertura plana a 1016,25 m (LiDAR: pontos de edifício avermelhados; faixa vermelha no ortofotomapa de 2021). A porta de chapa, a placa e os degraus seguem a fotografia de norte; a saída para o pátio junto à torre é estimada. O passadiço de madeira segue a faixa clara e lisa do LiDAR entre as duas ruínas em ferradura; os balizadores são esquemáticos.",
     "A barbacã é o muro de suporte do patamar a nascente e a sul, traçado onde o MDT cai 2,5 a 4 m; o caminho lajeado claro por cima segue o ortofotomapa e a vedação de madeira a fotografia de drone de nascente. As duas linhas de muralha exteriores desenhadas por Duarte de Armas (c. 1509) já não existem e não foram feitas.",
     "Pedra: granito cinzento em fiadas regulares nas torres e alvenaria mais miúda na cerca (fotografias). Telhados de telha vermelha. O pátio é de terra batida clara (ortofotomapa) e o resto do monte é relva. A cisterna ficou como um poço quadrado com bocal baixo.",
@@ -303,7 +303,7 @@
       "estado": "estado-atual",
       "confianca": "alta",
       "descricao": "No troço noroeste, onde a muralha está arruinada, a entrada faz-se hoje por um corredor coberto de aço corten, assente no muro antigo, com uma porta de chapa ao fundo do passadiço. Do adarve de poente desce para ele uma escada de aço.",
-      "medidas": "Cobertura a 1016,25 m; soleira da porta a c. 1011,86 m (LiDAR e fotografia).",
+      "medidas": "Cobertura a 1016,25 m; soleira da porta a c. 1011,66 m (LiDAR e fotografia).",
       "fontes": [
         "lidar",
         "orto",
