@@ -878,6 +878,7 @@ material("madeira", (0.34, 0.25, 0.17), 0.8)
 material("madeira_porta", (0.26, 0.17, 0.11), 0.75)
 material("tabuado", (0.50, 0.47, 0.42), 0.85)      # passadiço: tábuas de madeira acinzentada (fotografia de 2019)
 material("ferro", (0.13, 0.13, 0.14), 0.5)
+material("galvanizado", (0.58, 0.59, 0.58), 0.45)  # guardas da escada do adarve (fotografias de norte e de nascente)
 material("corten", (0.50, 0.25, 0.13), 0.75)       # aço corten da escada, dos guarda-corpos e do caminho do adarve (fotografias)
 material("corten_escuro", (0.36, 0.18, 0.10), 0.8)
 material("bandeira_verde", (0.0, 0.40, 0.18), 0.8)
@@ -1340,6 +1341,7 @@ def torres_sul():
 
 POL_TORRES = {k: Torre(k).pol() for k in C.TORRES}
 AZ_NO = (279.5, 352.0)      # troço noroeste: muro arruinado com o corredor de aço corten por cima
+AZ_ESCADA = (263.0, 279.5)  # escada do adarve poente (1019,42) para a cobertura do corredor (1016,25)
 Z_CORTEN = 1016.25
 
 
@@ -1391,12 +1393,12 @@ def cerca():
     """A cerca (LiDAR: perfil por azimute do centro do pátio, faces de dentro e de fora do topo e cota do adarve):
     - a nascente, entre a torre de menagem e a torre sueste, o adarve a 1016,6 m sobe em rampa para 1019,7–1020,1 m;
     - a sul e a poente, entre as três torres, a 1019,5–1019,8 m, com guarda de ferro pelo lado de fora (fotografias);
-    - entre a torre pequena e o troço noroeste, a escada de aço desce do adarve (1019,4) para o corredor (1016,25);
+    - entre a torre pequena e o troço noroeste, o muro desce em degraus de granito do adarve (1019,4) para o corredor (1016,25);
     - poterna em arco na base da face de fora, junto à torre sueste, e porta em arco entre a torre sul e a de sudoeste."""
     m = Malha(["muro", "muro_topo", "cantaria_lisa", "sombra", "madeira_porta", "intradorso", "ferro"])
     pl = PF.planta(passo=1.0)
     tor = shapely.union_all([p.buffer(-0.06) for p in POL_TORRES.values()])
-    pedra = pl.difference(setor(*AZ_NO)).difference(tor)
+    pedra = pl.difference(setor(*AZ_NO)).difference(setor(*AZ_ESCADA)).difference(tor)
     # a face da torre sueste voltada ao pátio desce até ao chão (fotografia de 2022): nada de muro à frente dela
     T_se = Torre("se")
     f_se, meia = T_se.faces()["-u"]
@@ -1453,24 +1455,35 @@ def cerca():
         if len(pts) > 1:
             corrimao(g, pts, alt=1.0, mat=0, passo=1.4)
     g.objeto("guardas", "cerca", GRUPOS["Muralhas"], uv=None)
-    # escada de aço do adarve poente para o corredor noroeste (fotografias de sul e de norte)
-    e = Malha(["corten", "ferro"])
-    ra = float(np.interp(270, PF.A, (PF.RIN + PF.ROUT) / 2))
-    p_top, p_pe = np.array(PF.ponto(263.0, ra)), np.array(PF.ponto(279.0, ra))
+    # escada do adarve poente para o corredor noroeste (fotografias de norte e de nascente): o próprio muro desce em
+    # degraus de granito, de lado a lado, com guardas de aço galvanizado claro dos dois lados
+    e = Malha(["muro", "cantaria_lisa", "galvanizado"])
+    a_top, a_pe = AZ_ESCADA
     n_d = 17
-    t_d = unit(p_top - p_pe)
-    n_l = np.array([-t_d[1], t_d[0]])
-    L_d = float(np.linalg.norm(p_top - p_pe))
+    pl_e = pl.intersection(setor(a_top, a_pe, passo=0.25)).difference(tor)
     for i in range(n_d):
-        a_, b_ = p_pe + t_d * L_d * i / n_d, p_pe + t_d * L_d * (i + 1) / n_d
+        a0 = a_pe - (a_pe - a_top) * i / n_d
+        a1 = a_pe - (a_pe - a_top) * (i + 1) / n_d
         zt = Z_CORTEN + (1019.42 - Z_CORTEN) * (i + 1) / n_d
-        zf = min(PF.ztopo(*a_), PF.ztopo(*b_)) - 0.15
-        e.prisma(ccw([a_ - n_l * 0.5, b_ - n_l * 0.5, b_ + n_l * 0.5, a_ + n_l * 0.5]), min(zf, zt - 0.06), zt, 0)
-    nn = unit(np.array([-(p_top - p_pe)[1], (p_top - p_pe)[0]]))
-    if np.dot(nn, np.array(C.CENTRO_PATIO) - p_pe) < 0:
-        nn = -nn
-    corrimao(e, [(*(p_pe + nn * 0.5), Z_CORTEN), (*(p_top + nn * 0.5), 1019.42)], alt=0.95, mat=1, passo=1.2)
-    e.objeto("escada_adarve", "cerca", GRUPOS["Muralhas"], uv=1.0)
+        g = pl_e.intersection(setor(a1, a0, passo=0.25))
+        for p in (g.geoms if hasattr(g, "geoms") else [g]):
+            if p.geom_type == "Polygon" and p.area > 0.02:
+                prisma_z(e, p.simplify(0.01), zbase, lambda x, y, zt=zt: zt, 0, 1)
+                # focinho do degrau: friso de granito um pouco saliente
+        lab = [PF.ponto(a1, float(np.interp(a1, PF.A, PF.RIN)) + 0.02), PF.ponto(a1, float(np.interp(a1, PF.A, PF.ROUT)) - 0.02)]
+        t_ = unit(np.array(lab[1]) - np.array(lab[0]))
+        n_ = unit(np.array(PF.ponto(a1 + 1.0, 17.0)) - np.array(PF.ponto(a1, 17.0)))
+        q = [np.array(lab[0]), np.array(lab[1]), np.array(lab[1]) + n_ * 0.04, np.array(lab[0]) + n_ * 0.04]
+        e.prisma(ccw(q), zt - 0.05, zt + 0.005, 1)
+    for col, dd in ((PF.RIN, 0.12), (PF.ROUT, -0.12)):
+        pts = []
+        for a in np.linspace(a_pe, a_top, n_d + 1):
+            x, y = PF.ponto(a, float(np.interp(a, PF.A, col)) + dd)
+            if any(p.buffer(0.1).contains(shapely.Point(x, y)) for p in POL_TORRES.values()):
+                continue
+            pts.append((x, y, Z_CORTEN + (1019.42 - Z_CORTEN) * (a_pe - a) / (a_pe - a_top)))
+        corrimao(e, pts, alt=1.0, mat=2, passo=1.2)
+    e.objeto("escada_adarve", "cerca", GRUPOS["Muralhas"], uv=3.0, vcor=patine_muro)
     MEDIDAS["cerca"] = {"area_m2": round(pedra.area, 1), "adarves": {"nascente": 1016.6, "sueste": 1020.08, "sul": 1019.83, "poente": 1019.48, "corredor_no": Z_CORTEN},
                         "portas": portas}
     # o recorte das portas conta como muro para o relevo (que não pode subir dentro do vão)
@@ -2117,6 +2130,9 @@ if "--vistas" in sys.argv:
         px, py = MEDIDAS["corredor"]["porta"]
         vista("porta_corredor_fora", (px - 2.0, py + 8.0), chao(px - 2.0, py + 8.0), (px, py), MEDIDAS["corredor"]["soleira"] + 1.2,
               lente=28, res=(1000, 750), perto=0.3)
+        # escada do adarve poente, de dentro do pátio (fotografias de nascente e de norte)
+        vista("escada_adarve", (-9.0, -15.0), 1030.0, (-21.0, -22.0), 1017.0, lente=30, res=(1000, 750), perto=0.3)
+        vista("escada_adarve_norte", (-19.0, -6.0), 1016.0, (-21.5, -23.0), 1018.0, lente=30, res=(1000, 750), perto=0.3)
         # coroamento da torre de menagem de perto, de sudoeste
         vista("coroamento", tuple(TM.W(-10.0, -12.0)), 1042.0, (0.0, 0.0), 1036.0, lente=30, res=(1000, 750), perto=0.3)
         # planta (ortográfica, norte para cima), para comparar com o ortofotomapa
