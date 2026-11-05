@@ -63,7 +63,7 @@
   "altura": 14.6
  },
  "cerca": {
-  "area_m2": 150.4,
+  "area_m2": 142.5,
   "adarves": {
    "nascente": 1016.6,
    "sueste": 1020.08,
@@ -116,7 +116,7 @@
    "lajeado": 455
   },
   "patio_cota": [
-   1010.52,
+   1010.48,
    1013.79
   ]
  },
