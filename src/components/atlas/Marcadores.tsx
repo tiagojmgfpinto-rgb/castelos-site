@@ -11,71 +11,157 @@ import { agrupar, MAX_RODA, posicoesRoda } from "./roda";
 import { useAtlas, visivel, type MonumentoResumo } from "./store";
 import { EXAGERO, useTerreno } from "./Terrain";
 
-// Marcadores como pequenas figuras de torre branca com bandeira vermelha, à maneira do castillos.site:
-// torre redonda ameada para os castelos medievais, baluarte em estrela com torre para as fortificações modernas.
-// um pouco de luz própria: a figura lê-se branca mesmo do lado da sombra
-const MAT_PEDRA = new THREE.MeshStandardMaterial({ color: "#f4efe4", roughness: 0.62, emissive: "#8f897d", emissiveIntensity: 0.55 });
-const MAT_BANDEIRA = new THREE.MeshStandardMaterial({ color: "#b3261b", roughness: 0.7, side: THREE.DoubleSide });
-const MAT_BASE = new THREE.MeshStandardMaterial({ color: "#5b4a38", roughness: 0.9 });
-const MAT_ANEL = new THREE.MeshBasicMaterial({ color: "#c0392b", transparent: true, opacity: 0.85, depthWrite: false });
-
-function ameias(raio: number, y: number, n: number, lado: number) {
-  const g: THREE.BufferGeometry[] = [];
-  for (let i = 0; i < n; i++) {
-    const a = (i / n) * Math.PI * 2;
-    g.push(new THREE.BoxGeometry(lado, lado * 1.25, lado).rotateY(-a).translate(Math.cos(a) * raio, y + lado * 0.62, Math.sin(a) * raio));
-  }
-  return g;
-}
-
-function torreRedonda(raio: number, base: number, altura: number) {
-  const topo = base + altura;
-  return [
-    new THREE.CylinderGeometry(raio * 0.94, raio, altura, 20).translate(0, base + altura / 2, 0),
-    new THREE.CylinderGeometry(raio * 1.18, raio * 0.96, 0.11, 20).translate(0, topo + 0.055, 0),
-    ...ameias(raio * 1.02, topo + 0.11, 7, raio * 0.42),
-  ];
-}
-
-const estrela = (() => {
-  const s = new THREE.Shape();
-  for (let i = 0; i < 10; i++) {
-    const a = (i / 10) * Math.PI * 2 - Math.PI / 2;
-    const r = i % 2 === 0 ? 0.62 : 0.36;
-    const p = [Math.cos(a) * r, Math.sin(a) * r] as const;
-    i === 0 ? s.moveTo(...p) : s.lineTo(...p);
-  }
-  return new THREE.ExtrudeGeometry(s, { depth: 0.2, bevelEnabled: false }).rotateX(-Math.PI / 2).translate(0, 0.07, 0);
-})();
-
-function bandeira(topo: number) {
-  const s = new THREE.Shape();
-  s.moveTo(0, 0);
-  s.lineTo(0.34, -0.07);
-  s.lineTo(0, -0.17);
-  return [
-    new THREE.CylinderGeometry(0.018, 0.018, 0.5, 6).translate(0, topo + 0.25, 0),
-    new THREE.ShapeGeometry(s).translate(0.012, topo + 0.5, 0),
-  ];
-}
-
-const juntar = (g: THREE.BufferGeometry[]) => mergeGeometries(g.map((x) => x.toNonIndexed()));
-const FORMAS = {
-  torre: {
-    pedra: juntar(torreRedonda(0.3, 0.07, 0.86)),
-    mastro: juntar([bandeira(1.08)[0]]),
-    bandeira: bandeira(1.08)[1],
-    topo: 1.62,
-  },
-  baluarte: {
-    pedra: juntar([estrela, ...torreRedonda(0.2, 0.27, 0.5)]),
-    mastro: juntar([bandeira(0.88)[0]]),
-    bandeira: bandeira(0.88)[1],
-    topo: 1.42,
-  },
+// Marcadores como pequenas figuras brancas, à maneira do castillos.site: um ícone por tipo de fortificação
+// (torre ameada com pendão para os castelos, pano de muralha entre duas torres para as fortalezas e praças
+// abaluartadas, estrela de baluartes com guarita para os fortes costeiros, torre esbelta para as torres),
+// brancas com alguma luz própria e um contorno escuro fino, que as distingue do relevo claro.
+const MAT = {
+  pedra: new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 0.7, flatShading: true, emissive: "#ffffff", emissiveIntensity: 0.3 }),
+  peana: new THREE.MeshStandardMaterial({ color: "#f4f2ec", roughness: 0.5, emissive: "#ffffff", emissiveIntensity: 0.22 }),
+  contorno: new THREE.MeshBasicMaterial({ color: "#2b1f14", side: THREE.BackSide }),
+  pendao: new THREE.MeshStandardMaterial({ color: "#b4311f", roughness: 0.8, side: THREE.DoubleSide, emissive: "#7a1a10", emissiveIntensity: 0.35 }),
+  escuro: new THREE.MeshBasicMaterial({ color: "#2b1f14" }),
+  sombra: new THREE.MeshBasicMaterial({
+    map: (() => {
+      if (typeof document === "undefined") return null;
+      const cv = document.createElement("canvas");
+      cv.width = cv.height = 64;
+      const g = cv.getContext("2d")!;
+      const grad = g.createRadialGradient(32, 32, 4, 32, 32, 32);
+      grad.addColorStop(0, "rgba(20,12,4,.55)");
+      grad.addColorStop(1, "rgba(20,12,4,0)");
+      g.fillStyle = grad;
+      g.fillRect(0, 0, 64, 64);
+      return new THREE.CanvasTexture(cv);
+    })(),
+    transparent: true,
+    depthWrite: false,
+    polygonOffset: true,
+    polygonOffsetFactor: -4,
+    polygonOffsetUnits: -4,
+  }),
 };
-const GEO_BASE = new THREE.CylinderGeometry(0.34, 0.37, 0.06, 24).translate(0, 0.03, 0);
-const GEO_ANEL = new THREE.RingGeometry(0.62, 0.8, 40).rotateX(-Math.PI / 2).translate(0, 0.02, 0);
+const MAT_ANEL = new THREE.MeshBasicMaterial({ color: "#c23a27", transparent: true, opacity: 0.85, depthWrite: false });
+
+// as figuras desenham-se numa escala própria (torre do castelo = 2,95) e reduzem-se a 0,55 no fim
+const ESCALA_ICONE = 0.55;
+const em = (g: THREE.BufferGeometry, x: number, y: number, z: number) => g.translate(x, y, z);
+const juntar = (lista: THREE.BufferGeometry[]) =>
+  mergeGeometries(
+    lista.map((g) => {
+      const n = g.index ? g.toNonIndexed() : g;
+      n.deleteAttribute("uv");
+      n.clearGroups();
+      return n;
+    }),
+  ).scale(ESCALA_ICONE, ESCALA_ICONE, ESCALA_ICONE);
+const peana = (sx = 1, sz = 1) => new THREE.CylinderGeometry(0.66, 0.74, 0.16, 24).translate(0, 0.08, 0).scale(sx, 1, sz);
+/** Vão de porta em arco de volta perfeita, a escuro. */
+function porta(x: number, y: number, z: number, largura: number, altura: number, rotY = 0) {
+  const r = largura / 2;
+  return [
+    new THREE.BoxGeometry(largura, altura - r, 0.04).translate(0, (altura - r) / 2, 0),
+    new THREE.CylinderGeometry(r, r, 0.04, 14).rotateX(Math.PI / 2).translate(0, altura - r, 0),
+  ].map((p) => p.rotateY(rotY).translate(x, y, z));
+}
+
+interface Icone {
+  pedra: THREE.BufferGeometry;
+  peana: THREE.BufferGeometry;
+  escuro?: THREE.BufferGeometry;
+  pendao?: THREE.BufferGeometry;
+  alto: number; // altura da figura, já reduzida
+  deFrente?: boolean; // figura plana: roda para olhar sempre para a câmara
+}
+
+function iconeCastelo(): Icone {
+  const pedra = [
+    em(new THREE.CylinderGeometry(0.4, 0.5, 1.35, 10), 0, 0.84, 0), // fuste em talude
+    em(new THREE.CylinderGeometry(0.57, 0.41, 0.2, 10), 0, 1.61, 0), // balcão de matacães
+    em(new THREE.CylinderGeometry(0.57, 0.57, 0.2, 10), 0, 1.81, 0), // adarve
+  ];
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2;
+    pedra.push(em(new THREE.BoxGeometry(0.26, 0.24, 0.17).rotateY(-a + Math.PI / 2), Math.cos(a) * 0.48, 2.03, Math.sin(a) * 0.48));
+  }
+  const peanaEMastro = [peana(), em(new THREE.CylinderGeometry(0.028, 0.028, 0.95, 6), 0, 2.4, 0), em(new THREE.SphereGeometry(0.06, 8, 6), 0, 2.9, 0)];
+  const s = new THREE.Shape([new THREE.Vector2(0, 0), new THREE.Vector2(0.72, -0.19), new THREE.Vector2(0, -0.38)]);
+  return { pedra: juntar(pedra), peana: juntar(peanaEMastro), pendao: juntar([em(new THREE.ShapeGeometry(s), 0.03, 2.84, 0)]), alto: 2.95 * ESCALA_ICONE };
+}
+
+function iconeFortaleza(): Icone {
+  const pedra = [
+    em(new THREE.BoxGeometry(0.86, 0.98, 0.3), 0, 0.65, 0), // pano de muralha
+    em(new THREE.BoxGeometry(0.44, 1.46, 0.44), -0.64, 0.89, 0),
+    em(new THREE.BoxGeometry(0.44, 1.46, 0.44), 0.64, 0.89, 0),
+    em(new THREE.BoxGeometry(0.52, 0.08, 0.52), -0.64, 1.66, 0),
+    em(new THREE.BoxGeometry(0.52, 0.08, 0.52), 0.64, 1.66, 0),
+  ];
+  for (const x of [-0.84, -0.64, -0.44, 0.44, 0.64, 0.84]) pedra.push(em(new THREE.BoxGeometry(0.12, 0.2, 0.5), x, 1.8, 0));
+  for (const x of [-0.28, 0, 0.28]) pedra.push(em(new THREE.BoxGeometry(0.14, 0.18, 0.3), x, 1.23, 0));
+  return {
+    pedra: juntar(pedra),
+    peana: juntar([peana(1.45, 0.8)]),
+    escuro: juntar([...porta(0, 0.16, 0.16, 0.26, 0.5), ...porta(0, 0.16, -0.16, 0.26, 0.5)]),
+    alto: 1.92 * ESCALA_ICONE,
+    deFrente: true,
+  };
+}
+
+function iconeForte(): Icone {
+  // estrela de quatro baluartes, rasa, com uma guarita ao centro
+  const s = new THREE.Shape();
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2 + Math.PI / 4;
+    const r = i % 2 === 0 ? 0.78 : 0.42;
+    i === 0 ? s.moveTo(Math.cos(a) * r, Math.sin(a) * r) : s.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+  }
+  const pedra = [
+    new THREE.ExtrudeGeometry(s, { depth: 0.42, bevelEnabled: false }).rotateX(-Math.PI / 2).translate(0, 0.16, 0),
+    em(new THREE.CylinderGeometry(0.2, 0.22, 0.62, 10), 0, 0.89, 0), // guarita
+    em(new THREE.ConeGeometry(0.27, 0.36, 10), 0, 1.38, 0),
+  ];
+  return { pedra: juntar(pedra), peana: juntar([peana(1.05, 1.05)]), escuro: juntar(porta(0, 0.6, 0.2, 0.12, 0.24)), alto: 1.6 * ESCALA_ICONE };
+}
+
+function iconeTorre(): Icone {
+  const pedra = [em(new THREE.CylinderGeometry(0.27, 0.31, 2.1, 10), 0, 1.21, 0), em(new THREE.CylinderGeometry(0.37, 0.37, 0.12, 10), 0, 2.32, 0)];
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2;
+    pedra.push(em(new THREE.BoxGeometry(0.17, 0.2, 0.12).rotateY(-a + Math.PI / 2), Math.cos(a) * 0.3, 2.48, Math.sin(a) * 0.3));
+  }
+  return { pedra: juntar(pedra), peana: juntar([peana()]), alto: 2.6 * ESCALA_ICONE };
+}
+
+const ICONES = { castelo: iconeCastelo(), fortaleza: iconeFortaleza(), forte: iconeForte(), torre: iconeTorre() };
+const ICONE_DA_TIPOLOGIA: Record<string, keyof typeof ICONES> = {
+  castelo: "castelo",
+  "cerca-urbana": "fortaleza",
+  fortaleza: "fortaleza",
+  "praca-forte": "fortaleza",
+  abaluartada: "fortaleza",
+  forte: "forte",
+  costeira: "forte",
+  bateria: "forte",
+  outra: "torre",
+};
+const GEO_SOMBRA = new THREE.CircleGeometry(1.25 * ESCALA_ICONE, 28).rotateX(-Math.PI / 2).translate(0, 0.01, 0);
+const GEO_ANEL = new THREE.RingGeometry(0.92 * ESCALA_ICONE, 1.08 * ESCALA_ICONE, 48).rotateX(-Math.PI / 2).translate(0, 0.02, 0);
+
+// Tamanho no ecrã como no castillos: cresce de 24 px (longe) até 54 px (aproximado) em escala logarítmica da
+// distância da câmara ao centro da vista; no telemóvel um pouco mais pequenas ao longe. As distâncias seguem as
+// proporções do castillos (vista inicial 118, perto 22, longe 300), a partir da vista inicial de cada território.
+const ALTO_PX = 54;
+const ALTO_MIN_PX = 24;
+function altoNoEcra(d: number, vistaInicial: number, larguraPx: number) {
+  const perto = (vistaInicial * 22) / 118;
+  if (larguraPx < 700) {
+    const t = THREE.MathUtils.clamp(Math.log(d / perto) / Math.log((vistaInicial * 250) / 118 / perto), 0, 1);
+    return ALTO_PX + (ALTO_MIN_PX * THREE.MathUtils.clamp(larguraPx / 1100, 0.66, 1) - ALTO_PX) * t;
+  }
+  const t = THREE.MathUtils.clamp(Math.log(d / perto) / Math.log((vistaInicial * 300) / 118 / perto), 0, 1) ** 1.6;
+  return ALTO_PX + (ALTO_MIN_PX - ALTO_PX) * t;
+}
 
 // ——— Gestão dos rótulos ———
 // Os nomes dos monumentos não aparecem todos (atropelar-se-iam e, ao aproximar de um castelo, enchiam o ecrã
@@ -304,7 +390,7 @@ export function Marcadores({ monumentos, territorio }: { monumentos: MonumentoRe
   return (
     <group>
       {lista.map(({ m, sx, sz }) => (
-        <Marcador key={m.id} m={m} x={sx} z={sz} />
+        <Marcador key={m.id} m={m} x={sx} z={sz} longe={t.vista.distancia} />
       ))}
       <FiosRoda />
       <Cidades territorio={territorio} />
@@ -314,21 +400,28 @@ export function Marcadores({ monumentos, territorio }: { monumentos: MonumentoRe
   );
 }
 
-function Marcador({ m, x, z }: { m: MonumentoResumo; x: number; z: number }) {
+function Marcador({ m, x, z, longe }: { m: MonumentoResumo; x: number; z: number; longe: number }) {
   const ref = useRef<THREE.Group>(null);
+  const corpo = useRef<THREE.Group>(null);
+  const contorno = useRef<THREE.Group>(null);
+  const pendao = useRef<THREE.Mesh>(null);
+  const controls = useThree((st) => st.controls);
+  const dir = useMemo(() => new THREE.Vector3(), []);
+  const ordem = useMemo(() => [...m.id].reduce((a, c) => a + c.charCodeAt(0), 0) % 7, [m.id]);
   const anel = useRef<THREE.Mesh>(null);
   const rotulo = useRef<HTMLDivElement>(null);
   const terreno = useTerreno();
-  const forma = FORMAS[TIPOLOGIAS[m.tipologia].forma === "torre" ? "torre" : "baluarte"];
+  const icone = ICONES[ICONE_DA_TIPOLOGIA[m.tipologia] ?? "castelo"];
   const v = useMemo(() => new THREE.Vector3(), []);
   const base = useMemo(() => new THREE.Vector3(), []);
   const aux = useMemo(() => ({ centro: new THREE.Vector3(), direita: new THREE.Vector3(), frente: new THREE.Vector3() }), []);
 
-  useFrame(({ camera, size }) => {
+  useFrame(({ camera, size, clock }) => {
     const g = ref.current;
     if (!g) return;
     const s = useAtlas.getState();
-    const ativo = s.selecionado === m.id || s.sobre === m.id;
+    const selecionado = s.selecionado === m.id;
+    const ativo = selecionado || s.sobre === m.id;
     const show = visivel(m, s);
     g.visible = show;
     const h = terreno?.altitude(x, z) ?? 0;
@@ -347,11 +440,23 @@ function Marcador({ m, x, z }: { m: MonumentoResumo; x: number; z: number }) {
       const cosInc = Math.max(0.35, (camera.position.y - centro.y) / d);
       g.position.copy(centro).addScaledVector(direita, dx * kmPx).addScaledVector(frente, (-dy * kmPx) / cosInc);
     }
-    // tamanho constante no ecrã
-    const d = camera.position.distanceTo(v.copy(g.position));
-    const escala = Math.min(d * 0.018, 34) * (ativo ? 1.25 : 1);
-    g.scale.setScalar(escala);
-    if (anel.current) anel.current.visible = s.selecionado === m.id;
+    // tamanho no ecrã como no castillos; de longe, mais luz própria e contorno mais grosso para continuarem a
+    // ler-se como torres brancas ameadas; a selecionada e a que está sob o rato ficam maiores
+    const alvo = (controls as unknown as { target?: THREE.Vector3 } | null)?.target;
+    const altoPx = altoNoEcra(alvo ? camera.position.distanceTo(alvo) : camera.position.distanceTo(g.position), longe, size.width);
+    const longeK = size.width < 700 ? 0 : THREE.MathUtils.clamp((ALTO_PX - altoPx) / (ALTO_PX - 22), 0, 1);
+    MAT.pedra.emissiveIntensity = 0.3 + 0.32 * longeK;
+    MAT.peana.emissiveIntensity = 0.22 + 0.25 * longeK;
+    camera.getWorldDirection(dir);
+    const profundidade = Math.max(0.01, v.copy(g.position).sub(camera.position).dot(dir));
+    const pxMundo = (2 * Math.tan(((camera as THREE.PerspectiveCamera).fov * Math.PI) / 360)) / size.height;
+    const enfase = selecionado ? 1 : ativo ? 0.6 : 0;
+    g.scale.setScalar(((altoPx * pxMundo * profundidade) / ICONES.castelo.alto) * (1 + 0.28 * enfase));
+    contorno.current?.scale.set(1.12 + 0.13 * longeK, 1.03 + 0.04 * longeK, 1.12 + 0.13 * longeK);
+    // as figuras planas olham sempre para a câmara; o pendão ondeia
+    if (icone.deFrente && corpo.current) corpo.current.rotation.y = Math.atan2(camera.position.x - g.position.x, camera.position.z - g.position.z);
+    if (pendao.current) pendao.current.rotation.y = Math.sin(clock.elapsedTime * 2.4 + ordem) * 0.22 * (0.4 + enfase);
+    if (anel.current) anel.current.visible = selecionado;
   });
 
   // o <Html> monta o rótulo noutra raiz React, por isso o registo só é possível quando ele já existe
@@ -368,16 +473,24 @@ function Marcador({ m, x, z }: { m: MonumentoResumo; x: number; z: number }) {
 
   return (
     <group ref={ref} onClick={click}>
-      <mesh geometry={GEO_BASE} material={MAT_BASE} castShadow />
-      <mesh geometry={forma.pedra} material={MAT_PEDRA} castShadow />
-      <mesh geometry={forma.mastro} material={MAT_BASE} />
-      <mesh geometry={forma.bandeira} material={MAT_BANDEIRA} />
+      <mesh geometry={GEO_SOMBRA} material={MAT.sombra} renderOrder={1} />
+      <group ref={corpo}>
+        <mesh geometry={icone.peana} material={MAT.peana} />
+        <mesh geometry={icone.pedra} material={MAT.pedra} />
+        {icone.escuro && <mesh geometry={icone.escuro} material={MAT.escuro} />}
+        {icone.pendao && <mesh ref={pendao} geometry={icone.pendao} material={MAT.pendao} />}
+        {/* contorno: a mesma figura um pouco maior, vista por dentro */}
+        <group ref={contorno} scale={[1.12, 1.03, 1.12]} position={[0, -0.01, 0]}>
+          <mesh geometry={icone.pedra} material={MAT.contorno} />
+          <mesh geometry={icone.peana} material={MAT.contorno} />
+        </group>
+      </group>
       <mesh ref={anel} geometry={GEO_ANEL} material={MAT_ANEL} visible={false} renderOrder={2} />
       {/* área de toque mais generosa, invisível */}
-      <mesh position={[0, 0.8, 0]} visible={false}>
-        <sphereGeometry args={[0.7, 8, 8]} />
+      <mesh position={[0, icone.alto / 2, 0]} visible={false}>
+        <cylinderGeometry args={[0.55, 0.55, icone.alto * 1.1, 8]} />
       </mesh>
-      <Html position={[0, forma.topo, 0]} center zIndexRange={[20, 10]} style={{ pointerEvents: "none" }}>
+      <Html position={[0, icone.alto, 0]} center zIndexRange={[20, 10]} style={{ pointerEvents: "none" }}>
         <div ref={rotulo} className="etiqueta" data-visivel="0" data-ativo="0">
           <b>{m.nome}</b>
           <span>{m.localidade} · {TIPOLOGIAS[m.tipologia].nome}</span>

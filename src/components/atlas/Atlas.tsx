@@ -16,7 +16,7 @@ function Luz() {
   const sol = useRef<THREE.DirectionalLight>(null);
   const controls = useThree((s) => s.controls) as unknown as { target: THREE.Vector3 } | null;
   const camera = useThree((s) => s.camera);
-  const dir = useMemo(() => new THREE.Vector3(-0.55, 0.62, -0.56).normalize(), []);
+  const dir = useMemo(() => new THREE.Vector3(-0.62, 0.72, -0.5).normalize(), []);
   useFrame(() => {
     const l = sol.current;
     if (!l || !controls) return;
@@ -41,8 +41,8 @@ function Luz() {
   });
   return (
     <>
-      <hemisphereLight args={["#fffaf0", "#8a8170", 1.25]} />
-      <directionalLight ref={sol} color="#fff1da" intensity={2.1} castShadow shadow-mapSize={[4096, 4096]} />
+      <hemisphereLight args={["#f2f6ff", "#8a7a66", 1.62]} />
+      <directionalLight ref={sol} color="#fff1dc" intensity={2.05} castShadow shadow-mapSize={[4096, 4096]} />
     </>
   );
 }

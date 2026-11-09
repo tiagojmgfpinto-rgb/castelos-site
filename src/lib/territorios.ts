@@ -25,7 +25,7 @@ export const TERRITORIOS: Record<TerritorioId, Territorio> = {
     id: "continente", nome: "Portugal Continental", crs: "EPSG:3763", rotuloProjecao: "Transversa de Mercator · PT-TM06/ETRS89",
     // quadrado de 1228,8 km: quase toda a Península, como uma maqueta sobre a mesa (igual ao pipeline)
     x0: -567200, y0: 607200, size: 1228800,
-    vista: { x: 25000, y: -20000, distancia: 1080, inclinacao: 24, rumo: 0 },
+    vista: { x: 25000, y: -30000, distancia: 1000, inclinacao: 36, rumo: 0 },
   },
   acores: {
     id: "acores", nome: "Açores", crs: "EPSG:5015", rotuloProjecao: "PTRA08 · UTM 26N",

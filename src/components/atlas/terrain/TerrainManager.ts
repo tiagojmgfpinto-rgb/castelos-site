@@ -16,7 +16,8 @@ export interface Manifest {
 
 interface TileData {
   heights: Float32Array; // (tileSize+1)^2, metros
-  cls: Uint8Array;
+  cls: Uint8Array; // 0 mar, 1 Portugal, 2 vizinhos
+  urb: Uint8Array; // 1 nas manchas urbanas
 }
 
 interface Leaf {
@@ -29,7 +30,10 @@ const SEGMENTS = 128;
 const SPLIT = 2.1; // dividir um nó quando a câmara está a menos de SPLIT x o seu lado
 const MAX_CACHE_GEOM = 220;
 const FUNDO_MAR = 0.45; // relevo submarino, suavizado, no sombreado: a plataforma e os canhões leem-se como no castillos.site
-const REFORCO_SOMBRA = 2.6; // o sombreado acentua o relevo mais do que a geometria, como num mapa de relevo
+const REFORCO_SOMBRA = 2.0; // o sombreado acentua o relevo mais do que a geometria, como num mapa de relevo
+const RES_TEXTURA = 256; // a cor e o sombreado vão numa textura por mosaico, com o detalhe da grelha de origem
+// luz do sombreado cozido na textura: do noroeste e a 45°, a convenção cartográfica (x para este, z para sul)
+const LUZ = new THREE.Vector3(-1, Math.SQRT2, -1).normalize();
 
 const k = (z: number, x: number, y: number) => `${z}/${x}/${y}`;
 const parse = (key: string) => key.split("/").map(Number) as [number, number, number];
@@ -47,12 +51,14 @@ export async function decodeTile(url: string): Promise<TileData> {
   const n = bmp.width * bmp.height;
   const heights = new Float32Array(n);
   const cls = new Uint8Array(n);
+  const urb = new Uint8Array(n);
   for (let i = 0; i < n; i++) {
     heights[i] = (px[i * 4] * 256 + px[i * 4 + 1]) / 5 - 8000;
-    cls[i] = px[i * 4 + 2];
+    cls[i] = px[i * 4 + 2] & 7;
+    urb[i] = px[i * 4 + 2] >> 3;
   }
   bmp.close();
-  return { heights, cls };
+  return { heights, cls, urb };
 }
 
 /**
@@ -67,7 +73,6 @@ export class TerrainManager {
   private loading = new Map<string, Promise<void>>();
   private geoms = new Map<string, THREE.Mesh>();
   private shown = new Set<string>();
-  private material: THREE.MeshStandardMaterial;
   private frustum = new THREE.Frustum();
   private projScreen = new THREE.Matrix4();
   private sizeKm: number;
@@ -88,12 +93,6 @@ export class TerrainManager {
         if (+z > 0) this.hasChildren.add(k(+z - 1, x >> 1, y >> 1));
       }
     }
-    this.material = new THREE.MeshStandardMaterial({
-      vertexColors: true,
-      roughness: 0.93,
-      metalness: 0,
-      side: THREE.FrontSide,
-    });
   }
 
   async init() {
@@ -201,6 +200,7 @@ export class TerrainManager {
       for (const [gk, mesh] of this.geoms) {
         if (this.shown.has(gk)) continue;
         mesh.geometry.dispose();
+        this.libertar(mesh);
         this.geoms.delete(gk);
         if (this.geoms.size <= MAX_CACHE_GEOM * 0.8) break;
       }
@@ -248,9 +248,11 @@ export class TerrainManager {
     const skirt = 4 * (seg + 1);
     const pos = new Float32Array((nv + skirt) * 3);
     const nor = new Float32Array((nv + skirt) * 3);
-    const col = new Float32Array((nv + skirt) * 3);
-    const c = new THREE.Color();
+    const uvs = new Float32Array((nv + skirt) * 2);
     const nrm = new THREE.Vector3();
+    const R = RES_TEXTURA;
+    // coordenada de textura no centro dos texels das bordas: mosaicos vizinhos coincidem na aresta
+    const uvDe = (f: number) => (0.5 + f * (R - 1)) / R;
 
     for (let j = 0; j <= seg; j++) {
       for (let i = 0; i <= seg; i++) {
@@ -272,10 +274,11 @@ export class TerrainManager {
         const fx = cl === 0 ? ex * FUNDO_MAR : ex * REFORCO_SOMBRA;
         const gx = ((bilinear(t.heights, ur, v) - bilinear(t.heights, ul, v)) * fx) / ((ur - ul) * sampleKm);
         const gz = ((bilinear(t.heights, u, vd) - bilinear(t.heights, u, vu)) * fx) / ((vd - vu) * sampleKm);
-        nrm.set(-gx, 1, -gz).normalize();
+        // na geometria, a normal real (a luz da cena dá volume ao rodar); o relevo forte vai na textura
+        nrm.set(-gx / REFORCO_SOMBRA, 1, -gz / REFORCO_SOMBRA).normalize();
+        if (cl === 0) nrm.set(0, 1, 0);
         nor.set([nrm.x, nrm.y, nrm.z], idx * 3);
-        corDoTerreno(c, hm, cl, nrm.y);
-        col.set([c.r, c.g, c.b], idx * 3);
+        uvs.set([uvDe(i / seg), 1 - uvDe(j / seg)], idx * 2);
       }
     }
 
@@ -292,7 +295,7 @@ export class TerrainManager {
       pos[d * 3 + 1] = pos[src * 3 + 1] - drop;
       pos[d * 3 + 2] = pos[src * 3 + 2];
       nor.copyWithin(d * 3, src * 3, src * 3 + 3);
-      col.copyWithin(d * 3, src * 3, src * 3 + 3);
+      uvs.copyWithin(d * 2, src * 2, src * 2 + 2);
     });
 
     const index: number[] = [];
@@ -319,10 +322,10 @@ export class TerrainManager {
     const g = new THREE.BufferGeometry();
     g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
     g.setAttribute("normal", new THREE.BufferAttribute(nor, 3));
-    g.setAttribute("color", new THREE.BufferAttribute(col, 3));
+    g.setAttribute("uv", new THREE.BufferAttribute(uvs, 2));
     g.setIndex(nv + skirt > 65535 ? new THREE.Uint32BufferAttribute(index, 1) : new THREE.Uint16BufferAttribute(index, 1));
     g.computeBoundingSphere();
-    const mesh = new THREE.Mesh(g, this.material);
+    const mesh = new THREE.Mesh(g, this.materialDe(this.textura(t, ox, oy, span, sampleKm, ex)));
     mesh.renderOrder = -10; // o relevo desenha-se primeiro; a fronteira vai por cima dele e as torres por cima dela (Linhas.tsx)
     mesh.castShadow = true;
     mesh.receiveShadow = true;
@@ -330,10 +333,68 @@ export class TerrainManager {
     return mesh;
   }
 
+  /**
+   * Cor e sombreado do relevo numa textura, como o mapa cozido do castillos: tintas hipsométricas
+   * multiplicadas por um sombreado do noroeste calculado em cada texel, com o relevo reforçado.
+   * Assim as serras ficam nítidas de perto, em vez do sombreado suave interpolado entre vértices.
+   */
+  private textura(t: TileData, ox: number, oy: number, span: number, sampleKm: number, ex: number) {
+    const R = RES_TEXTURA;
+    const dados = new Uint8Array(R * R * 4);
+    const c = new THREE.Color();
+    const n = new THREE.Vector3();
+    const passo = Math.max(span / (R - 1), 0.5);
+    for (let j = 0; j < R; j++) {
+      for (let i = 0; i < R; i++) {
+        const u = ox + (i / (R - 1)) * span;
+        const v = oy + (j / (R - 1)) * span;
+        const hm = bilinear(t.heights, u, v);
+        const cl = nearest(t.cls, u, v);
+        const ul = Math.max(u - passo, 0), ur = Math.min(u + passo, N - 1);
+        const vu = Math.max(v - passo, 0), vd = Math.min(v + passo, N - 1);
+        const fx = cl === 0 ? ex * FUNDO_MAR : ex * REFORCO_SOMBRA;
+        const gx = ((bilinear(t.heights, ur, v) - bilinear(t.heights, ul, v)) * fx) / ((ur - ul) * sampleKm);
+        const gz = ((bilinear(t.heights, u, vd) - bilinear(t.heights, u, vu)) * fx) / ((vd - vu) * sampleKm);
+        n.set(-gx, 1, -gz).normalize();
+        corDoTerreno(c, hm, cl, n.y, cl > 0 ? bilinearU8(t.urb, u, v) : 0);
+        // 1 em terreno plano; mais escuro nas encostas viradas a sudeste, um pouco mais claro nas do noroeste
+        const luz = Math.max(0, n.dot(LUZ)) / LUZ.y;
+        const sombra = cl === 0 ? 0.82 + 0.18 * luz : THREE.MathUtils.clamp(0.32 + 0.7 * luz, 0.22, 1.2);
+        c.multiplyScalar(sombra).convertLinearToSRGB();
+        const o = ((R - 1 - j) * R + i) * 4;
+        dados[o] = Math.min(255, c.r * 255);
+        dados[o + 1] = Math.min(255, c.g * 255);
+        dados[o + 2] = Math.min(255, c.b * 255);
+        dados[o + 3] = 255;
+      }
+    }
+    const tex = new THREE.DataTexture(dados, R, R, THREE.RGBAFormat);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.magFilter = THREE.LinearFilter;
+    tex.minFilter = THREE.LinearMipmapLinearFilter;
+    tex.generateMipmaps = true;
+    tex.anisotropy = 8;
+    tex.wrapS = tex.wrapT = THREE.ClampToEdgeWrapping;
+    tex.needsUpdate = true;
+    return tex;
+  }
+
+  private materialDe(map: THREE.Texture) {
+    return new THREE.MeshStandardMaterial({ map, roughness: 1, metalness: 0, side: THREE.FrontSide });
+  }
+
+  private libertar(mesh: THREE.Mesh) {
+    const mat = mesh.material as THREE.MeshStandardMaterial;
+    mat.map?.dispose();
+    mat.dispose();
+  }
+
   dispose() {
-    for (const m of this.geoms.values()) m.geometry.dispose();
+    for (const m of this.geoms.values()) {
+      m.geometry.dispose();
+      this.libertar(m);
+    }
     this.geoms.clear();
-    this.material.dispose();
   }
 }
 
@@ -350,4 +411,13 @@ function nearest(c: Uint8Array, u: number, v: number) {
   const i = Math.min(Math.max(Math.round(u), 0), N - 1);
   const j = Math.min(Math.max(Math.round(v), 0), N - 1);
   return c[j * N + i];
+}
+
+/** Interpolação de uma máscara 0/1: as manchas urbanas ficam com a borda suave. */
+function bilinearU8(m: Uint8Array, u: number, v: number) {
+  u = Math.min(Math.max(u, 0), N - 1);
+  v = Math.min(Math.max(v, 0), N - 1);
+  const i = Math.min(Math.floor(u), N - 2), j = Math.min(Math.floor(v), N - 2);
+  const fu = u - i, fv = v - j;
+  return (m[j * N + i] * (1 - fu) + m[j * N + i + 1] * fu) * (1 - fv) + (m[(j + 1) * N + i] * (1 - fu) + m[(j + 1) * N + i + 1] * fu) * fv;
 }

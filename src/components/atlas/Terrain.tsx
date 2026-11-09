@@ -6,7 +6,7 @@ import type { TerritorioId } from "../../lib/territorios";
 import { useAtlas } from "./store";
 import { TerrainManager, type Manifest } from "./terrain/TerrainManager";
 
-export const EXAGERO = 2.2;
+export const EXAGERO = 4;
 
 const TerrenoCtx = createContext<TerrainManager | null>(null);
 export const useTerreno = () => useContext(TerrenoCtx);

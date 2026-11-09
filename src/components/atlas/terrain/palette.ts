@@ -41,12 +41,19 @@ function amostrar(out: THREE.Color, r: readonly (readonly [number, THREE.Color])
   return out.copy(r[r.length - 1][1]);
 }
 
-export function corDoTerreno(out: THREE.Color, h: number, cls: number, ny: number) {
+// manchas urbanas num rosa-acastanhado apagado, como no castillos.site
+const URBANO = new THREE.Color("#b89482");
+const URBANO_VIZINHO = new THREE.Color("#bcaea2");
+
+export function corDoTerreno(out: THREE.Color, h: number, cls: number, ny: number, urbano = 0) {
   if (cls === 0) return amostrar(out, MAR, Math.min(h, 0));
-  if (cls === 2) return amostrar(out, VIZINHO, h);
+  if (cls === 2) {
+    amostrar(out, VIZINHO, h);
+    return urbano > 0 ? out.lerp(URBANO_VIZINHO, urbano * 0.75) : out;
+  }
   amostrar(out, TERRA, h);
   // encostas íngremes ficam mais terrosas
   const declive = 1 - ny;
   if (declive > 0.08) out.lerp(tmp.set("#8a6a4a"), Math.min(0.35, (declive - 0.08) * 1.4));
-  return out;
+  return urbano > 0 ? out.lerp(URBANO, urbano * 0.7) : out;
 }
