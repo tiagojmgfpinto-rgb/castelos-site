@@ -6,6 +6,7 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 import { CIDADES } from "../../data/cidades";
 import { paraCena, projectar, TERRITORIOS, type TerritorioId } from "../../lib/territorios";
 import { TIPOLOGIAS } from "../../lib/tipologias";
+import { caixasMonumentos, escolherRotulos, registar, retirar, rotulosMapa, sobrepoe, zonasInterface, type Caixa, type Candidato, type RotuloMapa } from "./rotulosMapa";
 import { useAtlas, visivel, type MonumentoResumo } from "./store";
 import { EXAGERO, useTerreno } from "./Terrain";
 
@@ -108,8 +109,9 @@ function GestorRotulos() {
   }, [gl]);
 
   // corre depois dos marcadores (subscreve-se depois deles); prioridade > 0 desligaria o desenho automático
-  useFrame(({ camera, size }) => {
+  useFrame(({ camera, size, clock }) => {
     const s = useAtlas.getState();
+    const zonas = zonasInterface(gl.domElement, clock.elapsedTime * 1000);
     const cand: { r: Registo; x: number; y: number; w: number; prio: number }[] = [];
     let foco: { x: number; y: number } | null = null;
     const proj = (r: Registo) => {
@@ -166,9 +168,10 @@ function GestorRotulos() {
       cand.push({ r, x: p.x, y: p.y, w, prio });
     }
     cand.sort((a, b) => a.prio - b.prio);
-    const ocupados: [number, number, number, number][] = [];
+    const ocupados: Caixa[] = [];
+    // as cartelas que não são do monumento ativo também não entram por baixo da barra, da rosa ou da escala
     const livre = (x0: number, y0: number, x1: number, y1: number) =>
-      ocupados.every(([a, b, c, d]) => x1 < a || x0 > c || y1 < b || y0 > d);
+      ocupados.every(([a, b, c, d]) => x1 < a || x0 > c || y1 < b || y0 > d) && !zonas.some((z) => sobrepoe([x0, y0, x1, y1], z));
     for (const c of cand) {
       const ativo = c.prio < 2;
       const tentativas = c.prio < 3 ? DESLOCAMENTOS : [0];
@@ -188,6 +191,55 @@ function GestorRotulos() {
       c.r.el.dataset.visivel = colocado ? "1" : "0";
       c.r.el.dataset.ativo = ativo ? "1" : "0";
     }
+    caixasMonumentos.length = 0;
+    caixasMonumentos.push(...ocupados);
+  });
+  return null;
+}
+
+// ——— Rótulos cartográficos (cidades, distritos, mares) ———
+const DESVIOS_MAPA = [0, -0.6, 0.6, -1.2, 1.2]; // em alturas do rótulo
+// Corre depois do GestorRotulos: os nomes do mapa cedem às cartelas dos monumentos e à interface.
+function GestorMapa() {
+  const v = useMemo(() => new THREE.Vector3(), []);
+  const gl = useThree((s) => s.gl);
+  const larguras = useMemo(() => new WeakMap<HTMLElement, [number, number]>(), []);
+  useFrame(({ camera, size, clock }) => {
+    const proibidas = [...zonasInterface(gl.domElement, clock.elapsedTime * 1000), ...caixasMonumentos];
+    const lista: RotuloMapa[] = [];
+    const cand: Candidato[] = [];
+    const alturas: number[] = [];
+    for (const r of rotulosMapa) {
+      const i = lista.push(r) - 1;
+      r.objeto.getWorldPosition(v);
+      const d = camera.position.distanceTo(v);
+      v.project(camera);
+      if (d >= r.ate || d <= r.desde || v.z > 1) continue;
+      const x = (v.x * 0.5 + 0.5) * size.width, y = (-v.y * 0.5 + 0.5) * size.height;
+      if (x < -200 || x > size.width + 200 || y < -50 || y > size.height + 50) continue;
+      // o tamanho do texto não muda: mede-se uma vez (o elemento invisível continua a ocupar espaço)
+      let wh = larguras.get(r.el);
+      if (!wh || !wh[0]) {
+        wh = [r.el.offsetWidth, r.el.offsetHeight];
+        larguras.set(r.el, wh);
+      }
+      const [w, h] = wh;
+      // além do sítio exato, o rótulo pode subir ou descer meia altura ou uma altura inteira
+      const caixas = (r.fixo ? [0] : DESVIOS_MAPA).map((f): Caixa => [x - w / 2 - 2, y + f * h - h / 2 - 1, x + w / 2 + 2, y + f * h + h / 2 + 1]);
+      const jaVisivel = r.el.dataset.visivel === "1";
+      cand.push({ id: i, prio: r.prio, caixas, jaVisivel, anterior: jaVisivel ? Number(r.el.dataset.desvio ?? 0) : undefined });
+      alturas[i] = h;
+    }
+    const escolha = escolherRotulos(cand, proibidas);
+    lista.forEach((r, i) => {
+      const k = escolha.get(i);
+      const novo = k === undefined ? "0" : "1";
+      if (r.el.dataset.visivel !== novo) r.el.dataset.visivel = novo;
+      if (k !== undefined && r.el.dataset.desvio !== String(k)) {
+        r.el.dataset.desvio = String(k);
+        r.el.style.transform = k ? `translateY(${DESVIOS_MAPA[k] * alturas[i]}px)` : "";
+      }
+    });
   });
   return null;
 }
@@ -212,6 +264,7 @@ export function Marcadores({ monumentos, territorio }: { monumentos: MonumentoRe
       ))}
       <Cidades territorio={territorio} />
       <GestorRotulos />
+      <GestorMapa />
     </group>
   );
 }
@@ -297,11 +350,13 @@ function Cidades({ territorio }: { territorio: TerritorioId }) {
 function Cidade({ nome, nivel, x, z, alt }: { nome: string; nivel: number; x: number; z: number; alt: () => number }) {
   const ref = useRef<THREE.Group>(null);
   const el = useRef<HTMLDivElement>(null);
-  useFrame(({ camera }) => {
+  const registo = useRef<RotuloMapa | null>(null);
+  useEffect(() => () => retirar(registo), []);
+  useFrame(() => {
     if (!ref.current) return;
     ref.current.position.set(x, (Math.max(alt(), 0) / 1000) * EXAGERO + 0.05, z);
-    const d = camera.position.distanceTo(ref.current.position);
-    if (el.current) el.current.dataset.visivel = nivel === 1 ? (d < 1500 ? "1" : "0") : d < 420 ? "1" : "0";
+    // as capitais de distrito (nível 1) vêm primeiro; as outras cidades só de perto e depois dos distritos
+    registar(registo, el.current && { el: el.current, objeto: ref.current, prio: nivel === 1 ? 0 : 3, ate: nivel === 1 ? 1500 : 420, desde: 0, fixo: true });
   });
   return (
     <group ref={ref}>

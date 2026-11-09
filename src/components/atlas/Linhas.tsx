@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { BASE } from "../../lib/base";
 import { CIDADES } from "../../data/cidades";
 import { centro, paraCena, projectar, TERRITORIOS, type TerritorioId } from "../../lib/territorios";
+import { registar, retirar, type RotuloMapa } from "./rotulosMapa";
 import { EXAGERO, useTerreno } from "./Terrain";
 
 type P = [number, number, number];
@@ -84,12 +85,14 @@ function Rotulo({ classe, texto, x, z, ate, desde, mar = false }: { classe: stri
   const ref = useRef<THREE.Group>(null);
   const el = useRef<HTMLDivElement>(null);
   const terreno = useTerreno();
-  useFrame(({ camera }) => {
+  const registo = useRef<RotuloMapa | null>(null);
+  useEffect(() => () => retirar(registo), []);
+  useFrame(() => {
     if (!ref.current) return;
     const h = mar ? 0 : Math.max(terreno?.altitude(x, z) ?? 0, 0);
     ref.current.position.set(x, (h / 1000) * EXAGERO + 0.05, z);
-    const d = camera.position.distanceTo(ref.current.position);
-    if (el.current) el.current.dataset.visivel = d < ate && d > desde ? "1" : "0";
+    // a visibilidade é decidida pelo GestorMapa (distância, interface e sobreposições): mares 1, distritos 2
+    registar(registo, el.current && { el: el.current, objeto: ref.current, prio: mar ? 1 : 2, ate, desde });
   });
   return (
     <group ref={ref}>
