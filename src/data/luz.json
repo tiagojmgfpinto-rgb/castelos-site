@@ -1,0 +1,39 @@
+{
+  "nota": "Luz do visor das maquetas, lida por src/components/maqueta/Luz.tsx. É a mesma para todas as maquetas; uma maqueta só pode mudar a direção do sol (campo sol do seu JSON). O tone mapping AgX e a força do sol vêm da calibração com os renders Cycles dos construir.py (PR #31). A luz de ambiente e a oclusão ambiental entraram na etapa 1 da auditoria de novembro de 2026: o hemisfério desceu para que o brilho médio das maquetas fique igual ao de antes.",
+  "sol": {
+    "cor": "#ffffff",
+    "intensidade": 3.4,
+    "direcao": [
+      -160,
+      220,
+      -140
+    ]
+  },
+  "hemisferio": {
+    "ceu": "#e7e2d9",
+    "chao": "#8a8070",
+    "intensidade": 1.7
+  },
+  "ambiente": {
+    "intensidade": 0.05,
+    "sigma": 0.04
+  },
+  "tom": "AgX",
+  "exposicao": 1,
+  "sombra": {
+    "mapa": 4096,
+    "mapaToque": 2048,
+    "raio": 1,
+    "bias": -0.0004
+  },
+  "oclusao": {
+    "raio": 1.6,
+    "raioMin": 1.5,
+    "raioMax": 4,
+    "espessura": 2,
+    "escala": 1.4,
+    "amostras": 16,
+    "intensidade": 1,
+    "fator": 0.015
+  }
+}

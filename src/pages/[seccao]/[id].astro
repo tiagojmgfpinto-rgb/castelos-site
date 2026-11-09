@@ -6,6 +6,7 @@ import { FichaConteudo } from "../../components/ui/FichaConteudo";
 import { REGIOES, TIPOLOGIAS } from "../../lib/tipologias";
 import { caminhoFicha, seccaoDe } from "../../lib/rotas";
 import MaquetaPagina from "../../components/maqueta/MaquetaPagina";
+import { comVersao } from "../../lib/versao";
 
 export async function getStaticPaths() {
   return (await todosMonumentos()).map((m) => ({ params: { seccao: seccaoDe(m.data.nome), id: m.id }, props: { m } }));
@@ -32,7 +33,7 @@ const vizinhos = (await todosMonumentos()).filter((x) => x.data.regiao === d.reg
 
     {maqueta && (
       <figure class="ficha-maqueta maqueta-pagina">
-        <MaquetaPagina client:visible id={m.id} ficheiro={maqueta.ficheiro} capa={maqueta.capa} provisoria={maqueta.provisoria} />
+        <MaquetaPagina client:visible id={m.id} ficheiro={comVersao(maqueta.ficheiro)} capa={comVersao(maqueta.capa)} provisoria={maqueta.provisoria} />
       </figure>
     )}
 
