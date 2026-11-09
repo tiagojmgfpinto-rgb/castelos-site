@@ -172,6 +172,7 @@ export function Camara({ territorio }: { territorio: TerritorioId }) {
       maxDistance={1600}
       maxPolarAngle={78 * DEG}
       zoomSpeed={1.1}
+      zoomToCursor
       rotateSpeed={0.6}
     />
   );
