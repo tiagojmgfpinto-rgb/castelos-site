@@ -16,3 +16,30 @@ test("atlas: carrega e, ao abrir um castelo, não mostra os nomes dos outros à 
   await expect(page.locator(".ficha")).toBeVisible();
   expect(erros).toEqual([]);
 });
+
+test("atlas: ao passar o rato numa torre só aparece o nome dela", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.route(/\.glb/, () => undefined);
+  await page.goto("./");
+  await page.waitForSelector('.estado[data-visivel="0"]', { state: "attached", timeout: 150_000 });
+  // Braga tem Guimarães e Lanhoso coladas no ecrã: antes apareciam os três nomes
+  await page.evaluate(() => (window as unknown as { __atlas: { getState(): { setSobre(id: string): void } } }).__atlas.getState().setSobre("braga"));
+  await page.waitForTimeout(1500);
+  const visiveis = await page.$$eval(".etiqueta[data-visivel='1'] b", (bs) => bs.map((b) => b.textContent));
+  expect(visiveis).toHaveLength(1);
+});
+
+test("atlas: Novidades com as abas Novos castelos e Próximas adições", async ({ page }) => {
+  await page.route(/\.glb/, () => undefined);
+  await page.goto("./");
+  await page.getByRole("button", { name: "Novidades" }).click();
+  const painel = page.locator("#novidades");
+  await expect(painel.getByRole("tab", { name: /Novos castelos/ })).toHaveAttribute("aria-selected", "true");
+  const novos = await painel.locator(".lista-novos b").allTextContents();
+  expect(novos.length).toBeGreaterThan(0);
+  await painel.getByRole("tab", { name: /Próximas adições/ }).click();
+  const proximos = await painel.locator(".lista-proximos li").allTextContents();
+  expect(proximos.length).toBeGreaterThan(0);
+  // as duas listas não se repetem: quem tem maqueta não está nas próximas adições
+  expect(proximos.filter((n) => novos.includes(n))).toEqual([]);
+});

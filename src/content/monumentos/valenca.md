@@ -92,6 +92,7 @@ notas:
   - "Os nomes das portas interiores e a função de cada túnel foram lidos no LiDAR e no OpenStreetMap e devem ser confirmados numa planta."
 maquetas:
   - tipo: estado-atual
+    publicada: "2026-11-02"
     ficheiro: "maquetas/valenca/valenca.glb"
     capa: "maquetas/valenca/capa.jpg"
     validada: false

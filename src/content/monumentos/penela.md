@@ -133,6 +133,7 @@ notas:
   - "As alturas medidas no LiDAR da DGT (até c. 15 m acima do pé exterior das muralhas) ficam abaixo do máximo de 19 m publicado pela Câmara Municipal. A diferença pode vir de medir a partir do pé da escarpa ou do fundo do vale; mostram-se os dois valores."
 maquetas:
   - tipo: estado-atual
+    publicada: "2026-10-26"
     ficheiro: "maquetas/penela/penela.glb"
     capa: "maquetas/penela/capa.jpg"
     validada: false

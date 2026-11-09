@@ -147,6 +147,7 @@ notas:
   - "Quatro imagens enviadas ficaram fora da galeria: duas fotografias com marca de água de outro autor, uma infografia de jornal e uma imagem de satélite."
 maquetas:
   - tipo: estado-atual
+    publicada: "2026-11-03"
     ficheiro: "maquetas/lindoso/lindoso.glb"
     capa: "maquetas/lindoso/capa.jpg"
     validada: false

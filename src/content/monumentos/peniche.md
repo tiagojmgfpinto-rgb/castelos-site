@@ -96,6 +96,7 @@ notas:
   - "As fotografias recebidas serviram de referência para as cores e para as formas da maqueta; não entram na ficha até se confirmar a autoria."
 maquetas:
   - tipo: estado-atual
+    publicada: "2026-11-02"
     ficheiro: "maquetas/peniche/peniche.glb"
     capa: "maquetas/peniche/capa.jpg"
     validada: false

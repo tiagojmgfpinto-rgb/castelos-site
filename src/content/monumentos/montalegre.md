@@ -126,6 +126,7 @@ notas:
   - "As fotografias da galeria foram enviadas e autorizadas pelo autor do projeto; serviram também de referência para a maqueta."
 maquetas:
   - tipo: estado-atual
+    publicada: "2026-11-03"
     ficheiro: "maquetas/montalegre/montalegre.glb"
     capa: "maquetas/montalegre/capa.jpg"
     validada: false

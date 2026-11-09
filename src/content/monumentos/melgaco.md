@@ -150,6 +150,7 @@ notas:
   - "Duas fotografias enviadas (uma com marca de água de outro autor e outra com marca de uma rede social) ficaram fora da galeria."
 maquetas:
   - tipo: estado-atual
+    publicada: "2026-11-03"
     ficheiro: "maquetas/melgaco/melgaco.glb"
     capa: "maquetas/melgaco/capa.jpg"
     validada: false

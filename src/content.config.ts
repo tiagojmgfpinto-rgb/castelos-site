@@ -55,6 +55,8 @@ const maqueta = z.object({
   // Versão provisória: publicada com aviso, com as limitações e estimativas à vista.
   provisoria: z.boolean().default(false),
   capa: z.string().optional(),
+  // dia em que a maqueta foi publicada no site (lista "Novos castelos")
+  publicada: data.optional(),
   fontes: z.array(fonte).default([]),
 });
 

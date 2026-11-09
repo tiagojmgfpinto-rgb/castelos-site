@@ -8,6 +8,7 @@ export interface Maqueta {
   epoca?: string;
   provisoria: boolean;
   capa?: string;
+  publicada?: string; // AAAA-MM-DD
 }
 
 export interface MonumentoResumo {
@@ -64,7 +65,7 @@ export interface Voo {
   instantaneo?: boolean;
 }
 
-export type Painel = "indice" | "distritos" | "fontes";
+export type Painel = "indice" | "distritos" | "fontes" | "novidades";
 
 /** Torres que se tocavam no ecrã, afastadas em roda à volta do centro delas até se escolher uma. */
 export interface Roda {
@@ -153,6 +154,8 @@ export const useAtlas = create<Estado>((set) => ({
 }));
 
 export const temMaqueta = (m: MonumentoResumo) => m.maquetas.length > 0;
+/** Dia em que o monumento ganhou a primeira maqueta no site (AAAA-MM-DD), se se souber. */
+export const publicadoEm = (m: MonumentoResumo) => m.maquetas.map((x) => x.publicada).filter(Boolean).sort()[0];
 export const temVisita = (m: MonumentoResumo) => !!m.conteudo.visita && Object.values(m.conteudo.visita).some(Boolean);
 
 export function visivel(m: MonumentoResumo, s: Pick<Estado, "filtrosTipologia" | "filtroRegiao"> & Partial<Pick<Estado, "filtroMaqueta" | "filtroVisita">>) {
