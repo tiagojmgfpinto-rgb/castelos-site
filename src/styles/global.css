@@ -249,6 +249,13 @@ button { font: inherit; color: inherit; }
 /* ——— Ficha lateral: meia ecrã de pergaminho, com a banda do nome fixa ——— */
 :root { --largura-ficha: clamp(460px, 50vw, 1280px); }
 .atlas[data-ficha="1"] .atlas-mapa { right: var(--largura-ficha); }
+/* alça da ficha (AlcaFicha.tsx): borda esquerda no computador, barra de cima no telemóvel */
+.ficha-alca { position: absolute; z-index: 31; top: 0; bottom: 0; right: calc(var(--largura-ficha) - 7px); width: 14px; cursor: col-resize; touch-action: none; display: grid; place-items: center; outline: none; }
+.ficha-alca span { width: 4px; height: 46px; border-radius: 2px; background: rgba(220, 180, 95, 0.55); box-shadow: 0 0 0 1px rgba(24, 19, 14, 0.5); opacity: 0; transition: opacity 0.2s; }
+.ficha-alca:hover span, .ficha-alca:focus-visible span, html[data-redimensionar] .ficha-alca span { opacity: 1; }
+html[data-redimensionar] { user-select: none; }
+html[data-redimensionar="x"], html[data-redimensionar="x"] * { cursor: col-resize !important; }
+html[data-redimensionar] .atlas canvas { pointer-events: none; }
 .ficha {
   --pergaminho-ficha: var(--pergaminho); --tinta-ficha: var(--tinta-1); --tinta-ficha-suave: var(--tinta-2); --vermelho: var(--gules); --filete-ficha: var(--pergaminho-3);
   container: ficha / inline-size; position: absolute; top: 0; right: 0; bottom: 0; width: var(--largura-ficha); z-index: 30;
@@ -384,8 +391,10 @@ button { font: inherit; color: inherit; }
   .leitura { left: 12px; bottom: calc(26px + var(--alto-ferramentas, 40px) + env(safe-area-inset-bottom, 0px)); gap: 12px; }
   .coordenadas { display: none; } .rosa { width: 52px; height: 52px; }
   .painel { left: 12px; right: 12px; width: auto; top: calc(62px + env(safe-area-inset-top, 0px)); max-height: calc(100% - 150px); }
-  .atlas[data-ficha="1"] .atlas-mapa { right: 0; bottom: 86dvh; }
-  .ficha { top: auto; left: 0; width: 100%; height: 86%; border-radius: 10px 10px 0 0; box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.6); animation-name: ficha-subir; }
+  .atlas[data-ficha="1"] .atlas-mapa { right: 0; bottom: var(--altura-ficha, 86dvh); }
+  .ficha-alca { right: 0; left: 0; top: auto; bottom: calc(var(--altura-ficha, 86dvh) - 22px); width: auto; height: 28px; cursor: row-resize; }
+  .ficha-alca span { width: 44px; height: 5px; opacity: 1; background: rgba(75, 64, 50, 0.45); box-shadow: none; }
+  .ficha { top: auto; left: 0; width: 100%; height: var(--altura-ficha, 86dvh); border-radius: 10px 10px 0 0; box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.6); animation-name: ficha-subir; }
   .ficha-moldura { padding: 22px 22px 30px; } .ficha-nome { font-size: 36px; } .ficha-banda { margin: -22px -22px 0; padding: 18px 22px 8px; } .vitrina { margin-inline: -8px; }
   .ficha .ficha-tecnica { grid-template-columns: 1fr; }
 }
@@ -511,3 +520,8 @@ button { font: inherit; color: inherit; }
   .lightbox-anterior, .lightbox-seguinte { top: auto; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); transform: none; }
   .lightbox-imagem { max-height: calc(100dvh - 210px); }
 }
+
+/* maqueta que não carregou (FalhaMaqueta.tsx) */
+.maqueta-falha { display: grid; place-content: center; gap: 10px; text-align: center; min-height: 220px; }
+.maqueta-falha p { margin: 0; font-style: italic; }
+.maqueta-falha button { justify-self: center; padding: 6px 14px; cursor: pointer; border: 1px solid currentColor; background: transparent; font: 500 13px/1 var(--versaletes); letter-spacing: 0.1em; }

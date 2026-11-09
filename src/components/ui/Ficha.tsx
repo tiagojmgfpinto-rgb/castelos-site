@@ -5,6 +5,8 @@ import { caminhoFicha } from "../../lib/rotas";
 import { REGIOES, TIPOLOGIAS } from "../../lib/tipologias";
 import { useAtlas, type MonumentoResumo } from "../atlas/store";
 import { dadosMaqueta } from "../maqueta/dados";
+import { FalhaMaqueta } from "../maqueta/FalhaMaqueta";
+import { AlcaFicha } from "./AlcaFicha";
 import { FichaConteudo, gms } from "./FichaConteudo";
 
 const Maqueta = lazy(() => import("../maqueta/Maqueta"));
@@ -29,6 +31,8 @@ export function Ficha({ m, monumentos, onFechar }: { m: MonumentoResumo; monumen
   const local = [m.localidade, m.concelho !== m.localidade ? m.concelho : null, m.distrito.replace(/^Região Autónoma d[aos]+ /, ""), REGIOES[m.regiao]].filter((x, i, a) => x && a.indexOf(x) === i).join(" · ");
 
   return (
+    <>
+    <AlcaFicha ficha={corpo} />
     <aside className="ficha" aria-label={`Ficha: ${m.nome}`} ref={corpo}>
       <div className="ficha-moldura">
         <div className="ficha-banda">
@@ -50,9 +54,11 @@ export function Ficha({ m, monumentos, onFechar }: { m: MonumentoResumo; monumen
 
         <section className="vitrina" aria-label="Maqueta 3D interativa">
           {atual && dados ? (
-            <Suspense fallback={<div className="ficha-maqueta-palco"><p>A preparar a maqueta…</p></div>}>
-              <Maqueta url={`${BASE}${atual.ficheiro}`} capa={atual.capa} dados={dados} provisoria={atual.provisoria} onVoltarMapa={onFechar} />
-            </Suspense>
+            <FalhaMaqueta url={`${BASE}${atual.ficheiro}`}>
+              <Suspense fallback={<div className="ficha-maqueta-palco"><p>A preparar a maqueta…</p></div>}>
+                <Maqueta url={`${BASE}${atual.ficheiro}`} capa={atual.capa} dados={dados} provisoria={atual.provisoria} onVoltarMapa={onFechar} />
+              </Suspense>
+            </FalhaMaqueta>
           ) : (
             <>
               <div className="ficha-maqueta-palco">
@@ -102,5 +108,6 @@ export function Ficha({ m, monumentos, onFechar }: { m: MonumentoResumo; monumen
         </div>
       </div>
     </aside>
+    </>
   );
 }
