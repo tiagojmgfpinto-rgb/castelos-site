@@ -25,6 +25,8 @@ REGIONS = {
     "continente": (-12.5, 35.8, -3.0, 43.2),
     # moldura larga, de menor resolução: quase toda a Península, o Atlântico e as pontas de França e de Marrocos
     "continente-moldura": (-16.0, 33.0, 1.6, 46.6),
+    # moldura do mapa único (build_tiles.py, "portugal"): dos Açores à Catalunha e das Landes às Canárias
+    "portugal-moldura": (-37.0, 17.0, 4.0, 47.5),
     "acores": (-32.5, 35.5, -23.5, 41.0),
     "madeira": (-17.7, 32.0, -15.8, 33.6),
 }

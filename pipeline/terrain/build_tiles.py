@@ -33,19 +33,23 @@ CACHE = Path(os.environ.get("CASTELOS_CACHE", ROOT / ".cache"))
 NE = Path(os.environ.get("NATURAL_EARTH_DIR", CACHE / "naturalearth"))
 TILE = 256
 
+# Projeção do mapa único (como o castillos.site, que leva as Canárias no mesmo mapa da Península): cónica
+# conforme de Lambert com o centro em Portugal Continental, paralelos 34° e 41°. O Continente fica como estava
+# (meridiano central e origem do PT-TM06) e os Açores e a Madeira aparecem na posição real, um pouco rodados.
+PT_LCC = ("+proj=lcc +lat_0=39.6682583333333 +lon_0=-8.13310833333333 +lat_1=34 +lat_2=41 "
+          "+x_0=0 +y_0=0 +ellps=GRS80 +units=m +no_defs")
+
 TERRITORIES = {
     # crs, canto superior esquerdo (m), lado do quadrado (m), nível máximo,
     # nível a partir do qual só se gera onde há Portugal
     # sea_max: até este nível geram-se também os mosaicos só de mar (batimetria)
-    # O Continente ocupa o centro de um quadrado de 1228,8 km que abarca quase toda a Península, como uma
-    # maqueta sobre a mesa: fora do Copernicus (Portugal e a margem de Espanha) o relevo vem da moldura larga.
-    "continente": dict(crs="EPSG:3763", x0=-567200, y0=607200, size=1228800, max_level=6, pt_only_from=5, sea_max=4,
-                       dem="dem_continente_3s.tif", bathy="bathy_continente_z9.tif", moldura="bathy_continente-moldura_z8.tif",
-                       name="Portugal Continental"),
-    "acores": dict(crs="EPSG:5015", x0=100000, y0=4560000, size=614400, max_level=6, pt_only_from=0, sea_max=3,
-                   dem="dem_acores_3s.tif", bathy="bathy_acores_z9.tif", name="Açores"),
-    "madeira": dict(crs="EPSG:5016", x0=260000, y0=3700000, size=153600, max_level=4, pt_only_from=0, sea_max=2,
-                    dem="dem_madeira_3s.tif", bathy="bathy_madeira_z9.tif", name="Madeira"),
+    # terra_km: entre sea_max e pt_only_from geram-se os mosaicos com terra a menos desta distância de Portugal
+    # Quadrado de 3072 km, das Flores à Catalunha e das Landes às Canárias; fora do Copernicus o relevo vem das molduras.
+    "portugal": dict(crs=PT_LCC, x0=-2300000, y0=700000, size=3200000, max_level=7, pt_only_from=6, sea_max=4, terra_km=450,
+                     dem=["dem_continente_3s.tif", "dem_acores_3s.tif", "dem_madeira_3s.tif"],
+                     bathy=["bathy_continente_z9.tif", "bathy_acores_z9.tif", "bathy_madeira_z9.tif"],
+                     moldura=["bathy_continente-moldura_z8.tif", "bathy_portugal-moldura_z7.tif"],
+                     name="Portugal"),
 }
 
 
@@ -106,11 +110,21 @@ def warp(src, tr, crs, res, n):
 def build_tile(cfg, level, tx, ty, srcs, cmap):
     res, tr = tile_transform(cfg, level, tx, ty)
     n = TILE + 1
-    dem, bathy, moldura = srcs
-    larga = warp(moldura, tr, cfg["crs"], res, n)
-    h = warp(dem, tr, cfg["crs"], res, n)
+    dems, bathys, molduras = srcs
+
+    def primeiro(fontes):
+        """Cada amostra vem da primeira fonte que a cobre."""
+        a = np.full((n, n), np.nan, dtype=np.float32)
+        for f in fontes:
+            if f is None or not np.isnan(a).any():
+                continue
+            a = np.where(np.isnan(a), warp(f, tr, cfg["crs"], res, n), a)
+        return a
+
+    larga = primeiro(molduras)
+    h = primeiro(dems)
     h = np.where(np.isnan(h), larga, h)
-    b = warp(bathy, tr, cfg["crs"], res, n)
+    b = primeiro(bathys)
     b = np.where(np.isnan(b), larga, b)
     h, b = np.nan_to_num(h), np.nan_to_num(b)
     shapes = []
@@ -141,19 +155,20 @@ def build_tiles(key, cfg):
     frame = box(cfg["x0"], cfg["y0"] - cfg["size"], cfg["x0"] + cfg["size"], cfg["y0"])
     tinv = Transformer.from_crs(cfg["crs"], "EPSG:4326", always_xy=True)
     frame_wgs84 = shp_transform(lambda x, y, z=None: tinv.transform(x, y), frame.segmentize(5000))
-    cmap = countries(cfg["crs"], frame_wgs84 if key == "continente" else None)
+    cmap = countries(cfg["crs"], frame_wgs84)
     urb = urban(cfg["crs"], frame_wgs84)
     if urb is not None:
         cmap["URB"] = urb
     pt = prep(cmap["PRT"])
-    terra = prep(unary_union([g for g in (cmap.get("PRT"), cmap.get("OUT")) if g is not None]))
+    perto = cmap["PRT"].buffer(cfg.get("terra_km", 1e5) * 1000)
+    terra = prep(unary_union([g for g in (cmap.get("PRT"), cmap.get("OUT")) if g is not None]).intersection(perto))
     manifest = dict(
         id=key, name=cfg["name"], crs=cfg["crs"], x0=cfg["x0"], y0=cfg["y0"], size=cfg["size"],
         tileSize=TILE, maxLevel=cfg["max_level"], encoding="rg16_5x_plus8000_b_class", levels={},
     )
     hmin, hmax = 1e9, -1e9
     abrir = lambda nome: rasterio.open(CACHE / nome) if nome and (CACHE / nome).exists() else None
-    srcs = [abrir(cfg["dem"]), abrir(cfg["bathy"]), abrir(cfg.get("moldura"))]
+    srcs = [[abrir(f) for f in cfg["dem"]], [abrir(f) for f in cfg["bathy"]], [abrir(f) for f in cfg.get("moldura", [])]]
     try:
         for level in range(cfg["max_level"] + 1):
             tiles = []
@@ -177,7 +192,7 @@ def build_tiles(key, cfg):
             manifest["levels"][level] = tiles
             print(f"{key} nível {level}: {len(tiles)} mosaicos, {cfg['size'] / (TILE * 2**level):.1f} m/amostra", flush=True)
     finally:
-        for s_ in srcs:
+        for s_ in (x for grupo in srcs for x in grupo):
             if s_ is not None:
                 s_.close()
     manifest["heightRange"] = [round(hmin, 1), round(hmax, 1)]
@@ -187,10 +202,15 @@ def build_tiles(key, cfg):
 
 def sample_heights(key, cfg, coords):
     """Altitude (m) em cada vértice, lida do nível mais fino gerado."""
-    with rasterio.open(CACHE / cfg["dem"]) as src:
-        t = Transformer.from_crs(cfg["crs"], "EPSG:4326", always_xy=True)
-        lon, lat = t.transform(np.array([c[0] for c in coords]), np.array([c[1] for c in coords]))
-        vals = np.array([v[0] for v in src.sample(list(zip(lon, lat)))], dtype=np.float32)
+    t = Transformer.from_crs(cfg["crs"], "EPSG:4326", always_xy=True)
+    lon, lat = t.transform(np.array([c[0] for c in coords]), np.array([c[1] for c in coords]))
+    vals = np.zeros(len(coords), dtype=np.float32)
+    for nome in cfg["dem"]:
+        if not (CACHE / nome).exists():
+            continue
+        with rasterio.open(CACHE / nome) as src:
+            v = np.array([x[0] for x in src.sample(list(zip(lon, lat)))], dtype=np.float32)
+        vals = np.maximum(vals, np.nan_to_num(v, nan=0.0))
     return np.maximum(vals, 0)
 
 
@@ -236,7 +256,7 @@ def build_lines(key, cfg, cmap):
         coast = as_lines(pt.boundary.difference(es.buffer(800)))
         data["fronteira"] = lines_out(border, key, cfg, 150)
         # costas e fronteiras dos outros países, mais finas
-        outros = cmap["OUT"].intersection(frame)
+        outros = cmap["OUT"].intersection(frame).intersection(cmap["PRT"].buffer(600000))
         es_coast = outros.boundary.difference(pt.buffer(800)).difference(frame.exterior.buffer(500))
         data["costaEspanha"] = lines_out(as_lines(es_coast), key, cfg, 300)
     else:
@@ -252,7 +272,8 @@ def build_lines(key, cfg, cmap):
         g = proj(shape(f["geometry"])).intersection(frame)
         if g.is_empty:
             continue
-        dists.append((p["name"].replace(" District", "").replace(" Autonomous region", ""), g))
+        nome = p["name"].replace(" District", "").replace(" Autonomous region", "")
+        dists.append(({"Azores": "Açores"}.get(nome, nome), g))
     inner = unary_union([g.boundary for _, g in dists]).difference(pt.boundary.buffer(600))
     data["distritos"] = lines_out(as_lines(inner), key, cfg, 150)
     tinv = Transformer.from_crs(cfg["crs"], "EPSG:4326", always_xy=True)

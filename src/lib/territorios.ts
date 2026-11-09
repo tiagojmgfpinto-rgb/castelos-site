@@ -1,9 +1,11 @@
 import proj4 from "proj4";
 
-// Projeções oficiais (DGT): PT-TM06/ETRS89 no Continente, PTRA08-UTM nas regiões autónomas.
-proj4.defs("EPSG:3763", "+proj=tmerc +lat_0=39.6682583333333 +lon_0=-8.13310833333333 +k=1 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
-proj4.defs("EPSG:5015", "+proj=utm +zone=26 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
-proj4.defs("EPSG:5016", "+proj=utm +zone=28 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
+// Um só mapa para o Continente, os Açores e a Madeira, como o castillos.site com as Canárias: cónica conforme
+// de Lambert com o centro em Portugal Continental (meridiano e origem do PT-TM06), paralelos 34° e 41°.
+// Igual a PT_LCC em pipeline/terrain/build_tiles.py.
+export const MAPA = "portugal";
+proj4.defs("PT-LCC", "+proj=lcc +lat_0=39.6682583333333 +lon_0=-8.13310833333333 +lat_1=34 +lat_2=41 +x_0=0 +y_0=0 +ellps=GRS80 +units=m +no_defs");
+const QUADRADO = { crs: "PT-LCC", rotuloProjecao: "Cónica conforme de Lambert · ETRS89", x0: -2300000, y0: 700000, size: 3200000 };
 
 export type TerritorioId = "continente" | "acores" | "madeira";
 
@@ -21,21 +23,18 @@ export interface Territorio {
 }
 
 export const TERRITORIOS: Record<TerritorioId, Territorio> = {
+  // as três regiões partilham o mesmo quadrado de mosaicos (3072 km, igual ao pipeline); muda só a vista
   continente: {
-    id: "continente", nome: "Portugal Continental", crs: "EPSG:3763", rotuloProjecao: "Transversa de Mercator · PT-TM06/ETRS89",
-    // quadrado de 1228,8 km: quase toda a Península, como uma maqueta sobre a mesa (igual ao pipeline)
-    x0: -567200, y0: 607200, size: 1228800,
+    id: "continente", nome: "Portugal Continental", ...QUADRADO,
     vista: { x: 25000, y: -30000, distancia: 1000, inclinacao: 36, rumo: 0, aspectoMin: 0.62 },
   },
   acores: {
-    id: "acores", nome: "Açores", crs: "EPSG:5015", rotuloProjecao: "PTRA08 · UTM 26N",
-    x0: 100000, y0: 4560000, size: 614400,
-    vista: { x: 390000, y: 4250000, distancia: 560, inclinacao: 14, rumo: 0 },
+    id: "acores", nome: "Açores", ...QUADRADO,
+    vista: { x: -1700000, y: 0, distancia: 880, inclinacao: 36, rumo: 0, aspectoMin: 1.1 },
   },
   madeira: {
-    id: "madeira", nome: "Madeira", crs: "EPSG:5016", rotuloProjecao: "PTRA08 · UTM 28N",
-    x0: 260000, y0: 3700000, size: 153600,
-    vista: { x: 335000, y: 3645000, distancia: 150, inclinacao: 16, rumo: 0 },
+    id: "madeira", nome: "Madeira", ...QUADRADO,
+    vista: { x: -806600, y: -718800, distancia: 170, inclinacao: 36, rumo: 0, aspectoMin: 0.8 },
   },
 };
 

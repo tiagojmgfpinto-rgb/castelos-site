@@ -3,7 +3,7 @@ import { BASE } from "../../lib/base";
 import { CIDADES } from "../../data/cidades";
 import { paraCena, projectar, TERRITORIOS, type TerritorioId } from "../../lib/territorios";
 import { REGIOES, TIPOLOGIAS, type Regiao, type Tipologia } from "../../lib/tipologias";
-import { camaraApi } from "../atlas/Camara";
+import { camaraApi, vistaInicial as vistaDoTerritorio } from "../atlas/Camara";
 import { temMaqueta, temVisita, useAtlas, visivel, type MonumentoResumo } from "../atlas/store";
 import { Escudo, IconeTipo, Rosa } from "./Icones";
 
@@ -54,7 +54,7 @@ export function Interface({ monumentos, vistaInicial }: { monumentos: MonumentoR
     s.setFiltroRegiao(null);
     s.setDistritoAtivo(null);
     if (s.territorio !== "continente") s.setTerritorio("continente");
-    else vistaInicial();
+    vistaInicial();
   };
   const emVistaGeral = territorio === "continente" && !distritoAtivo;
 
@@ -237,7 +237,7 @@ function Distritos({ monumentos }: { monumentos: MonumentoResumo[] }) {
     if (d.territorio !== "continente") {
       // nas ilhas, o enquadramento é a vista inicial do arquipélago
       if (s.territorio !== d.territorio) s.setTerritorio(d.territorio);
-      else s.voar({ ...vistaDe(d.territorio) });
+      s.voar({ ...vistaDe(d.territorio) });
       return;
     }
     if (s.territorio !== "continente") s.setTerritorio("continente");
@@ -270,9 +270,7 @@ function Distritos({ monumentos }: { monumentos: MonumentoResumo[] }) {
 }
 
 function vistaDe(t: TerritorioId) {
-  const v = TERRITORIOS[t].vista;
-  const [x, z] = paraCena(TERRITORIOS[t], v.x, v.y);
-  return { x, z, distancia: v.distancia, inclinacao: v.inclinacao, rumo: v.rumo };
+  return vistaDoTerritorio(t);
 }
 
 function Fontes() {
@@ -283,9 +281,9 @@ function Fontes() {
         <Fechar rotulo="Fechar" />
       </header>
       <p>
-        O mapa é uma maqueta em relevo gerada a partir de dados abertos e projetada no sistema oficial português, <em>PT-TM06/ETRS89</em> (Transversa de Mercator,
-        elipsoide GRS80); os Açores e a Madeira usam o <em>PTRA08</em>. Relevo, fronteiras e castelos passam pela mesma projeção: cada fortaleza cai onde dizem as
-        suas coordenadas GPS.
+        O mapa é uma maqueta em relevo gerada a partir de dados abertos, num único mapa que junta o Continente, os Açores e a Madeira nas suas posições reais.
+        A projeção é uma <em>cónica conforme de Lambert</em> sobre o <em>ETRS89</em> (elipsoide GRS80), com os paralelos 34° e 41° e o centro em Portugal
+        Continental. Relevo, fronteiras e castelos passam pela mesma projeção: cada fortaleza cai onde dizem as suas coordenadas GPS.
       </p>
       <dl>
         <div><dt>Relevo</dt><dd>Copernicus DEM GLO-30 (Agência Espacial Europeia, via AWS Open Data)</dd></div>

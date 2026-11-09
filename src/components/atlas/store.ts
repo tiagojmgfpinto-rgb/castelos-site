@@ -129,7 +129,7 @@ export const useAtlas = create<Estado>((set) => ({
   rumoAtual: 0,
   roda: null,
   setRoda: (roda) => set({ roda }),
-  setTerritorio: (territorio) => set({ territorio, selecionado: null, sobre: null, voo: null, carregamento: 0, roda: null }),
+  setTerritorio: (territorio) => set({ territorio, sobre: null }),
   selecionar: (selecionado) => set({ selecionado, roda: null }),
   setSobre: (sobre) => set({ sobre }),
   alternarTipologia: (t) =>
