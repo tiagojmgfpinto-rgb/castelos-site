@@ -90,7 +90,9 @@
         0.0,
         476.4,
         0.0
-      ]
+      ],
+      "desde": 1258,
+      "desdeTexto": "reinados de D. Afonso III e D. Dinis (1258–1278)"
     },
     {
       "id": "coroamento",
@@ -140,7 +142,9 @@
         -1.0,
         0.35,
         -0.1
-      ]
+      ],
+      "desde": 1258,
+      "desdeTexto": "1258–1278"
     },
     {
       "id": "porta_sul",
@@ -165,7 +169,9 @@
         0.02,
         0.25,
         1.0
-      ]
+      ],
+      "desde": 1258,
+      "desdeTexto": "cerca medieval (1258–1278)"
     },
     {
       "id": "porta_norte",
@@ -190,7 +196,9 @@
         -0.5,
         0.2,
         -0.87
-      ]
+      ],
+      "desde": 1666,
+      "desdeTexto": "c. 1666, na muralha abaluartada"
     },
     {
       "id": "postigo",
@@ -264,7 +272,9 @@
         0.98,
         0.5,
         -0.2
-      ]
+      ],
+      "desde": 1666,
+      "desdeTexto": "c. 1666; o revelim principal c. 1720"
     },
     {
       "id": "museu",
@@ -359,6 +369,28 @@
         "orto"
       ],
       "resumo": "Árvores à volta"
+    }
+  ],
+  "epocas": [
+    {
+      "id": "medieval",
+      "nome": "Castelo medieval",
+      "ate": 1640,
+      "periodo": "1258–1278",
+      "texto": "O castelo é erguido no reinado de D. Afonso III, no reforço das defesas da fronteira (Lindoso aparece nas Inquirições de 1258), e D. Dinis manda reforçá-lo e ampliá-lo em 1278.",
+      "fontes": [
+        "wiki"
+      ]
+    },
+    {
+      "id": "restauracao",
+      "nome": "Guerra da Restauração",
+      "ate": 1720,
+      "periodo": "1641 a c. 1720",
+      "texto": "O castelo serve de base às incursões na Galiza e é tomado pelos espanhóis por volta de 1663. A cerca medieval é envolvida por uma muralha abaluartada, acabada por volta de 1666; o revelim principal fica pronto por volta de 1720.",
+      "fontes": [
+        "wiki"
+      ]
     }
   ]
 }

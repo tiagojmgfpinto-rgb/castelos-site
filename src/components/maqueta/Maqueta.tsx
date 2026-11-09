@@ -4,7 +4,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import * as THREE from "three";
 import { MeshBVH, acceleratedRaycast } from "three-mesh-bvh";
 import { BASE } from "../../lib/base";
-import { CAMADAS_TERRENO, ESTADOS, elementosComPlaca, type DadosMaqueta, type ElementoMaqueta } from "./dados";
+import { CAMADAS_TERRENO, ESTADOS, elementosComPlaca, vistaEpoca, type DadosMaqueta, type ElementoMaqueta, type EpocaMaqueta } from "./dados";
 import { alturaLinha, disporPlacas, type OpcoesDisposicao } from "./placas";
 import { Ambiente, LUZ, Oclusao, aplicarTom, ecraTatil } from "./Luz";
 
@@ -28,6 +28,9 @@ const EIXO_Y = new THREE.Vector3(0, 1, 0);
 const VEL_GIRO = (2 * Math.PI) / 90; // uma volta em 90 s
 const RETOMA_GIRO = 5; // segundos sem interação até o giro recomeçar
 const SEM_PLACA_OCULTA = ["vegetacao"]; // as copas não escondem placas (pisca-pisca entre folhas)
+const NENHUM = new Set<string>();
+const semRaio = () => undefined;
+const raioOriginal = new WeakMap<THREE.Mesh, THREE.Mesh["raycast"]>();
 
 /** Estado de cada placa flutuante, atualizado a cada fotograma sem passar pelo React. */
 interface Placa {
@@ -65,6 +68,7 @@ export default function Maqueta({ url, capa, dados, provisoria, onVoltarMapa }: 
   const [sel, setSel] = useState<string | null>(null);
   const [notas, setNotas] = useState(false);
   const [pedidoEnquadrar, setPedidoEnquadrar] = useState(0);
+  const [epocaId, setEpocaId] = useState<string | null>(null);
   const caixa = useRef<HTMLDivElement>(null);
   const bussola = useRef<HTMLDivElement>(null);
   const escala = useRef<HTMLDivElement>(null);
@@ -76,6 +80,13 @@ export default function Maqueta({ url, capa, dados, provisoria, onVoltarMapa }: 
   const elementos = useMemo(() => new Map(dados.elementos.map((e) => [e.id, e])), [dados]);
   const elemento = sel ? elementos.get(sel) : undefined;
   const placas = useMemo(() => elementosComPlaca(dados), [dados]);
+  const epoca = dados.epocas?.find((e) => e.id === epocaId) ?? null;
+  const vista = useMemo(() => vistaEpoca(dados, epoca), [dados, epoca]);
+
+  // Ao mudar de época, larga o elemento selecionado se ele ainda não existia
+  useEffect(() => {
+    if (sel && vista.ocultos.has(sel)) setSel(null);
+  }, [sel, vista]);
 
   const ampliar = useCallback(() => {
     const el = caixa.current;
@@ -134,6 +145,7 @@ export default function Maqueta({ url, capa, dados, provisoria, onVoltarMapa }: 
               camadaPlacas={camadaPlacas}
               pausa={pausa}
               terreno={terreno}
+              ocultos={vista.ocultos}
               pedidoEnquadrar={pedidoEnquadrar}
               bussola={bussola}
               escala={escala}
@@ -192,7 +204,60 @@ export default function Maqueta({ url, capa, dados, provisoria, onVoltarMapa }: 
           <button key={nome} aria-pressed={ativo} onClick={f}>{nome}</button>
         ))}
       </div>
+      {dados.epocas && dados.epocas.length > 0 && (
+        <SeletorEpoca epocas={dados.epocas} epoca={epoca} dados={dados} semData={vista.semData} nOcultos={vista.ocultos.size} onEscolher={setEpocaId} onIr={setSel} />
+      )}
       <p className="maqueta-ajuda">Arraste para rodar · roda ou dois dedos para aproximar · botão direito para deslocar · clique numa placa ou num elemento para o identificar.</p>
+    </div>
+  );
+}
+
+/**
+ * Épocas da maqueta: cada uma mostra só o que hoje existe e que, segundo as fontes, já existia nesse tempo.
+ * As partes desaparecidas não se reconstroem (não se inventa); o que está de pé mostra-se na forma atual.
+ */
+function SeletorEpoca({ epocas, epoca, dados, semData, nOcultos, onEscolher, onIr }: {
+  epocas: EpocaMaqueta[];
+  epoca: EpocaMaqueta | null;
+  dados: DadosMaqueta;
+  semData: ElementoMaqueta[];
+  nOcultos: number;
+  onEscolher: (id: string | null) => void;
+  onIr: (id: string) => void;
+}) {
+  const opcoes: [string | null, string][] = [...epocas.map((e): [string, string] => [e.id, e.nome]), [null, "Hoje"]];
+  return (
+    <div className="maqueta-epocas">
+      <div className="maqueta-epocas-botoes" role="toolbar" aria-label="Épocas históricas">
+        {opcoes.map(([id, nome]) => (
+          <button key={id ?? "hoje"} aria-pressed={(epoca?.id ?? null) === id} onClick={() => onEscolher(id)}>{nome}</button>
+        ))}
+      </div>
+      {epoca && (
+        <div className="maqueta-epoca" aria-live="polite">
+          <p className="maqueta-epoca-periodo">{epoca.periodo}</p>
+          <p>{epoca.texto}</p>
+          <p className="maqueta-epoca-nota">
+            {nOcultos === 1 ? "Esconde-se o elemento posterior a esta época. " : nOcultos > 1 ? `Escondem-se os ${nOcultos} elementos posteriores a esta época. ` : ""}
+            O que fica à vista está na forma de hoje: as partes que entretanto desapareceram não se reconstituem, e o terreno e o casario são os atuais.
+          </p>
+          {semData.length > 0 && (
+            <p className="maqueta-epoca-nota">
+              Sem data nas fontes (ficam à vista):{" "}
+              {semData.map((e, i) => (
+                <span key={e.id}>{i > 0 && ", "}<button type="button" className="maqueta-epoca-ir" onClick={() => onIr(e.id)}>{e.nome}</button></span>
+              ))}.
+            </p>
+          )}
+          <ul className="maqueta-fontes">
+            {epoca.fontes.map((k) => {
+              const f = dados.fontes[k];
+              if (!f) return null;
+              return <li key={k}>{f.url ? <a href={f.url} target="_blank" rel="noopener">{f.titulo}</a> : f.titulo}</li>;
+            })}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
@@ -208,6 +273,7 @@ function FichaElemento({ e, dados, onFechar }: { e: ElementoMaqueta; dados: Dado
         <li>Confiança {e.confianca}</li>
       </ul>
       <p>{e.descricao}</p>
+      {e.desdeTexto && <p className="maqueta-elemento-medidas">Data: {e.desdeTexto}.</p>}
       {e.medidas && <p className="maqueta-elemento-medidas">{e.medidas}</p>}
       <ul className="maqueta-fontes">
         {e.fontes.map((k) => {
@@ -220,7 +286,7 @@ function FichaElemento({ e, dados, onFechar }: { e: ElementoMaqueta; dados: Dado
   );
 }
 
-function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, direcao, sol, distanciaMinima, camadaPlacas, pausa, terreno, pedidoEnquadrar, bussola, escala, escalaTexto, onCarregada }: {
+function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, direcao, sol, distanciaMinima, camadaPlacas, pausa, terreno, ocultos = NENHUM, pedidoEnquadrar, bussola, escala, escalaTexto, onCarregada }: {
   url: string;
   elementos: Map<string, ElementoMaqueta>;
   sel: string | null;
@@ -235,6 +301,7 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, d
   camadaPlacas: React.RefObject<HTMLDivElement | null>;
   pausa: React.RefObject<boolean>;
   terreno: boolean;
+  ocultos?: Set<string>;
   pedidoEnquadrar: number;
   bussola: React.RefObject<HTMLDivElement | null>;
   escala: React.RefObject<HTMLDivElement | null>;
@@ -387,6 +454,15 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, d
   }, [sel, alvos, porElemento, camera, elementos, distancia]);
 
   useEffect(() => {
+    // Época: os elementos que ainda não existiam escondem-se e deixam de apanhar cliques e de tapar placas
+    porElemento.forEach((meshes, id) => {
+      const fora = ocultos.has(id);
+      for (const m of meshes) {
+        if (!raioOriginal.has(m)) raioOriginal.set(m, m.raycast);
+        m.visible = !fora;
+        m.raycast = fora ? semRaio : raioOriginal.get(m)!;
+      }
+    });
     CAMADAS_TERRENO.forEach((n) => {
       const o = scene.getObjectByName(n);
       if (o) o.visible = terreno;
@@ -395,7 +471,7 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, d
     if (base) base.visible = terreno;
     const visivel = (o: THREE.Object3D | null): boolean => !o || (o.visible && visivel(o.parent));
     oclusores.current = malhas.filter((m) => visivel(m) && !SEM_PLACA_OCULTA.includes(idDe.get(m) ?? ""));
-  }, [terreno, scene, malhas, idDe]);
+  }, [terreno, ocultos, scene, malhas, idDe, porElemento]);
 
   useEffect(() => {
     const c = controlos.current;
@@ -480,7 +556,7 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, d
         const hit = raio.intersectObjects(oclusores.current, false)[0];
         p.tapada = !!hit && idDe.get(hit.object) !== p.id;
       }
-      return { x, y, w: p.w, h: p.h, candidata: rotulos && dentro && !p.tapada && t >= p.inicio };
+      return { x, y, w: p.w, h: p.h, candidata: rotulos && dentro && !p.tapada && !ocultos.has(p.id) && t >= p.inicio };
     });
     const lugares = disporPlacas(noEcra, o);
     const kOp = 1 - Math.exp(-dt * 5);

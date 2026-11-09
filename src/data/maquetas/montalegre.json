@@ -98,7 +98,9 @@
         0.0,
         1041.2,
         0.0
-      ]
+      ],
+      "desde": 1331,
+      "desdeTexto": "obra acabada em 1331, com D. Afonso IV"
     },
     {
       "id": "coroamento",
@@ -218,7 +220,9 @@
         0.29,
         0.3,
         0.96
-      ]
+      ],
+      "desde": 1331,
+      "desdeTexto": "obra acabada em 1331, com D. Afonso IV"
     },
     {
       "id": "torre_s",
@@ -244,7 +248,9 @@
         -0.45,
         0.3,
         0.89
-      ]
+      ],
+      "desde": 1331,
+      "desdeTexto": "obra acabada em 1331, com D. Afonso IV"
     },
     {
       "id": "torre_so",
@@ -268,7 +274,9 @@
         -0.96,
         0.3,
         0.29
-      ]
+      ],
+      "desde": 1331,
+      "desdeTexto": "obra acabada em 1331, com D. Afonso IV"
     },
     {
       "id": "cerca",
@@ -294,7 +302,9 @@
         1.0,
         0.3,
         -0.1
-      ]
+      ],
+      "desde": 1331,
+      "desdeTexto": "obra acabada em 1331, com D. Afonso IV"
     },
     {
       "id": "corredor",
@@ -477,6 +487,18 @@
         "orto"
       ],
       "resumo": "Árvores"
+    }
+  ],
+  "epocas": [
+    {
+      "id": "gotico",
+      "nome": "Castelo gótico",
+      "ate": 1579,
+      "periodo": "1273–1331",
+      "texto": "D. Afonso III dá foral a Montalegre em 1273, e o castelo terá começado por esta altura; é construído no reinado de D. Dinis e acaba em 1331, segundo a inscrição na base de uma das torres do sul. Em 1509 Duarte de Armas desenha-o com duas linhas de muralhas exteriores, hoje desaparecidas.",
+      "fontes": [
+        "wiki"
+      ]
     }
   ]
 }

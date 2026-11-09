@@ -96,7 +96,9 @@
         "lidar",
         "fotos"
       ],
-      "resumo": "Torre de D. Dinis, c. 27 m, ao centro da praça de armas"
+      "resumo": "Torre de D. Dinis, c. 27 m, ao centro da praça de armas",
+      "desde": 1300,
+      "desdeTexto": "fim do séc. XIII–XIV, obras de D. Dinis, de que resulta o edifício atual"
     },
     {
       "id": "passadico",
@@ -124,7 +126,9 @@
         "orto",
         "fotos"
       ],
-      "resumo": "Entrada a leste, com escadaria semicircular"
+      "resumo": "Entrada a leste, com escadaria semicircular",
+      "desde": 1300,
+      "desdeTexto": "fim do séc. XIII–XIV, obras de D. Dinis; as torres que protegem as portas são de D. João I (1383–1433)"
     },
     {
       "id": "porta_traicao",
@@ -139,7 +143,9 @@
         "lidar",
         "orto"
       ],
-      "resumo": "Porta falsa em arco quebrado, a oeste"
+      "resumo": "Porta falsa em arco quebrado, a oeste",
+      "desde": 1300,
+      "desdeTexto": "fim do séc. XIII–XIV, obras de D. Dinis; as torres que protegem as portas são de D. João I (1383–1433)"
     },
     {
       "id": "alcacova",
@@ -154,7 +160,9 @@
         "lidar",
         "fotos"
       ],
-      "resumo": "Restos da residência, a norte"
+      "resumo": "Restos da residência, a norte",
+      "desde": 1300,
+      "desdeTexto": "fim do séc. XIII–XIV, obras de D. Dinis, de que resulta o edifício atual"
     },
     {
       "id": "muralha_nascente",
@@ -169,7 +177,9 @@
         "lidar",
         "orto",
         "fotos"
-      ]
+      ],
+      "desde": 1300,
+      "desdeTexto": "fim do séc. XIII–XIV, obras de D. Dinis, de que resulta o edifício atual"
     },
     {
       "id": "muralha_nascente_norte",
@@ -184,7 +194,9 @@
         "lidar",
         "orto",
         "fotos"
-      ]
+      ],
+      "desde": 1300,
+      "desdeTexto": "fim do séc. XIII–XIV, obras de D. Dinis, de que resulta o edifício atual"
     },
     {
       "id": "muralha_noroeste",
@@ -199,7 +211,9 @@
         "lidar",
         "orto",
         "fotos"
-      ]
+      ],
+      "desde": 1300,
+      "desdeTexto": "fim do séc. XIII–XIV, obras de D. Dinis, de que resulta o edifício atual"
     },
     {
       "id": "muralha_sudoeste",
@@ -214,7 +228,9 @@
         "lidar",
         "orto",
         "fotos"
-      ]
+      ],
+      "desde": 1300,
+      "desdeTexto": "fim do séc. XIII–XIV, obras de D. Dinis, de que resulta o edifício atual"
     },
     {
       "id": "muralha_sul",
@@ -229,7 +245,9 @@
         "lidar",
         "orto",
         "fotos"
-      ]
+      ],
+      "desde": 1300,
+      "desdeTexto": "fim do séc. XIII–XIV, obras de D. Dinis, de que resulta o edifício atual"
     },
     {
       "id": "torre_nordeste",
@@ -245,7 +263,9 @@
         "orto",
         "fotos"
       ],
-      "resumo": "Torre de canto com telhado"
+      "resumo": "Torre de canto com telhado",
+      "desde": 1300,
+      "desdeTexto": "fim do séc. XIII–XIV, obras de D. Dinis, de que resulta o edifício atual"
     },
     {
       "id": "torre_sul",
@@ -261,7 +281,9 @@
         "orto",
         "fotos"
       ],
-      "resumo": "Torre com telhado e a antiga porta entaipada"
+      "resumo": "Torre com telhado e a antiga porta entaipada",
+      "desde": 1300,
+      "desdeTexto": "fim do séc. XIII–XIV, obras de D. Dinis, de que resulta o edifício atual"
     },
     {
       "id": "torre_sudoeste",
@@ -276,7 +298,9 @@
         "lidar",
         "orto",
         "fotos"
-      ]
+      ],
+      "desde": 1300,
+      "desdeTexto": "fim do séc. XIII–XIV, obras de D. Dinis, de que resulta o edifício atual"
     },
     {
       "id": "torre_noroeste",
@@ -291,7 +315,9 @@
         "lidar",
         "orto",
         "fotos"
-      ]
+      ],
+      "desde": 1300,
+      "desdeTexto": "fim do séc. XIII–XIV, obras de D. Dinis, de que resulta o edifício atual"
     },
     {
       "id": "muro_arco",
@@ -322,7 +348,9 @@
         "osm",
         "fotos"
       ],
-      "resumo": "Igreja românica do séc. XIII"
+      "resumo": "Igreja românica do séc. XIII",
+      "desde": 1216,
+      "desdeTexto": "primeira referência em 1216, sagrada c. 1239"
     },
     {
       "id": "paco",
@@ -339,7 +367,9 @@
         "orto",
         "fotos"
       ],
-      "resumo": "Paço do séc. XV, reconstruído em 1937–1959"
+      "resumo": "Paço do séc. XV, reconstruído em 1937–1959",
+      "desde": 1420,
+      "desdeTexto": "a partir de c. 1420, reconstruído entre 1937 e 1959"
     },
     {
       "id": "estatua",
@@ -355,7 +385,9 @@
         "lidar",
         "fotos"
       ],
-      "resumo": "Bronze de Soares dos Reis, 1887"
+      "resumo": "Bronze de Soares dos Reis, 1887",
+      "desde": 1887,
+      "desdeTexto": "inaugurada em 1887"
     },
     {
       "id": "terreno",
@@ -404,6 +436,30 @@
       "descricao": "592 árvores nas posições, alturas e raios de copa medidos na nuvem de pontos LiDAR, com forma esquemática.",
       "fontes": [
         "lidar"
+      ]
+    }
+  ],
+  "epocas": [
+    {
+      "id": "dinis",
+      "nome": "Castelo de D. Dinis",
+      "ate": 1419,
+      "periodo": "fim do século XIII e século XIV",
+      "texto": "As obras de D. Dinis dão ao castelo a forma atual, com a torre de menagem e a alcáçova. A Igreja de São Miguel, ao lado, já existia: é referida em 1216 e sagrada por volta de 1239. Do castelo da condessa Mumadona, do século X, não restam vestígios à vista.",
+      "fontes": [
+        "sipa",
+        "wiki"
+      ]
+    },
+    {
+      "id": "paco",
+      "nome": "Paço dos Duques",
+      "ate": 1886,
+      "periodo": "a partir de c. 1420",
+      "texto": "D. João I manda construir as torres que protegem as portas (1383–1433). D. Afonso, primeiro duque de Bragança, começa o Paço por volta de 1420; arruinado durante séculos, foi reconstruído entre 1937 e 1959.",
+      "fontes": [
+        "sipa",
+        "paco"
       ]
     }
   ]

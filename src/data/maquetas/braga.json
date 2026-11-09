@@ -81,7 +81,9 @@
         0.0,
         219.5,
         -0.0
-      ]
+      ],
+      "desde": 1300,
+      "desdeTexto": "c. 1300, D. Dinis"
     },
     {
       "id": "balcoes",
@@ -106,7 +108,9 @@
         -0.44,
         0.3,
         0.88
-      ]
+      ],
+      "desde": 1367,
+      "desdeTexto": "reinado de D. Fernando (1367–1383)"
     },
     {
       "id": "janela_geminada",
@@ -131,7 +135,9 @@
         0.31,
         0.35,
         0.95
-      ]
+      ],
+      "desde": 1398,
+      "desdeTexto": "1398, adaptação da torre a residência"
     },
     {
       "id": "porta",
@@ -156,7 +162,9 @@
         1.03,
         0.35,
         -0.08
-      ]
+      ],
+      "desde": 1300,
+      "desdeTexto": "c. 1300, com o escudo de D. Dinis"
     },
     {
       "id": "escada",
@@ -250,6 +258,39 @@
         "orto"
       ],
       "resumo": "Árvore a noroeste da torre"
+    }
+  ],
+  "epocas": [
+    {
+      "id": "dinis",
+      "nome": "Castelo de D. Dinis",
+      "ate": 1366,
+      "periodo": "c. 1300",
+      "texto": "D. Dinis manda construir o castelo e a torre de menagem, como atesta o escudo real por cima da porta da torre. Do castelo, demolido em 1905–1906, só resta a torre.",
+      "fontes": [
+        "wiki",
+        "wiki_en"
+      ]
+    },
+    {
+      "id": "fernando",
+      "nome": "D. Fernando",
+      "ate": 1397,
+      "periodo": "1367–1383",
+      "texto": "No reinado de D. Fernando, em que as tropas castelhanas saqueiam Braga (1369), as muralhas são refeitas mais robustas e o coroamento da torre é melhorado com merlões e matacães.",
+      "fontes": [
+        "wiki"
+      ]
+    },
+    {
+      "id": "residencia",
+      "nome": "Residência",
+      "ate": 1904,
+      "periodo": "1398 a 1905",
+      "texto": "Em 1398 o arcebispo D. Martinho Pires de Oliveira obtém licença para reparar o castelo, e a torre é adaptada a residência, com janelas geminadas. O castelo serve também de prisão. Em 1905 é demolido, e fica só a torre.",
+      "fontes": [
+        "wiki"
+      ]
     }
   ]
 }

@@ -91,7 +91,9 @@
         2.0,
         35.5,
         -50.0
-      ]
+      ],
+      "desde": 1290,
+      "desdeTexto": "c. 1290, configuração dada por D. Dinis"
     },
     {
       "id": "porta_traicao",
@@ -108,7 +110,9 @@
         "osm",
         "lidar"
       ],
-      "resumo": "Portal norte de volta perfeita, com duas mísulas por cima"
+      "resumo": "Portal norte de volta perfeita, com duas mísulas por cima",
+      "desde": 1290,
+      "desdeTexto": "c. 1290, configuração dada por D. Dinis"
     },
     {
       "id": "escada_norte",
@@ -138,7 +142,9 @@
         "lidar",
         "fotos"
       ],
-      "resumo": "Arco de volta perfeita entre o castelo e a cerca"
+      "resumo": "Arco de volta perfeita entre o castelo e a cerca",
+      "desde": 1290,
+      "desdeTexto": "c. 1290, configuração dada por D. Dinis"
     },
     {
       "id": "cerca",
@@ -162,7 +168,9 @@
         23.0,
         27.0,
         10.0
-      ]
+      ],
+      "desde": 1290,
+      "desdeTexto": "c. 1290, configuração dada por D. Dinis"
     },
     {
       "id": "porta_sol",
@@ -180,7 +188,9 @@
         "lidar",
         "fotos"
       ],
-      "resumo": "Porta principal, de arco apontado, entre grandes penedos"
+      "resumo": "Porta principal, de arco apontado, entre grandes penedos",
+      "desde": 1290,
+      "desdeTexto": "c. 1290, configuração dada por D. Dinis"
     },
     {
       "id": "porta_fonte",
@@ -195,7 +205,9 @@
         "lidar",
         "fotos"
       ],
-      "resumo": "Porta de verga reta junto à Porta do Sol"
+      "resumo": "Porta de verga reta junto à Porta do Sol",
+      "desde": 1290,
+      "desdeTexto": "c. 1290, configuração dada por D. Dinis"
     },
     {
       "id": "reduto",
@@ -211,7 +223,9 @@
         "orto",
         "fotos"
       ],
-      "resumo": "Cinta de muralha em volta de um penedo, na ponta sul"
+      "resumo": "Cinta de muralha em volta de um penedo, na ponta sul",
+      "desde": 1290,
+      "desdeTexto": "c. 1290, configuração dada por D. Dinis"
     },
     {
       "id": "capela",
@@ -299,6 +313,19 @@
       "fontes": [
         "lidar",
         "autor"
+      ]
+    }
+  ],
+  "epocas": [
+    {
+      "id": "dinis",
+      "nome": "Castelo de D. Dinis",
+      "ate": 1658,
+      "periodo": "c. 1290 a 1659",
+      "texto": "D. Dinis reforma ou reconstrói o castelo, que fica com a configuração atual. Em 1509 Duarte de Armas desenha-o com quatro torres, um cubelo e a torre de menagem ao centro; a torre de menagem desaparece em 1659, quando um raio faz explodir o paiol.",
+      "fontes": [
+        "sipa",
+        "wiki"
       ]
     }
   ]

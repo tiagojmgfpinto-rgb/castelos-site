@@ -14,6 +14,26 @@ export interface ElementoMaqueta {
   ancora?: [number, number, number];
   /** Direção de onde a câmara olha o elemento ao clicar na placa (x este, y cima, z sul), p. ex. para mostrar a fachada. */
   olhar?: [number, number, number];
+  /**
+   * Ano (aproximado) desde quando o elemento existe, segundo as fontes citadas em `fontes`: decide em que épocas
+   * aparece. Sem ele, o elemento não tem data nas fontes e aparece em todas as épocas, assinalado como tal.
+   */
+  desde?: number;
+  /** A mesma data como as fontes a dão (p. ex. "c. 1300", "1656", "século XVIII"). */
+  desdeTexto?: string;
+}
+
+/** Época histórica de uma maqueta: mostra só os elementos que hoje existem e que já existiam até ao ano `ate`. */
+export interface EpocaMaqueta {
+  id: string;
+  nome: string;
+  /** Último ano da época: entram os elementos com `desde` até este ano. */
+  ate: number;
+  /** Como se escreve o período (p. ex. "séculos XIII–XIV"). */
+  periodo: string;
+  /** O que se passou nessa época, tirado das fontes (sem acrescentar factos). */
+  texto: string;
+  fontes: string[];
 }
 
 export interface DadosMaqueta {
@@ -36,6 +56,8 @@ export interface DadosMaqueta {
   /** Distância mínima da câmara ao alvo, em metros (por omissão 22); menor nas maquetas pequenas. */
   distanciaMinima?: number;
   elementos: ElementoMaqueta[];
+  /** Épocas históricas, da mais antiga para a mais recente; a época atual ("Hoje") é implícita. */
+  epocas?: EpocaMaqueta[];
 }
 
 const ficheiros = import.meta.glob<DadosMaqueta>("../../data/maquetas/*.json", { eager: true, import: "default" });
@@ -62,3 +84,26 @@ export function elementosComPlaca(d: DadosMaqueta): ElementoMaqueta[] {
 
 /** Camadas que se escondem com o terreno (ficariam a flutuar sem ele). */
 export const CAMADAS_TERRENO = ["Terreno_grupo", "Vegetacao_grupo", "Vila_grupo", "Caminhos_grupo"];
+
+/** Grupos de contexto (terreno, casario, árvores): são os de hoje e aparecem em todas as épocas. */
+export const GRUPOS_CONTEXTO = ["Envolvente", "Terreno"];
+
+export interface VistaEpoca {
+  /** Elementos que ainda não existiam na época (escondem-se). */
+  ocultos: Set<string>;
+  /** Elementos sem data nas fontes (ficam à vista, assinalados). */
+  semData: ElementoMaqueta[];
+}
+
+/** O que se esconde e o que fica por datar numa época; sem época (hoje), nada se esconde. */
+export function vistaEpoca(d: DadosMaqueta, epoca: EpocaMaqueta | null | undefined): VistaEpoca {
+  const ocultos = new Set<string>();
+  const semData: ElementoMaqueta[] = [];
+  if (!epoca) return { ocultos, semData };
+  for (const e of d.elementos) {
+    if (GRUPOS_CONTEXTO.includes(e.grupo)) continue;
+    if (e.desde === undefined) semData.push(e);
+    else if (e.desde > epoca.ate) ocultos.add(e.id);
+  }
+  return { ocultos, semData };
+}
