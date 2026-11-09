@@ -78,9 +78,9 @@ const GEO_BASE = new THREE.CylinderGeometry(0.34, 0.37, 0.06, 24).translate(0, 0
 const GEO_ANEL = new THREE.RingGeometry(0.62, 0.8, 40).rotateX(-Math.PI / 2).translate(0, 0.02, 0);
 
 // ——— Gestão dos rótulos ———
-// Com o mapa afastado, os nomes não aparecem todos (atropelar-se-iam). Ao passar o rato
-// sobre um monumento, mostra-se o nome dele e dos vizinhos próximos no ecrã, em etiquetas
-// de papel dispostas de modo a não se sobreporem. Perto do chão, mostram-se todos os que couberem.
+// Os nomes dos monumentos não aparecem todos (atropelar-se-iam e, ao aproximar de um castelo, enchiam o ecrã
+// com os nomes dos outros à volta). Mostra-se o do monumento selecionado; ao passar o rato sobre uma torre,
+// o dela e os dos vizinhos próximos no ecrã, como no castillos.site, em etiquetas que não se sobrepõem.
 type Registo = { m: MonumentoResumo; grupo: THREE.Group; el: HTMLDivElement; base: THREE.Vector3 };
 const registos = new Map<string, Registo>();
 // câmara e tamanho do último fotograma, para o toque decidir fora do ciclo de desenho
@@ -120,7 +120,6 @@ export function tocar(id: string) {
   }
 }
 const RAIO_VIZINHOS = 110; // px à volta do monumento sob o rato
-const DIST_TODOS = 140; // km da câmara abaixo dos quais se tentam mostrar todos os nomes
 const ALTURA_ROTULO = 24;
 const DESLOCAMENTOS = [0, -ALTURA_ROTULO, ALTURA_ROTULO, -2 * ALTURA_ROTULO, 2 * ALTURA_ROTULO];
 const RAIO_TOQUE = 18; // px: com o mapa afastado os marcadores são pequenos, por isso o rato "apanha" o mais próximo
@@ -184,7 +183,8 @@ function GestorRotulos() {
         gl.domElement.style.cursor = melhor ? "pointer" : "";
       }
     }
-    const destaque = useAtlas.getState().sobre ?? s.selecionado;
+    // os vizinhos só se mostram à volta da torre sob o rato, não da selecionada
+    const destaque = useAtlas.getState().sobre;
     if (destaque && registos.has(destaque)) {
       const p = proj(registos.get(destaque)!);
       foco = { x: p.x, y: p.y };
@@ -203,8 +203,7 @@ function GestorRotulos() {
       }
       // as torres de uma roda aberta mostram todas o nome: é para isso que se afastaram
       const vizinho = s.roda?.ids.includes(r.m.id) || (foco && Math.hypot(p.x - foco.x, p.y - foco.y) < RAIO_VIZINHOS);
-      const perto = p.d < DIST_TODOS;
-      if (!ativo && !vizinho && !perto) {
+      if (!ativo && !vizinho) {
         r.el.dataset.visivel = "0";
         continue;
       }

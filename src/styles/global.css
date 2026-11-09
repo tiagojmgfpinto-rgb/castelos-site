@@ -453,9 +453,10 @@ html[data-redimensionar] .atlas canvas { pointer-events: none; }
   box-shadow: 0 2px 8px rgba(30, 20, 10, 0.12); backdrop-filter: blur(2px);
   transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
-.maqueta-placa-cartao strong { font-family: var(--serifa-versalete); font-size: 12px; font-weight: 600; letter-spacing: 0.08em; line-height: 1.15; white-space: nowrap; }
+/* nomes e resumos longos quebram em linhas dentro do cartão (antes ficavam numa linha e saíam pela borda) */
+.maqueta-placa-cartao strong { max-width: 100%; font-family: var(--serifa-versalete); font-size: 12px; font-weight: 600; letter-spacing: 0.08em; line-height: 1.15; overflow-wrap: anywhere; text-wrap: balance; }
 .maqueta-placa-cartao em {
-  max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  max-width: 100%; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow-wrap: anywhere; text-wrap: balance;
   font-family: var(--serifa-titulo); font-size: 11px; line-height: 1.2; color: var(--m-suave);
 }
 .maqueta-placa-cartao:hover, .maqueta-placa-cartao:focus-visible {
@@ -492,7 +493,7 @@ html[data-redimensionar] .atlas canvas { pointer-events: none; }
   .maqueta-elemento { max-height: 55%; }
   .maqueta-placa-cartao { max-width: 150px; padding: 1px 6px 2px; }
   .maqueta-placa-cartao strong { font-size: 11px; letter-spacing: 0.05em; }
-  .maqueta--ampliada .maqueta-placa-cartao em { max-width: 138px; font-size: 10.5px; }
+  .maqueta--ampliada .maqueta-placa-cartao em { font-size: 10.5px; }
   .maqueta:not(.maqueta--ampliada) .maqueta-placa-cartao em { display: none; } /* no visor pequeno, só o nome */
 }
 
@@ -540,3 +541,49 @@ html[data-redimensionar] .atlas canvas { pointer-events: none; }
 .maqueta-epoca-periodo { font-family: var(--sans); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--m-vermelho); }
 .maqueta-epoca-nota { font-style: italic; color: var(--m-suave); font-size: 12.5px; }
 .maqueta-epoca-ir { padding: 0; border: 0; background: none; font: inherit; color: var(--m-vermelho); text-decoration: underline; cursor: pointer; }
+
+/* ---------- Catálogo (/castelos/, src/lib/catalogo.ts) ---------- */
+.texto.catalogo { max-width: 1160px; }
+.catalogo-filtros { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 10px 14px; margin: 22px 0 18px; padding: 14px 16px;
+  background: rgba(255, 252, 240, 0.6); border: 1px solid rgba(42, 37, 28, 0.15); font-family: var(--sans); font-size: 13px; }
+.catalogo-filtros[hidden] { display: none; }
+.catalogo-filtros label { display: grid; gap: 4px; min-width: 0; }
+.catalogo-filtros label > span { letter-spacing: 0.08em; color: #6d6150; }
+.catalogo-pesquisa { align-self: end; }
+.catalogo-filtros input[type="search"], .catalogo-filtros select { width: 100%; min-width: 0; height: 36px; padding: 0 10px; font: inherit; font-size: 15px;
+  color: inherit; background: #fffdf6; border: 1px solid rgba(42, 37, 28, 0.3); border-radius: 2px; }
+.catalogo-filtros input[type="search"]:focus, .catalogo-filtros select:focus { outline: 2px solid var(--gules); outline-offset: 0; }
+.catalogo-marcas { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 20px; margin: 0; padding: 0; border: 0; }
+.catalogo-marcas label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.catalogo-marcas input { appearance: none; flex: none; width: 16px; height: 16px; margin: 0; display: grid; place-content: center; cursor: pointer;
+  background: #fffdf6; border: 1px solid rgba(42, 37, 28, 0.45); border-radius: 2px; }
+.catalogo-marcas input:checked { background: var(--gules); border-color: var(--gules); }
+.catalogo-marcas input:checked::after { content: ""; width: 8px; height: 4px; margin-top: -2px; border: solid #fff8ec; border-width: 0 0 2px 2px; transform: rotate(-45deg); }
+.catalogo-marcas input:focus-visible { outline: 2px solid var(--gules); outline-offset: 1px; }
+.catalogo-resumo { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 0; }
+.catalogo-conta { font-weight: 600; }
+.catalogo-resumo button { padding: 5px 10px; font: inherit; cursor: pointer; color: var(--gules); background: none; border: 1px solid rgba(156, 42, 30, 0.4); border-radius: 2px; }
+.catalogo-vazio { margin: 28px 0; font-style: italic; }
+.catalogo section[hidden] { display: none; }
+.catalogo-grelha { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+.catalogo-cartao[hidden] { display: none; }
+.catalogo-cartao a { display: flex; flex-direction: column; height: 100%; color: inherit; text-decoration: none; background: #fffaf0;
+  border: 1px solid rgba(42, 37, 28, 0.14); transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; }
+.catalogo-cartao a:hover, .catalogo-cartao a:focus-visible { border-color: var(--gules); box-shadow: 0 6px 18px rgba(42, 37, 28, 0.14); transform: translateY(-2px); }
+.catalogo-imagem { position: relative; display: block; aspect-ratio: 16 / 10; overflow: hidden; background: #e6dcc4; }
+.catalogo-imagem img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.catalogo-imagem--vazia::after { content: ""; position: absolute; inset: 0; margin: auto; width: 34%; height: 50%; opacity: 0.32;
+  background: center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath fill='%235a4c36' d='M8 38V14h4v4h4v-4h8v4h4v-4h4v24H23v-8a3 3 0 0 0-6 0v8z'/%3E%3C/svg%3E"); }
+.catalogo-imagem--vazia[data-forma="baluarte"]::after { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath fill='%235a4c36' d='M20 3l8 9h8l-4 9 4 9h-8l-8 9-8-9H4l4-9-4-9h8z'/%3E%3C/svg%3E"); }
+.catalogo-texto { display: grid; gap: 2px; padding: 10px 12px 6px; font-size: 15px; line-height: 1.3; }
+.catalogo-texto strong { font-family: var(--serifa-titulo); font-size: 20px; font-weight: 600; line-height: 1.15; overflow-wrap: anywhere; }
+.catalogo-tipo { color: #6d6150; font-size: 14px; }
+.catalogo-etiquetas { display: flex; flex-wrap: wrap; gap: 5px; margin-top: auto; padding: 6px 12px 12px; }
+.catalogo-etiqueta { padding: 2px 7px; font-family: var(--sans); font-size: 11.5px; letter-spacing: 0.04em; border: 1px solid rgba(42, 37, 28, 0.25); border-radius: 2px; }
+.catalogo-etiqueta--maqueta { color: #fff8ec; background: var(--gules); border-color: var(--gules); }
+.catalogo-etiqueta--prep { color: #8a7d64; border-style: dashed; }
+@media (max-width: 720px) {
+  .catalogo-filtros { grid-template-columns: 1fr 1fr; }
+  .catalogo-pesquisa { grid-column: 1 / -1; }
+  .catalogo-grelha { grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 12px; }
+}
