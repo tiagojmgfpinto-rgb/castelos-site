@@ -56,6 +56,23 @@ jobs:
           BASE_PATH: /${{ github.event.repository.name }}/
           SITE_URL: https://${{ github.repository_owner }}.github.io
 
+      # Testes no browser sobre o site compilado (atlas, catálogo, página do monumento com a maqueta, épocas,
+      # lightbox e texto dentro das caixas do visor). Correm antes de publicar: se falharem, o site não muda.
+      - name: Browser dos testes (Playwright)
+        run: npx playwright install --with-deps chromium
+      - name: Testes no browser
+        run: npx playwright test
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: relatorio-playwright
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
+
       - uses: actions/upload-pages-artifact@v3
         if: github.ref == 'refs/heads/main'
         with:
