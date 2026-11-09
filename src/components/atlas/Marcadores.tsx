@@ -9,7 +9,7 @@ import { TIPOLOGIAS } from "../../lib/tipologias";
 import { caixasMonumentos, escolherRotulos, registar, retirar, rotulosMapa, sobrepoe, zonasInterface, type Caixa, type Candidato, type RotuloMapa } from "./rotulosMapa";
 import { agrupar, MAX_RODA, posicoesRoda } from "./roda";
 import { useAtlas, visivel, type MonumentoResumo } from "./store";
-import { EXAGERO, useTerreno } from "./Terrain";
+import { exagero, useTerreno } from "./Terrain";
 
 // Marcadores como pequenas figuras brancas, à maneira do castillos.site: um ícone por tipo de fortificação
 // (torre ameada com pendão para os castelos, pano de muralha entre duas torres para as fortalezas e praças
@@ -416,7 +416,7 @@ function Marcador({ m, x, z, longe }: { m: MonumentoResumo; x: number; z: number
     const show = visivel(m, s);
     g.visible = show;
     const h = terreno?.altitude(x, z) ?? 0;
-    base.set(x, (Math.max(h, 0) / 1000) * EXAGERO, z);
+    base.set(x, (Math.max(h, 0) / 1000) * exagero(), z);
     g.position.copy(base);
     const k = s.roda ? s.roda.ids.indexOf(m.id) : -1;
     if (k >= 0 && s.roda) {
@@ -548,7 +548,7 @@ function Cidade({ nome, nivel, x, z, alt }: { nome: string; nivel: number; x: nu
   useEffect(() => () => retirar(registo), []);
   useFrame(() => {
     if (!ref.current) return;
-    ref.current.position.set(x, (Math.max(alt(), 0) / 1000) * EXAGERO + 0.05, z);
+    ref.current.position.set(x, (Math.max(alt(), 0) / 1000) * exagero() + 0.05, z);
     // as capitais de distrito (nível 1) vêm primeiro; as outras cidades só de perto e depois dos distritos
     registar(registo, el.current && { el: el.current, objeto: ref.current, prio: nivel === 1 ? 0 : 3, ate: nivel === 1 ? 1500 : 420, desde: 0, fixo: true });
   });

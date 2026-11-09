@@ -6,7 +6,7 @@ import { BASE } from "../../lib/base";
 import { CIDADES } from "../../data/cidades";
 import { centro, MAPA, paraCena, projectar, TERRITORIOS } from "../../lib/territorios";
 import { registar, retirar, type RotuloMapa } from "./rotulosMapa";
-import { EXAGERO, useTerreno } from "./Terrain";
+import { EXAGERO, exagero, relevo, useTerreno } from "./Terrain";
 
 type P = [number, number, number];
 interface Dados {
@@ -36,34 +36,45 @@ export function Linhas() {
     return (l: P[]) => l.map(([x, y, h]) => [(x - cx) / 1000, (h / 1000) * EXAGERO + ELEVAR, -(y - cy) / 1000] as [number, number, number]);
   }, []);
 
+  // as linhas acompanham o relevo quando ele baixa ao aproximar, mantendo a mesma folga sobre o chão
+  const grupo = useRef<THREE.Group>(null);
+  useFrame(() => {
+    const g = grupo.current;
+    if (!g || g.scale.y === relevo.escala) return;
+    g.scale.y = relevo.escala;
+    g.position.y = ELEVAR * (1 - relevo.escala);
+  });
+
   if (!dados) return null;
   return (
-    <group>
-      {/* hierarquia e cores como no castillos.site; o halo claro por baixo faz o traço ler-se igual na várzea e na serra */}
-      {dados.costa.map((l, i) => (
-        <Line key={`c${i}`} points={conv(l)} color="#274250" lineWidth={1.8} transparent opacity={0.92} />
-      ))}
-      {dados.costaEspanha?.map((l, i) => (
-        <Line key={`ce${i}`} points={conv(l)} color="#4f6470" lineWidth={1} transparent opacity={0.6} />
-      ))}
-      {dados.rios.map((r, i) => (
-        <Line key={`r${i}`} points={conv(r.pontos)} color="#356f94" lineWidth={1.8} transparent opacity={0.92} />
-      ))}
-      {dados.distritos.map((l, i) => (
-        <Line key={`dh${i}`} points={conv(l)} color={HALO} lineWidth={3.6} transparent opacity={0.42} depthWrite={false} />
-      ))}
-      {dados.distritos.map((l, i) => (
-        <Line key={`d${i}`} points={conv(l)} color="#33230f" lineWidth={1.5} dashed dashSize={2.4} gapSize={1.35} transparent opacity={0.9} />
-      ))}
-      {/* A fronteira desenha-se logo a seguir ao relevo e sem teste de profundidade: os pontos têm c. 3 km entre si
-          e seguem os vales do Minho, do Douro e do Guadiana, onde o relevo mais grosseiro de longe fica acima deles e
-          enterrava o traço escuro (só se via o halo). Opaca e sem escrever profundidade, as torres continuam por cima. */}
-      {dados.fronteira?.map((l, i) => (
-        <Line key={`fh${i}`} points={conv(l)} color={HALO} lineWidth={7.6} depthWrite={false} depthTest={false} renderOrder={-6} />
-      ))}
-      {dados.fronteira?.map((l, i) => (
-        <Line key={`f${i}`} points={conv(l)} color="#1c1209" lineWidth={3.6} depthWrite={false} depthTest={false} renderOrder={-5} />
-      ))}
+    <>
+      <group ref={grupo}>
+        {/* hierarquia e cores como no castillos.site; o halo claro por baixo faz o traço ler-se igual na várzea e na serra */}
+        {dados.costa.map((l, i) => (
+          <Line key={`c${i}`} points={conv(l)} color="#274250" lineWidth={1.8} transparent opacity={0.92} />
+        ))}
+        {dados.costaEspanha?.map((l, i) => (
+          <Line key={`ce${i}`} points={conv(l)} color="#4f6470" lineWidth={1} transparent opacity={0.6} />
+        ))}
+        {dados.rios.map((r, i) => (
+          <Line key={`r${i}`} points={conv(r.pontos)} color="#356f94" lineWidth={1.8} transparent opacity={0.92} />
+        ))}
+        {dados.distritos.map((l, i) => (
+          <Line key={`dh${i}`} points={conv(l)} color={HALO} lineWidth={3.6} transparent opacity={0.42} depthWrite={false} />
+        ))}
+        {dados.distritos.map((l, i) => (
+          <Line key={`d${i}`} points={conv(l)} color="#33230f" lineWidth={1.5} dashed dashSize={2.4} gapSize={1.35} transparent opacity={0.9} />
+        ))}
+        {/* A fronteira desenha-se logo a seguir ao relevo e sem teste de profundidade: os pontos têm c. 3 km entre si
+            e seguem os vales do Minho, do Douro e do Guadiana, onde o relevo mais grosseiro de longe fica acima deles e
+            enterrava o traço escuro (só se via o halo). Opaca e sem escrever profundidade, as torres continuam por cima. */}
+        {dados.fronteira?.map((l, i) => (
+          <Line key={`fh${i}`} points={conv(l)} color={HALO} lineWidth={7.6} depthWrite={false} depthTest={false} renderOrder={-6} />
+        ))}
+        {dados.fronteira?.map((l, i) => (
+          <Line key={`f${i}`} points={conv(l)} color="#1c1209" lineWidth={3.6} depthWrite={false} depthTest={false} renderOrder={-5} />
+        ))}
+      </group>
       {/* o distrito com o nome da sua capital já rotulada como cidade grande não se repete;
           as regiões autónomas levam o nome do arquipélago e veem-se de mais longe */}
       {dados.nomesDistritos.filter((d) => !CIDADES.some((c) => c.nivel === 1 && c.nome === d.nome)).map((d) => {
@@ -75,7 +86,7 @@ export function Linhas() {
         const [x, z] = paraCena(T, ...projectar(T, m.lon, m.lat));
         return <Rotulo key={m.nome + m.lon} classe="rotulo-mar" texto={m.nome} x={x} z={z} ate={m.ate} desde={60} mar />;
       })}
-    </group>
+    </>
   );
 }
 
@@ -96,7 +107,7 @@ function Rotulo({ classe, texto, x, z, ate, desde, mar = false }: { classe: stri
   useFrame(() => {
     if (!ref.current) return;
     const h = mar ? 0 : Math.max(terreno?.altitude(x, z) ?? 0, 0);
-    ref.current.position.set(x, (h / 1000) * EXAGERO + 0.05, z);
+    ref.current.position.set(x, (h / 1000) * exagero() + 0.05, z);
     // a visibilidade é decidida pelo GestorMapa (distância, interface e sobreposições): mares 1, distritos 2
     registar(registo, el.current && { el: el.current, objeto: ref.current, prio: mar ? 1 : 2, ate, desde });
   });

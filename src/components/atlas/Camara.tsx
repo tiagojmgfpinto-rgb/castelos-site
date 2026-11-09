@@ -5,7 +5,7 @@ import * as THREE from "three";
 import type { MapControls as MapControlsImpl } from "three-stdlib";
 import { paraCena, TERRITORIOS, type TerritorioId } from "../../lib/territorios";
 import { useAtlas, type Voo } from "./store";
-import { EXAGERO, useTerreno } from "./Terrain";
+import { EXAGERO, escalaRelevo, relevo, useTerreno } from "./Terrain";
 
 const DEG = Math.PI / 180;
 
@@ -78,7 +78,7 @@ export function Camara({ territorio }: { territorio: TerritorioId }) {
   useEffect(() => {
     if (!voo || !controls.current) return;
     const de = estadoAtual();
-    const alvoY = ((terreno?.altitude(voo.x, voo.z) ?? 0) / 1000) * EXAGERO;
+    const alvoY = ((terreno?.altitude(voo.x, voo.z) ?? 0) / 1000) * EXAGERO * escalaRelevo(voo.distancia);
     const theta = voo.rumo === undefined ? de.theta : angMaisPerto(de.theta, -voo.rumo * DEG);
     const para = { x: voo.x, y: Math.max(alvoY, 0), z: voo.z, r: voo.distancia, phi: voo.inclinacao * DEG, theta };
     if (voo.instantaneo) {
@@ -154,6 +154,7 @@ export function Camara({ territorio }: { territorio: TerritorioId }) {
     }
     // planos de recorte e escala adaptados à distância
     const dist = camera.position.distanceTo(c.target);
+    relevo.escala = escalaRelevo(dist);
     camera.near = Math.max(0.01, dist / 400);
     camera.far = Math.max(4000, dist * 8);
     camera.updateProjectionMatrix();
