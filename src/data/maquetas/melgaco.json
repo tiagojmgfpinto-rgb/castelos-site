@@ -90,7 +90,9 @@
         0.0,
         212.5,
         0.0
-      ]
+      ],
+      "desde": 1212,
+      "desdeTexto": "castelo primitivo de c. 1170–1212; a torre foi quase toda reconstruída no século XX"
     },
     {
       "id": "coroamento",
@@ -159,7 +161,9 @@
         -25.6,
         196.0,
         -13.4
-      ]
+      ],
+      "desde": 1212,
+      "desdeTexto": "castelo primitivo de c. 1170–1212"
     },
     {
       "id": "escadas",
@@ -283,7 +287,9 @@
         0.2,
         0.35,
         -0.98
-      ]
+      ],
+      "desde": 1245,
+      "desdeTexto": "1245–1263, D. Afonso III"
     },
     {
       "id": "porta_baixo",
@@ -308,7 +314,9 @@
         -1.0,
         0.2,
         0.08
-      ]
+      ],
+      "desde": 1245,
+      "desdeTexto": "muralha da vila de 1245–1263"
     },
     {
       "id": "porta_carvalho",
@@ -376,6 +384,28 @@
         "orto"
       ],
       "resumo": "Árvores à volta do castelo"
+    }
+  ],
+  "epocas": [
+    {
+      "id": "castelo",
+      "nome": "Castelo primitivo",
+      "ate": 1244,
+      "periodo": "c. 1170–1212",
+      "texto": "D. Afonso Henriques manda construir o castelo por volta de 1170; fica concluído entre 1205 e 1212, com ajuda dos mosteiros de Longos Vales e de Fiães, e resiste em 1212 a uma invasão leonesa.",
+      "fontes": [
+        "wiki"
+      ]
+    },
+    {
+      "id": "vila",
+      "nome": "Cerca da vila",
+      "ate": 1600,
+      "periodo": "1245–1263",
+      "texto": "D. Afonso III manda fazer a muralha à volta da vila; o troço poente fica pronto em 1263. Em 1387 a vila rende-se a D. João I depois de quase dois meses de cerco.",
+      "fontes": [
+        "wiki"
+      ]
     }
   ]
 }

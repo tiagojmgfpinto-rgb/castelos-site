@@ -85,7 +85,9 @@
         0.0,
         397.5,
         0.0
-      ]
+      ],
+      "desde": 1200,
+      "desdeTexto": "fim do século XII ou início do XIII"
     },
     {
       "id": "coroamento",
@@ -306,7 +308,9 @@
         5.6,
         393.6,
         44.0
-      ]
+      ],
+      "desde": 1680,
+      "desdeTexto": "1680"
     },
     {
       "id": "fachada",
@@ -330,7 +334,9 @@
         0.13,
         0.15,
         0.99
-      ]
+      ],
+      "desde": 1680,
+      "desdeTexto": "1680, com obras ainda em 1724"
     },
     {
       "id": "terreno",
@@ -374,6 +380,18 @@
         "orto"
       ],
       "resumo": "Árvores do monte"
+    }
+  ],
+  "epocas": [
+    {
+      "id": "medieval",
+      "nome": "Castelo medieval",
+      "ate": 1679,
+      "periodo": "séculos XI a XVII",
+      "texto": "O arcebispo D. Pedro de Braga manda construir o castelo entre 1071 e 1091; no fim do século XII é reformado e ganha a torre de menagem. Em 1121 D. Teresa é aqui cercada pelas tropas de D. Urraca.",
+      "fontes": [
+        "wiki"
+      ]
     }
   ]
 }

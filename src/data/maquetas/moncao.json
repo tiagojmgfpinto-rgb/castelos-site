@@ -75,7 +75,9 @@
         200.0,
         52.5,
         230.0
-      ]
+      ],
+      "desde": 1656,
+      "desdeTexto": "obra começada em 1656"
     },
     {
       "id": "guaritas",
@@ -195,7 +197,9 @@
         -0.37,
         0.5,
         -0.93
-      ]
+      ],
+      "desde": 1700,
+      "desdeTexto": "século XVIII"
     },
     {
       "id": "ponte_en202",
@@ -265,6 +269,18 @@
         "lidar"
       ],
       "resumo": "Arvoredo medido no LiDAR"
+    }
+  ],
+  "epocas": [
+    {
+      "id": "abaluartada",
+      "nome": "Fortaleza abaluartada",
+      "ate": 1699,
+      "periodo": "1656 a 1659",
+      "texto": "Em 1656 começam as obras da fortaleza abaluartada, com traçado de Miguel de L'École, à volta da vila e da cerca medieval. A praça resiste ao cerco castelhano de outubro de 1658 até 7 de fevereiro de 1659, quando a guarnição capitula. Do castelo de D. Dinis (1306) não há elemento próprio na maqueta.",
+      "fontes": [
+        "castelos"
+      ]
     }
   ]
 }

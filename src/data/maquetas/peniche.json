@@ -74,7 +74,9 @@
         -10.5,
         27.5,
         59.0
-      ]
+      ],
+      "desde": 1557,
+      "desdeTexto": "1557–1558"
     },
     {
       "id": "ponte",
@@ -132,7 +134,9 @@
         5.0,
         34.0,
         -45.0
-      ]
+      ],
+      "desde": 1934,
+      "desdeTexto": "prisão política desde 1934"
     },
     {
       "id": "muralhas",
@@ -151,7 +155,9 @@
         -95.0,
         30.0,
         -22.0
-      ]
+      ],
+      "desde": 1642,
+      "desdeTexto": "1642–1645"
     },
     {
       "id": "guaritas",
@@ -237,6 +243,29 @@
         "lidar"
       ],
       "resumo": "Árvores e palmeiras"
+    }
+  ],
+  "epocas": [
+    {
+      "id": "fortim",
+      "nome": "Fortim Redondo",
+      "ate": 1641,
+      "periodo": "1557–1578",
+      "texto": "D. Luís de Ataíde, 3.º conde de Atouguia, manda construir o Fortim Redondo em 1557–1558, com Gonçalo de Torralva como mestre das obras, para defender o porto e a costa. A primeira guarnição chega em 1567 e as obras continuam até 1578.",
+      "fontes": [
+        "wikipedia",
+        "mnrl"
+      ]
+    },
+    {
+      "id": "abaluartada",
+      "nome": "Fortaleza abaluartada",
+      "ate": 1933,
+      "periodo": "1642–1645",
+      "texto": "Na Guerra da Restauração a fortaleza é ampliada e ganha o traçado abaluartado em estrela irregular. Em 1934 passa a ser prisão política do Estado Novo.",
+      "fontes": [
+        "wikipedia"
+      ]
     }
   ]
 }

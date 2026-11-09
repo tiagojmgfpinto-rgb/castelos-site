@@ -525,3 +525,18 @@ html[data-redimensionar] .atlas canvas { pointer-events: none; }
 .maqueta-falha { display: grid; place-content: center; gap: 10px; text-align: center; min-height: 220px; }
 .maqueta-falha p { margin: 0; font-style: italic; }
 .maqueta-falha button { justify-self: center; padding: 6px 14px; cursor: pointer; border: 1px solid currentColor; background: transparent; font: 500 13px/1 var(--versaletes); letter-spacing: 0.1em; }
+
+/* ---------- Épocas da maqueta (Maqueta.tsx, SeletorEpoca) ---------- */
+.maqueta-epocas { margin-top: 8px; max-width: 640px; }
+.maqueta--ampliada .maqueta-epocas { max-width: 720px; }
+.maqueta-epocas-botoes { display: flex; flex-wrap: wrap; gap: 6px; }
+.maqueta-epocas-botoes button {
+  flex: 1 1 auto; min-height: 30px; padding: 4px 10px; cursor: pointer; font-family: var(--sans); font-size: 12.5px; line-height: 1.15;
+  color: var(--m-tinta); background: transparent; border: 1px solid #2a2016; border-radius: 2px;
+}
+.maqueta-epocas-botoes button[aria-pressed="true"] { background: var(--m-vermelho); border-color: var(--m-vermelho); color: #f3ead4; }
+.maqueta-epoca { margin-top: 8px; padding: 10px 12px; border-left: 3px solid var(--m-vermelho); background: rgba(243, 234, 212, 0.6); font-size: 13.5px; line-height: 1.42; }
+.maqueta-epoca p { margin: 0 0 6px; }
+.maqueta-epoca-periodo { font-family: var(--sans); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--m-vermelho); }
+.maqueta-epoca-nota { font-style: italic; color: var(--m-suave); font-size: 12.5px; }
+.maqueta-epoca-ir { padding: 0; border: 0; background: none; font: inherit; color: var(--m-vermelho); text-decoration: underline; cursor: pointer; }

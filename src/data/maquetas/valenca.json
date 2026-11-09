@@ -76,7 +76,9 @@
         -40.0,
         87.5,
         300.0
-      ]
+      ],
+      "desde": 1641,
+      "desdeTexto": "1641–1713"
     },
     {
       "id": "guaritas",
@@ -357,6 +359,18 @@
         "lidar"
       ],
       "resumo": "Arvoredo medido no LiDAR"
+    }
+  ],
+  "epocas": [
+    {
+      "id": "abaluartada",
+      "nome": "Praça abaluartada",
+      "ate": 1808,
+      "periodo": "1641–1713",
+      "texto": "Na Guerra da Restauração começam as obras da fortificação abaluartada sobre a cerca medieval dos séculos XIII e XIV, que são dadas por concluídas em 1713. Em 1809 as tropas do marechal Soult rebentam as Portas do Sol, depois reconstruídas.",
+      "fontes": [
+        "burgenwelt"
+      ]
     }
   ]
 }

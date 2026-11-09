@@ -99,7 +99,9 @@
         "orto",
         "fotos"
       ],
-      "resumo": "Núcleo primitivo do século XI, depois torre de menagem"
+      "resumo": "Núcleo primitivo do século XI, depois torre de menagem",
+      "desde": 1100,
+      "desdeTexto": "século XI, reedificado nos séculos XV e XVI"
     },
     {
       "id": "porta_vila",
@@ -116,7 +118,9 @@
         "lidar",
         "fotos"
       ],
-      "resumo": "Porta em arco pleno do século XV, ligação à vila"
+      "resumo": "Porta em arco pleno do século XV, ligação à vila",
+      "desde": 1401,
+      "desdeTexto": "século XV"
     },
     {
       "id": "porta_traicao",
@@ -132,7 +136,9 @@
         "osm",
         "lidar"
       ],
-      "resumo": "Entrada em cotovelo numa torre quadrangular, séculos XIII–XIV"
+      "resumo": "Entrada em cotovelo numa torre quadrangular, séculos XIII–XIV",
+      "desde": 1300,
+      "desdeTexto": "séculos XIII e XIV"
     },
     {
       "id": "brecha",
@@ -150,7 +156,9 @@
         "lidar",
         "fotos"
       ],
-      "resumo": "Lugar da porta virada a sul, demolida em 1760"
+      "resumo": "Lugar da porta virada a sul, demolida em 1760",
+      "desde": 1760,
+      "desdeTexto": "1760, demolição da terceira porta"
     },
     {
       "id": "torre_quinaria",
@@ -330,7 +338,9 @@
         "foto_fachada",
         "fotos"
       ],
-      "resumo": "Matriz reedificada em 1420, com três naves sob um só telhado"
+      "resumo": "Matriz reedificada em 1420, com três naves sob um só telhado",
+      "desde": 1420,
+      "desdeTexto": "reedificada em 1420"
     },
     {
       "id": "casa_paroquial",
@@ -410,6 +420,41 @@
       "fontes": [
         "lidar",
         "fotos"
+      ]
+    }
+  ],
+  "epocas": [
+    {
+      "id": "sesnando",
+      "nome": "Castelo de Sesnando",
+      "ate": 1199,
+      "periodo": "séculos XI e XII",
+      "texto": "Depois da conquista de Coimbra, em 1064, Penela torna-se ponto fulcral da sua defesa meridional; o conde D. Sesnando declara em 1087 ter povoado o castelo. D. Afonso Henriques dá-lhe foral em 1137. O núcleo primitivo é o castelejo.",
+      "fontes": [
+        "sipa",
+        "wiki"
+      ]
+    },
+    {
+      "id": "dinis",
+      "nome": "D. Sancho I e D. Dinis",
+      "ate": 1399,
+      "periodo": "séculos XIII e XIV",
+      "texto": "D. Sancho I e D. Dinis mandam restaurar o castelo. Desta época é a Porta da Traição, em cotovelo, numa torre quadrangular.",
+      "fontes": [
+        "sipa",
+        "pc"
+      ]
+    },
+    {
+      "id": "infante",
+      "nome": "Infante D. Pedro",
+      "ate": 1759,
+      "periodo": "século XV a 1759",
+      "texto": "Em 1408 D. João I doa Penela ao infante D. Pedro, que reedifica a igreja de São Miguel em 1420. Do século XV é a Porta da Vila. Em 1755 o terramoto derruba a torre do relógio, e em 1760 a terceira porta é demolida para aproveitar a pedra.",
+      "fontes": [
+        "sipa",
+        "wiki"
       ]
     }
   ]
