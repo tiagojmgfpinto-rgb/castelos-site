@@ -125,6 +125,7 @@ notas:
   - "As fotografias da galeria são do Wikimedia Commons, com licença livre; as fotografias enviadas, de origem por confirmar, e a captura do geoportal serviram só de referência para a maqueta."
 maquetas:
   - tipo: estado-atual
+    publicada: "2026-11-03"
     ficheiro: "maquetas/lanhoso/lanhoso.glb"
     capa: "maquetas/lanhoso/capa.jpg"
     validada: false

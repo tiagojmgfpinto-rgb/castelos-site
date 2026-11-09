@@ -4,7 +4,7 @@ import { CIDADES } from "../../data/cidades";
 import { paraCena, projectar, TERRITORIOS, type TerritorioId } from "../../lib/territorios";
 import { REGIOES, TIPOLOGIAS, type Regiao, type Tipologia } from "../../lib/tipologias";
 import { camaraApi, vistaInicial as vistaDoTerritorio } from "../atlas/Camara";
-import { temMaqueta, temVisita, useAtlas, visivel, type MonumentoResumo } from "../atlas/store";
+import { publicadoEm, temMaqueta, temVisita, useAtlas, visivel, type MonumentoResumo } from "../atlas/store";
 import { Escudo, IconeTipo, Rosa } from "./Icones";
 
 const normalizar = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
@@ -48,6 +48,19 @@ export function Interface({ monumentos, vistaInicial }: { monumentos: MonumentoR
     return () => removeEventListener("keydown", tecla);
   }, []);
 
+  // como no castillos.site: nas 36 h depois de entrar uma maqueta nova, as Novidades abrem sozinhas uma vez
+  useEffect(() => {
+    const ultima = monumentos.map(publicadoEm).filter((d): d is string => !!d).sort().at(-1);
+    if (!ultima || location.hash || Date.now() - Date.parse(ultima) > 36 * 3600e3) return;
+    try {
+      if (localStorage.getItem("novidades-vistas") === ultima) return;
+      localStorage.setItem("novidades-vistas", ultima);
+    } catch {
+      /* sem armazenamento: abre na mesma */
+    }
+    if (!useAtlas.getState().painel) useAtlas.setState({ painel: "novidades" });
+  }, [monumentos]);
+
   const centrar = () => {
     const s = useAtlas.getState();
     s.selecionar(null);
@@ -82,6 +95,10 @@ export function Interface({ monumentos, vistaInicial }: { monumentos: MonumentoR
             <svg className="flecha" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" /></svg>
           </button>
         </div>
+        <button className="botao" type="button" aria-expanded={painel === "novidades"} aria-controls="novidades" title="Novos castelos e próximas adições" onClick={() => useAtlas.getState().alternarPainel("novidades")}>
+          <svg viewBox="0 0 24 24"><path d="M12 3.5l2.5 5.3 5.8.7-4.3 4 1.1 5.7L12 16.4l-5.1 2.8 1.1-5.7-4.3-4 5.8-.7z" /></svg>
+          <span>Novidades</span>
+        </button>
         <button className="botao" type="button" aria-expanded={painel === "fontes"} aria-controls="fontes" title="Fontes cartográficas e método" onClick={() => useAtlas.getState().alternarPainel("fontes")}>
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7.4v.6" /></svg>
           <span>Fontes</span>
@@ -91,6 +108,7 @@ export function Interface({ monumentos, vistaInicial }: { monumentos: MonumentoR
       {painel === "indice" && <Indice monumentos={monumentos} />}
       {painel === "distritos" && <Distritos monumentos={monumentos} />}
       {painel === "fontes" && <Fontes />}
+      {painel === "novidades" && <Novidades monumentos={monumentos} />}
 
       <Leitura />
 
@@ -273,6 +291,71 @@ function vistaDe(t: TerritorioId) {
   return vistaDoTerritorio(t);
 }
 
+const MESES = ["jan.", "fev.", "mar.", "abr.", "maio", "jun.", "jul.", "ago.", "set.", "out.", "nov.", "dez."];
+const dataCurta = (d: string) => `${Number(d.slice(8, 10))} ${MESES[Number(d.slice(5, 7)) - 1]} ${d.slice(0, 4)}`;
+
+/**
+ * Novidades, como o aviso de "castillos nuevos" do castillos.site: os castelos que já têm maqueta, do mais
+ * recente para o mais antigo, e numa segunda aba os nomes dos que ainda esperam pela sua.
+ */
+function Novidades({ monumentos }: { monumentos: MonumentoResumo[] }) {
+  const [aba, setAba] = useState<"novos" | "proximos">("novos");
+  const novos = useMemo(
+    () =>
+      monumentos
+        .filter(temMaqueta)
+        .map((m) => ({ m, data: publicadoEm(m) ?? "" }))
+        .sort((a, b) => b.data.localeCompare(a.data) || a.m.nome.localeCompare(b.m.nome, "pt")),
+    [monumentos],
+  );
+  const proximos = useMemo(() => monumentos.filter((m) => !temMaqueta(m)).sort((a, b) => a.nome.localeCompare(b.nome, "pt")), [monumentos]);
+  const escolher = (m: MonumentoResumo) => {
+    const s = useAtlas.getState();
+    if (s.territorio !== m.territorio) s.setTerritorio(m.territorio);
+    s.selecionar(m.id);
+  };
+  return (
+    <aside id="novidades" className="painel novidades" aria-label="Novidades">
+      <header>
+        <h2>Novidades</h2>
+        <Fechar rotulo="Fechar" />
+      </header>
+      <div className="abas" role="tablist" aria-label="Novidades">
+        <button type="button" role="tab" id="aba-novos" aria-selected={aba === "novos"} aria-controls="lista-novos" onClick={() => setAba("novos")}>
+          Novos castelos <b>{novos.length}</b>
+        </button>
+        <button type="button" role="tab" id="aba-proximos" aria-selected={aba === "proximos"} aria-controls="lista-proximos" onClick={() => setAba("proximos")}>
+          Próximas adições <b>{proximos.length}</b>
+        </button>
+      </div>
+      {aba === "novos" ? (
+        <ul className="lista-novos" id="lista-novos" role="tabpanel" aria-labelledby="aba-novos">
+          {novos.map(({ m, data }) => (
+            <li key={m.id}>
+              <button type="button" onClick={() => escolher(m)}>
+                <b>{m.nome}</b>
+                <span>
+                  {m.localidade} · {TIPOLOGIAS[m.tipologia].nome}
+                  {data && <> · maqueta de {dataCurta(data)}</>}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div id="lista-proximos" role="tabpanel" aria-labelledby="aba-proximos">
+          <p className="nota-proximos">Castelos que já estão no mapa e cuja maqueta 3D ainda está por fazer.</p>
+          <ul className="lista-proximos">
+            {proximos.map((m) => (
+              <li key={m.id}>{m.nome}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </aside>
+  );
+}
+
 function Fontes() {
   return (
     <aside id="fontes" className="painel fontes" aria-label="Fontes e método">
@@ -294,6 +377,9 @@ function Fontes() {
       <p className="nota">
         As maquetas dos castelos são construídas com scripts de Python em Blender à escala 1:1 (1 unidade = 1 m) a partir do LiDAR e dos ortofotos da DGT, de plantas e
         de fotografias; as alturas não publicadas são estimativas e assim se indica em cada ficha.
+      </p>
+      <p className="inspiracao">
+        Website inspirado no website <a href="https://castillos.site/" rel="noopener">Castillos de España</a> (castillos.site)
       </p>
       <p className="creditos"><a href={`${BASE}creditos/`}>Créditos e licenças</a></p>
     </aside>

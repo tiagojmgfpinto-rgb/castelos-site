@@ -31,7 +31,7 @@ export function resumo(m: Monumento): MonumentoResumo {
     seculoOrigem: d.seculoOrigem,
     maquetas: d.maquetas
       .filter((x) => x.validada || x.provisoria)
-      .map(({ tipo, ficheiro, epoca, provisoria, capa }) => ({ tipo, ficheiro: comVersao(ficheiro), epoca, provisoria, capa: comVersao(capa) })),
+      .map(({ tipo, ficheiro, epoca, provisoria, capa, publicada }) => ({ tipo, ficheiro: comVersao(ficheiro), epoca, provisoria, capa: comVersao(capa), publicada })),
     notas: d.notas,
     fontes: d.fontes,
     html: m.rendered?.html ?? "",

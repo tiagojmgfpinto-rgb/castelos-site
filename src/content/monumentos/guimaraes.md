@@ -145,6 +145,7 @@ notas:
   - "A Wikipédia descreve as portas ao contrário do SIPA (principal a oeste, da Traição a leste) e fala em quatro torres. Segue-se o SIPA, que bate com o LiDAR e com as fotografias: oito torres e a porta principal a leste, com a escadaria."
 maquetas:
   - tipo: estado-atual
+    publicada: "2026-10-27"
     ficheiro: "maquetas/guimaraes/guimaraes.glb"
     capa: "maquetas/guimaraes/capa.jpg"
     validada: false

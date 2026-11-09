@@ -104,6 +104,7 @@ notas:
   - "A Wikipédia diz que as janelas geminadas estão nas faces sudeste e noroeste, mas marca a frase como a precisar de esclarecimento. A fotografia de 2006 da face norte mostra uma janela em arco simples; segue-se a fotografia."
 maquetas:
   - tipo: estado-atual
+    publicada: "2026-11-02"
     ficheiro: "maquetas/braga/braga.glb"
     capa: "maquetas/braga/capa.jpg"
     validada: false

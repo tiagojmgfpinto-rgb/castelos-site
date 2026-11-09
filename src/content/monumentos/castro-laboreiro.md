@@ -150,6 +150,7 @@ notas:
   - "O reduto da ponta sul é lido no LiDAR e na fotografia aérea; o SIPA descreve ali uma frente sul estreita e retilínea, sem lhe dar nome."
 maquetas:
   - tipo: estado-atual
+    publicada: "2026-10-28"
     ficheiro: "maquetas/castro-laboreiro/castro-laboreiro.glb"
     capa: "maquetas/castro-laboreiro/capa.jpg"
     validada: false

@@ -86,6 +86,7 @@ notas:
   - "As fotografias recebidas (de blogues e do Google Maps) serviram só de referência para as cores e para as formas da maqueta; não entram na ficha."
 maquetas:
   - tipo: estado-atual
+    publicada: "2026-11-02"
     ficheiro: "maquetas/moncao/moncao.glb"
     capa: "maquetas/moncao/capa.jpg"
     validada: false

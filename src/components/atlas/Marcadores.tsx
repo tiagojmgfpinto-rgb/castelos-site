@@ -165,8 +165,8 @@ function altoNoEcra(d: number, vistaInicial: number, larguraPx: number) {
 
 // ——— Gestão dos rótulos ———
 // Os nomes dos monumentos não aparecem todos (atropelar-se-iam e, ao aproximar de um castelo, enchiam o ecrã
-// com os nomes dos outros à volta). Mostra-se o do monumento selecionado; ao passar o rato sobre uma torre,
-// o dela e os dos vizinhos próximos no ecrã, como no castillos.site, em etiquetas que não se sobrepõem.
+// com os nomes dos outros à volta). Mostra-se o do monumento selecionado e, ao passar o rato sobre uma torre,
+// só o dela (pedido do Tiago, 9 nov. 2026: com os vizinhos ficava confuso). Numa roda aberta veem-se todos.
 type Registo = { m: MonumentoResumo; grupo: THREE.Group; el: HTMLDivElement; base: THREE.Vector3 };
 const registos = new Map<string, Registo>();
 // câmara e tamanho do último fotograma, para o toque decidir fora do ciclo de desenho
@@ -205,7 +205,6 @@ export function tocar(id: string) {
     s.voar({ x: centro.x, z: centro.z, distancia, inclinacao });
   }
 }
-const RAIO_VIZINHOS = 110; // px à volta do monumento sob o rato
 const ALTURA_ROTULO = 24;
 const DESLOCAMENTOS = [0, -ALTURA_ROTULO, ALTURA_ROTULO, -2 * ALTURA_ROTULO, 2 * ALTURA_ROTULO];
 const RAIO_TOQUE = 18; // px: com o mapa afastado os marcadores são pequenos, por isso o rato "apanha" o mais próximo
@@ -242,7 +241,6 @@ function GestorRotulos() {
     }
     const zonas = zonasInterface(gl.domElement, clock.elapsedTime * 1000);
     const cand: { r: Registo; x: number; y: number; w: number; prio: number }[] = [];
-    let foco: { x: number; y: number } | null = null;
     const proj = (r: Registo) => {
       v.set(0, 1.6, 0);
       r.grupo.localToWorld(v);
@@ -269,12 +267,6 @@ function GestorRotulos() {
         gl.domElement.style.cursor = melhor ? "pointer" : "";
       }
     }
-    // os vizinhos só se mostram à volta da torre sob o rato, não da selecionada
-    const destaque = useAtlas.getState().sobre;
-    if (destaque && registos.has(destaque)) {
-      const p = proj(registos.get(destaque)!);
-      foco = { x: p.x, y: p.y };
-    }
     const sobre = useAtlas.getState().sobre;
     for (const r of registos.values()) {
       const ativo = r.m.id === sobre || r.m.id === s.selecionado;
@@ -288,13 +280,13 @@ function GestorRotulos() {
         continue;
       }
       // as torres de uma roda aberta mostram todas o nome: é para isso que se afastaram
-      const vizinho = s.roda?.ids.includes(r.m.id) || (foco && Math.hypot(p.x - foco.x, p.y - foco.y) < RAIO_VIZINHOS);
+      const vizinho = !!s.roda?.ids.includes(r.m.id);
       if (!ativo && !vizinho) {
         r.el.dataset.visivel = "0";
         continue;
       }
       const w = ativo ? Math.min(250, Math.max(r.m.nome.length * 8.4, (r.m.localidade.length + TIPOLOGIAS[r.m.tipologia].nome.length + 3) * 7.2) + 24) : r.m.nome.length * 7 + 18;
-      const prio = r.m.id === sobre ? 0 : r.m.id === s.selecionado ? 1 : vizinho ? 2 + (foco ? Math.hypot(p.x - foco.x, p.y - foco.y) / 1000 : 0) : 3 + p.d / 1e4;
+      const prio = r.m.id === sobre ? 0 : r.m.id === s.selecionado ? 1 : vizinho ? 2 : 3 + p.d / 1e4;
       cand.push({ r, x: p.x, y: p.y, w, prio });
     }
     cand.sort((a, b) => a.prio - b.prio);
