@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef } from "react";
 import { BASE } from "../../lib/base";
+import { instalarLightbox } from "../../lib/lightbox";
 import { caminhoFicha } from "../../lib/rotas";
 import { REGIOES, TIPOLOGIAS } from "../../lib/tipologias";
 import { useAtlas, type MonumentoResumo } from "../atlas/store";
@@ -15,6 +16,8 @@ export function Ficha({ m, monumentos, onFechar }: { m: MonumentoResumo; monumen
   const dados = dadosMaqueta(m.id);
   const vizinhos = monumentos.filter((x) => x.regiao === m.regiao && x.id !== m.id).slice(0, 8);
   const corpo = useRef<HTMLElement>(null);
+
+  useEffect(instalarLightbox, []);
 
   useEffect(() => {
     corpo.current?.scrollTo({ top: 0 });

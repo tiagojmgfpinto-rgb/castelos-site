@@ -48,4 +48,8 @@ const vizinhos = (await todosMonumentos()).filter((x) => x.data.regiao === d.reg
       </>
     )}
   </main>
+  <script>
+    import { instalarLightbox } from "../../lib/lightbox";
+    instalarLightbox();
+  </script>
 </Base>
