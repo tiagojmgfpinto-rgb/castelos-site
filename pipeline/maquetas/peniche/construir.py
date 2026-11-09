@@ -32,6 +32,12 @@ import shapely
 from scipy import ndimage as ndi
 from scipy.spatial import cKDTree
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # pipeline/, para o kit comum
+from kit.geometria import unit, area, densificar, dentro, simplificar, mediana_movel, partir, _retangulo, _ang  # noqa: E402
+from kit.texturas import ruido, fbm, textura_grao, imagem  # noqa: E402
+from kit.cena import arvore_modelo  # noqa: E402
+from kit.arquitetura import Quadro, _vao_desloc, altura_telhado, barra, cupula, faixa_inclinada, guarita, oitavado, porta_revelim, telhado_4aguas, telhado_generico  # noqa: E402
+
 AQUI = Path(__file__).resolve().parent
 RAIZ = AQUI.parents[2]
 F = json.loads((AQUI / "dados" / "fontes.json").read_text())
@@ -117,18 +123,6 @@ def medir(poly=None, centro=None, raio=None, q=95, sem_veg=True):
     return float(np.percentile(v, q)) if len(v) >= 3 else float("nan")
 
 
-def dentro(px, py, poly):
-    px, py = np.asarray(px, float), np.asarray(py, float)
-    res = np.zeros(px.shape, bool)
-    x, y = poly[:, 0], poly[:, 1]
-    j = len(poly) - 1
-    for i in range(len(poly)):
-        cond = ((y[i] > py) != (y[j] > py)) & (px < (x[j] - x[i]) * (py - y[i]) / (y[j] - y[i] + 1e-12) + x[i])
-        res ^= cond
-        j = i
-    return res
-
-
 def distancia(px, py, linha, fechada=False):
     px, py = np.asarray(px, float), np.asarray(py, float)
     pts = np.vstack([linha, linha[:1]]) if fechada else linha
@@ -142,16 +136,6 @@ def distancia(px, py, linha, fechada=False):
         m = dd < best
         best[m], qx[m], qy[m] = dd[m], cx[m], cy[m]
     return best, qx, qy
-
-
-def area(poly):
-    x, y = poly[:, 0], poly[:, 1]
-    return 0.5 * np.sum(x * np.roll(y, -1) - np.roll(x, -1) * y)
-
-
-def unit(v):
-    n = np.linalg.norm(v)
-    return v / n if n > 1e-9 else v
 
 
 def desvio(linha, d, fechada=False):
@@ -175,42 +159,7 @@ def desvio(linha, d, fechada=False):
     return np.array(out)
 
 
-def densificar(linha, passo=2.0, fechada=False):
-    pts = np.vstack([linha, linha[:1]]) if fechada else linha
-    out = [pts[0]]
-    for a, b in zip(pts[:-1], pts[1:]):
-        k = max(1, int(math.ceil(np.linalg.norm(b - a) / passo)))
-        out += [a + (b - a) * t for t in np.linspace(0, 1, k + 1)[1:]]
-    out = np.array(out)
-    return out[:-1] if fechada else out
-
-
-def mediana_movel(v, k=5, fechada=False):
-    h = k // 2
-    vv = np.concatenate([v[-h:], v, v[:h]]) if fechada else np.concatenate([np.repeat(v[:1], h), v, np.repeat(v[-1:], h)])
-    return np.array([np.median(vv[i:i + k]) for i in range(len(v))])
-
-
 # ---------------------------------------------------------------- ruído
-
-def ruido(x, y, escala, semente):
-    g = np.random.default_rng(semente).random((64, 64))
-    u, v = np.asarray(x) / escala, np.asarray(y) / escala
-    i, j = np.floor(u).astype(int), np.floor(v).astype(int)
-    fu, fv = u - i, v - j
-    fu, fv = fu * fu * (3 - 2 * fu), fv * fv * (3 - 2 * fv)
-    a, b = g[i % 64, j % 64], g[(i + 1) % 64, j % 64]
-    c, d = g[i % 64, (j + 1) % 64], g[(i + 1) % 64, (j + 1) % 64]
-    return (a * (1 - fu) + b * fu) * (1 - fv) + (c * (1 - fu) + d * fu) * fv
-
-
-def fbm(x, y, escala, semente, oit=4):
-    s, amp, tot = 0.0, 1.0, 0.0
-    for o in range(oit):
-        s = s + amp * ruido(x, y, escala / 2**o, semente + o)
-        tot += amp
-        amp *= 0.5
-    return s / tot
 
 
 # ---------------------------------------------------------------- malhas
@@ -356,15 +305,6 @@ def malha_rapida(nome, V, Fq, mat, pai, elemento=None):
 
 # ---------------------------------------------------------------- materiais e texturas
 
-def imagem(nome, arr):
-    h, w, _ = arr.shape
-    img = bpy.data.images.new(nome, w, h, alpha=False)
-    rgba = np.concatenate([arr, np.ones((h, w, 1))], 2).astype(np.float32)
-    img.pixels.foreach_set(rgba.ravel())
-    img.file_format = "JPEG"
-    img.pack()
-    return img
-
 
 def material(nome, cor, rug=0.9, tex=None, vcor=False, normal=None, forca=1.0, uv_nome=None):
     mt = bpy.data.materials.new(nome)
@@ -500,154 +440,7 @@ def textura_telha(n=256, metros=2.0):
     return np.repeat(v[..., None], 3, 2).clip(0, 1), onda - 0.4 * (fiada > 0.9)
 
 
-def textura_grao(n=256):
-    yy, xx = np.mgrid[0:n, 0:n] / n
-    g = fbm(xx * 30, yy * 30, 2.0, 31)
-    return np.repeat((0.84 + 0.22 * g)[..., None], 3, 2).clip(0, 1)
-
-
-
-
-def guarita(m, c, bis, zc, topo):
-    """Guarita de cantaria (fotografias): mísula em cone invertido aos degraus a sair do ângulo, corpo
-    quadrado de cunhais chanfrados com frestas, cornija, cúpula e pináculo em bola."""
-    u = unit(bis)
-    w = np.array([-u[1], u[0]])
-    L = 0.78  # meia largura do corpo
-    ch = 0.22  # chanfro
-    planta = []
-    for sx, sy in ((1, 1), (-1, 1), (-1, -1), (1, -1)):
-        planta += [c + u * sx * L + w * sy * (L - ch), c + u * sx * (L - ch) + w * sy * L]
-    planta = np.array(planta)
-    if area(planta) < 0:
-        planta = planta[::-1]
-    piso = zc + 0.25
-    # mísula: anéis cada vez mais estreitos para baixo, até um remate em pinha
-    for k, (r_, z0, z1) in enumerate(((1.0, piso - 0.35, piso), (0.86, piso - 0.65, piso - 0.35), (0.7, piso - 0.95, piso - 0.65),
-                                      (0.52, piso - 1.25, piso - 0.95), (0.32, piso - 1.55, piso - 1.25))):
-        m.prisma([c + (p - c) * r_ for p in planta], z0, z1, 1, fundo=True)
-    m.cilindro(c, 0.18, piso - 1.85, piso - 1.55, 1, k=8, r1=0.3)
-    zt = piso + 1.95
-    m.prisma(planta, piso, zt, 1)
-    # frestas nas três faces de fora e porta na de dentro
-    for d_, larg, z0, z1 in ((u, 0.12, piso + 0.7, piso + 1.45), (w, 0.12, piso + 0.7, piso + 1.45),
-                             (-w, 0.12, piso + 0.7, piso + 1.45), (-u, 0.5, piso + 0.05, piso + 1.6)):
-        m.caixa(c + d_ * (L + 0.005), np.array([-d_[1], d_[0]]), larg, 0.02, z0, z1, 2)
-    m.prisma([c + (p - c) * 1.1 for p in planta], zt, zt + 0.16, 1)  # cornija
-    # cúpula em meia laranja (anéis) e pináculo
-    prev = [c + (p - c) * 1.0 for p in planta]
-    zprev = zt + 0.16
-    for k in range(1, 5):
-        fi = math.pi / 2 * k / 4
-        r_ = math.cos(fi)
-        zz = zt + 0.16 + 0.75 * math.sin(fi)
-        cur = [c + (p - c) * r_ for p in planta]
-        for i in range(len(planta)):
-            j = (i + 1) % len(planta)
-            m.face([(*prev[i], zprev), (*prev[j], zprev), (*cur[j], zz), (*cur[i], zz)], 1)
-        prev, zprev = cur, zz
-    m.cilindro(c, 0.12, zprev - 0.02, zprev + 0.2, 1, k=8)
-    m.esfera((c[0], c[1], zprev + 0.42), 0.24, 1, k=10)
-
-
-def simplificar(poly, tol=0.6):
-    pts = list(poly)
-    mudou = True
-    while mudou and len(pts) > 4:
-        mudou = False
-        for i in range(len(pts)):
-            a, b, c = np.array(pts[i - 1]), np.array(pts[i]), np.array(pts[(i + 1) % len(pts)])
-            d = abs((c - a)[0] * (b - a)[1] - (c - a)[1] * (b - a)[0]) / max(np.linalg.norm(c - a), 1e-9)
-            if d < tol:
-                pts.pop(i)
-                mudou = True
-                break
-    return np.array(pts)
-
-
-def _retangulo(base):
-    b = np.array(base)
-    if area(b) < 0:
-        b = b[::-1]
-    e = [np.linalg.norm(b[(i + 1) % 4] - b[i]) for i in range(4)]
-    k = 0 if e[0] + e[2] >= e[1] + e[3] else 1
-    b = np.roll(b, -k, axis=0)
-    L = (np.linalg.norm(b[1] - b[0]) + np.linalg.norm(b[2] - b[3])) / 2
-    W = (np.linalg.norm(b[3] - b[0]) + np.linalg.norm(b[2] - b[1])) / 2
-    return b, L, W
-
-
-def telhado_4aguas(m, base, z, inclinacao=26, mat=1, beiral=0.3):
-    b, L, W = _retangulo(base)
-    c = b.mean(0)
-    b = np.array([p + unit(p - c) * beiral * 1.41 for p in b])  # beirado saliente
-    L += 2 * beiral
-    W += 2 * beiral
-    h = W / 2 * math.tan(math.radians(inclinacao))
-    mid_a, mid_b = (b[0] + b[3]) / 2, (b[1] + b[2]) / 2
-    u = unit(mid_b - mid_a)
-    r1, r2 = mid_a + u * min(W / 2, L / 2), mid_b - u * min(W / 2, L / 2)
-    R1, R2 = (*r1, z + h), (*r2, z + h)
-    B = [(*p, z) for p in b]
-    m.face([B[0], B[1], R2, R1], mat)
-    m.face([B[2], B[3], R1, R2], mat)
-    m.face([B[1], B[2], R2], mat)
-    m.face([B[3], B[0], R1], mat)
-    m.face(B[::-1], mat)  # face de baixo do beirado
-
-
-def telhado_generico(m, base, z, mat=1):
-    b = np.array(base)
-    if area(b) < 0:
-        b = b[::-1]
-    c = b.mean(0)
-    inset = c + (b - c) * 0.45
-    h = min(2.4, 0.25 * math.sqrt(abs(area(b))))
-    n = len(b)
-    for i in range(n):
-        j = (i + 1) % n
-        m.face([(*b[i], z), (*b[j], z), (*inset[j], z + h), (*inset[i], z + h)], mat)
-    m.face([(*p, z + h) for p in inset], mat)
-
-
-def altura_telhado(poly, inclinacao=26):
-    s = simplificar(poly)
-    if len(s) == 4 and abs(area(s)) > 0.85 * abs(area(poly)):
-        return _retangulo(s)[2] / 2 * math.tan(math.radians(inclinacao))
-    return min(2.4, 0.25 * math.sqrt(abs(area(poly))))
-
-
 CORES_PAREDE = [0, 0, 0, 0, 0, 0, 2, 3, 3, 4]  # cal (a maioria), ocre, granito à vista, rosa (fotografias)
-
-
-def partir(poly, frente=7.5, fundo=13.0):
-    """Os quarteirões do OSM vêm muitas vezes como um só polígono: partem-se em casas, em faixas de c.
-    7,5 m ao longo do eixo maior (e em duas fiadas costas com costas quando o bloco é fundo), como o
-    parcelamento estreito que se vê na ortoimagem. Cada parte leva a sua altura medida no MDS."""
-    g = shapely.Polygon(poly).buffer(0)
-    if g.area < 110:
-        return [poly]
-    r = np.array(g.minimum_rotated_rectangle.exterior.coords)[:4]
-    e0, e1 = r[1] - r[0], r[2] - r[1]
-    if np.linalg.norm(e0) < np.linalg.norm(e1):
-        e0, e1 = e1, e0
-    L, W = np.linalg.norm(e0), np.linalg.norm(e1)
-    u, v = e0 / L, e1 / W
-    c = r.mean(0)
-    nl = max(1, int(round(L / frente)))
-    nw = 2 if W > fundo else 1
-    partes = []
-    for i in range(nl):
-        for j in range(nw):
-            u0, u1 = -L / 2 + L * i / nl, -L / 2 + L * (i + 1) / nl
-            v0, v1 = -W / 2 + W * j / nw, -W / 2 + W * (j + 1) / nw
-            q = shapely.Polygon([c + u * u0 + v * v0, c + u * u1 + v * v0, c + u * u1 + v * v1, c + u * u0 + v * v1])
-            p = g.intersection(q.buffer(0.01, join_style="mitre"))
-            for pp in (p.geoms if hasattr(p, "geoms") else [p]):
-                if pp.geom_type == "Polygon" and pp.area > 12:
-                    b_ = np.array(pp.simplify(0.3).exterior.coords)[:-1]
-                    partes.append(b_ if area(b_) > 0 else b_[::-1])
-    return partes or [poly]
 
 
 def casa(m, poly, altura):
@@ -667,15 +460,6 @@ def casa(m, poly, altura):
     else:
         telhado_generico(m, poly, z1, mat=1)
     return z1, medido
-
-
-def arvore_modelo(subdiv):
-    bm = bmesh.new()
-    bmesh.ops.create_icosphere(bm, subdivisions=subdiv, radius=1.0)
-    v = np.array([x.co[:] for x in bm.verts])
-    f = [[x.index for x in fa.verts] for fa in bm.faces]
-    bm.free()
-    return v, f
 
 
 ICO = {k: arvore_modelo(k) for k in (0, 1, 2)}
@@ -728,115 +512,8 @@ def plantar(x, y, z, raio, alt, especie, tronco):
         _lobo(x + d * math.cos(a), y + d * math.sin(a), base + alt * (0.36 + 0.12 * rng.random()), rl, min(rl, alt * 0.4), c2, base, topo, 1, 0.07)
 
 
-class Quadro:
-    """Referencial local de uma fachada: s ao longo dela (para a direita de quem olha de fora), z para
-    cima e d para fora da parede, a partir de um ponto da face."""
-
-    def __init__(self, m, origem, normal):
-        self.m = m
-        self.o = np.asarray(origem, float)
-        self.n = unit(np.asarray(normal, float))
-        self.t = np.array([self.n[1], -self.n[0]])  # olhando de fora (contra a normal), a direita
-
-    def p(self, s, z, d):
-        q = self.o + self.t * s + self.n * d
-        return (q[0], q[1], z)
-
-    def bloco(self, s0, s1, z0, z1, d0, d1, mat):
-        c = self.o + self.t * (s0 + s1) / 2 + self.n * (d0 + d1) / 2
-        self.m.caixa(c, self.t, abs(s1 - s0), abs(d1 - d0), z0, z1, mat, fundo=True)
-
-    def placa(self, sz, d0, d1, mat):
-        """Extrude um polígono do plano (s, z) entre as profundidades d0 e d1."""
-        sz = [tuple(q) for q in sz]
-        if area(np.array(sz)) < 0:
-            sz = sz[::-1]
-        frente = [self.p(s, z, d1) for s, z in sz]
-        tras = [self.p(s, z, d0) for s, z in sz]
-        self.m.face(frente[::-1], mat)
-        self.m.face(tras, mat)
-        k = len(sz)
-        for i in range(k):
-            j = (i + 1) % k
-            self.m.face([frente[i], frente[j], tras[j], tras[i]], mat)
-
-    def arco_sz(self, s0, r0, r1, zn, d0, d1, mat, a0=0.0, a1=math.pi, k=12, aduelas=False):
-        """Coroa de arco (entre os raios r0 e r1) centrada em (s0, zn), extrudida entre d0 e d1;
-        com aduelas=True, partida em aduelas com juntas finas."""
-        for i in range(k):
-            t0 = a0 + (a1 - a0) * i / k + (0.012 if aduelas else 0)
-            t1 = a0 + (a1 - a0) * (i + 1) / k - (0.012 if aduelas else 0)
-            q = [(s0 + r0 * math.cos(t0), zn + r0 * math.sin(t0)), (s0 + r1 * math.cos(t0), zn + r1 * math.sin(t0)),
-                 (s0 + r1 * math.cos(t1), zn + r1 * math.sin(t1)), (s0 + r0 * math.cos(t1), zn + r0 * math.sin(t1))]
-            self.placa(q, d0, d1, mat)
-
-    def vao(self, largura, z0, nascenca, d, mat, reto=False):
-        """Vão escuro (arco pleno, ou verga reta) no plano d."""
-        w = largura / 2
-        pts = [(-w, z0), (w, z0), (w, z0 + nascenca)]
-        if not reto:
-            pts += [(w * math.cos(math.pi * k / 14), z0 + nascenca + w * math.sin(math.pi * k / 14)) for k in range(1, 14)]
-        pts += [(-w, z0 + nascenca)]
-        self.m.face([self.p(s, z, d) for s, z in pts], mat)
-
-    def esfera(self, s, z, d, r, mat):
-        self.m.esfera(self.p(s, z, d), r, mat, k=10)
-
-    def escudo(self, s0, z0, larg, alt, d0, d1, mat, coroa=True):
-        """Escudo português (base redonda) com coroa real por cima, em relevo."""
-        w = larg / 2
-        pts = [(s0 - w, z0 + alt), (s0 - w, z0 + alt * 0.4)]
-        pts += [(s0 - w * math.cos(math.pi / 2 * k / 6), z0 + alt * 0.4 - alt * 0.4 * math.sin(math.pi / 2 * k / 6)) for k in range(1, 7)]
-        pts += [(s0 + w * math.sin(math.pi / 2 * k / 6), z0 + alt * 0.4 - alt * 0.4 * math.cos(math.pi / 2 * k / 6)) for k in range(1, 6)]
-        pts += [(s0 + w, z0 + alt * 0.4), (s0 + w, z0 + alt)]
-        self.placa(pts, d0, d1, mat)
-        self.placa([(s0 - w * 0.55, z0 + alt * 0.25), (s0 + w * 0.55, z0 + alt * 0.25), (s0 + w * 0.55, z0 + alt * 0.85), (s0 - w * 0.55, z0 + alt * 0.85)],
-                   d1, d1 + 0.05, mat)  # escudete das quinas
-        if coroa:
-            zc = z0 + alt
-            self.placa([(s0 - w * 1.05, zc), (s0 + w * 1.05, zc), (s0 + w * 1.15, zc + alt * 0.28), (s0 + w * 0.5, zc + alt * 0.2),
-                        (s0, zc + alt * 0.36), (s0 - w * 0.5, zc + alt * 0.2), (s0 - w * 1.15, zc + alt * 0.28)], d0, d1, mat)
-            self.esfera(s0, zc + alt * 0.45, (d0 + d1) / 2, alt * 0.09, mat)
-
-    def almofadas(self, s0, s1, z0, z1, d0, d1, mat, fiada=0.55):
-        """Pilastra de almofadado rústico: blocos salientes com juntas fundas (fotografia da Porta da Coroada)."""
-        self.bloco(s0 + 0.04, s1 - 0.04, z0, z1, d0, d1 - 0.06, mat)
-        for k, z in enumerate(np.arange(z0, z1 - 0.1, fiada)):
-            ss = (0.0 if k % 2 == 0 else 0.06)
-            self.bloco(s0 + ss, s1 - ss, z + 0.04, min(z + fiada - 0.04, z1), d1 - 0.08, d1, mat)
-
-
-def porta_revelim(Q, sole):
-    """Porta do revelim (fotografia): moldura de cantaria com pilastras e entablamento, arco de volta
-    perfeita com porta de madeira, e cartela com as armas reais por cima da cornija."""
-    c, s_ = 0, 1
-    z = sole
-    Q.bloco(-3.0, 3.0, z - 0.5, z + 4.1, -1.4, 0.25, c)
-    w, zn = 1.15, z + 2.35
-    Q.vao(2 * w, z, zn - z, 0.26, s_)
-    Q.placa([(-w + 0.05, z), (w - 0.05, z), (w - 0.05, zn), (-w + 0.05, zn)], 0.2, 0.24, 2)  # porta de ferro/madeira
-    Q.arco_sz(0.0, w, w + 0.4, zn, 0.25, 0.36, c, k=11, aduelas=True)
-    for sg in (-1, 1):
-        s0, s1 = sorted((sg * 1.7, sg * 2.25))
-        Q.bloco(s0, s1, z - 0.3, z + 3.45, 0.25, 0.48, c)
-        Q.bloco(s0 - 0.06, s1 + 0.06, z + 3.45, z + 3.65, 0.25, 0.55, c)
-    Q.bloco(-2.45, 2.45, z + 3.65, z + 3.95, 0.25, 0.6, c)
-    Q.bloco(-2.6, 2.6, z + 3.95, z + 4.2, 0.25, 0.72, c)
-    # cartela: escudo com coroa entre enrolamentos
-    Q.bloco(-0.9, 0.9, z + 4.2, z + 5.3, -0.2, 0.4, c)
-    Q.escudo(0.0, z + 4.35, 0.75, 0.8, 0.4, 0.52, c)
-    for sg in (-1, 1):
-        circ = [(sg * 1.05 + 0.24 * math.cos(t), z + 4.5 + 0.24 * math.sin(t)) for t in np.linspace(0, 2 * math.pi, 10, endpoint=False)]
-        Q.placa(circ, -0.1, 0.45, c)
-    return 5.6
-
-
 CAL, CAN, TEL, SOM, MAD, FER, BRO, VID, LOU, LIS = range(10)
 MAT_IGR = ["cal", "cantaria", "telha", "sombra", "madeira_verde", "ferro", "bronze", "vidro", "lousa", "cantaria_lisa"]
-
-
-def _ang(v):
-    return math.radians(v)
 
 
 def cruz(Q, s, z, d, alt=1.2, mat=FER, esp=0.08):
@@ -873,45 +550,6 @@ def piramide(m, c, u, lado, z0, z1, mat, lado1=0.0):
             m.face([(*b[i], z0), (*b[j], z0), (*c, z1)], mat)
     if lado1 > 0.01:
         m.face([(*p, z1) for p in t], mat)
-
-
-def oitavado(m, c, r0, r1, z0, z1, mat, rot=math.pi / 8):
-    """Tronco octogonal (agulhas, tambores)."""
-    a = np.linspace(0, 2 * math.pi, 8, endpoint=False) + rot
-    b0 = [(c[0] + r0 * math.cos(t), c[1] + r0 * math.sin(t), z0) for t in a]
-    b1 = [(c[0] + r1 * math.cos(t), c[1] + r1 * math.sin(t), z1) for t in a]
-    for i in range(8):
-        j = (i + 1) % 8
-        if r1 > 0.01:
-            m.face([b0[i], b0[j], b1[j], b1[i]], mat)
-        else:
-            m.face([b0[i], b0[j], (c[0], c[1], z1)], mat)
-    if r1 > 0.01:
-        m.face(b1, mat)
-
-
-def cupula(m, c, r, z0, mat, k=16, aneis=6, alt=None):
-    """Meia cúpula por anéis (cobertura da torre de Santo Estêvão)."""
-    alt = r if alt is None else alt
-    ang = np.linspace(0, 2 * math.pi, k, endpoint=False)
-    prev = [(c[0] + r * math.cos(t), c[1] + r * math.sin(t), z0) for t in ang]
-    for i in range(1, aneis + 1):
-        fi = math.pi / 2 * i / aneis
-        rr, zz = r * math.cos(fi), z0 + alt * math.sin(fi)
-        cur = [(c[0] + rr * math.cos(t), c[1] + rr * math.sin(t), zz) for t in ang]
-        for j in range(k):
-            jj = (j + 1) % k
-            if i == aneis:
-                m.face([prev[j], prev[jj], (c[0], c[1], zz)], mat)
-            else:
-                m.face([prev[j], prev[jj], cur[jj], cur[j]], mat)
-        prev = cur
-
-
-def faixa_inclinada(Q, pts, esp, d0, d1, mat):
-    """Faixa (cornija) que segue uma linha poligonal do plano (s, z), com espessura esp para cima."""
-    for (s0, z0), (s1, z1) in zip(pts[:-1], pts[1:]):
-        Q.placa([(s0, z0), (s1, z1), (s1, z1 + esp), (s0, z0 + esp)], d0, d1, mat)
 
 
 def corpo(Q, L, W, z0, ze, inc=30.0, mw=CAL, mr=TEL, beiral=0.32, cachorros=False, cunhais=True,
@@ -979,14 +617,6 @@ def janela(Q, s0, z0, w, h, arco=True, mat_vidro=VID, moldura=0.18, d=0.0, grade
             Q.bloco(ss - 0.015, ss + 0.015, z0, z0 + hn, d + 0.02, d + 0.04, FER)
 
 
-def _vao_desloc(Q, s0, w, z0, hn, d, mat, reto=False):
-    """Como Quadro.vao mas centrado em s0."""
-    o = Q.o
-    Q.o = Q.o + Q.t * s0
-    Q.vao(w, z0, hn, d, mat, reto=reto)
-    Q.o = o
-
-
 def porta_igreja(Q, s0, z0, w, hn, moldura=0.3, arco=True, d=0.0, folhas=MAD):
     """Porta com moldura de cantaria (arco pleno ou verga reta) e folhas de madeira verde almofadadas."""
     _vao_desloc(Q, s0, w, z0, hn, d + 0.012, folhas, reto=not arco)
@@ -1010,20 +640,6 @@ def sino(m, c, z, r=0.32, mat=BRO):
     m.esfera((c[0], c[1], z + r * 1.2), r * 0.5, mat, k=10, achata=0.6)
 
 
-def barra(m, p0, p1, r, mat):
-    """Barra fina de secção quadrada entre dois pontos (ferragens)."""
-    p0, p1 = np.asarray(p0, float), np.asarray(p1, float)
-    d = p1 - p0
-    d /= max(np.linalg.norm(d), 1e-9)
-    a = np.cross(d, [0, 0, 1.0]) if abs(d[2]) < 0.95 else np.cross(d, [1.0, 0, 0])
-    a /= np.linalg.norm(a)
-    b_ = np.cross(d, a)
-    q = [a * r + b_ * r, -a * r + b_ * r, -a * r - b_ * r, a * r - b_ * r]
-    for i in range(4):
-        j = (i + 1) % 4
-        m.face([p0 + q[i], p0 + q[j], p1 + q[j], p1 + q[i]], mat)
-
-
 def varrer(m, linha, perfil, mat, fechar=True):
     """Varre um perfil ao longo de uma polilinha (o exterior fica à direita). O perfil é uma lista de
     (afastamento para fora, cota), cada um um número ou um array com um valor por vértice; os mats
@@ -1044,7 +660,6 @@ def varrer(m, linha, perfil, mat, fechar=True):
         m.face([c[0] for c in cols], mats[0])
         m.face([c[-1] for c in cols][::-1], mats[0])
     return cols
-
 
 
 # ================================================================ Peniche

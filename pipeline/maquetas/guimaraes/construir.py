@@ -24,6 +24,12 @@ import bpy  # noqa: I001 (o bpy tem de vir antes do bmesh)
 import bmesh
 import numpy as np
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # pipeline/, para o kit comum
+from kit.geometria import unit, area, densificar, dentro, distancia, desvio, mediana_movel, arco, arco_quebrado, _retangulo, _arred  # noqa: E402
+from kit.texturas import imagem  # noqa: E402
+from kit.cena import limpar, arvore_modelo  # noqa: E402
+from kit.arquitetura import piramide  # noqa: E402
+
 AQUI = Path(__file__).resolve().parent
 RAIZ = AQUI.parents[2]
 F = json.loads((AQUI / "dados" / "fontes.json").read_text())
@@ -128,41 +134,6 @@ def celulas(poly=None, centro=None, raio=None, sem_veg=True):
 def medir(poly=None, centro=None, raio=None, q=95):
     v = celulas(poly, centro, raio)
     return float(np.percentile(v, q)) if len(v) >= 3 else float("nan")
-
-
-def dentro(px, py, poly):
-    px, py = np.asarray(px, float), np.asarray(py, float)
-    res = np.zeros(px.shape, bool)
-    x, y = poly[:, 0], poly[:, 1]
-    j = len(poly) - 1
-    for i in range(len(poly)):
-        cond = ((y[i] > py) != (y[j] > py)) & (px < (x[j] - x[i]) * (py - y[i]) / (y[j] - y[i] + 1e-12) + x[i])
-        res ^= cond
-        j = i
-    return res
-
-
-def distancia(px, py, linha, fechada=False):
-    """Distância mínima de pontos a uma polilinha e o ponto mais próximo."""
-    px, py = np.asarray(px, float), np.asarray(py, float)
-    pts = np.vstack([linha, linha[:1]]) if fechada else linha
-    best = np.full(px.shape, np.inf)
-    qx, qy = np.zeros(px.shape), np.zeros(px.shape)
-    for a, b in zip(pts[:-1], pts[1:]):
-        d = b - a
-        t = np.clip(((px - a[0]) * d[0] + (py - a[1]) * d[1]) / max(d @ d, 1e-9), 0, 1)
-        cx, cy = a[0] + t * d[0], a[1] + t * d[1]
-        dd = np.hypot(px - cx, py - cy)
-        m = dd < best
-        best[m], qx[m], qy[m] = dd[m], cx[m], cy[m]
-    return best, qx, qy
-
-
-def area(poly):
-    x, y = poly[:, 0], poly[:, 1]
-    return 0.5 * np.sum(x * np.roll(y, -1) - np.roll(x, -1) * y)
-
-
 
 
 # ---------------------------------------------------------------- terreno
@@ -394,48 +365,6 @@ class Malha:
         return ob
 
 
-def unit(v):
-    n = np.linalg.norm(v)
-    return v / n if n > 1e-9 else v
-
-
-def desvio(linha, d, fechada=False):
-    """Polilinha paralela à distância d (positivo = à esquerda), com esquinas em mitra."""
-    n = len(linha)
-    out = []
-    for i in range(n):
-        if fechada or 0 < i < n - 1:
-            t1 = unit(linha[i] - linha[i - 1])
-            t2 = unit(linha[(i + 1) % n] - linha[i])
-        elif i == 0:
-            t1 = t2 = unit(linha[1] - linha[0])
-        else:
-            t1 = t2 = unit(linha[-1] - linha[-2])
-        n1 = np.array([-t1[1], t1[0]])
-        nm = unit(np.array([-(t1 + t2)[1], (t1 + t2)[0]]))
-        if np.linalg.norm(nm) < 1e-6:
-            nm = n1
-        esc = 1.0 / max(0.7, float(nm @ n1))
-        out.append(linha[i] + nm * d * esc)
-    return np.array(out)
-
-
-def densificar(linha, passo=2.0, fechada=False):
-    pts = np.vstack([linha, linha[:1]]) if fechada else linha
-    out = [pts[0]]
-    for a, b in zip(pts[:-1], pts[1:]):
-        k = max(1, int(math.ceil(np.linalg.norm(b - a) / passo)))
-        out += [a + (b - a) * t for t in np.linspace(0, 1, k + 1)[1:]]
-    out = np.array(out)
-    return out[:-1] if fechada else out
-
-
-def mediana_movel(v, k=5, fechada=False):
-    h = k // 2
-    vv = np.concatenate([v[-h:], v, v[:h]]) if fechada else np.concatenate([np.repeat(v[:1], h), v, np.repeat(v[-1:], h)])
-    return np.array([np.median(vv[i:i + k]) for i in range(len(v))])
-
-
 def perfil(linha, esp, fechada=False, raio=1.6):
     """Mede uma muralha no LiDAR, vértice a vértice: topo das ameias no MDS (percentil 95 das células
     sem vegetação num raio de 1,6 m da linha, filtrado ao longo do pano), pé exterior e chão interior
@@ -563,38 +492,7 @@ def torre(m, base, pe, topo, mat=0):
     ameias_ao_longo(m, desvio(base, 0.3, True), terraco + PARAPEITO, True, mat, seteira=1)
 
 
-def piramide(m, c, r, z0, z1, mat):
-    """Pináculo: pirâmide de base quadrada."""
-    b = [c + np.array([math.cos(k * math.pi / 2 + math.pi / 4), math.sin(k * math.pi / 2 + math.pi / 4)]) * r for k in range(4)]
-    for k in range(4):
-        m.face([(*b[k], z0), (*b[(k + 1) % 4], z0), (*c, z1)], mat)
-
-
-def arco(m, centro, u, normal, largura, soleira, nascenca, prof, mat):
-    """Vão em arco pleno, como reentrância escura na face (normal aponta para fora)."""
-    r = largura / 2
-    pts = [(-r, soleira), (r, soleira), (r, soleira + nascenca)]
-    for k in range(1, 12):
-        a = math.pi * k / 12
-        pts.append((r * math.cos(a), soleira + nascenca + r * math.sin(a)))
-    pts.append((-r, soleira + nascenca))
-    frente = [centro + u * px + normal * 0.03 for px, _ in pts]
-    m.face([(*p, z) for p, (_, z) in zip(frente, pts)], mat)
-
-
 # ---------------------------------------------------------------- edifícios
-
-
-def _retangulo(base):
-    b = np.array(base)
-    if area(b) < 0:
-        b = b[::-1]
-    e = [np.linalg.norm(b[(i + 1) % 4] - b[i]) for i in range(4)]
-    k = 0 if e[0] + e[2] >= e[1] + e[3] else 1  # arestas k e k+2 são as compridas
-    b = np.roll(b, -k, axis=0)
-    L = (np.linalg.norm(b[1] - b[0]) + np.linalg.norm(b[2] - b[3])) / 2
-    W = (np.linalg.norm(b[3] - b[0]) + np.linalg.norm(b[2] - b[1])) / 2
-    return b, L, W
 
 
 def altura_telhado(poly, inclinacao=24):
@@ -671,21 +569,9 @@ def casa(m, poly, altura, mat_par=0, mat_tel=1):
     return z1, medido
 
 
-
-
 # ---------------------------------------------------------------- materiais e texturas
 
 # ---------------------------------------------------------------- materiais e texturas
-
-
-def imagem(nome, arr):
-    h, w, _ = arr.shape
-    img = bpy.data.images.new(nome, w, h, alpha=False)
-    rgba = np.concatenate([arr, np.ones((h, w, 1))], 2).astype(np.float32)
-    img.pixels.foreach_set(rgba.ravel())
-    img.file_format = "JPEG"
-    img.pack()
-    return img
 
 
 def textura_pedra(n=512):
@@ -769,7 +655,6 @@ def material(nome, cor, rug=0.9, tex=None, vcor=False):
         nt.links.new(va.outputs["Color"], bsdf.inputs["Base Color"])
     MATS[nome] = mt
     return mt
-
 
 
 # ---------------------------------------------------------------- planta do castelo (traçada no LiDAR)
@@ -892,20 +777,6 @@ def aduelas(m, centro, u, normal, largura, soleira, nascenca, mat, quebrado=Fals
         for sg in (-1, 1):
             cc = centro + u * sg * (w + e_ / 2) + normal * (saliencia / 2)
             m.caixa(cc, u, e_, saliencia, zs[j] + 0.02, zs[j + 1] - 0.02, mat)
-
-
-def arco_quebrado(m, centro, u, normal, largura, soleira, nascenca, mat):
-    """Vão em arco quebrado (ogival), como reentrância escura na face."""
-    r = largura
-    pts = [(-largura / 2, soleira), (largura / 2, soleira), (largura / 2, soleira + nascenca)]
-    for k in range(1, 7):  # arco do lado direito, centro no arranque esquerdo
-        a = math.pi / 3 * k / 6
-        pts.append((-largura / 2 + r * math.cos(a), soleira + nascenca + r * math.sin(a)))
-    for k in range(5, 0, -1):  # lado esquerdo, simétrico
-        a = math.pi / 3 * k / 6
-        pts.append((largura / 2 - r * math.cos(a), soleira + nascenca + r * math.sin(a)))
-    pts.append((-largura / 2, soleira + nascenca))
-    m.face([(*(centro + u * px + normal * 0.03), z) for px, z in pts], mat)
 
 
 # ---------------------------------------------------------------- Paço dos Duques
@@ -1553,10 +1424,6 @@ def estatua():
 # ---------------------------------------------------------------- cena
 
 
-def limpar():
-    bpy.ops.wm.read_factory_settings(use_empty=True)
-
-
 limpar()
 RAIZ_OB = bpy.data.objects.new("Castelo_Guimaraes", None)
 bpy.context.scene.collection.objects.link(RAIZ_OB)
@@ -2001,15 +1868,6 @@ print("vegetação…")
 print("vegetação…")
 
 
-def arvore_modelo(subdiv):
-    bm = bmesh.new()
-    bmesh.ops.create_icosphere(bm, subdivisions=subdiv, radius=1.0)
-    v = np.array([x.co[:] for x in bm.verts])
-    f = [[x.index for x in fa.verts] for fa in bm.faces]
-    bm.free()
-    return v, f
-
-
 ico1, ico1f = arvore_modelo(1)
 ico2, ico2f = arvore_modelo(2)
 mv, mf, mc = [], [], []
@@ -2092,16 +1950,6 @@ ca = me.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
 ca.data.foreach_set("color", np.hstack([cl, np.ones((len(cl), 1))]).astype(np.float32).ravel())
 me.color_attributes.active_color = ca
 novo_objeto("Vegetacao", me, "vegetacao", mat="arvore", pai=GRUPOS["Vegetacao"])
-
-
-def _arred(v):
-    if isinstance(v, float):
-        return round(v, 1)
-    if isinstance(v, list):
-        return [_arred(x) for x in v]
-    if isinstance(v, dict):
-        return {k: _arred(x) for k, x in v.items()}
-    return v
 
 
 (AQUI / "saida").mkdir(exist_ok=True)

@@ -30,6 +30,12 @@ import shapely
 from scipy import ndimage as ndi
 from scipy.spatial import cKDTree
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # pipeline/, para o kit comum
+from kit.geometria import normais, quad, arco_pts  # noqa: E402
+from kit.texturas import ruido, fbm, textura_telha, imagem  # noqa: E402
+from kit.cena import uv_mundo  # noqa: E402
+from kit.materiais import MATS, malha_rapida, material  # noqa: E402
+
 AQUI = Path(__file__).resolve().parent
 RAIZ = AQUI.parents[2]
 CFG = json.loads((RAIZ / "src" / "data" / "maquetas" / "braga.json").read_text())
@@ -93,55 +99,8 @@ def cota(x, y):
 
 # ---------------------------------------------------------------- ruído
 
-def ruido(x, y, escala, semente):
-    g = np.random.default_rng(semente).random((64, 64))
-    u, v = np.asarray(x) / escala, np.asarray(y) / escala
-    i, j = np.floor(u).astype(int), np.floor(v).astype(int)
-    fu, fv = u - i, v - j
-    fu, fv = fu * fu * (3 - 2 * fu), fv * fv * (3 - 2 * fv)
-    a, b = g[i % 64, j % 64], g[(i + 1) % 64, j % 64]
-    c, d = g[i % 64, (j + 1) % 64], g[(i + 1) % 64, (j + 1) % 64]
-    return (a * (1 - fu) + b * fu) * (1 - fv) + (c * (1 - fu) + d * fu) * fv
-
-
-def fbm(x, y, escala, semente, oit=4):
-    s, amp, tot = 0.0, 1.0, 0.0
-    for o in range(oit):
-        s = s + amp * ruido(x, y, escala / 2**o, semente + o)
-        tot += amp
-        amp *= 0.5
-    return s / tot
-
 
 # ---------------------------------------------------------------- malhas
-
-MATS = {}
-
-
-def uv_mundo(ob, escala):
-    """UV em metros: faces horizontais em planta, verticais ao longo da face (as fiadas seguem a cota)."""
-    me = ob.data
-    if not me.uv_layers:
-        me.uv_layers.new(name="UVMap")
-    n_l = len(me.loops)
-    co = np.empty(len(me.vertices) * 3)
-    me.vertices.foreach_get("co", co)
-    co = co.reshape(-1, 3)
-    vi = np.empty(n_l, int)
-    me.loops.foreach_get("vertex_index", vi)
-    nrm = np.empty(len(me.polygons) * 3)
-    me.polygons.foreach_get("normal", nrm)
-    nrm = nrm.reshape(-1, 3)
-    lt = np.empty(len(me.polygons), int)
-    me.polygons.foreach_get("loop_total", lt)
-    pol = np.repeat(np.arange(len(me.polygons)), lt)
-    n = nrm[pol]
-    p = co[vi]
-    hz = np.abs(n[:, 2]) > 0.7
-    h = np.maximum(np.hypot(n[:, 0], n[:, 1]), 1e-6)
-    u = np.where(hz, p[:, 0], (p[:, 0] * -n[:, 1] + p[:, 1] * n[:, 0]) / h)
-    v = np.where(hz, p[:, 1], p[:, 2])
-    me.uv_layers.active.data.foreach_set("uv", (np.stack([u, v], 1) / escala).ravel().astype(np.float32))
 
 
 class Malha:
@@ -224,90 +183,7 @@ class Malha:
         return ob
 
 
-def malha_rapida(nome, V, Fq, mat, pai, elemento=None):
-    me = bpy.data.meshes.new(nome)
-    me.vertices.add(len(V))
-    me.vertices.foreach_set("co", V.astype(np.float32).ravel())
-    me.loops.add(Fq.size)
-    me.loops.foreach_set("vertex_index", Fq.astype(np.int32).ravel())
-    me.polygons.add(len(Fq))
-    me.polygons.foreach_set("loop_start", (np.arange(len(Fq)) * 4).astype(np.int32))
-    me.update(calc_edges=True)
-    me.materials.append(MATS[mat])
-    ob = bpy.data.objects.new(nome, me)
-    bpy.context.scene.collection.objects.link(ob)
-    if elemento:
-        ob["elemento"] = elemento
-    ob.parent = pai
-    return ob
-
-
 # ---------------------------------------------------------------- materiais e texturas
-
-def imagem(nome, arr):
-    h, w, _ = arr.shape
-    img = bpy.data.images.new(nome, w, h, alpha=False)
-    rgba = np.concatenate([arr, np.ones((h, w, 1))], 2).astype(np.float32)
-    img.pixels.foreach_set(rgba.ravel())
-    img.file_format = "JPEG"
-    img.pack()
-    return img
-
-
-def material(nome, cor, rug=0.9, tex=None, vcor=False, normal=None, forca=1.0, escala=None):
-    mt = bpy.data.materials.new(nome)
-    mt.use_nodes = True
-    nt = mt.node_tree
-    bsdf = nt.nodes["Principled BSDF"]
-    mapa = None
-    if escala is not None:
-        uvn = nt.nodes.new("ShaderNodeUVMap")
-        mapa = nt.nodes.new("ShaderNodeMapping")
-        mapa.inputs["Scale"].default_value = (escala, escala, 1.0)
-        nt.links.new(uvn.outputs["UV"], mapa.inputs["Vector"])
-    if normal is not None:
-        normal.colorspace_settings.name = "Non-Color"
-        tn = nt.nodes.new("ShaderNodeTexImage")
-        tn.image = normal
-        if mapa is not None:
-            nt.links.new(mapa.outputs["Vector"], tn.inputs["Vector"])
-        nm = nt.nodes.new("ShaderNodeNormalMap")
-        nm.inputs["Strength"].default_value = forca
-        nt.links.new(tn.outputs["Color"], nm.inputs["Color"])
-        nt.links.new(nm.outputs["Normal"], bsdf.inputs["Normal"])
-    bsdf.inputs["Base Color"].default_value = (*[c ** 2.2 for c in cor], 1)
-    bsdf.inputs["Roughness"].default_value = rug
-    if tex is not None:
-        ti = nt.nodes.new("ShaderNodeTexImage")
-        ti.image = tex
-        if mapa is not None:
-            nt.links.new(mapa.outputs["Vector"], ti.inputs["Vector"])
-        if vcor:
-            va = nt.nodes.new("ShaderNodeVertexColor")
-            va.layer_name = "Col"
-            mix = nt.nodes.new("ShaderNodeMix")
-            mix.data_type = "RGBA"
-            mix.blend_type = "MULTIPLY"
-            mix.inputs["Factor"].default_value = 1.0
-            nt.links.new(ti.outputs["Color"], mix.inputs[6])
-            nt.links.new(va.outputs["Color"], mix.inputs[7])
-            nt.links.new(mix.outputs[2], bsdf.inputs["Base Color"])
-        else:
-            nt.links.new(ti.outputs["Color"], bsdf.inputs["Base Color"])
-    elif vcor:
-        va = nt.nodes.new("ShaderNodeVertexColor")
-        va.layer_name = "Col"
-        nt.links.new(va.outputs["Color"], bsdf.inputs["Base Color"])
-    MATS[nome] = mt
-    return mt
-
-
-def normais(alt, forca):
-    gx = (np.roll(alt, -1, 1) - np.roll(alt, 1, 1)) * forca
-    gy = (np.roll(alt, -1, 0) - np.roll(alt, 1, 0)) * forca
-    nv = np.stack([-gx, -gy, np.ones_like(alt)], 2)
-    nv /= np.linalg.norm(nv, axis=2, keepdims=True)
-    return nv * 0.5 + 0.5
 
 
 def textura_cantaria_torre(n=1024, metros=6.0, semente=1300, fiada=(0.30, 0.48), comp=(0.55, 1.6), liquen=0.80, tinta=(1.0, 1.0, 1.0), sat=1.0):
@@ -391,16 +267,6 @@ def textura_cantaria_torre(n=1024, metros=6.0, semente=1300, fiada=(0.30, 0.48),
     lum = (tex @ np.array([0.30, 0.59, 0.11]))[..., None]
     tex = lum + sat * (tex - lum)
     return np.clip(tex * np.array(tinta), 0, 1), ndi.gaussian_filter(alt, 0.8) + 0.05 * g1
-
-
-def textura_telha(n=256, metros=2.0):
-    yy, xx = np.mgrid[0:n, 0:n] / n * metros
-    onda = 0.5 + 0.5 * np.cos(2 * math.pi * xx / 0.22)
-    fiada = (yy % 0.42) / 0.42
-    v = 0.78 + 0.22 * onda - 0.18 * (fiada > 0.9)
-    g = fbm(xx * 8, yy * 8, 1.0, 77)
-    v = v * (0.9 + 0.2 * g)
-    return np.repeat(v[..., None], 3, 2).clip(0, 1), onda - 0.4 * (fiada > 0.9)
 
 
 def textura_vitral(n=512, metros=2.0):
@@ -513,14 +379,6 @@ FACES = {
     "OSO": Face("OSO", (-1, 0), A, B),
     "SSE": Face("SSE", (0, -1), B, A),
 }
-
-
-def quad(m, f, s0, s1, z0, z1, d=0.0, mat=0):
-    m.face([f.p(s0, d, z0), f.p(s1, d, z0), f.p(s1, d, z1), f.p(s0, d, z1)], mat)
-
-
-def arco_pts(sc, zc, r, k=10, a0=0.0, a1=math.pi):
-    return [(sc + r * math.cos(a), zc + r * math.sin(a)) for a in np.linspace(a0, a1, k + 1)]
 
 
 def parede(m, f, s0, s1, z0, z1, vaos, mat=0, passo_z=1.5):
