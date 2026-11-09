@@ -612,6 +612,7 @@ html[data-redimensionar] .atlas canvas { pointer-events: none; }
 .pagina-atlas .rodape-site { position: fixed; z-index: 3; right: 18px; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); padding: 0; text-align: right;
   font-size: 12.5px; color: rgba(250, 242, 222, 0.9); text-shadow: 0 0 3px rgba(20, 14, 8, 0.95), 0 1px 6px rgba(20, 14, 8, 0.8); pointer-events: auto; }
 .pagina-atlas .rodape-site a:hover { color: var(--pergaminho); }
+.pagina-atlas:has(.atlas[data-ficha="1"]) .rodape-site { display: none; } /* com a ficha aberta não se sobrepõe ao texto */
 @media (max-width: 860px) {
   /* no telemóvel o mapa não tem espaço livre em baixo: a nota passa para o painel Fontes */
   .pagina-atlas .rodape-site { display: none; }

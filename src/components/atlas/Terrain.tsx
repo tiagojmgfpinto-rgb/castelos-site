@@ -6,7 +6,18 @@ import { MAPA, type TerritorioId } from "../../lib/territorios";
 import { useAtlas } from "./store";
 import { TerrainManager, type Manifest } from "./terrain/TerrainManager";
 
-export const EXAGERO = 4;
+// Exagero vertical do castillos.site (EXAGERACION 11) à escala do país. Ao aproximar, o relevo baixa aos poucos
+// até 4× (ver escalaRelevo): de perto, 11× fazia das serras agulhas e enterrava as linhas dos distritos.
+export const EXAGERO = 11;
+export const relevo = { escala: 1 };
+/** Exagero vertical em vigor neste fotograma. */
+export const exagero = () => EXAGERO * relevo.escala;
+const PERTO = 40, LONGE = 300, MINIMO = 4 / EXAGERO; // km de distância da câmara ao alvo
+export function escalaRelevo(dist: number) {
+  const t = THREE.MathUtils.clamp(Math.log(dist / PERTO) / Math.log(LONGE / PERTO), 0, 1);
+  const e = t * t * (3 - 2 * t);
+  return MINIMO + (1 - MINIMO) * e;
+}
 
 const TerrenoCtx = createContext<TerrainManager | null>(null);
 export const useTerreno = () => useContext(TerrenoCtx);
@@ -43,6 +54,7 @@ export function Terreno({ territorio, children }: { territorio: TerritorioId; ch
 
   useFrame(({ camera }) => {
     mgr?.update(camera);
+    if (mgr && mgr.group.scale.y !== relevo.escala) mgr.group.scale.y = relevo.escala;
   });
 
   if (!mgr) return null;

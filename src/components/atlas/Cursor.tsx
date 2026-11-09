@@ -4,7 +4,7 @@ import * as THREE from "three";
 import { deCena, TERRITORIOS, type TerritorioId } from "../../lib/territorios";
 import { gms } from "../ui/FichaConteudo";
 import { useAtlas } from "./store";
-import { EXAGERO, useTerreno } from "./Terrain";
+import { exagero, useTerreno } from "./Terrain";
 
 /** Coordenadas e altitude sob o rato, para a leitura do canto inferior esquerdo. */
 export function Cursor({ territorio }: { territorio: TerritorioId }) {
@@ -30,7 +30,7 @@ export function Cursor({ territorio }: { territorio: TerritorioId }) {
       // interseção com o plano à altitude do terreno, refinada duas vezes
       let h = 0;
       for (let i = 0; i < 3; i++) {
-        plano.constant = -(Math.max(h, 0) / 1000) * EXAGERO;
+        plano.constant = -(Math.max(h, 0) / 1000) * exagero();
         if (!ray.ray.intersectPlane(plano, p)) return;
         h = terreno?.altitude(p.x, p.z) ?? 0;
       }
