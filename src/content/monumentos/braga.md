@@ -88,6 +88,11 @@ visita:
   resumo: "Vê-se de fora, a pé, no largo entre a Rua do Castelo e a Praça da República"
   acessibilidade: "No centro histórico de Braga, numa zona pedonal e plana, junto à Praça da República (Arcada)"
 imagens:
+  - ficheiro: "imagens/braga/torre-sudeste.jpg"
+    legenda: "A torre vista de sudeste, com a escada de pedra encostada à base, o coroamento de ameias e, à direita, a torre da Igreja dos Terceiros."
+    autor: "Joseolgon, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Torre_de_menagem_Braga.jpg"
   - ficheiro: "imagens/braga/ortofotomapa-2021.jpg"
     legenda: "A torre vista do alto, numa área de 100 × 100 m com o norte para cima: o telhado de quatro águas dentro das ameias, a árvore a noroeste, o edifício comprido da Rua do Castelo a poente e a Praça da República a nascente. No ortofotomapa a torre aparece um pouco inclinada para noroeste."
     autor: "Direção-Geral do Território, Ortofotomapa 2021 (25 cm)"
