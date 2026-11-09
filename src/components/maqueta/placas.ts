@@ -20,6 +20,8 @@ export interface OpcoesDisposicao {
   niveis: number;
   /** Margem de cima reservada aos botões do visor, em px. */
   topo: number;
+  /** Zonas do visor onde nenhum cartão pode ficar (o selo da versão provisória, a bússola), em px. */
+  bloqueadas?: Caixa[];
 }
 
 /** Lugar de uma placa: nível da linha e desvio do cartão para o lado (fração da largura). */
@@ -28,7 +30,7 @@ export interface Lugar { nivel: number; lado: number }
 /** Desvios tentados em cada nível: centrado, depois para a esquerda e para a direita. */
 const LADOS = [0, -0.38, 0.38];
 
-interface Caixa { x0: number; y0: number; x1: number; y1: number }
+export interface Caixa { x0: number; y0: number; x1: number; y1: number }
 
 const cruza = (a: Caixa, b: Caixa) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
 
@@ -43,7 +45,7 @@ export function alturaLinha(nivel: number, h: number, o: OpcoesDisposicao): numb
  * subir um nível. As que não cabem, ou não são candidatas, ficam com nível -1 e escondem-se.
  */
 export function disporPlacas(placas: PlacaNoEcra[], o: OpcoesDisposicao): Lugar[] {
-  const ocupadas: Caixa[] = [];
+  const ocupadas: Caixa[] = [...(o.bloqueadas ?? [])];
   return placas.map((p) => {
     if (!p.candidata) return { nivel: -1, lado: 0 };
     for (let n = 0; n <= o.niveis; n++) {

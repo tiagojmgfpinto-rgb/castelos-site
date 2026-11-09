@@ -5,7 +5,7 @@ import * as THREE from "three";
 import { MeshBVH, acceleratedRaycast } from "three-mesh-bvh";
 import { BASE } from "../../lib/base";
 import { CAMADAS_TERRENO, ESTADOS, elementosComPlaca, vistaEpoca, type DadosMaqueta, type ElementoMaqueta, type EpocaMaqueta } from "./dados";
-import { alturaLinha, disporPlacas, type OpcoesDisposicao } from "./placas";
+import { alturaLinha, disporPlacas, type Caixa, type OpcoesDisposicao } from "./placas";
 import { Ambiente, LUZ, Oclusao, aplicarTom, ecraTatil } from "./Luz";
 
 interface Controlos {
@@ -405,9 +405,11 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, d
     if (rotulos) entrada.current = { atraso: 0, passo: 0.08 };
   }, [rotulos]);
 
-  // Remedir os cartões quando o visor muda de tamanho
+  // Remedir os cartões (e as zonas do selo e da bússola) quando o visor muda de tamanho
+  const bloqueadas = useRef<Caixa[] | null>(null);
   useEffect(() => {
     estados.current.forEach((p) => (p.w = 0));
+    bloqueadas.current = null;
   }, [size.width, size.height]);
 
   // Depois de fechar a ficha de um elemento, o giro espera como depois de uma interação
@@ -539,7 +541,18 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, d
       ps.forEach((p, i) => (p.inicio = t + e.atraso + i * e.passo));
       entrada.current = null;
     }
-    const o: OpcoesDisposicao = { linha: size.width < 560 ? 26 : 42, folga: 6, niveis: 2, topo: 44 };
+    // os cartões não entram por baixo do selo «Versão provisória» nem da bússola
+    if (!bloqueadas.current) {
+      const camada = camadaPlacas.current;
+      const r0 = camada?.getBoundingClientRect();
+      bloqueadas.current = r0
+        ? [...(camada!.parentElement?.querySelectorAll<HTMLElement>(".maqueta-selo, .maqueta-norte") ?? [])].map((el) => {
+            const r = el.getBoundingClientRect();
+            return { x0: r.left - r0.left - 4, y0: r.top - r0.top - 4, x1: r.right - r0.left + 4, y1: r.bottom - r0.top + 4 };
+          })
+        : [];
+    }
+    const o: OpcoesDisposicao = { linha: size.width < 560 ? 26 : 42, folga: 6, niveis: 2, topo: 44, bloqueadas: bloqueadas.current };
     const { v, dir, raio } = aux;
     const noEcra = ps.map((p) => {
       if (!p.w) { p.w = p.cartao.offsetWidth; p.h = p.cartao.offsetHeight; }
@@ -567,7 +580,9 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, d
       p.op += ((nivel >= 0 ? 1 : 0) - p.op) * kOp;
       if (nivel >= 0) {
         p.dy += (alturaLinha(nivel, p.h, o) - p.dy) * kDy;
-        p.dx += (lado * p.w - p.dx) * kDy;
+        // o cartão desliza para dentro do visor quando o ponto está junto à borda (não fica cortado)
+        const alvoDx = THREE.MathUtils.clamp(lado * p.w, p.w / 2 + 4 - x, size.width - p.w / 2 - 4 - x);
+        p.dx += (alvoDx - p.dx) * kDy;
       } else if (p.op < 0.02) {
         p.dy = o.linha * 0.4; // ao reaparecer, a linha cresce de novo
       }

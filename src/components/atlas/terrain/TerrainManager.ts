@@ -323,6 +323,7 @@ export class TerrainManager {
     g.setIndex(nv + skirt > 65535 ? new THREE.Uint32BufferAttribute(index, 1) : new THREE.Uint16BufferAttribute(index, 1));
     g.computeBoundingSphere();
     const mesh = new THREE.Mesh(g, this.material);
+    mesh.renderOrder = -10; // o relevo desenha-se primeiro; a fronteira vai por cima dele e as torres por cima dela (Linhas.tsx)
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     mesh.name = leaf.key;

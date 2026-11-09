@@ -52,11 +52,14 @@ export function Linhas({ territorio }: { territorio: TerritorioId }) {
       {dados.distritos.map((l, i) => (
         <Line key={`d${i}`} points={conv(l)} color="#33230f" lineWidth={1.5} dashed dashSize={2.4} gapSize={1.35} transparent opacity={0.9} />
       ))}
+      {/* A fronteira desenha-se logo a seguir ao relevo e sem teste de profundidade: os pontos têm c. 3 km entre si
+          e seguem os vales do Minho, do Douro e do Guadiana, onde o relevo mais grosseiro de longe fica acima deles e
+          enterrava o traço escuro (só se via o halo). Opaca e sem escrever profundidade, as torres continuam por cima. */}
       {dados.fronteira?.map((l, i) => (
-        <Line key={`fh${i}`} points={conv(l)} color={HALO} lineWidth={6.6} transparent opacity={0.65} depthWrite={false} />
+        <Line key={`fh${i}`} points={conv(l)} color={HALO} lineWidth={7.6} depthWrite={false} depthTest={false} renderOrder={-6} />
       ))}
       {dados.fronteira?.map((l, i) => (
-        <Line key={`f${i}`} points={conv(l)} color="#1c1209" lineWidth={3.1} />
+        <Line key={`f${i}`} points={conv(l)} color="#1c1209" lineWidth={3.6} depthWrite={false} depthTest={false} renderOrder={-5} />
       ))}
       {territorio === "continente" &&
         // o distrito com o nome da sua capital já rotulada como cidade grande não se repete
