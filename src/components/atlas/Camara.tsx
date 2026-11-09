@@ -33,7 +33,10 @@ function angMaisPerto(de: number, para: number) {
 export function vistaInicial(territorio: TerritorioId): Voo {
   const t = TERRITORIOS[territorio];
   const [x, z] = paraCena(t, t.vista.x, t.vista.y);
-  return { x, z, distancia: t.vista.distancia, inclinacao: t.vista.inclinacao, rumo: t.vista.rumo };
+  // em ecrãs estreitos (telemóvel ao alto) a câmara afasta-se até caber a largura do território
+  const aspecto = typeof window === "undefined" ? 1.6 : window.innerWidth / Math.max(1, window.innerHeight);
+  const fator = Math.max(1, (t.vista.aspectoMin ?? 0) / aspecto);
+  return { x, z, distancia: t.vista.distancia * fator, inclinacao: t.vista.inclinacao, rumo: t.vista.rumo };
 }
 
 export function Camara({ territorio }: { territorio: TerritorioId }) {
