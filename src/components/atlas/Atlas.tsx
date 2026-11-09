@@ -5,7 +5,7 @@ import { paraCena, projectar, TERRITORIOS, type TerritorioId } from "../../lib/t
 import { Camara, vistaInicial } from "./Camara";
 import { Cursor } from "./Cursor";
 import { Linhas } from "./Linhas";
-import { Marcadores } from "./Marcadores";
+import { Marcadores, tocar } from "./Marcadores";
 import { useAtlas, type MonumentoResumo } from "./store";
 import { Terreno } from "./Terrain";
 import { Ficha } from "../ui/Ficha";
@@ -112,7 +112,8 @@ export default function Atlas({ monumentos }: { monumentos: MonumentoResumo[] })
           onPointerMissed={() => {
             // o marcador sob o rato é escolhido por proximidade no ecrã, mesmo sem tocar na malha
             const s = useAtlas.getState();
-            if (s.sobre) s.selecionar(s.sobre);
+            if (s.sobre) tocar(s.sobre);
+            else if (s.roda) s.setRoda(null);
           }}
         >
           <Cena territorio={territorio} monumentos={monumentos} />

@@ -66,12 +66,25 @@ export interface Voo {
 
 export type Painel = "indice" | "distritos" | "fontes";
 
+/** Torres que se tocavam no ecrã, afastadas em roda à volta do centro delas até se escolher uma. */
+export interface Roda {
+  ids: string[];
+  x: number; // centro na cena (km)
+  y: number;
+  z: number;
+  distancia: number; // distância da câmara quando abriu: aproximar ou afastar muito fecha a roda
+}
+
 interface Estado {
   territorio: TerritorioId;
   selecionado: string | null;
   sobre: string | null;
   filtrosTipologia: Set<Tipologia>;
   filtroRegiao: Regiao | null;
+  /** só os monumentos com maqueta 3D publicada */
+  filtroMaqueta: boolean;
+  /** só os que têm informação de visita nas fontes (horário, acesso, entrada…) */
+  filtroVisita: boolean;
   indiceAberto: boolean;
   painel: Painel | null;
   distritoAtivo: string | null;
@@ -80,6 +93,8 @@ interface Estado {
   carregamento: number; // 0..1
   escalaKmPorPx: number;
   rumoAtual: number;
+  roda: Roda | null;
+  setRoda: (r: Roda | null) => void;
   setTerritorio: (t: TerritorioId) => void;
   selecionar: (id: string | null) => void;
   setSobre: (id: string | null) => void;
@@ -102,6 +117,8 @@ export const useAtlas = create<Estado>((set) => ({
   sobre: null,
   filtrosTipologia: new Set(),
   filtroRegiao: null,
+  filtroMaqueta: false,
+  filtroVisita: false,
   indiceAberto: false,
   painel: null,
   distritoAtivo: null,
@@ -110,8 +127,10 @@ export const useAtlas = create<Estado>((set) => ({
   carregamento: 0,
   escalaKmPorPx: 1,
   rumoAtual: 0,
-  setTerritorio: (territorio) => set({ territorio, selecionado: null, sobre: null, voo: null, carregamento: 0 }),
-  selecionar: (selecionado) => set({ selecionado }),
+  roda: null,
+  setRoda: (roda) => set({ roda }),
+  setTerritorio: (territorio) => set({ territorio, selecionado: null, sobre: null, voo: null, carregamento: 0, roda: null }),
+  selecionar: (selecionado) => set({ selecionado, roda: null }),
   setSobre: (sobre) => set({ sobre }),
   alternarTipologia: (t) =>
     set((s) => {
@@ -133,9 +152,14 @@ export const useAtlas = create<Estado>((set) => ({
   setEscala: (escalaKmPorPx, rumoAtual) => set({ escalaKmPorPx, rumoAtual }),
 }));
 
-export function visivel(m: MonumentoResumo, s: Pick<Estado, "filtrosTipologia" | "filtroRegiao">) {
+export const temMaqueta = (m: MonumentoResumo) => m.maquetas.length > 0;
+export const temVisita = (m: MonumentoResumo) => !!m.conteudo.visita && Object.values(m.conteudo.visita).some(Boolean);
+
+export function visivel(m: MonumentoResumo, s: Pick<Estado, "filtrosTipologia" | "filtroRegiao"> & Partial<Pick<Estado, "filtroMaqueta" | "filtroVisita">>) {
   if (s.filtrosTipologia.size && !s.filtrosTipologia.has(m.tipologia)) return false;
   if (s.filtroRegiao && m.regiao !== s.filtroRegiao) return false;
+  if (s.filtroMaqueta && !temMaqueta(m)) return false;
+  if (s.filtroVisita && !temVisita(m)) return false;
   return true;
 }
 

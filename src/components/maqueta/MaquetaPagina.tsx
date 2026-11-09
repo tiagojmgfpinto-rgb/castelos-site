@@ -1,4 +1,5 @@
 import Maqueta from "./Maqueta";
+import { FalhaMaqueta } from "./FalhaMaqueta";
 import { dadosMaqueta } from "./dados";
 import { BASE } from "../../lib/base";
 
@@ -6,5 +7,9 @@ import { BASE } from "../../lib/base";
 export default function MaquetaPagina({ id, ficheiro, capa, provisoria }: { id: string; ficheiro: string; capa?: string; provisoria: boolean }) {
   const dados = dadosMaqueta(id);
   if (!dados) return null;
-  return <Maqueta url={`${BASE}${ficheiro}`} capa={capa} dados={dados} provisoria={provisoria} onVoltarMapa={() => (location.href = `${BASE}#${id}`)} />;
+  return (
+    <FalhaMaqueta url={`${BASE}${ficheiro}`}>
+      <Maqueta url={`${BASE}${ficheiro}`} capa={capa} dados={dados} provisoria={provisoria} onVoltarMapa={() => (location.href = `${BASE}#${id}`)} />
+    </FalhaMaqueta>
+  );
 }
