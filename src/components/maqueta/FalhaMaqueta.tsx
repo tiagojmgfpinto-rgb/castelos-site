@@ -1,5 +1,5 @@
 import { useGLTF } from "@react-three/drei";
-import { Component, type ReactNode } from "react";
+import { Component, Fragment, type ReactNode } from "react";
 
 /**
  * Se a maqueta 3D não carregar (rede em baixo, ficheiro em falta, WebGL perdido), mostra um aviso no lugar
@@ -17,7 +17,10 @@ export class FalhaMaqueta extends Component<{ children: ReactNode; url?: string 
   }
 
   render() {
-    if (!this.state.erro) return <div key={this.state.tentativa} style={{ display: "contents" }}>{this.props.children}</div>;
+    // Fragment com chave (e não um <div style="display: contents">): a ilha Astro client:visible observa o
+    // primeiro elemento filho, e um elemento com display: contents nunca entra no ecrã, pelo que a maqueta
+    // da página do monumento não chegava a carregar.
+    if (!this.state.erro) return <Fragment key={this.state.tentativa}>{this.props.children}</Fragment>;
     return (
       <div className="ficha-maqueta-palco maqueta-falha" role="alert">
         <p>Não foi possível carregar a maqueta 3D.</p>
