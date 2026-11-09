@@ -1,0 +1,59 @@
+{
+ "maquetas": {
+  "braga": {
+   "glb": "a872885507d9948365122513a4bff7f0dc4ec463",
+   "medidas": "0864ed94e8108e860ee7892b80be29794eece0a3"
+  },
+  "castro-laboreiro": {
+   "glb": "b1684cbef25e8f1410a40dbf7015508f789a8d0a",
+   "medidas": "9b54ee915730c5372a4d305091310687c8f53a59"
+  },
+  "guimaraes": {
+   "glb": "698e6d230d25f1734169a4db1bec8c00f84acac0",
+   "medidas": "956f627f5035c9ba2a30c576f984165870acb47d"
+  },
+  "lanhoso": {
+   "glb": "39cd0cf38470fe47b80032c643f3a1caa285dce5",
+   "medidas": "2f02454260efdacc1d7e963468c42a5ac3afe7ce"
+  },
+  "lindoso": {
+   "glb": "2a466efb8bd6b7d720813274ea7474c02f3d78d6",
+   "medidas": "50da72c11a9746909114c6fa361dbac78de66c08"
+  },
+  "melgaco": {
+   "glb": "f43a768277cf99e8ef7d10ac79fbca450d5febf5",
+   "medidas": "e0c3eb9dd2c0d7db19c0a4eac6820cc57288c0a5"
+  },
+  "moncao": {
+   "glb": "3f66965fb22542b9e578cd2b50f0925c8e0813f9",
+   "medidas": "99b1c1de087683a0612cd6252a8582ea45b4a66e"
+  },
+  "montalegre": {
+   "glb": "6878621f5eafc9a488b49733abd3cbcd64e63ad0",
+   "medidas": "fa17c18545b8c26fd40f1c086c4b9f3011fc5779"
+  },
+  "penela": {
+   "glb": "010c4a8c7797dac18017b8e636d4dfa970172cb7",
+   "medidas": "54e3e2bfe407fe022d273624c05622e225cd0b8b"
+  },
+  "peniche": {
+   "glb": "0381b9bef2dca1b5b850a588d8599827ea96d89e",
+   "medidas": "848b5f9e7f3d2e0dba9093be19077dfb6a97037b"
+  },
+  "valenca": {
+   "glb": "5c3918618724c554a10b988d5676ff5083aa97e0",
+   "medidas": "ec6cf56be9b09dd1ca1bfa46d9730f87f9910cad"
+  }
+ },
+ "ambiente": {
+  "python": "3.13.18",
+  "bpy": "5.2.3 LTS",
+  "numpy": "2.5.4",
+  "scipy": "1.18.1",
+  "shapely": "2.2.0",
+  "rasterio": "1.5.2",
+  "pyproj": "3.8.0",
+  "matplotlib": "3.11.2",
+  "PIL": "13.0.0"
+ }
+}

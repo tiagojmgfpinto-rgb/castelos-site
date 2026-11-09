@@ -45,6 +45,13 @@ sys.path.insert(0, str(AQUI))
 from comum import (ALA_OESTE, ALA_SUL, CORREDOR, LAT0, LON0, MEIA_TORRE, PASSAGEM_SUL, PORTA_CERCA_SUL,  # noqa: E402
                    PORTA_NORTE, POSTIGO, ROT_TORRE, TORRE_DA_PORTA, ZONA_CASTELO, _bloco)
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # pipeline/, para o kit comum
+from kit.geometria import normais, amostra, quad, arco_pts, _sd, _anc  # noqa: E402
+from kit.texturas import ruido, fbm, textura_cantaria, textura_cubos, textura_rocha, textura_telha, textura_terra, imagem  # noqa: E402
+from kit.cena import uv_mundo  # noqa: E402
+from kit.materiais import MATS, malha_rapida, material  # noqa: E402
+from kit.arquitetura import aduelas, contorno_vao, parede, passagem, vao  # noqa: E402
+
 _cfg = RAIZ / "src" / "data" / "maquetas" / "lindoso.json"
 CFG = json.loads(_cfg.read_text()) if _cfg.exists() else {"origem": {"lat": LAT0, "lon": LON0}, "variante": "estado-atual", "versao": "0.1"}
 F = json.loads((AQUI / "dados" / "fontes.json").read_text())
@@ -84,12 +91,6 @@ def unit(v):
     return v / max(np.linalg.norm(v), 1e-9)
 
 
-def amostra(G, x0, y0, p, x, y, ordem=1):
-    xa, ya = np.atleast_1d(np.asarray(x, float)), np.atleast_1d(np.asarray(y, float))
-    r = ndi.map_coordinates(G, [(ya - y0) / p, (xa - x0) / p], order=ordem, mode="nearest")
-    return r if np.ndim(x) else float(r[0])
-
-
 def cota(x, y):
     """Chão (MDT de 50 cm)."""
     return amostra(MDT, LX0, LY0, LP, x, y)
@@ -103,56 +104,9 @@ def superficie(x, y):
 # ---------------------------------------------------------------- ruído
 # ---------------------------------------------------------------- ruído
 
-def ruido(x, y, escala, semente):
-    g = np.random.default_rng(semente).random((64, 64))
-    u, v = np.asarray(x) / escala, np.asarray(y) / escala
-    i, j = np.floor(u).astype(int), np.floor(v).astype(int)
-    fu, fv = u - i, v - j
-    fu, fv = fu * fu * (3 - 2 * fu), fv * fv * (3 - 2 * fv)
-    a, b = g[i % 64, j % 64], g[(i + 1) % 64, j % 64]
-    c, d = g[i % 64, (j + 1) % 64], g[(i + 1) % 64, (j + 1) % 64]
-    return (a * (1 - fu) + b * fu) * (1 - fv) + (c * (1 - fu) + d * fu) * fv
-
-
-def fbm(x, y, escala, semente, oit=4):
-    s, amp, tot = 0.0, 1.0, 0.0
-    for o in range(oit):
-        s = s + amp * ruido(x, y, escala / 2**o, semente + o)
-        tot += amp
-        amp *= 0.5
-    return s / tot
-
 
 # ---------------------------------------------------------------- malhas
 # ---------------------------------------------------------------- malhas
-
-MATS = {}
-
-
-def uv_mundo(ob, escala):
-    """UV em metros: faces horizontais em planta, verticais ao longo da face (as fiadas seguem a cota)."""
-    me = ob.data
-    if not me.uv_layers:
-        me.uv_layers.new(name="UVMap")
-    n_l = len(me.loops)
-    co = np.empty(len(me.vertices) * 3)
-    me.vertices.foreach_get("co", co)
-    co = co.reshape(-1, 3)
-    vi = np.empty(n_l, int)
-    me.loops.foreach_get("vertex_index", vi)
-    nrm = np.empty(len(me.polygons) * 3)
-    me.polygons.foreach_get("normal", nrm)
-    nrm = nrm.reshape(-1, 3)
-    lt = np.empty(len(me.polygons), int)
-    me.polygons.foreach_get("loop_total", lt)
-    pol = np.repeat(np.arange(len(me.polygons)), lt)
-    n = nrm[pol]
-    p = co[vi]
-    hz = np.abs(n[:, 2]) > 0.7
-    h = np.maximum(np.hypot(n[:, 0], n[:, 1]), 1e-6)
-    u = np.where(hz, p[:, 0], (p[:, 0] * -n[:, 1] + p[:, 1] * n[:, 0]) / h)
-    v = np.where(hz, p[:, 1], p[:, 2])
-    me.uv_layers.active.data.foreach_set("uv", (np.stack([u, v], 1) / escala).ravel().astype(np.float32))
 
 
 class Malha:
@@ -260,193 +214,10 @@ class Malha:
         return ob
 
 
-def malha_rapida(nome, V, Fq, mat, pai, elemento=None):
-    me = bpy.data.meshes.new(nome)
-    me.vertices.add(len(V))
-    me.vertices.foreach_set("co", V.astype(np.float32).ravel())
-    me.loops.add(Fq.size)
-    me.loops.foreach_set("vertex_index", Fq.astype(np.int32).ravel())
-    me.polygons.add(len(Fq))
-    me.polygons.foreach_set("loop_start", (np.arange(len(Fq)) * 4).astype(np.int32))
-    me.update(calc_edges=True)
-    me.materials.append(MATS[mat])
-    ob = bpy.data.objects.new(nome, me)
-    bpy.context.scene.collection.objects.link(ob)
-    if elemento:
-        ob["elemento"] = elemento
-    ob.parent = pai
-    return ob
+# ---------------------------------------------------------------- materiais e texturas
 
 
 # ---------------------------------------------------------------- materiais e texturas
-
-def imagem(nome, arr):
-    h, w, _ = arr.shape
-    img = bpy.data.images.new(nome, w, h, alpha=False)
-    rgba = np.concatenate([arr, np.ones((h, w, 1))], 2).astype(np.float32)
-    img.pixels.foreach_set(rgba.ravel())
-    img.file_format = "JPEG"
-    img.pack()
-    return img
-
-
-# ---------------------------------------------------------------- materiais e texturas
-def material(nome, cor, rug=0.9, tex=None, vcor=False, normal=None, forca=1.0, escala=None):
-    mt = bpy.data.materials.new(nome)
-    mt.use_nodes = True
-    nt = mt.node_tree
-    bsdf = nt.nodes["Principled BSDF"]
-    mapa = None
-    if escala is not None:
-        uvn = nt.nodes.new("ShaderNodeUVMap")
-        mapa = nt.nodes.new("ShaderNodeMapping")
-        mapa.inputs["Scale"].default_value = (escala, escala, 1.0)
-        nt.links.new(uvn.outputs["UV"], mapa.inputs["Vector"])
-    if normal is not None:
-        normal.colorspace_settings.name = "Non-Color"
-        tn = nt.nodes.new("ShaderNodeTexImage")
-        tn.image = normal
-        if mapa is not None:
-            nt.links.new(mapa.outputs["Vector"], tn.inputs["Vector"])
-        nm = nt.nodes.new("ShaderNodeNormalMap")
-        nm.inputs["Strength"].default_value = forca
-        nt.links.new(tn.outputs["Color"], nm.inputs["Color"])
-        nt.links.new(nm.outputs["Normal"], bsdf.inputs["Normal"])
-    bsdf.inputs["Base Color"].default_value = (*[c ** 2.2 for c in cor], 1)
-    bsdf.inputs["Roughness"].default_value = rug
-    if tex is not None:
-        ti = nt.nodes.new("ShaderNodeTexImage")
-        ti.image = tex
-        if mapa is not None:
-            nt.links.new(mapa.outputs["Vector"], ti.inputs["Vector"])
-        if vcor:
-            va = nt.nodes.new("ShaderNodeVertexColor")
-            va.layer_name = "Col"
-            mix = nt.nodes.new("ShaderNodeMix")
-            mix.data_type = "RGBA"
-            mix.blend_type = "MULTIPLY"
-            mix.inputs["Factor"].default_value = 1.0
-            nt.links.new(ti.outputs["Color"], mix.inputs[6])
-            nt.links.new(va.outputs["Color"], mix.inputs[7])
-            nt.links.new(mix.outputs[2], bsdf.inputs["Base Color"])
-        else:
-            nt.links.new(ti.outputs["Color"], bsdf.inputs["Base Color"])
-    elif vcor:
-        va = nt.nodes.new("ShaderNodeVertexColor")
-        va.layer_name = "Col"
-        nt.links.new(va.outputs["Color"], bsdf.inputs["Base Color"])
-    MATS[nome] = mt
-    return mt
-
-
-def normais(alt, forca):
-    gx = (np.roll(alt, -1, 1) - np.roll(alt, 1, 1)) * forca
-    gy = (np.roll(alt, -1, 0) - np.roll(alt, 1, 0)) * forca
-    nv = np.stack([-gx, -gy, np.ones_like(alt)], 2)
-    nv /= np.linalg.norm(nv, axis=2, keepdims=True)
-    return nv * 0.5 + 0.5
-
-
-def textura_cantaria(n=1024, metros=6.0, semente=1170, fiada=(0.30, 0.48), comp=(0.55, 1.6), liquen=0.80,
-                     tinta=(1.0, 1.0, 1.0), paleta=None, prob=None, junta_m=0.005, irregular=0.0, var=(0.86, 1.12),
-                     liq_forca=0.55):
-    """Aparelho de granito em fiadas (6 m por repetição): silhares de fiada e comprimento dados, juntas finas,
-    arestas gastas, grão de biotite e feldspato, manchas de óxido, escorrências e líquenes. Com irregular > 0
-    as juntas verticais inclinam e as fiadas ondulam (alvenaria da cerca e da muralha). Devolve a cor e o relevo."""
-    r = np.random.default_rng(semente)
-    m_px = n / metros
-    if paleta is None:
-        # granito de Melgaço nas fotografias: cinzento quente, dourado ao sol, com silhares mais claros e outros
-        # tingidos de ocre (óxido de ferro)
-        paleta = np.array([
-            (0.600, 0.565, 0.500),  # cinzento-dourado (a maioria)
-            (0.660, 0.630, 0.570),  # claro
-            (0.500, 0.475, 0.430),  # escuro, gasto
-            (0.640, 0.565, 0.460),  # ocre
-            (0.575, 0.505, 0.420),  # ocre-acastanhado
-            (0.560, 0.555, 0.535),  # cinzento frio
-        ])
-        prob = [0.40, 0.16, 0.16, 0.15, 0.05, 0.08]
-    prob = np.array(prob) / np.sum(prob)
-    cel = np.zeros((n, n), int)
-    cores = []
-    y = 0.0
-    k = 0
-    while y < n - 1:
-        hf = r.uniform(*fiada) * m_px
-        if y + hf > n - fiada[0] * 0.6 * m_px:
-            hf = n - y
-        y0, y1 = int(round(y)), int(round(y + hf))
-        x = r.uniform(0, 1.0) * m_px
-        x_ini = x
-        while x < x_ini + n:
-            wf = r.uniform(*comp) * m_px
-            xs = (np.arange(int(round(x)), int(round(x + wf)))) % n
-            cel[y0:y1, xs] = k
-            cores.append(paleta[r.choice(len(paleta), p=prob)] * r.uniform(*var))
-            k += 1
-            x += wf
-        y += hf
-    cores = np.array(cores)
-    yy, xx = np.mgrid[0:n, 0:n]
-    amp = 0.04 + irregular
-    wx = ((fbm(xx, yy, 0.2 * m_px, semente + 3) - 0.5) * amp * m_px).astype(int)
-    wy = ((fbm(xx, yy, 0.2 * m_px, semente + 4) - 0.5) * (0.03 + irregular * 0.6) * m_px).astype(int)
-    celw = cel[(yy + wy) % n, (xx + wx) % n]
-    tex = cores[celw]
-    borda = np.zeros((n, n), bool)
-    for dy, dx in ((0, 1), (1, 0), (0, -1), (-1, 0)):
-        borda |= celw != np.roll(np.roll(celw, dy, 0), dx, 1)
-    dist = ndi.distance_transform_edt(~borda) / m_px
-    junta = dist < junta_m
-    gasto = np.clip(dist / (0.04 + irregular * 0.5), 0, 1)
-    alt = np.sqrt(gasto) * (~junta)
-    tex = tex * (0.86 + 0.14 * alt[..., None])
-    tex = np.where(junta[..., None], tex * 0.55 + np.array([0.36, 0.35, 0.33]) * 0.45, tex)
-    tex = tex * (0.92 + 0.16 * fbm(xx, yy, 0.30 * m_px, semente + 5))[..., None]
-    g1 = ndi.gaussian_filter(r.random((n, n)), 0.6, mode="wrap")
-    g1 = (g1 - g1.mean()) / g1.std()
-    g2 = r.random((n, n))
-    tex = tex * (1 + 0.05 * g1[..., None])
-    tex = np.where((g2 < 0.045)[..., None], tex * 0.62, tex)
-    tex = np.where((g2 > 0.93)[..., None], tex * 0.80 + 0.17, tex)
-    ox = np.clip((fbm(xx, yy, 0.6 * m_px, semente + 8) - 0.58) * 3.0, 0, 1)[..., None]
-    tex = tex * (1 - 0.30 * ox) + np.array([0.62, 0.50, 0.36]) * 0.30 * ox
-    esc = fbm(xx * 6.0, yy * 0.25, 0.9 * m_px, semente + 9)
-    esc = np.clip((esc - 0.55) * 2.2, 0, 1)[..., None]
-    tex = tex * (1 - 0.22 * esc)
-    # líquenes: manchas brancas acinzentadas (muito visíveis nas fotografias, sobretudo na torre e no alto
-    # dos muros) e algumas amarelo-esverdeadas
-    liq = fbm(xx, yy, 0.25 * m_px, semente + 6)
-    tex = np.where((liq > liquen)[..., None], tex * (1 - liq_forca) + np.array([0.86, 0.86, 0.82]) * liq_forca, tex)
-    liq2 = fbm(xx, yy, 0.18 * m_px, semente + 11)
-    tex = np.where((liq2 > liquen + 0.04)[..., None], tex * 0.6 + np.array([0.66, 0.66, 0.42]) * 0.4, tex)
-    return np.clip(tex * np.array(tinta), 0, 1), ndi.gaussian_filter(alt, 0.8) + 0.05 * g1
-
-
-def textura_telha(n=256, metros=2.0):
-    yy, xx = np.mgrid[0:n, 0:n] / n * metros
-    onda = 0.5 + 0.5 * np.cos(2 * math.pi * xx / 0.22)
-    fiada = (yy % 0.42) / 0.42
-    v = 0.78 + 0.22 * onda - 0.18 * (fiada > 0.9)
-    g = fbm(xx * 8, yy * 8, 1.0, 77)
-    v = v * (0.9 + 0.2 * g)
-    return np.repeat(v[..., None], 3, 2).clip(0, 1), onda - 0.4 * (fiada > 0.9)
-
-
-def textura_cubos(n=1024, metros=8.0, semente=91, base=(0.58, 0.57, 0.54)):
-    """Calçada de cubos de granito (cubos de c. 10 cm, juntas de areia)."""
-    r = np.random.default_rng(semente)
-    m_px = n / metros
-    yy, xx = np.mgrid[0:n, 0:n]
-    c = 0.105 * m_px
-    gi = (xx // c).astype(int) + 1000 * ((yy + (xx // (3 * c)).astype(int) % 2 * c * 0.5) // c).astype(int)
-    tom = r.uniform(0.85, 1.12, gi.max() + 1)[gi]
-    fx, fy = (xx % c) / c, ((yy + (xx // (3 * c)).astype(int) % 2 * c * 0.5) % c) / c
-    junta = (fx < 0.12) | (fy < 0.12)
-    tex = np.array(base) * tom[..., None] * (0.9 + 0.2 * fbm(xx, yy, 1.5 * m_px, semente + 1))[..., None]
-    tex = np.where(junta[..., None], np.array([0.40, 0.38, 0.35]), tex)
-    return np.clip(tex, 0, 1), (~junta).astype(float)
 
 
 def textura_relva(n=512, metros=8.0, semente=7):
@@ -463,19 +234,6 @@ def textura_relva(n=512, metros=8.0, semente=7):
     pinta = np.random.default_rng(semente).random((n, n))
     tex = np.where((pinta > 0.9)[..., None], tex * 1.15, tex)
     return np.clip(tex, 0, 1), g2
-
-
-def textura_rocha(n=512, metros=6.0, semente=13):
-    """Afloramentos de granito do recinto: cinzento claro, gasto, com líquenes e fendas."""
-    m_px = n / metros
-    yy, xx = np.mgrid[0:n, 0:n]
-    g = fbm(xx, yy, 0.8 * m_px, semente)
-    tex = np.array([0.60, 0.58, 0.54]) * (0.8 + 0.4 * g)[..., None]
-    fenda = np.abs(fbm(xx, yy, 1.5 * m_px, semente + 3) - 0.5) < 0.012
-    tex = np.where(fenda[..., None], tex * 0.55, tex)
-    liq = fbm(xx, yy, 0.2 * m_px, semente + 6)
-    tex = np.where((liq > 0.66)[..., None], tex * 0.5 + 0.42, tex)
-    return np.clip(tex, 0, 1), g
 
 
 # ---------------------------------------------------------------- planos e vãos
@@ -503,158 +261,6 @@ def face_torre(nuv, off):
     nuv = np.array(nuv, float)
     tuv = np.array([nuv[1], -nuv[0]])
     return Plano(W(*(nuv * off)), W(*tuv), W(*nuv), meia=A)
-
-
-
-
-def quad(m, f, s0, s1, z0, z1, d=0.0, mat=0):
-    m.face([f.p(s0, d, z0), f.p(s1, d, z0), f.p(s1, d, z1), f.p(s0, d, z1)], mat)
-
-
-def arco_pts(sc, zc, r, k=10, a0=0.0, a1=math.pi):
-    return [(sc + r * math.cos(a), zc + r * math.sin(a)) for a in np.linspace(a0, a1, k + 1)]
-
-
-def parede(m, f, s0, s1, z0, z1, vaos, mat=0, passo_z=1.5, d=0.0):
-    """Plano da face entre s0..s1 e z0..z1, com vãos retangulares ou em arco abertos.
-    vaos: lista de (sa, sb, za, zb, arco); arco=True: zb é o fecho do arco de volta perfeita."""
-    ss = sorted({s0, s1, *[v_[0] for v_ in vaos], *[v_[1] for v_ in vaos]})
-    ss = [s for s in ss if s0 <= s <= s1]
-    for a, b in zip(ss[:-1], ss[1:]):
-        sm = (a + b) / 2
-        cort = sorted([(v_[2], v_[3]) for v_ in vaos if v_[0] <= sm <= v_[1]])
-        zs = [z0]
-        for za, zb in cort:
-            zs += [za, zb]
-        zs.append(z1)
-        for za, zb in zip(zs[0::2], zs[1::2]):
-            if zb - za < 1e-4:
-                continue
-            nz = max(1, int(math.ceil((zb - za) / passo_z)))
-            for i in range(nz):
-                quad(m, f, a, b, za + (zb - za) * i / nz, za + (zb - za) * (i + 1) / nz, d=d, mat=mat)
-    for sa, sb, za, zb, arco in vaos:
-        if not arco:
-            continue
-        r = (sb - sa) / 2
-        zc = zb - r
-        pts = arco_pts((sa + sb) / 2, zc, r, 12)
-        meio = len(pts) // 2
-        m.face([f.p(s, d, z) for s, z in pts[:meio + 1]] + [f.p(sb, d, zb)], mat)
-        m.face([f.p(s, d, z) for s, z in pts[meio:]] + [f.p(sa, d, zb)], mat)
-
-
-def contorno_vao(sc, w, za, zb, arco=True, k=12):
-    r = w / 2
-    sa, sb = sc - r, sc + r
-    c = [(sa, za), (sb, za)]
-    if arco:
-        c += arco_pts(sc, zb - r, r, k)
-    else:
-        c += [(sb, zb), (sa, zb)]
-    return c
-
-
-def vao(m, f, sc, w, za, zb, prof, arco=True, mat_lado="cantaria_torre", mat_fundo="sombra", k=12, d0=0.0):
-    """Ombreiras, soleira e intradorso do vão (para dentro da parede até prof) e o fundo."""
-    contorno = contorno_vao(sc, w, za, zb, arco, k)
-    pts = contorno + [contorno[0]]
-    for (s1, z1), (s2, z2) in zip(pts[:-1], pts[1:]):
-        m.face([f.p(s1, d0, z1), f.p(s2, d0, z2), f.p(s2, d0 - prof, z2), f.p(s1, d0 - prof, z1)], mat_lado)
-    m.face([f.p(s, d0 - prof, z) for s, z in contorno], mat_fundo)
-    return contorno
-
-
-def aduelas(m, f, sc, w, za, zb, larg, sal, n=9, mat="cantaria_lisa", ombreiras=True, d0=0.0):
-    """Aduelas do arco (e ombreiras de cantaria), ligeiramente salientes da face."""
-    r = w / 2
-    zc = zb - r
-    R = r + larg
-    for i in range(n):
-        a0, a1 = math.pi * i / n, math.pi * (i + 1) / n
-        g = 0.010
-        pts = [(sc + r * math.cos(a0 + g), zc + r * math.sin(a0 + g)), (sc + R * math.cos(a0 + g), zc + R * math.sin(a0 + g)),
-               (sc + R * math.cos(a1 - g), zc + R * math.sin(a1 - g)), (sc + r * math.cos(a1 - g), zc + r * math.sin(a1 - g))]
-        m.face([f.p(s, d0 + sal, z) for s, z in pts], mat)
-        for (s1, z1), (s2, z2) in zip(pts, pts[1:] + pts[:1]):
-            m.face([f.p(s1, d0, z1), f.p(s2, d0, z2), f.p(s2, d0 + sal, z2), f.p(s1, d0 + sal, z1)], mat)
-    if ombreiras:
-        for s0, s1 in ((sc - r - larg, sc - r), (sc + r, sc + r + larg)):
-            hz = zc - za
-            k = max(1, int(round(hz / 0.45)))
-            for j in range(k):
-                z0_, z1_ = za + hz * j / k + 0.008, za + hz * (j + 1) / k - 0.008
-                m.caixa_face(f, s0, s1, d0, d0 + sal, z0_, z1_, mat)
-
-
-def passagem(m, f, s0, s1, prof, z_base, z_topo, w, alt, chao_f, chao_d, mat="muro", mat_topo="muro_topo",
-             mat_intra="intradorso", degrau=None, arco_dentro=None, topo=True, lados=True):
-    """Bloco de muro com uma passagem em arco de volta perfeita, de lado a lado. f: plano da face de fora (d = 0,
-    normal para fora); o bloco vai de s0 a s1 ao longo e de d = 0 a d = -prof; o eixo da passagem é s = 0.
-    w, alt: largura e altura (do chão ao fecho) do vão; chao_f, chao_d: chão da passagem fora e dentro.
-    degrau = (w2, alt2, p2): arquivolta de fora mais larga (w2 × alt2) até p2 de profundidade.
-    arco_dentro = (w3, alt3): vão da face de dentro, se for diferente."""
-    k = 14
-
-    def face_com_vao(d, ww, aa, chao):
-        r = ww / 2
-        zap = chao + aa
-        zs = zap - r
-        # faixas dos lados, do pé ao topo
-        quad(m, f, s0, -r, z_base, z_topo, d=d, mat=mat)
-        quad(m, f, r, s1, z_base, z_topo, d=d, mat=mat)
-        if chao > z_base + 0.01:
-            quad(m, f, -r, r, z_base, chao, d=d, mat=mat)
-        # por cima do arco: duas metades, do arranque ao fecho e até ao topo
-        pts = arco_pts(0.0, zs, r, k)
-        meio = len(pts) // 2
-        m.face([f.p(s, d, z) for s, z in pts[:meio + 1]] + [f.p(0.0, d, z_topo), f.p(r, d, z_topo)], mat)
-        m.face([f.p(s, d, z) for s, z in pts[meio:]] + [f.p(-r, d, z_topo), f.p(0.0, d, z_topo)], mat)
-        return contorno_vao(0.0, ww, chao, zap, True, k)
-
-    def forro(c_a, d_a, c_b, d_b):
-        pa, pb = c_a + [c_a[0]], c_b + [c_b[0]]
-        for i in range(len(c_a)):
-            (sa1, za1), (sa2, za2) = pa[i], pa[i + 1]
-            (sb1, zb1), (sb2, zb2) = pb[i], pb[i + 1]
-            mt = mat_intra if i > 0 else "calcada"
-            m.face([f.p(sa1, d_a, za1), f.p(sa2, d_a, za2), f.p(sb2, d_b, zb2), f.p(sb1, d_b, zb1)], mt)
-
-    if degrau is None:
-        c_fora = face_com_vao(0.0, w, alt, chao_f)
-        d_ini = 0.0
-    else:
-        w2, alt2, p2 = degrau
-        c2 = face_com_vao(0.0, w2, alt2, chao_f)
-        chao_p = chao_f + (chao_d - chao_f) * p2 / prof
-        c2b = contorno_vao(0.0, w2, chao_p, chao_p + alt2, True, k)
-        forro(c2, 0.0, c2b, -p2)
-        # face do degrau (entre a arquivolta e o vão), a p2 de profundidade
-        c_fora = contorno_vao(0.0, w, chao_p, chao_p + alt, True, k)
-        for i in range(len(c2b)):
-            j = (i + 1) % len(c2b)
-            if i == 0:
-                continue
-            m.face([f.p(*_sd(c2b[i], -p2)), f.p(*_sd(c2b[j], -p2)), f.p(*_sd(c_fora[j], -p2)), f.p(*_sd(c_fora[i], -p2))], mat)
-        d_ini = -p2
-    if arco_dentro is None:
-        c_dentro = face_com_vao(-prof, w, alt, chao_d)
-        forro(c_fora, d_ini, c_dentro, -prof)
-    else:
-        w3, alt3 = arco_dentro
-        c_d = face_com_vao(-prof, w3, alt3, chao_d)
-        c_m = contorno_vao(0.0, w, chao_d, chao_d + alt, True, k)
-        forro(c_fora, d_ini, c_m, -prof + 0.4)
-        forro(c_m, -prof + 0.4, c_d, -prof)  # abre em derrame para o arco de dentro
-    if topo:
-        m.face([f.p(s0, 0, z_topo), f.p(s1, 0, z_topo), f.p(s1, -prof, z_topo), f.p(s0, -prof, z_topo)], mat_topo)
-    if lados:
-        for s_ in (s0, s1):
-            m.face([f.p(s_, 0, z_base), f.p(s_, -prof, z_base), f.p(s_, -prof, z_topo), f.p(s_, 0, z_topo)], mat)
-
-
-def _sd(sz, d):
-    return (sz[0], d, sz[1])
 
 
 def textura_tabuas(n=512, metros=2.0, semente=21):
@@ -715,16 +321,6 @@ def textura_erva(n=512, metros=8.0, semente=17):
     tex = palha * (1 - t) + verde * t
     tex = tex * (0.82 + 0.36 * g2[..., None])
     return np.clip(tex, 0, 1), g2
-
-
-def textura_terra(n=512, metros=6.0, semente=23):
-    m_px = n / metros
-    yy, xx = np.mgrid[0:n, 0:n]
-    g = fbm(xx, yy, 0.6 * m_px, semente)
-    tex = np.array([0.60, 0.52, 0.42]) * (0.85 + 0.3 * g)[..., None]
-    pedra = np.random.default_rng(semente).random((n, n)) > 0.985
-    tex = np.where(ndi.binary_dilation(pedra, iterations=2)[..., None], tex * 1.15, tex)
-    return np.clip(tex, 0, 1), g
 
 
 # ---------------------------------------------------------------- cena
@@ -1861,7 +1457,6 @@ def construir_arvores(mon):
     ob.parent = GRUPOS["Vegetacao"]
 
 
-
 # ---------------------------------------------------------------- construção
 
 print("muros…")
@@ -1886,10 +1481,6 @@ print("envolvente…")
 MON = monumento_pl()
 construir_envolvente(MON, ESP_PL)
 construir_arvores(shapely.union_all([MON, ESP_PL]))
-
-
-def _anc(x, y, z):
-    return [round(float(x), 1), round(float(z), 1), round(float(-y), 1)]
 
 
 def _olhar(x, y, up=0.35):
