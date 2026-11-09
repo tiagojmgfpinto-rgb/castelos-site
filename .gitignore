@@ -18,3 +18,7 @@ pipeline/maquetas/melgaco/saida/
 pipeline/maquetas/lindoso/saida/
 pipeline/maquetas/lanhoso/saida/
 pipeline/maquetas/montalegre/saida/
+
+# Playwright
+playwright-report/
+test-results/
