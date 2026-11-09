@@ -10,10 +10,13 @@ test("catálogo: pesquisa, filtros e endereço", async ({ page }) => {
   await expect(page.locator(".catalogo-filtros")).toBeVisible();
   await expect(cartoes).toHaveCount(total);
 
+  // Monção também é o concelho da Torre de Lapela: cada palavra tem de aparecer, sem acentos
   await page.fill("input[name=q]", "moncao");
+  await expect(cartoes).toHaveCount(2);
+  await page.fill("input[name=q]", "fortaleza moncao");
   await expect(cartoes).toHaveCount(1);
   await expect(cartoes.first()).toContainText("Monção");
-  expect(page.url()).toContain("q=moncao");
+  expect(page.url()).toContain("q=fortaleza+moncao");
 
   await page.fill("input[name=q]", "");
   await page.check("input[name=maqueta]");
