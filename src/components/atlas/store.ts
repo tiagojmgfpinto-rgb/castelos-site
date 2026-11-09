@@ -81,6 +81,10 @@ interface Estado {
   sobre: string | null;
   filtrosTipologia: Set<Tipologia>;
   filtroRegiao: Regiao | null;
+  /** só os monumentos com maqueta 3D publicada */
+  filtroMaqueta: boolean;
+  /** só os que têm informação de visita nas fontes (horário, acesso, entrada…) */
+  filtroVisita: boolean;
   indiceAberto: boolean;
   painel: Painel | null;
   distritoAtivo: string | null;
@@ -113,6 +117,8 @@ export const useAtlas = create<Estado>((set) => ({
   sobre: null,
   filtrosTipologia: new Set(),
   filtroRegiao: null,
+  filtroMaqueta: false,
+  filtroVisita: false,
   indiceAberto: false,
   painel: null,
   distritoAtivo: null,
@@ -146,9 +152,14 @@ export const useAtlas = create<Estado>((set) => ({
   setEscala: (escalaKmPorPx, rumoAtual) => set({ escalaKmPorPx, rumoAtual }),
 }));
 
-export function visivel(m: MonumentoResumo, s: Pick<Estado, "filtrosTipologia" | "filtroRegiao">) {
+export const temMaqueta = (m: MonumentoResumo) => m.maquetas.length > 0;
+export const temVisita = (m: MonumentoResumo) => !!m.conteudo.visita && Object.values(m.conteudo.visita).some(Boolean);
+
+export function visivel(m: MonumentoResumo, s: Pick<Estado, "filtrosTipologia" | "filtroRegiao"> & Partial<Pick<Estado, "filtroMaqueta" | "filtroVisita">>) {
   if (s.filtrosTipologia.size && !s.filtrosTipologia.has(m.tipologia)) return false;
   if (s.filtroRegiao && m.regiao !== s.filtroRegiao) return false;
+  if (s.filtroMaqueta && !temMaqueta(m)) return false;
+  if (s.filtroVisita && !temVisita(m)) return false;
   return true;
 }
 

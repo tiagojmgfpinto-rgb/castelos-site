@@ -4,7 +4,7 @@ import { CIDADES } from "../../data/cidades";
 import { paraCena, projectar, TERRITORIOS, type TerritorioId } from "../../lib/territorios";
 import { REGIOES, TIPOLOGIAS, type Regiao, type Tipologia } from "../../lib/tipologias";
 import { camaraApi } from "../atlas/Camara";
-import { useAtlas, visivel, type MonumentoResumo } from "../atlas/store";
+import { temMaqueta, temVisita, useAtlas, visivel, type MonumentoResumo } from "../atlas/store";
 import { Escudo, IconeTipo, Rosa } from "./Icones";
 
 const normalizar = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
@@ -113,6 +113,8 @@ function Fechar({ rotulo }: { rotulo: string }) {
 function Indice({ monumentos }: { monumentos: MonumentoResumo[] }) {
   const [q, setQ] = useState("");
   const filtrosTipologia = useAtlas((s) => s.filtrosTipologia);
+  const filtroMaqueta = useAtlas((s) => s.filtroMaqueta);
+  const filtroVisita = useAtlas((s) => s.filtroVisita);
   const selecionado = useAtlas((s) => s.selecionado);
   const busca = useRef<HTMLInputElement>(null);
   useEffect(() => busca.current?.focus({ preventScroll: true }), []);
@@ -123,13 +125,15 @@ function Indice({ monumentos }: { monumentos: MonumentoResumo[] }) {
     return c;
   }, [monumentos]);
 
+  const nMaqueta = useMemo(() => monumentos.filter(temMaqueta).length, [monumentos]);
+  const nVisita = useMemo(() => monumentos.filter(temVisita).length, [monumentos]);
   const n = normalizar(q.trim());
   const lista = monumentos.filter(
     (m) =>
-      visivel(m, { filtrosTipologia, filtroRegiao: null }) &&
+      visivel(m, { filtrosTipologia, filtroRegiao: null, filtroMaqueta, filtroVisita }) &&
       (!n ||
         normalizar(
-          `${m.nome} ${m.localidade} ${m.concelho} ${m.distrito} ${REGIOES[m.regiao]} ${TIPOLOGIAS[m.tipologia].nome} ${m.seculoOrigem ?? ""} ${seculoCurto(m.seculoOrigem)}`,
+          `${m.nome} ${m.conteudo.outrasDesignacoes.join(" ")} ${m.localidade} ${m.concelho} ${m.distrito} ${REGIOES[m.regiao]} ${TIPOLOGIAS[m.tipologia].nome} ${m.seculoOrigem ?? ""} ${seculoCurto(m.seculoOrigem)} ${m.conteudo.fichaTecnica.protecao ?? ""}`,
         ).includes(n)),
   );
 
@@ -151,7 +155,7 @@ function Indice({ monumentos }: { monumentos: MonumentoResumo[] }) {
         ref={busca}
         id="buscar"
         type="search"
-        placeholder="Procurar por nome, distrito, século…"
+        placeholder="Procurar por nome, concelho, século, classificação…"
         autoComplete="off"
         aria-label="Procurar castelo"
         value={q}
@@ -177,6 +181,14 @@ function Indice({ monumentos }: { monumentos: MonumentoResumo[] }) {
               <small>{contagem.get(t)}</small>
             </button>
           ))}
+      </div>
+      <div className="filtros" role="group" aria-label="Filtrar pelo que a ficha tem">
+        <button type="button" className="filtro" aria-pressed={filtroMaqueta} title="Só os monumentos com maqueta 3D publicada" onClick={() => useAtlas.setState({ filtroMaqueta: !filtroMaqueta })}>
+          Com maqueta 3D<small>{nMaqueta}</small>
+        </button>
+        <button type="button" className="filtro" aria-pressed={filtroVisita} title="Só os monumentos com horário, acesso ou entrada indicados na ficha, a partir das fontes" onClick={() => useAtlas.setState({ filtroVisita: !filtroVisita })}>
+          Com informação de visita<small>{nVisita}</small>
+        </button>
       </div>
       <div className="lista">
         {lista.length === 0 && <p className="vazio">Nenhum monumento corresponde à pesquisa.</p>}
