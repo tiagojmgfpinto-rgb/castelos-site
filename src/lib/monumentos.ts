@@ -1,6 +1,7 @@
 import { getCollection, type CollectionEntry } from "astro:content";
 import type { MonumentoResumo } from "../components/atlas/store";
 import { REGIOES, type Regiao } from "./tipologias";
+import { comVersao } from "./versao";
 
 export type Monumento = CollectionEntry<"monumentos">;
 
@@ -30,7 +31,7 @@ export function resumo(m: Monumento): MonumentoResumo {
     seculoOrigem: d.seculoOrigem,
     maquetas: d.maquetas
       .filter((x) => x.validada || x.provisoria)
-      .map(({ tipo, ficheiro, epoca, provisoria, capa }) => ({ tipo, ficheiro, epoca, provisoria, capa })),
+      .map(({ tipo, ficheiro, epoca, provisoria, capa }) => ({ tipo, ficheiro: comVersao(ficheiro), epoca, provisoria, capa: comVersao(capa) })),
     notas: d.notas,
     fontes: d.fontes,
     html: m.rendered?.html ?? "",

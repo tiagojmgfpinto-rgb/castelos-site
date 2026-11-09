@@ -6,6 +6,7 @@ import { MeshBVH, acceleratedRaycast } from "three-mesh-bvh";
 import { BASE } from "../../lib/base";
 import { CAMADAS_TERRENO, ESTADOS, elementosComPlaca, type DadosMaqueta, type ElementoMaqueta } from "./dados";
 import { alturaLinha, disporPlacas, type OpcoesDisposicao } from "./placas";
+import { Ambiente, LUZ, Oclusao, aplicarTom, ecraTatil } from "./Luz";
 
 interface Controlos {
   target: THREE.Vector3;
@@ -116,7 +117,7 @@ export default function Maqueta({ url, capa, dados, provisoria, onVoltarMapa }: 
     <div className={`maqueta${ampliada ? " maqueta--ampliada" : ""}`} ref={caixa} tabIndex={-1}>
       <div className="maqueta-palco">
         {capa && !carregada && <img className="maqueta-capa-fundo" src={`${BASE}${capa}`} alt={`Maqueta 3D de ${dados.titulo}, vista de sudoeste`} />}
-        <Canvas shadows={{ type: THREE.PCFShadowMap }} dpr={[1, 2]} camera={{ fov: 32, near: 1, far: 4000, position: [-300, 300, 250] }} gl={{ antialias: true, alpha: true }} onCreated={({ gl }) => { gl.toneMapping = THREE.AgXToneMapping; }}>
+        <Canvas shadows={{ type: THREE.PCFShadowMap }} dpr={[1, 2]} camera={{ fov: 32, near: 1, far: 4000, position: [-300, 300, 250] }} gl={{ antialias: true, alpha: true }} onCreated={({ gl }) => aplicarTom(gl)}>
           <Suspense fallback={null}>
             <Cena
               url={url}
@@ -241,7 +242,8 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, d
   onCarregada: () => void;
 }) {
   const { scene } = useGLTF(url, `${BASE}draco/`);
-  const { camera, size } = useThree();
+  const { camera, size, gl } = useThree();
+  const tatil = useMemo(ecraTatil, []);
   const controlos = useRef<Controlos>(null);
   const objetivo = useRef<{ alvo: THREE.Vector3; pos: THREE.Vector3 } | null>(null);
   const rodar = useRef({ v: 0, agarrada: false, ultima: -Infinity });
@@ -515,20 +517,25 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, d
   const solC = area.getCenter(new THREE.Vector3());
   // posição do sol: por omissão de noroeste; uma maqueta pode pedir outra direção (a torre de Braga tem as
   // faces principais a sul e a nascente, que de noroeste ficavam sempre na sombra)
-  const solD = sol ? new THREE.Vector3(...sol).normalize().multiplyScalar(300) : new THREE.Vector3(-160, 220, -140);
+  const solD = sol ? new THREE.Vector3(...sol).normalize().multiplyScalar(300) : new THREE.Vector3(...(LUZ.sol.direcao as [number, number, number]));
   const meiaSombra = Math.max(area.max.x - area.min.x, area.max.z - area.min.z) / 2 + 5;
-  // maquetas grandes (a praça-forte de Valença tem quase 1 km) pedem um mapa de sombras maior
-  const mapaSombra = meiaSombra > 300 ? 4096 : 2048;
+  // 4096 px no computador (antes 2048 nas maquetas pequenas): as ameias, os matacães e as copas já fazem sombra
+  // própria; nos ecrãs táteis, 2048. O normalBias acompanha o tamanho do píxel de sombra.
+  const mapaSombra = Math.min(tatil ? LUZ.sombra.mapaToque : LUZ.sombra.mapa, gl.capabilities.maxTextureSize);
+  const pixelSombra = (2 * meiaSombra) / mapaSombra;
 
   return (
     <>
-      {/* Luz igual à dos renders Cycles dos construir.py: o sol com a mesma força (3,4 a 3,6 W/m² no Cycles dá a
-          mesma radiância no three.js), o céu com a cor do "mundo" (0,80 0,76 0,68) e o chão neutro. Com o tone
-          mapping AgX (o do Cycles) as cores ficam como nos renders; o ACES do R3F escurecia e aquecia tudo. */}
-      <hemisphereLight args={["#e7e2d9", "#8a8070", 1.8]} />
+      {/* Luz partilhada (src/data/luz.json), calibrada com os renders Cycles dos construir.py: sol com a mesma força,
+          céu com a cor do "mundo" e chão neutro, tone mapping AgX. A luz de ambiente e a oclusão ambiental fazem
+          aqui o papel da luz indireta do Cycles. */}
+      <hemisphereLight args={[LUZ.hemisferio.ceu, LUZ.hemisferio.chao, LUZ.hemisferio.intensidade]} />
+      <Ambiente />
+      {!tatil && <Oclusao raio={meiaSombra} />}
       <directionalLight
         position={[solC.x + solD.x, centro.y + solD.y, solC.z + solD.z]}
-        intensity={3.4}
+        color={LUZ.sol.cor}
+        intensity={LUZ.sol.intensidade}
         castShadow
         shadow-mapSize={[mapaSombra, mapaSombra]}
         shadow-camera-left={-meiaSombra}
@@ -537,8 +544,9 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia, d
         shadow-camera-bottom={-meiaSombra}
         shadow-camera-near={10}
         shadow-camera-far={Math.max(700, 400 + 2 * meiaSombra)}
-        shadow-bias={-0.0004}
-        shadow-normalBias={0.6}
+        shadow-bias={LUZ.sombra.bias}
+        shadow-normalBias={Math.max(0.15, pixelSombra * 2.2)}
+        shadow-radius={LUZ.sombra.raio}
       >
         <object3D attach="target" position={[solC.x, centro.y, solC.z]} />
       </directionalLight>
