@@ -7,7 +7,7 @@ Saída:   public/terrain/<territorio>/<z>/<x>_<y>.png + manifest.json
 
 Codificação de cada píxel PNG (RGB, sem perdas):
     R*256 + G = (altitude_m + 8000) * 5       -> de -8000 a +5107 m, precisão de 0,2 m
-    B         = classe (0 mar, 1 Portugal, 2 Espanha)
+    B         = classe (0 mar, 1 Portugal, 2 Espanha) + 8 nas manchas urbanas (Natural Earth urban areas)
 
 Cada mosaico tem 257x257 amostras: a última linha e coluna repetem a primeira
 do mosaico vizinho, para que as malhas encaixem sem fendas.
@@ -77,6 +77,12 @@ def countries(crs, frame_wgs84=None):
     return out
 
 
+def urban(crs, frame_wgs84):
+    """Manchas urbanas do Natural Earth dentro do quadrado, tingidas no relevo como no castillos.site."""
+    urb = [g for g in (shape(f["geometry"]) for f in load_ne("ne_10m_urban_areas")) if g.intersects(frame_wgs84)]
+    return projector(crs)(unary_union(urb).buffer(0)) if urb else None
+
+
 def tile_transform(cfg, level, tx, ty):
     res = cfg["size"] / (TILE * 2**level)
     # amostras nos vértices: o centro do píxel (0,0) fica exatamente no canto do mosaico
@@ -115,6 +121,9 @@ def build_tile(cfg, level, tx, ty, srcs, cmap):
     # Terra que o Natural Earth não apanha (ilhéus, costa recortada) fica com a classe vizinha mais comum.
     land_missing = (cls == 0) & (h > 2)
     cls[land_missing] = 1 if "OUT" not in cmap else 0
+    if "URB" in cmap:
+        urb = rasterize([(mapping(cmap["URB"]), 1)], out_shape=(n, n), transform=tr, fill=0, dtype="uint8", all_touched=False)
+        cls[(urb == 1) & (cls > 0)] += 8
     # no mar, a profundidade vem da batimetria
     sea = cls == 0
     h[sea] = np.minimum(np.minimum(h[sea], 0), np.minimum(b[sea], -1))
@@ -133,6 +142,9 @@ def build_tiles(key, cfg):
     tinv = Transformer.from_crs(cfg["crs"], "EPSG:4326", always_xy=True)
     frame_wgs84 = shp_transform(lambda x, y, z=None: tinv.transform(x, y), frame.segmentize(5000))
     cmap = countries(cfg["crs"], frame_wgs84 if key == "continente" else None)
+    urb = urban(cfg["crs"], frame_wgs84)
+    if urb is not None:
+        cmap["URB"] = urb
     pt = prep(cmap["PRT"])
     terra = prep(unary_union([g for g in (cmap.get("PRT"), cmap.get("OUT")) if g is not None]))
     manifest = dict(
