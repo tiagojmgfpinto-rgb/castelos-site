@@ -66,6 +66,15 @@ export interface Voo {
 
 export type Painel = "indice" | "distritos" | "fontes";
 
+/** Torres que se tocavam no ecrã, afastadas em roda à volta do centro delas até se escolher uma. */
+export interface Roda {
+  ids: string[];
+  x: number; // centro na cena (km)
+  y: number;
+  z: number;
+  distancia: number; // distância da câmara quando abriu: aproximar ou afastar muito fecha a roda
+}
+
 interface Estado {
   territorio: TerritorioId;
   selecionado: string | null;
@@ -80,6 +89,8 @@ interface Estado {
   carregamento: number; // 0..1
   escalaKmPorPx: number;
   rumoAtual: number;
+  roda: Roda | null;
+  setRoda: (r: Roda | null) => void;
   setTerritorio: (t: TerritorioId) => void;
   selecionar: (id: string | null) => void;
   setSobre: (id: string | null) => void;
@@ -110,8 +121,10 @@ export const useAtlas = create<Estado>((set) => ({
   carregamento: 0,
   escalaKmPorPx: 1,
   rumoAtual: 0,
-  setTerritorio: (territorio) => set({ territorio, selecionado: null, sobre: null, voo: null, carregamento: 0 }),
-  selecionar: (selecionado) => set({ selecionado }),
+  roda: null,
+  setRoda: (roda) => set({ roda }),
+  setTerritorio: (territorio) => set({ territorio, selecionado: null, sobre: null, voo: null, carregamento: 0, roda: null }),
+  selecionar: (selecionado) => set({ selecionado, roda: null }),
   setSobre: (sobre) => set({ sobre }),
   alternarTipologia: (t) =>
     set((s) => {

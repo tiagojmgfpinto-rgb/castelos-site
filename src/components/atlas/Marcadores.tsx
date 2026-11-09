@@ -7,6 +7,7 @@ import { CIDADES } from "../../data/cidades";
 import { paraCena, projectar, TERRITORIOS, type TerritorioId } from "../../lib/territorios";
 import { TIPOLOGIAS } from "../../lib/tipologias";
 import { caixasMonumentos, escolherRotulos, registar, retirar, rotulosMapa, sobrepoe, zonasInterface, type Caixa, type Candidato, type RotuloMapa } from "./rotulosMapa";
+import { agrupar, MAX_RODA, posicoesRoda } from "./roda";
 import { useAtlas, visivel, type MonumentoResumo } from "./store";
 import { EXAGERO, useTerreno } from "./Terrain";
 
@@ -80,8 +81,44 @@ const GEO_ANEL = new THREE.RingGeometry(0.62, 0.8, 40).rotateX(-Math.PI / 2).tra
 // Com o mapa afastado, os nomes não aparecem todos (atropelar-se-iam). Ao passar o rato
 // sobre um monumento, mostra-se o nome dele e dos vizinhos próximos no ecrã, em etiquetas
 // de papel dispostas de modo a não se sobreporem. Perto do chão, mostram-se todos os que couberem.
-type Registo = { m: MonumentoResumo; grupo: THREE.Group; el: HTMLDivElement };
+type Registo = { m: MonumentoResumo; grupo: THREE.Group; el: HTMLDivElement; base: THREE.Vector3 };
 const registos = new Map<string, Registo>();
+// câmara e tamanho do último fotograma, para o toque decidir fora do ciclo de desenho
+const vista: { camera?: THREE.Camera; altura: number } = { altura: 1 };
+const RAIO_RODA = 26; // px: torres mais perto do que isto umas das outras abrem em roda
+
+/**
+ * Toque ou clique numa torre: abre a ficha, ou, se houver outras torres coladas a ela no ecrã, afasta-as
+ * todas em roda para se escolher a certa. Dentro de uma roda aberta, o toque abre logo a ficha.
+ */
+export function tocar(id: string) {
+  const s = useAtlas.getState();
+  const camera = vista.camera;
+  if (s.roda?.ids.includes(id) || !camera) return s.selecionar(id);
+  const v = new THREE.Vector3();
+  const pontos = [...registos.values()]
+    .filter((r) => r.grupo.visible)
+    .map((r) => {
+      v.copy(r.base).project(camera);
+      return { id: r.m.id, x: v.x * 0.5 * vista.altura * (camera as THREE.PerspectiveCamera).aspect, y: -v.y * 0.5 * vista.altura, z: v.z };
+    })
+    .filter((p) => p.z < 1);
+  const ids = agrupar(id, pontos, RAIO_RODA);
+  if (ids.length < 2) return s.selecionar(id);
+  const centro = new THREE.Vector3();
+  for (const i of ids) centro.add(registos.get(i)!.base);
+  centro.divideScalar(ids.length);
+  s.setSobre(null);
+  const distancia = camera.position.distanceTo(centro);
+  s.setRoda({ ids, x: centro.x, y: centro.y, z: centro.z, distancia });
+  // roda junto à borda do ecrã (ou por baixo da barra): o mapa desliza para a pôr ao centro, à mesma distância
+  v.copy(centro).project(camera);
+  const margem = (posicoesRoda(ids.length)[0][1] * -1 + 70) / (vista.altura / 2);
+  if (Math.abs(v.y) > 1 - margem || Math.abs(v.x) > 1 - margem / (camera as THREE.PerspectiveCamera).aspect) {
+    const inclinacao = THREE.MathUtils.radToDeg(Math.acos(THREE.MathUtils.clamp((camera.position.y - centro.y) / distancia, -1, 1)));
+    s.voar({ x: centro.x, z: centro.z, distancia, inclinacao });
+  }
+}
 const RAIO_VIZINHOS = 110; // px à volta do monumento sob o rato
 const DIST_TODOS = 140; // km da câmara abaixo dos quais se tentam mostrar todos os nomes
 const ALTURA_ROTULO = 24;
@@ -111,6 +148,13 @@ function GestorRotulos() {
   // corre depois dos marcadores (subscreve-se depois deles); prioridade > 0 desligaria o desenho automático
   useFrame(({ camera, size, clock }) => {
     const s = useAtlas.getState();
+    vista.camera = camera;
+    vista.altura = size.height;
+    // aproximar ou afastar bastante fecha a roda: as torres já se separam sozinhas, ou voltam a juntar-se
+    if (s.roda) {
+      const d = camera.position.distanceTo(v.set(s.roda.x, s.roda.y, s.roda.z));
+      if (Math.abs(d / s.roda.distancia - 1) > 0.3) s.setRoda(null);
+    }
     const zonas = zonasInterface(gl.domElement, clock.elapsedTime * 1000);
     const cand: { r: Registo; x: number; y: number; w: number; prio: number }[] = [];
     let foco: { x: number; y: number } | null = null;
@@ -135,7 +179,7 @@ function GestorRotulos() {
           const dd = Math.hypot((v.x * 0.5 + 0.5) * size.width - r0.x, (-v.y * 0.5 + 0.5) * size.height - r0.y);
           if (dd < dmin) [dmin, melhor] = [dd, r.m.id];
         }
-      if (melhor !== s.sobre) {
+      if (melhor !== useAtlas.getState().sobre) {
         s.setSobre(melhor);
         gl.domElement.style.cursor = melhor ? "pointer" : "";
       }
@@ -157,14 +201,15 @@ function GestorRotulos() {
         r.el.dataset.visivel = "0";
         continue;
       }
-      const vizinho = foco && Math.hypot(p.x - foco.x, p.y - foco.y) < RAIO_VIZINHOS;
+      // as torres de uma roda aberta mostram todas o nome: é para isso que se afastaram
+      const vizinho = s.roda?.ids.includes(r.m.id) || (foco && Math.hypot(p.x - foco.x, p.y - foco.y) < RAIO_VIZINHOS);
       const perto = p.d < DIST_TODOS;
       if (!ativo && !vizinho && !perto) {
         r.el.dataset.visivel = "0";
         continue;
       }
       const w = ativo ? Math.min(250, Math.max(r.m.nome.length * 8.4, (r.m.localidade.length + TIPOLOGIAS[r.m.tipologia].nome.length + 3) * 7.2) + 24) : r.m.nome.length * 7 + 18;
-      const prio = r.m.id === sobre ? 0 : r.m.id === s.selecionado ? 1 : vizinho ? 2 + Math.hypot(p.x - foco!.x, p.y - foco!.y) / 1000 : 3 + p.d / 1e4;
+      const prio = r.m.id === sobre ? 0 : r.m.id === s.selecionado ? 1 : vizinho ? 2 + (foco ? Math.hypot(p.x - foco.x, p.y - foco.y) / 1000 : 0) : 3 + p.d / 1e4;
       cand.push({ r, x: p.x, y: p.y, w, prio });
     }
     cand.sort((a, b) => a.prio - b.prio);
@@ -262,6 +307,7 @@ export function Marcadores({ monumentos, territorio }: { monumentos: MonumentoRe
       {lista.map(({ m, sx, sz }) => (
         <Marcador key={m.id} m={m} x={sx} z={sz} />
       ))}
+      <FiosRoda />
       <Cidades territorio={territorio} />
       <GestorRotulos />
       <GestorMapa />
@@ -275,9 +321,11 @@ function Marcador({ m, x, z }: { m: MonumentoResumo; x: number; z: number }) {
   const rotulo = useRef<HTMLDivElement>(null);
   const terreno = useTerreno();
   const forma = FORMAS[TIPOLOGIAS[m.tipologia].forma === "torre" ? "torre" : "baluarte"];
-  const v = new THREE.Vector3();
+  const v = useMemo(() => new THREE.Vector3(), []);
+  const base = useMemo(() => new THREE.Vector3(), []);
+  const aux = useMemo(() => ({ centro: new THREE.Vector3(), direita: new THREE.Vector3(), frente: new THREE.Vector3() }), []);
 
-  useFrame(({ camera }) => {
+  useFrame(({ camera, size }) => {
     const g = ref.current;
     if (!g) return;
     const s = useAtlas.getState();
@@ -285,7 +333,21 @@ function Marcador({ m, x, z }: { m: MonumentoResumo; x: number; z: number }) {
     const show = visivel(m, s);
     g.visible = show;
     const h = terreno?.altitude(x, z) ?? 0;
-    g.position.set(x, (Math.max(h, 0) / 1000) * EXAGERO, z);
+    base.set(x, (Math.max(h, 0) / 1000) * EXAGERO, z);
+    g.position.copy(base);
+    const k = s.roda ? s.roda.ids.indexOf(m.id) : -1;
+    if (k >= 0 && s.roda) {
+      // na roda: o desvio em px no ecrã passa a km no chão, à distância do centro da roda
+      const [dx, dy] = posicoesRoda(s.roda.ids.length)[k];
+      const { centro, direita, frente } = aux;
+      centro.set(s.roda.x, s.roda.y, s.roda.z);
+      const d = camera.position.distanceTo(centro);
+      const kmPx = (2 * d * Math.tan(((camera as THREE.PerspectiveCamera).fov * Math.PI) / 360)) / size.height;
+      direita.setFromMatrixColumn(camera.matrixWorld, 0).setY(0).normalize();
+      frente.set(direita.z, 0, -direita.x);
+      const cosInc = Math.max(0.35, (camera.position.y - centro.y) / d);
+      g.position.copy(centro).addScaledVector(direita, dx * kmPx).addScaledVector(frente, (-dy * kmPx) / cosInc);
+    }
     // tamanho constante no ecrã
     const d = camera.position.distanceTo(v.copy(g.position));
     const escala = Math.min(d * 0.018, 34) * (ativo ? 1.25 : 1);
@@ -296,13 +358,13 @@ function Marcador({ m, x, z }: { m: MonumentoResumo; x: number; z: number }) {
   // o <Html> monta o rótulo noutra raiz React, por isso o registo só é possível quando ele já existe
   useFrame(() => {
     if (ref.current && rotulo.current && registos.get(m.id)?.el !== rotulo.current)
-      registos.set(m.id, { m, grupo: ref.current, el: rotulo.current });
+      registos.set(m.id, { m, grupo: ref.current, el: rotulo.current, base });
   });
   useEffect(() => () => void registos.delete(m.id), [m.id]);
 
   const click = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
-    useAtlas.getState().selecionar(m.id);
+    tocar(m.id);
   };
 
   return (
@@ -323,6 +385,35 @@ function Marcador({ m, x, z }: { m: MonumentoResumo; x: number; z: number }) {
         </div>
       </Html>
     </group>
+  );
+}
+
+/** Fios finos do centro da roda a cada torre afastada, para se perceber de onde veio cada uma. */
+function FiosRoda() {
+  const geo = useMemo(() => new THREE.BufferGeometry().setAttribute("position", new THREE.BufferAttribute(new Float32Array(MAX_RODA * 6), 3)), []);
+  const ref = useRef<THREE.LineSegments>(null);
+  useEffect(() => () => geo.dispose(), [geo]);
+  useFrame(() => {
+    const l = ref.current;
+    if (!l) return;
+    const r = useAtlas.getState().roda;
+    l.visible = !!r;
+    if (!r) return;
+    const a = geo.attributes.position as THREE.BufferAttribute;
+    let n = 0;
+    for (const id of r.ids) {
+      const g = registos.get(id)?.grupo;
+      if (!g || !g.visible) continue;
+      a.setXYZ(n++, r.x, r.y, r.z);
+      a.setXYZ(n++, g.position.x, g.position.y, g.position.z);
+    }
+    geo.setDrawRange(0, n);
+    a.needsUpdate = true;
+  });
+  return (
+    <lineSegments ref={ref} geometry={geo} frustumCulled={false} renderOrder={3} visible={false}>
+      <lineBasicMaterial color="#2a1c10" transparent opacity={0.85} depthTest={false} />
+    </lineSegments>
   );
 }
 

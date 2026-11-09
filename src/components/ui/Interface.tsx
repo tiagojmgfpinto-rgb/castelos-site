@@ -41,6 +41,7 @@ export function Interface({ monumentos, vistaInicial }: { monumentos: MonumentoR
 
   useEffect(() => {
     const tecla = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && useAtlas.getState().roda) return useAtlas.getState().setRoda(null);
       if (e.key === "Escape" && useAtlas.getState().painel && !useAtlas.getState().selecionado) useAtlas.setState({ painel: null, indiceAberto: false });
     };
     addEventListener("keydown", tecla);
