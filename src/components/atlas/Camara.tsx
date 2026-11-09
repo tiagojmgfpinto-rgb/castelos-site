@@ -65,14 +65,14 @@ export function Camara({ territorio }: { territorio: TerritorioId }) {
     camera.lookAt(c.target);
   };
 
-  // vista inicial em cada mudança de território
+  // mapa único: só a primeira vista é aplicada aqui; mudar de região é um voo pedido pela interface
   useEffect(() => {
     if (!controls.current) return;
     const v = vistaInicial(territorio);
     aplicar({ x: v.x, y: 0, z: v.z, r: v.distancia, phi: v.inclinacao * DEG, theta: -(v.rumo ?? 0) * DEG });
     controls.current.update();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [territorio]);
+  }, []);
 
   // novo pedido de voo
   useEffect(() => {
@@ -172,7 +172,7 @@ export function Camara({ territorio }: { territorio: TerritorioId }) {
       dampingFactor={0.09}
       screenSpacePanning={false}
       minDistance={0.25}
-      maxDistance={1600}
+      maxDistance={4200}
       maxPolarAngle={78 * DEG}
       zoomSpeed={1.1}
       zoomToCursor

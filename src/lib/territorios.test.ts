@@ -2,22 +2,24 @@ import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { paraCena, projectar, TERRITORIOS, type TerritorioId } from "./territorios";
 
-// Valores de referência calculados com pyproj (PROJ) para as mesmas projeções.
-describe("projeções oficiais", () => {
-  it("PT-TM06 (Lisboa)", () => {
-    const [x, y] = projectar(TERRITORIOS.continente, -9.1393, 38.7223);
-    expect(x).toBeCloseTo(-87503.4, 0);
-    expect(y).toBeCloseTo(-104538.9, 0);
+// Valores de referência calculados com pyproj (PROJ) para a mesma projeção.
+describe("mapa único (Lambert, ETRS89)", () => {
+  const casos: [string, TerritorioId, number, number, number, number][] = [
+    ["Lisboa", "continente", -9.1393, 38.7223, -87357.2, -104403.0],
+    ["Ponta Delgada", "acores", -25.6756, 37.7412, -1534405.7, -70076.9],
+    ["Funchal", "madeira", -16.9241, 32.6669, -824781.6, -737563.2],
+  ];
+  it.each(casos)("%s", (_n, t, lon, lat, ex, ey) => {
+    const [x, y] = projectar(TERRITORIOS[t], lon, lat);
+    expect(x).toBeCloseTo(ex, 0);
+    expect(y).toBeCloseTo(ey, 0);
   });
-  it("PTRA08 UTM 26N (Ponta Delgada)", () => {
-    const [x, y] = projectar(TERRITORIOS.acores, -25.6756, 37.7412);
-    expect(x).toBeCloseTo(616688.9, 0);
-    expect(y).toBeCloseTo(4177926.8, 0);
-  });
-  it("PTRA08 UTM 28N (Funchal)", () => {
-    const [x, y] = projectar(TERRITORIOS.madeira, -16.9241, 32.6669);
-    expect(x).toBeCloseTo(319572.0, 0);
-    expect(y).toBeCloseTo(3615996.0, 0);
+  it("os três territórios partilham o mesmo quadrado", () => {
+    const { continente, acores, madeira } = TERRITORIOS;
+    for (const t of [acores, madeira]) {
+      expect(t.crs).toBe(continente.crs);
+      expect([t.x0, t.y0, t.size]).toEqual([continente.x0, continente.y0, continente.size]);
+    }
   });
 });
 

@@ -2,7 +2,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import * as THREE from "three";
 import { BASE } from "../../lib/base";
-import type { TerritorioId } from "../../lib/territorios";
+import { MAPA, type TerritorioId } from "../../lib/territorios";
 import { useAtlas } from "./store";
 import { TerrainManager, type Manifest } from "./terrain/TerrainManager";
 
@@ -20,7 +20,7 @@ export function Terreno({ territorio, children }: { territorio: TerritorioId; ch
     let vivo = true;
     let m: TerrainManager | null = null;
     setMgr(null);
-    const base = `${BASE}terrain/${territorio}/`;
+    const base = `${BASE}terrain/${MAPA}/`;
     fetch(`${base}manifest.json`)
       .then((r) => r.json() as Promise<Manifest>)
       .then(async (manifest) => {
@@ -39,7 +39,7 @@ export function Terreno({ territorio, children }: { territorio: TerritorioId; ch
       vivo = false;
       m?.dispose();
     };
-  }, [territorio, setCarregamento, invalidate]);
+  }, [setCarregamento, invalidate]);
 
   useFrame(({ camera }) => {
     mgr?.update(camera);

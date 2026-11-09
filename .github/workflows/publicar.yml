@@ -41,6 +41,7 @@ jobs:
             [ -f .cache/bathy_${r}_z9.tif ] || python pipeline/terrain/fetch_bathy.py --region $r --zoom 9
           done
           [ -f .cache/bathy_continente-moldura_z8.tif ] || python pipeline/terrain/fetch_bathy.py --region continente-moldura --zoom 8
+          [ -f .cache/bathy_portugal-moldura_z7.tif ] || python pipeline/terrain/fetch_bathy.py --region portugal-moldura --zoom 7
           bash pipeline/terrain/naturalearth.sh
           python -W ignore pipeline/terrain/build_tiles.py
 

@@ -78,7 +78,7 @@ function useVooSelecao(monumentos: MonumentoResumo[]) {
   useEffect(() => {
     if (!selecionado) return;
     const m = monumentos.find((x) => x.id === selecionado);
-    if (!m || m.territorio !== territorio) return;
+    if (!m) return;
     const t = TERRITORIOS[territorio];
     const [x, y] = projectar(t, m.lon, m.lat);
     const [sx, sz] = paraCena(t, x, y);
@@ -129,8 +129,8 @@ function Cena({ territorio, monumentos }: { territorio: TerritorioId; monumentos
   return (
     <>
       <Luz />
-      <Terreno key={territorio} territorio={territorio}>
-        <Linhas territorio={territorio} />
+      <Terreno territorio={territorio}>
+        <Linhas />
         <Marcadores monumentos={monumentos} territorio={territorio} />
         <Camara territorio={territorio} />
         <Cursor territorio={territorio} />

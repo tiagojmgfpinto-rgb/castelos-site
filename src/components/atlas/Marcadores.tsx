@@ -379,7 +379,6 @@ export function Marcadores({ monumentos, territorio }: { monumentos: MonumentoRe
   const lista = useMemo(
     () =>
       monumentos
-        .filter((m) => m.territorio === territorio)
         .map((m) => {
           const [x, y] = projectar(t, m.lon, m.lat);
           const [sx, sz] = paraCena(t, x, y);
@@ -534,7 +533,7 @@ function Cidades({ territorio }: { territorio: TerritorioId }) {
   const terreno = useTerreno();
   const lista = useMemo(
     () =>
-      CIDADES.filter((c) => c.territorio === territorio).map((c) => {
+      CIDADES.map((c) => {
         const [x, y] = projectar(t, c.lon, c.lat);
         const [sx, sz] = paraCena(t, x, y);
         return { c, sx, sz };
