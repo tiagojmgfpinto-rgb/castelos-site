@@ -45,3 +45,52 @@ def arvore_modelo(subdiv):
     f = [[x.index for x in fa.verts] for fa in bm.faces]
     bm.free()
     return v, f
+
+
+class Obra:
+    """Folga das copas às construções já feitas (auditoria de novembro de 2026: copas a entrar em muros e
+    telhados). Junta numa BVH todas as malhas da cena menos as que se excluem (terreno, base, vegetação)."""
+
+    def __init__(self, excluir=("Terreno", "Base", "Vegetacao")):
+        from mathutils.bvhtree import BVHTree
+        v, f = [], []
+        for ob in bpy.data.objects:
+            if ob.type != "MESH" or any(ob.name.startswith(e) for e in excluir):
+                continue
+            mw = ob.matrix_world
+            b = len(v)
+            v.extend([tuple(mw @ p.co) for p in ob.data.vertices])
+            f.extend([[b + i for i in p.vertices] for p in ob.data.polygons])
+        self.bvh = BVHTree.FromPolygons(v, f) if f else None
+        self.encolhidas = self.retiradas = 0
+
+    def folga(self, pts):
+        from mathutils import Vector
+        if self.bvh is None:
+            return 99.0
+        d = [self.bvh.find_nearest(Vector(p))[3] for p in pts]
+        return min([x for x in d if x is not None] or [99.0])
+
+    def ajustar(self, x, y, z, h, raio, alt, alt_max_raio, alcance=1.1, minimo=1.2, tronco_min=0.6):
+        """Copa de raio `raio` e altura `alt` com o topo medido a z + h. Devolve (raio, alt, tronco) com a copa
+        encolhida até à construção mais próxima, ou None se o tronco bate na obra ou não cabe uma copa
+        razoável (a árvore não se planta)."""
+        tronco = max(h - alt, tronco_min)
+        if self.folga([(x, y, z + k) for k in (0.5, tronco * 0.5, tronco)]) < 0.35:
+            self.retiradas += 1
+            return None
+        centros = lambda t, a: [(x, y, z + t + a * f) for f in (0.15, 0.5, 0.85)]
+        fo = self.folga(centros(tronco, alt))
+        if fo >= raio * alcance + 0.15:
+            return raio, alt, tronco
+        if fo < minimo:
+            self.retiradas += 1
+            return None
+        raio = (fo - 0.15) / alcance
+        alt = min(alt, alt_max_raio * raio)
+        tronco = max(h - alt, tronco_min)
+        if self.folga(centros(tronco, alt)) < raio * alcance + 0.05:
+            self.retiradas += 1
+            return None
+        self.encolhidas += 1
+        return raio, alt, tronco

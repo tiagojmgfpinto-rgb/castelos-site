@@ -34,7 +34,7 @@ from scipy.spatial import cKDTree
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # pipeline/, para o kit comum
 from kit.geometria import unit, area, densificar, dentro, simplificar, mediana_movel, angulos, partir, _retangulo, _ang, _arred  # noqa: E402
 from kit.texturas import ruido, fbm, imagem  # noqa: E402
-from kit.cena import arvore_modelo  # noqa: E402
+from kit.cena import Obra, arvore_modelo  # noqa: E402
 from kit.arquitetura import _vao_desloc, altura_telhado, barra, cupula, faixa_inclinada, guardas_corredor, guarita, oitavado, porta_tunel, telhado_4aguas, telhado_generico  # noqa: E402
 
 AQUI = Path(__file__).resolve().parent
@@ -880,6 +880,11 @@ def textura_terreno(k=2):
     # chão aberto à volta do recinto (nem mata, nem casas, nem tendas): a cor do terreiro
     perto = shapely.contains_xy(FEIRA.buffer(35.0), Xp, Yp) & ~na_feira & ~tc & ~mata
     cor_feira = np.median(img[perto], 0)
+    # sombras de árvores e muros no chão aberto (escuras face à vizinhança e sem ser mata): tapam-se também,
+    # porque a maqueta faz as suas sombras (auditoria de novembro de 2026: sombras carimbadas no chão)
+    lum_ = img.mean(-1)
+    sombra = (lum_ < 0.72 * ndi.uniform_filter(lum_, 30 * k + 1)) & (lum_ < 0.36) & ~mata
+    tc |= ndi.binary_dilation(ndi.binary_opening(sombra, iterations=1), iterations=k)
     bom = (~tc).astype(float)
     out = img.copy()
     falta = tc.copy()
@@ -2418,6 +2423,7 @@ MEDIDAS["vila"] = {"edificios": len(pegadas), "do_osm": n_osm, "do_lidar": len(p
 print("vegetação…")
 pg_shp = shapely.union_all([shapely.Polygon(p).buffer(1.0) for p in pegadas] + [shapely.Polygon(z).buffer(1.5) for z in EVITAR])
 n_arv = 0
+OBRA = Obra()  # nenhuma copa entra em muros, casas ou igrejas (auditoria de novembro de 2026: 31 entravam)
 for x, y, topo, _, r in LID["arvores"]:
     x, y = float(x), float(y)
     if not CONTORNO.contains(shapely.Point(x, y).buffer(2.0)):
@@ -2431,7 +2437,11 @@ for x, y, topo, _, r in LID["arvores"]:
     r = float(np.clip(r, 1.0, 6.5))
     especie = "pinheiro" if (h > 13 and r < 3.6 and rng.random() < 0.6) else "folhosa"
     alt = float(np.clip(h * 0.62, 1.6, 2.2 * r))
-    plantar(x, y, z, r, alt, especie, tronco=max(h - alt, 0.8))
+    aj = OBRA.ajustar(x, y, z, h, r, alt, 2.2, tronco_min=0.8)
+    if aj is None:
+        continue
+    r, alt, tronco_ = aj
+    plantar(x, y, z, r, alt, especie, tronco=tronco_)
     n_arv += 1
 me = bpy.data.meshes.new("vegetacao")
 me.from_pydata(MV, [], MF)
@@ -2446,7 +2456,7 @@ ob = bpy.data.objects.new("Vegetacao", me)
 bpy.context.scene.collection.objects.link(ob)
 ob["elemento"] = "vegetacao"
 ob.parent = GRUPOS["Vegetacao"]
-MEDIDAS["vegetacao"] = {"arvores": n_arv}
+MEDIDAS["vegetacao"] = {"arvores": n_arv, "encolhidas": OBRA.encolhidas, "retiradas": OBRA.retiradas}
 
 
 def ancora(x, y, acima=2.0):
