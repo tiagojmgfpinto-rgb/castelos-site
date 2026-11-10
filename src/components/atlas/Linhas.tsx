@@ -100,7 +100,7 @@ export function Linhas() {
         {concelhos && <Concelhos pontos={concelhos} />}
         {distritos && (
           <>
-            <Line points={distritos} segments color={HALO} lineWidth={5.6} transparent opacity={0.6} depthWrite={false} depthTest={false} renderOrder={-8} />
+            <Line points={distritos} segments color={HALO} lineWidth={4.4} transparent opacity={0.45} depthWrite={false} depthTest={false} renderOrder={-8} />
             <Line points={distritos} segments color="#3a2410" lineWidth={2.3} transparent opacity={0.95} depthWrite={false} depthTest={false} renderOrder={-7} />
           </>
         )}

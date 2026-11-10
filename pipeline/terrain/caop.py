@@ -103,8 +103,9 @@ def main():
     descarregar()
     out = {
         "fonte": f"CAOP {ANO}, Direção-Geral do Território (https://www.dgterritorio.gov.pt/cartografia/cartografia-tematica/caop)",
-        "fronteira": [], "distritos": [], "concelhos": [], "nomesDistritos": [], "ilhas": [],
+        "fronteira": [], "distritos": [], "concelhos": [], "nomesDistritos": [], "ilhas": [], "contorno": [],
     }
+    contorno = []
     ilhas = {}
     for regiao, ficheiros in FONTES.items():
         for ficheiro, pre in ficheiros:
@@ -120,6 +121,10 @@ def main():
                     continue
                 g = linemerge(unary_union(por_nivel[nivel])).simplify(40 if chave == "concelhos" else 20)
                 out[chave] += linhas_json(graus(g, crs))
+
+            # contorno de Portugal (terra), para o relevo e a costa baterem certo com os limites
+            for p, g in ler(ficheiro, f"{pre}_municipios")[0]:
+                contorno.append(graus(g.buffer(1).simplify(30), crs))
 
             if regiao == "Continente":
                 # nome de cada distrito no ponto mais afastado dos seus limites (não cai num canto nem fora dele)
@@ -148,11 +153,20 @@ def main():
         arq = "Madeira" if nome_caop in ("Ilha da Madeira", "Ilha de Porto Santo") else "Açores"
         out["ilhas"].append({"nome": ILHAS[nome_caop], "arquipelago": arq, "lonlat": ponto_json(maior.representative_point()), "caixa": caixa_json(g)})
 
+    u = unary_union(contorno)
+    polis = list(u.geoms) if u.geom_type == "MultiPolygon" else [u]
+    for q in polis:
+        if q.area < 1e-7:  # ilhéus com menos de c. 1 ha
+            continue
+        anel = lambda r: [[round(x, 5), round(y, 5)] for x, y in r.coords]
+        # sem buracos: os que aparecem são frinchas de milímetros entre municípios vizinhos (Portugal não tem enclaves)
+        out["contorno"].append([anel(q.exterior)])
+
     SAIDA.parent.mkdir(parents=True, exist_ok=True)
     SAIDA.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")))
     n = {k: (len(v), sum(len(l) for l in v)) for k, v in out.items() if k in ("fronteira", "distritos", "concelhos")}
     print(f"{SAIDA.relative_to(ROOT)}: {SAIDA.stat().st_size / 1024:.0f} KB; linhas e vértices {n}; "
-          f"{len(out['nomesDistritos'])} distritos; {len(out['ilhas'])} ilhas")
+          f"{len(out['nomesDistritos'])} distritos; {len(out['ilhas'])} ilhas; contorno com {len(out['contorno'])} polígonos")
 
 
 if __name__ == "__main__":

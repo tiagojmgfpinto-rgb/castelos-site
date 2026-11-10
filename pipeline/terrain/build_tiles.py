@@ -24,7 +24,7 @@ from pyproj import Transformer
 from rasterio.enums import Resampling
 from rasterio.features import rasterize
 from rasterio.warp import reproject
-from shapely.geometry import shape, mapping, LineString, MultiLineString, box
+from shapely.geometry import shape, mapping, LineString, MultiLineString, MultiPolygon, box
 from shapely.ops import transform as shp_transform, unary_union, linemerge
 from shapely.prepared import prep
 
@@ -79,6 +79,17 @@ def countries(crs, frame_wgs84=None):
             out["ESP"] = proj(g)
     if outros:
         out["OUT"] = unary_union(outros)
+    # Portugal com o contorno oficial da CAOP (o do Natural Earth afasta-se até c. 2 km da fronteira e da costa, e as
+    # cores do relevo não batiam certo com os limites desenhados). A terra que o Natural Earth dava a Portugal junto à
+    # fronteira e que a CAOP não inclui passa para Espanha; o que a CAOP inclui a mais sobrepõe-se a Espanha.
+    if CAOP.exists():
+        caop = json.loads(CAOP.read_text())
+        pt_caop = proj(MultiPolygon([(p[0], p[1:]) for p in caop["contorno"]]).buffer(0))
+        faixa = proj(MultiLineString(caop["fronteira"])).buffer(8000)
+        out["OUT_NE"] = out.get("OUT")
+        if "OUT" in out:
+            out["OUT"] = unary_union([out["OUT"], out["PRT"].difference(pt_caop).intersection(faixa)])
+        out["PRT"] = pt_caop
     return out
 
 
@@ -251,13 +262,14 @@ def build_lines(key, cfg, cmap):
     frame = box(cfg["x0"], cfg["y0"] - cfg["size"], cfg["x0"] + cfg["size"], cfg["y0"])
     pt = cmap["PRT"].intersection(frame)
     data = {}
+    caop = json.loads(CAOP.read_text())
+    fronteira_caop = proj(MultiLineString(caop["fronteira"]))
     if "OUT" in cmap:
-        es = cmap["ESP"].intersection(frame)
-        border = as_lines(pt.boundary.intersection(es.buffer(800)))
-        coast = as_lines(pt.boundary.difference(es.buffer(800)))
-        data["fronteira"] = lines_out(border, key, cfg, 150)
+        # costa: o contorno da CAOP menos a fronteira (que vem dos troços de 1.ª ordem, mais abaixo)
+        coast = as_lines(pt.boundary.difference(fronteira_caop.buffer(400)))
+        data["fronteira"] = []
         # costas e fronteiras dos outros países, mais finas
-        outros = cmap["OUT"].intersection(frame).intersection(cmap["PRT"].buffer(600000))
+        outros = (cmap["OUT_NE"] if cmap.get("OUT_NE") is not None else cmap["OUT"]).intersection(frame).intersection(cmap["PRT"].buffer(600000))
         es_coast = outros.boundary.difference(pt.buffer(800)).difference(frame.exterior.buffer(500))
         data["costaEspanha"] = lines_out(as_lines(es_coast), key, cfg, 300)
     else:
@@ -266,7 +278,6 @@ def build_lines(key, cfg, cmap):
 
     # Limites administrativos oficiais: CAOP 2025 da DGT (extraída por caop.py para dados/caop.json).
     # Os troços já são linhas partilhadas, desenhadas uma só vez: sem falhas nem sobreposições entre distritos.
-    caop = json.loads(CAOP.read_text())
     data["fonteLimites"] = caop["fonte"]
 
     def caop_linhas(lista):
