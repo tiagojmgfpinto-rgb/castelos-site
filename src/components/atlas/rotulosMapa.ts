@@ -18,6 +18,8 @@ export interface RotuloMapa {
   desde: number;
   /** o rótulo não pode sair do sítio (as cidades: o ponto faz parte do rótulo) */
   fixo?: boolean;
+  /** posições possíveis em alturas do rótulo, abaixo (+) ou acima (-) do ponto; por omissão 0, ±0,6, ±1,2 */
+  desvios?: number[];
 }
 
 export type Caixa = [x0: number, y0: number, x1: number, y1: number];

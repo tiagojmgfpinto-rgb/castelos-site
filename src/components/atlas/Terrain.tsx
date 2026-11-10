@@ -9,7 +9,8 @@ import { TerrainManager, type Manifest } from "./terrain/TerrainManager";
 // Exagero vertical do castillos.site (EXAGERACION 11) à escala do país. Ao aproximar, o relevo baixa aos poucos
 // até 4× (ver escalaRelevo): de perto, 11× fazia das serras agulhas e enterrava as linhas dos distritos.
 export const EXAGERO = 11;
-export const relevo = { escala: 1 };
+// distância da câmara ao alvo (km), atualizada pela Camara a cada fotograma
+export const relevo = { escala: 1, distancia: 1000 };
 /** Exagero vertical em vigor neste fotograma. */
 export const exagero = () => EXAGERO * relevo.escala;
 const PERTO = 40, LONGE = 300, MINIMO = 4 / EXAGERO; // km de distância da câmara ao alvo

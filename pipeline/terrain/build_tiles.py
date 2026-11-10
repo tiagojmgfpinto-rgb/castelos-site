@@ -1,7 +1,7 @@
 """Gera os mosaicos de relevo (quadtree) e as linhas cartográficas de cada território.
 
 Entrada: mosaico WGS84 criado por fetch_dem.py (terra), batimetria de fetch_bathy.py (mar)
-         e Natural Earth 10m (GeoJSON).
+         Natural Earth 10m (GeoJSON) e limites administrativos da CAOP (dados/caop.json, gerado por caop.py).
 Saída:   public/terrain/<territorio>/<z>/<x>_<y>.png + manifest.json
          public/data/<territorio>/linhas.json
 
@@ -31,6 +31,7 @@ from shapely.prepared import prep
 ROOT = Path(__file__).resolve().parents[2]
 CACHE = Path(os.environ.get("CASTELOS_CACHE", ROOT / ".cache"))
 NE = Path(os.environ.get("NATURAL_EARTH_DIR", CACHE / "naturalearth"))
+CAOP = Path(__file__).resolve().parent / "dados" / "caop.json"
 TILE = 256
 
 # Projeção do mapa único (como o castillos.site, que leva as Canárias no mesmo mapa da Península): cónica
@@ -263,24 +264,31 @@ def build_lines(key, cfg, cmap):
         coast = pt.boundary
     data["costa"] = lines_out(coast, key, cfg, 100)
 
-    # Distritos (limites internos) e regiões autónomas
-    dists = []
-    for f in load_ne("ne_10m_admin_1_states_provinces"):
-        p = f["properties"]
-        if p["adm0_a3"] != "PRT":
-            continue
-        g = proj(shape(f["geometry"])).intersection(frame)
-        if g.is_empty:
-            continue
-        nome = p["name"].replace(" District", "").replace(" Autonomous region", "")
-        dists.append(({"Azores": "Açores"}.get(nome, nome), g))
-    inner = unary_union([g.boundary for _, g in dists]).difference(pt.boundary.buffer(600))
-    data["distritos"] = lines_out(as_lines(inner), key, cfg, 150)
-    tinv = Transformer.from_crs(cfg["crs"], "EPSG:4326", always_xy=True)
+    # Limites administrativos oficiais: CAOP 2025 da DGT (extraída por caop.py para dados/caop.json).
+    # Os troços já são linhas partilhadas, desenhadas uma só vez: sem falhas nem sobreposições entre distritos.
+    caop = json.loads(CAOP.read_text())
+    data["fonteLimites"] = caop["fonte"]
+
+    def caop_linhas(lista):
+        return MultiLineString([[c for c in l] for l in lista])
+
+    if "fronteira" in data:
+        data["fronteira"] = lines_out(proj(caop_linhas(caop["fronteira"])).intersection(frame), key, cfg, 100)
+    data["distritos"] = lines_out(proj(caop_linhas(caop["distritos"])).intersection(frame), key, cfg, 100)
+    data["concelhos"] = lines_out(proj(caop_linhas(caop["concelhos"])).intersection(frame), key, cfg, 150)
+    p_ = Transformer.from_crs("EPSG:4326", cfg["crs"], always_xy=True)
     data["nomesDistritos"] = []
-    for name, g in dists:
-        c = g.representative_point()
-        data["nomesDistritos"].append({"nome": name, "x": round(c.x), "y": round(c.y)})
+    for d_ in caop["nomesDistritos"]:
+        x, y = p_.transform(*d_["lonlat"])
+        data["nomesDistritos"].append({"nome": d_["nome"], "x": round(x), "y": round(y)})
+    # ilhas: centro da ilha principal e caixa (na projeção) para o rótulo se pôr ao lado, sobre o mar
+    data["ilhas"] = []
+    for i in caop["ilhas"]:
+        x, y = p_.transform(*i["lonlat"])
+        lo0, la0, lo1, la1 = i["caixa"]
+        xs, ys = p_.transform([lo0, lo1, lo0, lo1], [la0, la0, la1, la1])
+        data["ilhas"].append({"nome": i["nome"], "arquipelago": i["arquipelago"], "x": round(x), "y": round(y),
+                              "caixa": [round(min(xs)), round(min(ys)), round(max(xs)), round(max(ys))]})
 
     # Rios
     rivers = []
