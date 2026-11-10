@@ -118,6 +118,27 @@ fontes:
   - titulo: "Município de Almeida — Museu Histórico Militar de Almeida (Casamatas)"
     url: "https://www.cm-almeida.pt/espacos-municipais/1678-2/casamatas/"
     consultado: "2026-10-27"
+imagens:
+  - ficheiro: "imagens/almeida/vila.jpg"
+    legenda: "Os telhados da vila de Almeida, dentro das muralhas, com a torre da igreja."
+    autor: "Alvesgaspar, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Almeida_March_2026-3.jpg"
+  - ficheiro: "imagens/almeida/baluarte.jpg"
+    legenda: "Um baluarte da praça-forte visto do lado de dentro, coberto de erva."
+    autor: "Alvesgaspar, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Almeida_March_2026-7.jpg"
+  - ficheiro: "imagens/almeida/ruinas-do-castelo.jpg"
+    legenda: "As ruínas do castelo medieval, destruído pela explosão do paiol em 1810."
+    autor: "Dinah Raphael, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Forte_Almeida_-_Ru%C3%ADnas_do_Castelo.jpg"
+  - ficheiro: "imagens/almeida/castelo-e-fosso.jpg"
+    legenda: "Os restos do castelo medieval e o seu fosso, com a torre da igreja ao fundo."
+    autor: "Xemenendura, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Almeida_castillo.jpg"
 ---
 
 Almeida foi vila leonesa antes de ser portuguesa: a primeira referência documental, de 1217, ainda a dá como leonesa. D. Dinis deu-lhe foral em 1296 e mandou construir o castelo, ampliado por D. Fernando em 1369 e desenhado por Duarte de Armas no início do século XVI. D. Manuel deu novo foral em 1510.

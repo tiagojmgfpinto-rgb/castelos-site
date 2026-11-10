@@ -105,6 +105,27 @@ fontes:
   - titulo: "Município de Vila Nova da Barquinha, Visit Barquinha — Castelo de Almourol"
     url: "https://visitbarquinha.pt/o-que-fazer/castelo-de-almourol/"
     consultado: "2026-10-27"
+imagens:
+  - ficheiro: "imagens/almourol/do-rio.jpg"
+    legenda: "O castelo na ilha rochosa do Tejo, visto do rio."
+    autor: "Marta Magalhães, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Almourol_-_1.jpg"
+  - ficheiro: "imagens/almourol/torre-de-menagem.jpg"
+    legenda: "A torre de menagem e as torres redondas da cerca, com ameias."
+    autor: "Marta Magalhães, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Almourol_-_4.jpg"
+  - ficheiro: "imagens/almourol/do-alto-da-torre.jpg"
+    legenda: "Os adarves e as ameias vistos do alto da torre de menagem, com o Tejo em baixo."
+    autor: "miguelcarrelhas, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Almourol_-_panoramio_-_miguelcarrelhas.jpg"
+  - ficheiro: "imagens/almourol/paisagem.jpg"
+    legenda: "A ilha de Almourol no meio do Tejo, vista da margem de Praia do Ribatejo."
+    autor: "FenandoLBMaria, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Praia_do_Ribatejo_-_Castelo_de_Almourol_-_20200308170250.jpg"
 ---
 
 Quando os portugueses chegaram ao Tejo, em 1129, havia já no ilhéu uma fortificação chamada Almorolan. D. Afonso Henriques entregou a linha do rio à Ordem do Templo: em 1169 doou-lhe os castelos de Cardiga e do Zêzere, e em 1171, segundo a inscrição da porta principal, começou a construção de Almourol, sob o mestre Gualdim Pais. Em 1201 foi criada a comenda de Almourol.

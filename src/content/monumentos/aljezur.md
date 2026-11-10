@@ -83,6 +83,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo de Aljezur, n.º 2813 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=2813"
+imagens:
+  - ficheiro: "imagens/aljezur/torre-e-muralha.jpg"
+    legenda: "A torre redonda e o pano de muralha junto à entrada do castelo, no alto do monte."
+    autor: "Bextrel, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Aljezur_-_16.10.2019.jpg"
+  - ficheiro: "imagens/aljezur/panos-arruinados.jpg"
+    legenda: "Panos de muralha arruinados e uma torre no recinto do castelo."
+    autor: "Norbert Nagel, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Ruined_walls_and_round_tower_of_Castelo_de_Aljezur_-_Portugal_-_2015-08-05.jpg"
+  - ficheiro: "imagens/aljezur/castelo-no-monte.jpg"
+    legenda: "O castelo no alto do monte, por cima das casas de Aljezur."
+    autor: "Concierge.2C, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Aljezur_no_monte.jpg"
+  - ficheiro: "imagens/aljezur/torre-ao-entardecer.jpg"
+    legenda: "Uma torre do castelo ao fim da tarde, com a vila e o vale ao fundo."
+    autor: "Bextrel, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Torre_do_Castelo_de_Aljezur_-_16.10.2019.jpg"
 ---
 
 O castelo de Aljezur nasceu no século X, no tempo do domínio islâmico, no alto de um monte sobre a ribeira. As muralhas e os silos que chegaram até hoje são da época almóada, dos séculos XII e XIII. Em meados do século XIII, em 1242 ou 1246 conforme as fontes, a Ordem de Santiago conquistou-o sob o comando do mestre D. Paio Peres Correia.

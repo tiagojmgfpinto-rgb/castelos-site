@@ -87,6 +87,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo de Bragança, n.º 5158 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=5158"
+imagens:
+  - ficheiro: "imagens/braganca/torre-de-menagem.jpg"
+    legenda: "A torre de menagem e os torreões redondos da cerca do castelo."
+    autor: "Lídia Maria Faria, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:CASTELO_DE_BRAGAN%C3%87A_2.jpg"
+  - ficheiro: "imagens/braganca/cidadela-ao-longe.jpg"
+    legenda: "A cidadela de Bragança vista de longe, com a torre de menagem acima das casas."
+    autor: "GFreihalter, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Bragan%C3%A7a_Castelo_204.jpg"
+  - ficheiro: "imagens/braganca/porta-da-cerca.jpg"
+    legenda: "Uma porta da cerca entre torres, com as ameias por cima."
+    autor: "António Amen, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Bragan%C3%A7a_-_Ameias.jpg"
+  - ficheiro: "imagens/braganca/janela.jpg"
+    legenda: "Uma janela gótica de cantaria no castelo."
+    autor: "António Amen, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Bragan%C3%A7a_-_Janela.jpg"
 ---
 
 Bragança recebeu foral em 1187, e no ano seguinte D. Sancho I mandou erguer as primeiras muralhas. D. Dinis acrescentou uma segunda cerca em 1293. A vila voltou a Portugal pelo Tratado de Segóvia, em 1400, e a partir de 1409 D. João I mandou reforçar o castelo.
