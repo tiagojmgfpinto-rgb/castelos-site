@@ -267,8 +267,11 @@ def construir_terreno():
     claro = np.clip((lum - 0.55) * 6, 0, 1) * np.clip((0.12 - sat) * 12, 0, 1) * (1 - sob)
     cor = cor * (1 - claro[:, None]) + calcada * claro[:, None]
     cor = cor * (0.94 + 0.12 * fbm(xv, yv, 6.0, 3))[:, None]
-    roc = np.array([0.76, 0.69, 0.55]) * (0.9 + 0.2 * fbm(xv, yv, 4.0, 5)[:, None])
-    tr = np.clip((dv - 38) / 12, 0, 1)[:, None]
+    # penedos de calcário onde assentam as muralhas (canto sudoeste, debaixo das torres): cinzento
+    # claro, como na fotografia aérea, a partir de c. 40° de declive e só fora do mato (antes bege, igual à
+    # terra); debaixo das copas a encosta continua de terra e erva
+    roc = np.array([0.70, 0.69, 0.65]) * (0.82 + 0.3 * fbm(xv, yv, 3.0, 5)[:, None])
+    tr = (np.clip((dv - 38) / 10, 0, 1) * (1 - sob))[:, None]
     cor = cor * (1 - tr) + roc * tr
 
     me = bpy.data.meshes.new("terreno")
@@ -818,7 +821,6 @@ material("terreno", (1, 1, 1), 0.97, grao, vcor=True)
 material("base", (0.33, 0.26, 0.20), 0.95)
 material("caminho", (0.74, 0.72, 0.67), 0.95)
 material("arvore", (1, 1, 1), 0.9, None, vcor=True)
-material("apoio", (0.42, 0.33, 0.25), 0.9)
 material("madeira", (0.42, 0.25, 0.13), 0.8)
 
 print("terreno…")
@@ -929,16 +931,20 @@ z1, med = casa(m, pc_, 7.0)
 m.objeto("Casa_Paroquial", "casa_paroquial", ["cal", "telha"], GRUPOS["Recinto"], uv=None)
 MEDIDAS["casa_paroquial"] = {"cornija": z1 + ZREF, "cume": medir(desvio(pc_ if area(pc_) > 0 else pc_[::-1], 0.4, True)) + ZREF,
                              "chao": float(np.median(cota(*pc_.T))) + ZREF, "medido": med}
+# Dois polígonos que o OSM marca como edifícios no recinto. O LiDAR de 2024 não tem lá nada acima de 0,6 m
+# (90 % das células são chão, classe 2) e a ortofoto de 2025 mostra um murete e um canteiro lajeado, não
+# casas: ficam como restos baixos de alvenaria à altura medida. Antes eram caixas castanhas de 3 m
+# (auditoria de novembro de 2026).
 m = Malha()
 for pid in ("9ed07352", "dc7a9b83"):
     poly = geom(osm(pid, "edificios"))
     if area(poly) < 0:
         poly = poly[::-1]
     z = cota(poly[:, 0], poly[:, 1])
-    tp = medir(poly)
-    tp = tp if not math.isnan(tp) and tp > float(z.max()) + 1.5 else float(z.max()) + 3.0
-    m.prisma(poly, float(z.min()) - 0.5, tp, 0)
-m.objeto("Apoio", None, ["apoio"], GRUPOS["Recinto"], uv=None)
+    tp = medir(poly, q=90)
+    alt_ = float(np.clip(tp - float(np.median(z)), 0.3, 1.0)) if not math.isnan(tp) else 0.5
+    m.prisma(poly, float(z.min()) - 0.5, float(np.median(z)) + alt_, 0)
+m.objeto("Restos_Recinto", None, ["pedra"], GRUPOS["Recinto"])
 m = Malha()
 lin = densificar(MURO_TERREIRO, 2.0)
 dentro_ = mediana_movel(cota(*desvio(lin, 1.2).T), 5)  # terreiro (à esquerda da linha), sem picos nas esquinas
@@ -1058,7 +1064,7 @@ def _lobo(cx, cy, cz, rx, rz, cor, base, topo, grande, irregular):
     mc.extend(map(tuple, np.clip(np.array(cor)[None, :] * luz[:, None], 0, 1)))
 
 
-def plantar(x, y, z, raio, alt, copa_cor, tronco=1.0, oliveira=False):
+def plantar(x, y, z, raio, alt, copa_cor, tronco=1.0, oliveira=False, cipreste=False):
     """Árvore com a posição, o topo e o raio de copa medidos; a forma da copa é esquemática:
     um lobo principal e, nas maiores, dois a quatro lobos à volta, como nas maquetas de referência."""
     b = len(mv)
@@ -1076,6 +1082,11 @@ def plantar(x, y, z, raio, alt, copa_cor, tronco=1.0, oliveira=False):
     sh = 0.88 + 0.24 * rng.random()
     cor = tuple(np.clip(np.array(copa_cor) * sh, 0, 1))
     irregular = 0.11 if oliveira else 0.06
+    if cipreste:
+        # fuso estreito e alto, verde-escuro (fotografia aérea: ciprestes ao lado da igreja)
+        _lobo(x, y, base + alt * 0.42, raio, alt * 0.42, cor, base, topo, False, 0.04)
+        _lobo(x, y, base + alt * 0.78, raio * 0.6, alt * 0.24, cor, base, topo, False, 0.04)
+        return
     n = 1 if raio < 1.8 else (3 if raio < 3.2 else 4)
     if n == 1:
         _lobo(x, y, base + alt / 2, raio, alt / 2, cor, base, topo, False, irregular)
@@ -1092,9 +1103,30 @@ def plantar(x, y, z, raio, alt, copa_cor, tronco=1.0, oliveira=False):
         _lobo(x + d * math.cos(a), y + d * math.sin(a), zl, rl, min(rl, alt * 0.36), c2, base, topo, False, irregular)
 
 
-# Copas medidas no LiDAR (lidar.py): posição, topo e raio de cada árvore; a forma é esquemática.
+# Construções já feitas (tudo menos o terreno): as copas não podem entrar nelas (auditoria de novembro de
+# 2026: 28 árvores tocavam em casas ou muros). O raio encolhe até à construção mais próxima e, se não
+# couber uma copa de 0,9 m ou o tronco bater na obra, a árvore não se planta.
+from mathutils import Vector  # noqa: E402
+from mathutils.bvhtree import BVHTree  # noqa: E402
+_ov, _of = [], []
+for _ob in bpy.data.objects:
+    if _ob.type != "MESH" or _ob.name in ("Terreno", "Base"):
+        continue
+    _mw = _ob.matrix_world
+    _b = len(_ov)
+    _ov.extend([tuple(_mw @ v.co) for v in _ob.data.vertices])
+    _of.extend([[_b + i for i in p_.vertices] for p_ in _ob.data.polygons])
+OBRA = BVHTree.FromPolygons(_ov, _of)
+
+
+def folga_obra(pts):
+    d = [OBRA.find_nearest(Vector(p_))[3] for p_ in pts]
+    return min([x for x in d if x is not None] or [99.0])
+
+
 ARV = LID["arvores"]
 n_arv = 0
+n_afastadas = {"encolhidas": 0, "retiradas": 0}
 for x, y, topo, _, r in ARV:
     if np.hypot(x, y) > RAIO - 2:
         continue
@@ -1104,14 +1136,39 @@ for x, y, topo, _, r in ARV:
         continue
     r = float(np.clip(r, 1.0, 6.0))
     alt = float(np.clip(h * 0.62, 1.4, 2.6 * r))
+    tronco_ = max(h - alt, 0.6)
+    if folga_obra([(x, y, z + k) for k in (0.5, tronco_ * 0.5, tronco_)]) < 0.35:
+        n_afastadas["retiradas"] += 1
+        continue
+    zc_ = [z + tronco_ + alt * f for f in (0.15, 0.5, 0.85)]
+    folga = folga_obra([(x, y, zz) for zz in zc_])
+    if folga < r * 1.08 + 0.2:
+        if folga < 1.2:
+            n_afastadas["retiradas"] += 1
+            continue
+        r = (folga - 0.2) / 1.08
+        alt = min(alt, 2.6 * r)
+        tronco_ = max(h - alt, 0.6)
+        if folga_obra([(x, y, z + tronco_ + alt * f) for f in (0.15, 0.5, 0.85)]) < r * 1.08 + 0.1:
+            n_afastadas["retiradas"] += 1
+            continue
+        n_afastadas["encolhidas"] += 1
     no_recinto = bool(dentro(x, y, perimetro))
+    if no_recinto and h >= 7 and r <= 2.2:
+        # árvore alta e estreita no recinto: cipreste (fotografia aérea do castelo)
+        rc_ = min(r * 0.55, 1.1)
+        plantar(float(x), float(y), z, rc_, h * 0.88, (0.20, 0.29, 0.17), tronco=h * 0.12, cipreste=True)
+        n_arv += 1
+        MEDIDAS.setdefault("ciprestes", 0)
+        MEDIDAS["ciprestes"] += 1
+        continue
     if no_recinto and h < 8:
         cor = (0.48, 0.52, 0.38)  # oliveiras (fotografias aéreas 1 e 2)
     else:
         cor = (0.30, 0.38, 0.22) if rng.random() < 0.65 else (0.42, 0.47, 0.30)
     plantar(float(x), float(y), z, r, alt, cor, tronco=max(h - alt, 0.6), oliveira=no_recinto and h < 8)
     n_arv += 1
-MEDIDAS["vegetacao"] = {"arvores": n_arv}
+MEDIDAS["vegetacao"] = {"arvores": n_arv, **n_afastadas}
 
 me = bpy.data.meshes.new("vegetacao")
 me.from_pydata(mv, [], mf)
