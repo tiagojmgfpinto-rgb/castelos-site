@@ -259,6 +259,9 @@
   "medidos": 12
  },
  "vegetacao": {
-  "arvores": 592
+  "arvores": 580,
+  "encolhidas": 17,
+  "retiradas": 12,
+  "tiradas_da_estrada": 16
  }
 }

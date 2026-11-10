@@ -27,7 +27,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # pipeline/, para o kit comum
 from kit.geometria import unit, area, densificar, dentro, distancia, desvio, mediana_movel, arco, arco_quebrado, _retangulo, _arred  # noqa: E402
 from kit.texturas import imagem  # noqa: E402
-from kit.cena import limpar, arvore_modelo  # noqa: E402
+from kit.cena import Obra, limpar, arvore_modelo  # noqa: E402
 from kit.arquitetura import piramide  # noqa: E402
 
 AQUI = Path(__file__).resolve().parent
@@ -1821,6 +1821,7 @@ print("caminhos…")
 LARG = {"primary": 7, "secondary": 7, "tertiary": 6, "residential": 5, "unclassified": 4.5, "service": 3.5,
         "living_street": 4, "pedestrian": 4, "track": 3, "footway": 1.8, "path": 1.6, "steps": 1.8}
 m = Malha()
+RUAS = []  # troços de asfalto (eixo, largura): nenhuma árvore fica com o tronco na faixa
 for f in F["caminhos"]:
     if f["subtipo"] != "road" or f["geometria"]["type"] != "LineString":
         continue
@@ -1846,6 +1847,8 @@ for f in F["caminhos"]:
             troco.append(p)
         if (not k or i == len(pts) - 1) and len(troco) > 1:
             t = np.array(troco)
+            if mat_ == 0:
+                RUAS.append((t, lw))
             L_ = desvio(t, lw / 2)
             R_ = desvio(t, -lw / 2)
             zl = cota(L_[:, 0], L_[:, 1]) + 0.12
@@ -1923,6 +1926,8 @@ def plantar(x, y, z, raio, alt, copa_cor, tronco=1.0, oliveira=False):
 # Copas medidas no LiDAR (lidar.py): posição, topo e raio de cada árvore; a forma é esquemática.
 ARV = LID["arvores"]
 n_arv = 0
+OBRA = Obra(excluir=("Terreno", "Base", "Vegetacao", "Caminhos"))  # copas fora de muros, casas e paço
+n_rua = 0
 for x, y, topo, _, r in ARV:
     if np.hypot(x, y) > RAIO - 2:
         continue
@@ -1936,10 +1941,34 @@ for x, y, topo, _, r in ARV:
         continue  # a estátua é classificada como vegetação na nuvem de pontos: não é árvore
     if any(dentro(x, y, z_) for z_ in evitar):
         continue  # copas sobre os telhados ou dentro do castelo: o LiDAR mede-as, mas são poucas e escondem o monumento
+    # Árvores de arruamento: o LiDAR mede a copa, que pende sobre a estrada; o tronco fica no passeio, à
+    # beira da faixa de asfalto (auditoria de novembro de 2026: troncos no meio da estrada, a norte).
+    for t_, lw_ in RUAS:
+        d_, _, _ = distancia(np.array([x]), np.array([y]), t_)
+        if d_[0] < lw_ / 2 + 0.6:
+            k_ = int(np.argmin(np.hypot(t_[:, 0] - x, t_[:, 1] - y)))
+            a_, b_ = t_[max(k_ - 1, 0)], t_[min(k_ + 1, len(t_) - 1)]
+            u_ = (b_ - a_) / (np.linalg.norm(b_ - a_) or 1.0)
+            n_ = np.array([-u_[1], u_[0]])
+            lado = 1.0 if (np.array([x, y]) - t_[k_]) @ n_ >= 0 else -1.0
+            off = (np.array([x, y]) - t_[k_]) @ n_
+            x, y = (np.array([x, y]) + n_ * (lado * (lw_ / 2 + 0.9) - off)).tolist()
+            z = float(cota(x, y))
+            h = float(topo) - ZREF - z
+            n_rua += 1
+            break
+    # Troncos nus de 15–20 m não batem com as fotografias do monte: o tronco fica no máximo a 35 % da altura,
+    # e nunca acima de 5 m; a copa desce até lá
+    tronco_ = min(max(h - alt, 0.6), 0.35 * h, 5.0)
+    alt = max(h - tronco_, 1.4)
+    aj = OBRA.ajustar(float(x), float(y), z, h, r, alt, 99.0)
+    if aj is None:
+        continue
+    r, alt, tronco_ = aj
     cor = (0.30, 0.38, 0.22) if rng.random() < 0.65 else (0.42, 0.47, 0.30)
-    plantar(float(x), float(y), z, r, alt, cor, tronco=max(h - alt, 0.6))
+    plantar(float(x), float(y), z, r, alt, cor, tronco=tronco_)
     n_arv += 1
-MEDIDAS["vegetacao"] = {"arvores": n_arv}
+MEDIDAS["vegetacao"] = {"arvores": n_arv, "encolhidas": OBRA.encolhidas, "retiradas": OBRA.retiradas, "tiradas_da_estrada": n_rua}
 
 me = bpy.data.meshes.new("vegetacao")
 me.from_pydata(mv, [], mf)
