@@ -987,6 +987,19 @@ def construir_terreno():
     ri = np.clip(((OY1 - cx[:, 1]) / OP).astype(int), 0, ORTO.shape[0] - 1)
     o = ndi.uniform_filter(ORTO, size=(9, 9, 1))[ri, ci]
     verde = (o[:, 1] > o[:, 0] * 1.04) & (o[:, 1] > o[:, 2] * 1.08)
+
+    def manchas(mask, minimo=12):
+        """Arredonda uma máscara por face (grelha do terreno) e tira as manchas pequenas: sem isto o relvado e
+        a rocha saíam aos quadrados soltos de 50 cm (auditoria de novembro de 2026)."""
+        g = mask.reshape(ny - 1, nx - 1).astype(float)
+        g = ndi.gaussian_filter(g, 1.2) > 0.5
+        lab_, k_ = ndi.label(g)
+        if k_:
+            tam = ndi.sum(g, lab_, range(1, k_ + 1))
+            g &= np.isin(lab_, 1 + np.nonzero(tam >= minimo)[0])
+        return g.ravel()
+
+    verde = manchas(verde, 20)
     mi_[verde] = 5
     calc, asf = caminhos()
     if not calc.is_empty:
@@ -999,7 +1012,7 @@ def construir_terreno():
     rel = ndi.gaussian_filter(MDT - ndi.gaussian_filter(MDT, 4.0), 0.8)
     rl = amostra(rel, LX0, LY0, LP, cx[:, 0], cx[:, 1])
     mi_[dentro] = 1
-    mi_[dentro & (rl > 0.09)] = 2
+    mi_[dentro & manchas(rl > 0.09)] = 2
     # carreiro de lajes da entrada (fotografia de cima) e pátio da barbacã
     carreiro = shapely.LineString([(-3.0, -29.5), (-3.0, -24.0), (-2.0, -19.5)]).buffer(0.9)
     patio = shapely.Polygon([(-5.5, -28.6), (2.6, -28.6), (2.6, -32.6), (-5.5, -32.6)])
