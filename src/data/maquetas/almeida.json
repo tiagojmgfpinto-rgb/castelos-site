@@ -1,0 +1,339 @@
+{
+  "monumento": "almeida",
+  "titulo": "Praça-forte de Almeida",
+  "variante": "estado-atual",
+  "versao": "0.1 provisória",
+  "data": "2026-11-10",
+  "origem": {
+    "lat": 40.725642,
+    "lon": -6.906288,
+    "nota": "Centróide do anel da contraescarpa do fosso principal no OpenStreetMap. Eixos da maqueta: x para este, y para norte (no visor, -z é o norte), em metros à escala 1:1; as cotas são altitudes."
+  },
+  "fontes": {
+    "lidar": {
+      "titulo": "DGT, LiDAR 2024: nuvem de pontos classificada com cor e MDT/MDS de 50 cm, folhas 303418, 303419, 304418 e 304419 (CC BY 4.0). O MDT de 303418 e o MDS de 303418 e 303419 foram feitos a partir das nuvens de pontos (rasterizar.py). Traçado das escarpas, relevo, pontes (classe 26), cotas, alturas e pegadas medidas.",
+      "url": "https://cdd.dgterritorio.gov.pt"
+    },
+    "orto": {
+      "titulo": "Ortoimagem de 50 cm feita com a cor dos pontos do LiDAR 2024 da DGT (CC BY 4.0). Cor do chão, dos fossos e dos taludes.",
+      "url": "https://cdd.dgterritorio.gov.pt"
+    },
+    "osm": {
+      "titulo": "OpenStreetMap (ODbL), via Overture Maps: muralhas, contraescarpa, casas da guarda, edifícios com nome e ruas",
+      "url": "https://www.openstreetmap.org/#map=17/40.7256/-6.9063"
+    },
+    "wikipedia": {
+      "titulo": "Wikipédia, «Praça-forte de Almeida»: baluartes, revelins, portas duplas com pontes de alvenaria e túneis à prova de bomba, fosso",
+      "url": "https://pt.wikipedia.org/wiki/Pra%C3%A7a-forte_de_Almeida"
+    },
+    "municipio": {
+      "titulo": "Município de Almeida: circuito da praça-forte (Portas de São Francisco, Quartel das Esquadras, Misericórdia, Casa dos Governadores, ruínas do castelo, Picadeiro, Casamatas)"
+    },
+    "commons": {
+      "titulo": "Fotografias da Wikimedia Commons com GPS (David Perez CC BY 3.0, Hovallef CC BY-SA 4.0, Dinah Raphael CC BY-SA 3.0, Xemenendura CC BY-SA 4.0), usadas para orientar fachadas e conferir pormenores",
+      "url": "https://commons.wikimedia.org/wiki/Category:Almeida"
+    },
+    "fotos": {
+      "titulo": "Capturas e fotografias das portas, guaritas e vistas aéreas enviadas pelo autor do projeto como referência, novembro de 2026"
+    }
+  },
+  "limitacoes": [
+    "Não foi usada planta cotada. As escarpas (os panos de muralha em talude) foram traçadas automaticamente no MDT de 50 cm e encostadas à aresta medida (erro esperado de 0,5 a 1 m em planta). Troços muito baixos ou tapados por árvores podem faltar ou estar partidos.",
+    "Topo e pé de cada pano medidos no LiDAR e filtrados ao longo dele (erro de 0,3 a 0,5 m na vertical). O perfil é esquemático: talude de 1/10 a 1/4, cordão de meia-cana a meia altura nos panos altos (fotografias das portas), parapeito de alvenaria e terrapleno por trás.",
+    "As guaritas foram postas nos ângulos salientes dos baluartes e revelins com mais de 4,5 m; o número (25) é uma estimativa.",
+    "Os túneis das portas são retos e com o comprimento estimado no LiDAR. O de Santo António do lado de dentro acaba num fundo escuro a 20 m: o traçado real (que deve dobrar para o pátio) não se vê no LiDAR.",
+    "Os arcos das pontes foram contados pela medida (vãos de c. 6,5 m), não nas fotografias de cada ponte.",
+    "O SIPA não respondeu durante o trabalho (erro 503); as fontes escritas são a Wikipédia e o Município.",
+    "O casario fica em volumes simples cinzentos, com a altura do MDS; o Picadeiro, o Paiol e a Casa dos Governadores estão nesse casario. As Casamatas são subterrâneas e só se vê o pátio, no relevo.",
+    "As cores do chão vêm da ortoimagem do LiDAR (voo de 2024), com as manchas e sombras desse dia."
+  ],
+  "distancia": 1300,
+  "placas": [
+    "portas_sao_francisco",
+    "igreja_matriz",
+    "torre_relogio"
+  ],
+  "elementos": [
+    {
+      "id": "escarpas",
+      "nome": "Muralhas abaluartadas",
+      "grupo": "Fortificação",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Praça abaluartada em estrela de seis baluartes (São Pedro, Bandeira, Nossa Senhora das Brotas, Santa Bárbara, São João de Deus e São Francisco) com revelins entre eles, toda em panos de granito em talude com cordão e parapeito, cercada por um fosso seco largo e pela estrada coberta e esplanada de terra.",
+      "medidas": "64 panos traçados, com c. 8.6 km; sobem em mediana 5.7 m acima do pé e até 14.2 m (LiDAR). A Wikipédia dá 2,5 km de perímetro e um fosso de 12 m de fundo e 10 a 62 m de largura.",
+      "fontes": [
+        "lidar",
+        "osm",
+        "wikipedia",
+        "fotos"
+      ],
+      "resumo": "Seis baluartes, revelins e fosso em estrela",
+      "ancora": [
+        39.9,
+        747.0,
+        329.8
+      ]
+    },
+    {
+      "id": "guaritas",
+      "nome": "Guaritas",
+      "grupo": "Fortificação",
+      "estado": "estado-atual",
+      "confianca": "baixa",
+      "descricao": "Guaritas redondas de granito sobre mísula nos ângulos salientes dos baluartes e revelins, com cúpula e remate (fotografia de referência).",
+      "medidas": "25 na maqueta (número estimado).",
+      "fontes": [
+        "fotos",
+        "lidar"
+      ],
+      "resumo": "Guaritas redondas nos salientes",
+      "ancora": [
+        26.5,
+        740.9,
+        322.5
+      ]
+    },
+    {
+      "id": "portas_sao_francisco",
+      "nome": "Portas de São Francisco",
+      "grupo": "Portas",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "A entrada principal, a sul: porta dupla, uma no revelim e outra na cortina, ligadas por uma ponte de alvenaria sobre o fosso. Cada porta tem frontispício de cantaria com arco pleno, brasão e guarita por cima, passagem abobadada à prova de bomba e casa da guarda; à frente da porta de fora, a calçada com dois obeliscos (fotografias).",
+      "medidas": "Fora: soleira 741.4 m, passagem com 16 m; dentro: soleira 742.3 m, passagem com 25 m. Ponte com 37.4 m e tabuleiro a 742.3 m (LiDAR, classe 26).",
+      "fontes": [
+        "fotos",
+        "lidar",
+        "osm",
+        "wikipedia"
+      ],
+      "resumo": "Porta dupla com ponte, a entrada principal",
+      "ancora": [
+        151.0,
+        752.4,
+        266.4
+      ]
+    },
+    {
+      "id": "portas_santo_antonio",
+      "nome": "Portas de Santo António",
+      "grupo": "Portas",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "A outra porta dupla, a poente: porta no revelim, com casa da guarda de cobertura baixa em duas águas, chaminé e guarita (fotografia), ponte curta, e porta na cortina com ponte de sete arcos. A Wikipédia diz que estão «rasgadas a Norte»; o LiDAR e o OSM põem-nas a poente. O túnel da porta de dentro acaba num fundo escuro (hipótese).",
+      "medidas": "Fora: soleira 745.4 m, passagem com 22 m; dentro: soleira 749.4 m, passagem com 20 m. Pontes de 18.6 e 44.7 m.",
+      "fontes": [
+        "fotos",
+        "lidar",
+        "osm",
+        "wikipedia"
+      ],
+      "resumo": "Porta dupla a poente, com duas pontes",
+      "ancora": [
+        -327.9,
+        756.4,
+        18.2
+      ]
+    },
+    {
+      "id": "porta_nova",
+      "nome": "Porta Nova",
+      "grupo": "Portas",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Passagem moderna de verga reta por baixo do terrapleno, a nordeste, por onde passa a estrada (fotografia de referência).",
+      "medidas": "soleira 738.6 m, passagem com 14 m; o chão sobe 1,4 m até à saída (MDT).",
+      "fontes": [
+        "fotos",
+        "lidar",
+        "osm"
+      ],
+      "resumo": "Passagem da estrada sob o terrapleno",
+      "ancora": [
+        169.9,
+        749.6,
+        -172.5
+      ]
+    },
+    {
+      "id": "pontes",
+      "nome": "Pontes",
+      "grupo": "Portas",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Três pontes de alvenaria sobre os fossos, com guardas de granito e arcos de volta perfeita (o número de arcos é estimado pela medida).",
+      "medidas": "São Francisco: 37.4 m, 6 arcos; Santo António: 44.7 m, 7 arcos; revelim de Santo António: 18.6 m, 3 arcos",
+      "fontes": [
+        "lidar",
+        "fotos"
+      ],
+      "resumo": "Pontes de alvenaria sobre o fosso",
+      "ancora": [
+        124.9,
+        753.3,
+        177.4
+      ]
+    },
+    {
+      "id": "igreja_matriz",
+      "nome": "Igreja Matriz de Nossa Senhora das Candeias",
+      "grupo": "Igrejas",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Fachada de cantaria virada a poente, empena com pináculos e cruz, portal de arco pleno e janela; torre sineira no canto sudoeste com relógio, sineira e ameias com pináculos (fotografia de D. Perez, Commons, tirada a poente).",
+      "medidas": "Nave de 24 × 9,5 m com cumeeira a 749,9 m; torre de 5 m de lado, remate a c. 758,7 m e pináculos a 760,8 m (MDS).",
+      "fontes": [
+        "commons",
+        "lidar",
+        "osm"
+      ],
+      "resumo": "Matriz de granito com torre ameada",
+      "ancora": [
+        146.0,
+        763.3,
+        50.4
+      ]
+    },
+    {
+      "id": "igreja_misericordia",
+      "nome": "Igreja da Misericórdia",
+      "grupo": "Igrejas",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Fachada barroca de granito encaixada no quarteirão, virada a nordeste para a Praça da República: portal de verga reta com frontão curvo e brasão, duas janelas de sacada com grade, pilastras, pináculos e cruz. A orientação foi tirada das fotografias com GPS e da empena que o MDS mostra.",
+      "medidas": "Nave de c. 10 × 20 m, cumeeira a c. 752,4 m (MDS).",
+      "fontes": [
+        "commons",
+        "lidar",
+        "osm"
+      ],
+      "resumo": "Fachada barroca na Praça da República",
+      "ancora": [
+        73.0,
+        757.2,
+        137.0
+      ]
+    },
+    {
+      "id": "torre_relogio",
+      "nome": "Torre do Relógio",
+      "grupo": "Igrejas",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Torre quadrada rebocada a ocre, com cunhais e cornijas de granito, porta, janelas, mostrador, sineira com um arco por face e remate de balaustrada, pináculos, cúpula e lanterna (fotografias de Hovallef e D. Perez, Commons).",
+      "medidas": "5,5 m de lado; chão a 762,7 m, balaustrada a c. 781 m e lanterna a c. 786 m (MDS).",
+      "fontes": [
+        "commons",
+        "lidar",
+        "osm"
+      ],
+      "resumo": "Torre ocre com cúpula, junto ao castelo",
+      "ancora": [
+        -56.2,
+        789.9,
+        -37.6
+      ]
+    },
+    {
+      "id": "quartel_esquadras",
+      "nome": "Quartel das Esquadras",
+      "grupo": "Edifícios militares",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Corpo comprido de dois pisos, caiado, com cunhais e cornija de granito, telhado de quatro águas e arcaria de granito no rés-do-chão do lado sudeste, virada à Rua da Muralha (fotografia de D. Perez, Commons). O número de arcos e as janelas do lado noroeste são estimativas.",
+      "medidas": "105,5 × 14,6 m (OSM); beiral a c. 752,2 m e cumeeira a 755,8 m (MDS).",
+      "fontes": [
+        "commons",
+        "lidar",
+        "osm",
+        "municipio"
+      ],
+      "resumo": "Quartel de dois pisos com arcaria",
+      "ancora": [
+        52.7,
+        760.1,
+        170.6
+      ]
+    },
+    {
+      "id": "castelo",
+      "nome": "Ruínas do castelo",
+      "grupo": "Fortificação",
+      "estado": "estado-atual",
+      "confianca": "baixa",
+      "descricao": "Restos do castelo medieval no meio da praça, rodeados por um fosso seco: as bases de três torres redondas nos cantos norte, este e oeste, que o relevo e a ortoimagem mostram como anéis de pedra. As muralhas baixas do recinto estão no traçado das escarpas e no relevo. Alturas das torres estimadas no MDT.",
+      "medidas": "Torres de 9 a 11 m de diâmetro, 3 a 3,5 m acima do fundo do fosso (MDT).",
+      "fontes": [
+        "lidar",
+        "orto",
+        "osm",
+        "commons"
+      ],
+      "resumo": "Fosso e bases das torres do castelo",
+      "ancora": [
+        -95.0,
+        769.5,
+        3.0
+      ]
+    },
+    {
+      "id": "vila",
+      "nome": "Vila",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Casario dentro das muralhas em volumes simples num cinzento neutro, para a fortificação sobressair; pegadas do OSM e do LiDAR, alturas do MDS.",
+      "medidas": "239 edifícios.",
+      "fontes": [
+        "osm",
+        "lidar"
+      ],
+      "resumo": "Casario em volumes simples",
+      "ancora": [
+        10.0,
+        763.7,
+        60.0
+      ]
+    },
+    {
+      "id": "terreno",
+      "nome": "Terreno",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "alta",
+      "descricao": "Relevo do MDT de 50 cm: terraplenos, fossos, estrada coberta e esplanada, com a cor da ortoimagem do LiDAR.",
+      "medidas": "41.7 ha, 299999 triângulos.",
+      "fontes": [
+        "lidar",
+        "orto"
+      ],
+      "resumo": "Relevo do LiDAR com a cor do voo"
+    },
+    {
+      "id": "vegetacao",
+      "nome": "Árvores",
+      "grupo": "Envolvente",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Árvores do LiDAR (classes 3 a 5), com a altura e a copa medidas, afastadas das muralhas e dos edifícios.",
+      "medidas": "303 árvores.",
+      "fontes": [
+        "lidar"
+      ],
+      "resumo": "Árvores medidas no LiDAR"
+    }
+  ],
+  "epocas": [
+    {
+      "id": "abaluartada",
+      "nome": "Praça abaluartada",
+      "ate": 2026,
+      "periodo": "séculos XVII–XVIII",
+      "texto": "Depois da Restauração de 1640, a vila fronteiriça é cercada por uma praça-forte abaluartada de seis baluartes, sobre o lugar do castelo medieval, cujas ruínas ficam no meio da praça.",
+      "fontes": [
+        "wikipedia"
+      ]
+    }
+  ]
+}

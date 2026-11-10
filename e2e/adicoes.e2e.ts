@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { errosDaPagina } from "./ajuda";
+import { errosDaPagina, fecharNovidadesSozinhas } from "./ajuda";
 
 // Testes A, B e C do pedido: painel dos adicionados nas últimas 24 h, mapa só com maquetas publicadas e
 // Próximas adições. Os dados vêm de dados/adicionados.json, a mesma lista que o painel lê de 5 em 5 minutos.
@@ -24,6 +24,7 @@ test("A: cada monumento fica 24 h no painel e sai sozinho, sem ser apagado", asy
   await page.clock.install({ time: t + 24 * H - 2 * 60 * 1000 });
   await page.route(/\.glb/, () => undefined);
   await page.goto("./");
+  await fecharNovidadesSozinhas(page);
   const painel = page.locator("#recentes");
   if ((await painel.getAttribute("data-minimizado")) === "1") await painel.locator(".recentes-titulo").click();
   const item = painel.locator(`li[data-id="${alvo.id}"]`);

@@ -7,15 +7,15 @@ distrito: "Guarda"
 concelho: "Almeida"
 localidade: "Almeida"
 coordenadas:
-  lat: 40.7258
-  lon: -6.9064
-  verificadas: false
+  lat: 40.7256
+  lon: -6.9063
+  verificadas: true
 seculoOrigem: "século XVII"
 classificacao:
   categoria: "Monumento Nacional (Decreto n.º 14 985, de 03-02-1928)"
   sipa: "IPA.00001382"
 estadoFicha: publicada
-estadoMaqueta: pendente
+estadoMaqueta: concluida
 adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
@@ -33,7 +33,7 @@ fichaTecnica:
   propriedade: "Pública, do Estado"
   usoAtual: "Cultural, turístico e administrativo: museu, posto de turismo e serviços municipais"
 oQueVer:
-  - nome: "Porta da Cruz"
+  - nome: "Porta da Cruz (Portas de São Francisco)"
     texto: "Porta magistral a sudeste, de ordem toscana, com a data de 1661 na abóbada do trânsito."
   - nome: "Porta de Santo António"
     texto: "Porta magistral a noroeste, com pilastras de ordem dórica e as datas de 1674 e 1676."
@@ -97,6 +97,14 @@ medidas:
     valor: "São Francisco 18, São João de Deus 28, Santa Bárbara 23, Brotas 13, Santo António 13, São Pedro 10 (SIPA)"
   - conceito: "Casamatas"
     valor: "20 compartimentos abobadados (SIPA; Município de Almeida)"
+  - conceito: "Panos de muralha (escarpas) traçados"
+    valor: "c. 8,6 km em 64 panos; altura acima do pé de 5,7 m em mediana e até 14,2 m (LiDAR DGT 2024)"
+  - conceito: "Área dentro da contraescarpa do fosso principal"
+    valor: "c. 33 ha (OpenStreetMap)"
+  - conceito: "Pontes das portas"
+    valor: "São Francisco 37,4 m; Santo António 44,7 m e 18,6 m (LiDAR DGT 2024)"
+  - conceito: "Torre do Relógio"
+    valor: "c. 23 m de altura, 5,5 m de lado (LiDAR DGT 2024)"
 curiosidades:
   - "As casamatas eram também chamadas Quartéis Velhos, por faltarem casernas para alojar a infantaria."
   - "Em 1815–1817 Beresford propôs desmantelar a praça e chegou a mandá-la minar."
@@ -110,9 +118,26 @@ visita:
     titulo: "Município de Almeida — Museu Histórico Militar de Almeida (Casamatas)"
     url: "https://www.cm-almeida.pt/espacos-municipais/1678-2/casamatas/"
     consultado: "2026-10-27"
-verificadoEm: "2026-10-27"
+verificadoEm: "2026-11-10"
 notas:
   - "O SIPA atribui a perda da torre de menagem à explosão de 1695 e regista outra explosão do paiol do castelo durante o cerco de 1810."
+  - "Orientação das Portas de Santo António: o SIPA diz noroeste e a Wikipédia diz que estão «rasgadas a Norte», mas o LiDAR de 2024 e o OpenStreetMap põem-nas a poente do centro da praça. A maqueta segue o LiDAR."
+  - "A porta magistral do revelim da Cruz, a sul-sudeste, é a que o Município e o OpenStreetMap chamam Portas de São Francisco; na maqueta tem esse nome."
+  - "Coordenadas: centro do anel da contraescarpa no OpenStreetMap (origem da maqueta, 40,725642, -6,906288), a menos de 20 m das que a ficha tinha da Wikipédia (40,7258, -6,9064)."
+maquetas:
+  - tipo: estado-atual
+    publicada: "2026-11-10"
+    ficheiro: "maquetas/almeida/almeida.glb"
+    capa: "maquetas/almeida/capa.jpg"
+    validada: false
+    provisoria: true
+    fontes:
+      - titulo: "DGT — LiDAR 2024 (nuvem de pontos com cor, MDT e MDS 50 cm, folhas 303418, 303419, 304418 e 304419)"
+        url: "https://cdd.dgterritorio.gov.pt"
+      - titulo: "OpenStreetMap (ODbL), via Overture Maps"
+      - titulo: "Wikipédia — Praça-forte de Almeida"
+        url: "https://pt.wikipedia.org/wiki/Pra%C3%A7a-forte_de_Almeida"
+      - titulo: "Fotografias da Wikimedia Commons com GPS (D. Perez, Hovallef, Dinah Raphael, Xemenendura)"
 fontes:
   - titulo: "SIPA — Muralhas da Praça de Almeida / Castelo e Fortaleza de Almeida, ficha IPA.00001382 (P. Noé, 2012)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=1382"
@@ -120,7 +145,18 @@ fontes:
   - titulo: "Município de Almeida — Museu Histórico Militar de Almeida (Casamatas)"
     url: "https://www.cm-almeida.pt/espacos-municipais/1678-2/casamatas/"
     consultado: "2026-10-27"
+  - titulo: "Wikipédia — Praça-forte de Almeida"
+    url: "https://pt.wikipedia.org/wiki/Pra%C3%A7a-forte_de_Almeida"
+    consultado: "2026-11-10"
+  - titulo: "DGT — LiDAR 2024, folhas 303418, 303419, 304418 e 304419 (medidas das muralhas, pontes e Torre do Relógio)"
+    url: "https://cdd.dgterritorio.gov.pt"
+    consultado: "2026-11-10"
 imagens:
+  - ficheiro: "imagens/almeida/porta-sao-francisco.jpg"
+    legenda: "A porta interior de São Francisco vista da ponte sobre o fosso, com o brasão real e a guarita por cima do frontispício."
+    autor: "Dinah Raphael, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Forte_Almeida_-_Porta_S._Francisco.jpg"
   - ficheiro: "imagens/almeida/vila.jpg"
     legenda: "Os telhados da vila de Almeida, dentro das muralhas, com a torre da igreja."
     autor: "Alvesgaspar, Wikimedia Commons"

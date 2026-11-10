@@ -1,0 +1,47 @@
+{
+ "ponte_sao_francisco": {
+  "centro": [
+   134.44,
+   -191.16
+  ],
+  "eixo": [
+   -0.57,
+   0.8217
+  ],
+  "comprimento": 37.38,
+  "largura": 4.24,
+  "tabuleiro": 742.29,
+  "guardas": 743.21,
+  "pontos": 2258
+ },
+ "ponte_santo_antonio": {
+  "centro": [
+   -200.19,
+   -46.96
+  ],
+  "eixo": [
+   0.9916,
+   0.1297
+  ],
+  "comprimento": 44.68,
+  "largura": 5.07,
+  "tabuleiro": 749.37,
+  "guardas": 750.22,
+  "pontos": 3068
+ },
+ "ponte_santo_antonio_revelim": {
+  "centro": [
+   -332.64,
+   -12.72
+  ],
+  "eixo": [
+   -0.6536,
+   0.7568
+  ],
+  "comprimento": 18.55,
+  "largura": 4.25,
+  "tabuleiro": 745.4,
+  "guardas": 745.48,
+  "pontos": 1023
+ }
+}

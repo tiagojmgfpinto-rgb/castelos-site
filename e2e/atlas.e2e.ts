@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { errosDaPagina } from "./ajuda";
+import { errosDaPagina, fecharNovidadesSozinhas } from "./ajuda";
 
 test("atlas: carrega e, ao abrir um castelo, não mostra os nomes dos outros à volta", async ({ page }) => {
   const erros = errosDaPagina(page);
@@ -32,6 +32,7 @@ test("atlas: ao passar o rato numa torre só aparece o nome dela", async ({ page
 test("atlas: Novidades com as abas Novos castelos e Próximas adições", async ({ page }) => {
   await page.route(/\.glb/, () => undefined);
   await page.goto("./");
+  await fecharNovidadesSozinhas(page);
   await page.getByRole("button", { name: "Novidades" }).click();
   const painel = page.locator("#novidades");
   await expect(painel.getByRole("tab", { name: /Novos castelos/ })).toHaveAttribute("aria-selected", "true");
@@ -49,9 +50,10 @@ test("atlas: nos Açores aparecem o nome do arquipélago e das nove ilhas", asyn
   await page.route(/\.glb/, () => undefined);
   await page.goto("./");
   await page.waitForSelector('.estado[data-visivel="0"]', { state: "attached", timeout: 150_000 });
+  await fecharNovidadesSozinhas(page);
   // vista dos Açores (TERRITORIOS.acores) em coordenadas da cena
   await page.evaluate(() => (window as unknown as { __atlas: { getState(): { voar(v: object): void } } }).__atlas.getState().voar({ x: -1000, z: -900, distancia: 880, inclinacao: 36 }));
-  await expect(page.locator(".rotulo-arquipelago[data-visivel='1']")).toHaveText("Arquipélago dos Açores", { timeout: 60_000 });
+  await expect(page.locator(".rotulo-arquipelago[data-visivel='1']")).toHaveText(["Arquipélago dos Açores"], { timeout: 60_000 }); // lista: espera que a Madeira saia de vista durante o voo
   await page.waitForTimeout(2000);
   const ilhas = await page.$$eval(".rotulo-ilha[data-visivel='1']", (e) => e.map((x) => x.textContent).sort());
   expect(ilhas).toEqual(["Corvo", "Faial", "Flores", "Graciosa", "Pico", "Santa Maria", "São Jorge", "São Miguel", "Terceira"].sort());
