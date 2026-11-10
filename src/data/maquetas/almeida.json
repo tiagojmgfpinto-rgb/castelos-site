@@ -2,7 +2,7 @@
   "monumento": "almeida",
   "titulo": "Praça-forte de Almeida",
   "variante": "estado-atual",
-  "versao": "0.1 provisória",
+  "versao": "0.2 provisória",
   "data": "2026-11-10",
   "origem": {
     "lat": 40.725642,
@@ -221,14 +221,14 @@
       "grupo": "Igrejas",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "Torre quadrada rebocada a ocre, com cunhais e cornijas de granito, porta, janelas, mostrador, sineira com um arco por face e remate de balaustrada, pináculos, cúpula e lanterna (fotografias de Hovallef e D. Perez, Commons).",
+      "descricao": "Torre quadrada rebocada a ocre, com cunhais e cornijas de granito, porta, janelas, mostrador, sineira com um arco por face e remate de balaustrada, pináculos nos cantos e lanterna pequena com cata-vento (fotografias de Hovallef e D. Perez, Commons, e Street View).",
       "medidas": "5,5 m de lado; chão a 762,7 m, balaustrada a c. 781 m e lanterna a c. 786 m (MDS).",
       "fontes": [
         "commons",
         "lidar",
         "osm"
       ],
-      "resumo": "Torre ocre com cúpula, junto ao castelo",
+      "resumo": "Torre ocre com lanterna, junto ao castelo",
       "ancora": [
         -56.2,
         789.9,
@@ -241,7 +241,7 @@
       "grupo": "Edifícios militares",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "Corpo comprido de dois pisos, caiado, com cunhais e cornija de granito, telhado de quatro águas e arcaria de granito no rés-do-chão do lado sudeste, virada à Rua da Muralha (fotografia de D. Perez, Commons). O número de arcos e as janelas do lado noroeste são estimativas.",
+      "descricao": "Corpo comprido de dois pisos, caiado, com cunhais e cornija de granito, telhado de quatro águas de telha velha com chaminés, arcaria de arcos plenos sobre pilares de granito no rés-do-chão dos dois lados compridos (Terreiro do Poço do Rancho e Rua da Muralha) e escadaria de granito em V no topo nordeste (fotografia de D. Perez, Commons, e Street View). O número de arcos, as janelas e as chaminés são estimativas.",
       "medidas": "105,5 × 14,6 m (OSM); beiral a c. 752,2 m e cumeeira a 755,8 m (MDS).",
       "fontes": [
         "commons",

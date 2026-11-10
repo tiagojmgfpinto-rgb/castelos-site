@@ -8,9 +8,9 @@
  },
  "guaritas": 25,
  "terreno": {
-  "vertices": 152327,
-  "triangulos": 299999,
-  "area_ha": 41.7
+  "vertices": 152311,
+  "triangulos": 300000,
+  "area_ha": 68.3
  },
  "ponte_sao_francisco": {
   "comprimento": 37.4,
@@ -135,27 +135,27 @@
   "faces": 954
  },
  "torre_relogio": {
-  "faces": 2297
+  "faces": 2243
  },
  "quartel_esquadras": {
-  "faces": 2869
+  "faces": 6912
  },
  "castelo": {
   "faces": 174
  },
  "vila": {
-  "edificios": 239,
-  "do_osm": 197,
-  "do_lidar": 42,
-  "medidos": 659,
+  "edificios": 265,
+  "do_osm": 219,
+  "do_lidar": 46,
+  "medidos": 720,
   "recusas": {
-   "fora": 542,
+   "fora": 516,
    "evitar": 3,
    "escarpa": 24
   }
  },
  "vegetacao": {
-  "arvores": 303
+  "arvores": 500
  },
  "ancoras": {
   "sa_dentro": [
