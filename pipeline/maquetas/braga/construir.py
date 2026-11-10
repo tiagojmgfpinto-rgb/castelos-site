@@ -1042,6 +1042,11 @@ print(MEDIDAS)
 
 # ---------------------------------------------------------------- exportação
 
+# A cena de arranque do bpy traz um cubo de 2 m na origem (190 m abaixo da torre), que ia parar ao GLB
+# (auditoria de novembro de 2026). A luz e a câmara de arranque não são exportadas.
+for _ob in [o for o in bpy.data.objects if o.name == "Cube" and o.type == "MESH" and o.parent is None]:
+    bpy.data.objects.remove(_ob)
+
 SAIDA.mkdir(parents=True, exist_ok=True)
 (AQUI / "saida").mkdir(exist_ok=True)
 glb = AQUI / "saida" / "braga-bruto.glb"
