@@ -16,6 +16,8 @@ classificacao:
   categoria: "Monumento Nacional (1910)"
   sipa: "IPA.00005158"
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Cidadela oval com torre de menagem de xisto e granito sobre a vila velha"

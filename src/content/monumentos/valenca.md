@@ -16,6 +16,8 @@ classificacao:
   categoria: "Monumento Nacional (1928)"
 altitude: 70
 estadoFicha: publicada
+estadoMaqueta: concluida
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Praça-forte abaluartada dos séculos XVII e XVIII, sobre o rio Minho"

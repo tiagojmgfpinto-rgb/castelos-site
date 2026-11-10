@@ -16,6 +16,8 @@ classificacao:
   categoria: "Monumento Nacional (1938)"
   sipa: "IPA.00004062"
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Forte seiscentista num ilhéu da Berlenga Grande, ligado por uma ponte em arco"

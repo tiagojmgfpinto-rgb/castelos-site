@@ -17,6 +17,8 @@ classificacao:
   categoria: "Imóvel de Interesse Público (classificado em 1977)"
   sipa: "IPA.00006072"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Forte de Santo António da Barra (Forte Velho) (Q10283929): classificação, concelho e data de origem e coordenadas"

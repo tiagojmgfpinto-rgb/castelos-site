@@ -20,6 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # histórico completo: a data de publicação dos monumentos novos vem do merge em main (src/lib/adicionados.ts)
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:

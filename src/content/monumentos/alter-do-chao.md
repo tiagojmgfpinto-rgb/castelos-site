@@ -16,6 +16,8 @@ classificacao:
   categoria: "Monumento Nacional"
   sipa: "IPA.00003236"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Castelo de Alter do Chão (Q5049744): classificação, concelho e data de origem e coordenadas"

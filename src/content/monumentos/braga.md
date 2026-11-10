@@ -17,6 +17,8 @@ classificacao:
   sipa: "IPA.00001114"
 altitude: 191
 estadoFicha: publicada
+estadoMaqueta: concluida
+adicionado: "2026-11-02T22:50:10Z"
 prioritario: false
 
 subtitulo: "Torre de menagem de D. Dinis, o que resta do castelo de Braga"

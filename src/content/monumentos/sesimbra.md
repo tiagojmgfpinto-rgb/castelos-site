@@ -17,6 +17,8 @@ classificacao:
   sipa: "IPA.00006525"
 altitude: 240
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Castelo da Ordem de Santiago no alto da Serra da Arrábida, sobre Sesimbra"

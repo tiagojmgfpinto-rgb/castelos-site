@@ -17,6 +17,8 @@ classificacao:
   sipa: "IPA.00002273"
 altitude: 1033
 estadoFicha: publicada
+estadoMaqueta: concluida
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Castelo roqueiro dos séculos XII a XIV, em ruína"

@@ -11,6 +11,8 @@ coordenadas:
   lon: -9.1578
   verificadas: false
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 seculoOrigem: "séculos XII–XIII"

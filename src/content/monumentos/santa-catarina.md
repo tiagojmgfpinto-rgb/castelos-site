@@ -16,6 +16,8 @@ classificacao:
   categoria: "Imóvel de Interesse Público (1977)"
   sipa: "IPA.00001286"
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Fortaleza seiscentista na foz do Arade, sobre a Praia da Rocha"

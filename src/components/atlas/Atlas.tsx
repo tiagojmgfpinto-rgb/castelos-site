@@ -10,6 +10,8 @@ import { useAtlas, type MonumentoResumo } from "./store";
 import { Terreno } from "./Terrain";
 import { Ficha } from "../ui/Ficha";
 import { Interface } from "../ui/Interface";
+import { BASE } from "../../lib/base";
+import { caminhoFicha } from "../../lib/rotas";
 
 /** Sol baixo de noroeste, como no relevo sombreado clássico; a sombra acompanha a câmara. */
 function Luz() {
@@ -48,13 +50,18 @@ function Luz() {
 }
 
 
-/** Sincroniza a seleção com o endereço (#guimaraes), como ligação partilhável. */
-function useHash(monumentos: MonumentoResumo[]) {
+/**
+ * Sincroniza a seleção com o endereço (#guimaraes), como ligação partilhável. Um monumento que ainda não está no
+ * mapa (sem maqueta publicada) abre a sua página.
+ */
+function useHash(monumentos: MonumentoResumo[], todos: MonumentoResumo[]) {
   const selecionado = useAtlas((s) => s.selecionado);
   useEffect(() => {
     const ler = () => {
       const id = decodeURIComponent(location.hash.slice(1));
       const m = monumentos.find((x) => x.id === id);
+      const fora = !m && todos.find((x) => x.id === id);
+      if (fora) location.replace(`${BASE}${caminhoFicha(fora)}`);
       if (m) {
         const s = useAtlas.getState();
         if (s.territorio !== m.territorio) s.setTerritorio(m.territorio);
@@ -64,7 +71,7 @@ function useHash(monumentos: MonumentoResumo[]) {
     ler();
     addEventListener("hashchange", ler);
     return () => removeEventListener("hashchange", ler);
-  }, [monumentos]);
+  }, [monumentos, todos]);
   useEffect(() => {
     const novo = selecionado ? `#${selecionado}` : " ";
     if ((location.hash || " ") !== novo) history.replaceState(null, "", selecionado ? novo : location.pathname + location.search);
@@ -88,11 +95,13 @@ function useVooSelecao(monumentos: MonumentoResumo[]) {
   }, [selecionado, territorio, monumentos]);
 }
 
-export default function Atlas({ monumentos }: { monumentos: MonumentoResumo[] }) {
+export default function Atlas({ monumentos: todos }: { monumentos: MonumentoResumo[] }) {
+  // o mapa principal só mostra os monumentos com a maqueta concluída e publicada; os outros estão em Próximas adições
+  const monumentos = useMemo(() => todos.filter((x) => x.noMapa), [todos]);
   const territorio = useAtlas((s) => s.territorio);
   const selecionado = useAtlas((s) => s.selecionado);
   const m = monumentos.find((x) => x.id === selecionado) ?? null;
-  useHash(monumentos);
+  useHash(monumentos, todos);
   useVooSelecao(monumentos);
 
   // com a ficha aberta, o mapa encolhe para a metade esquerda e o monumento fica ao centro dela
@@ -118,7 +127,7 @@ export default function Atlas({ monumentos }: { monumentos: MonumentoResumo[] })
         >
           <Cena territorio={territorio} monumentos={monumentos} />
         </Canvas>
-        <Interface monumentos={monumentos} vistaInicial={() => useAtlas.getState().voar(vistaInicial(useAtlas.getState().territorio))} />
+        <Interface monumentos={monumentos} todos={todos} vistaInicial={() => useAtlas.getState().voar(vistaInicial(useAtlas.getState().territorio))} />
       </div>
       {m && <Ficha key={m.id} m={m} monumentos={monumentos} onFechar={() => useAtlas.getState().selecionar(null)} />}
     </div>

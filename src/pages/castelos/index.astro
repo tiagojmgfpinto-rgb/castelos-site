@@ -1,7 +1,7 @@
 ---
 import Base from "../../layouts/Base.astro";
 import Cabecalho from "../../components/Cabecalho.astro";
-import { todosMonumentos, type Monumento } from "../../lib/monumentos";
+import { estaNoMapa, imagemDe, maquetasPublicadas, todosMonumentos, type Monumento } from "../../lib/monumentos";
 import { REGIOES, TIPOLOGIAS, type Regiao, type Tipologia } from "../../lib/tipologias";
 import { caminhoFicha } from "../../lib/rotas";
 import { comVersao } from "../../lib/versao";
@@ -15,9 +15,10 @@ const base = import.meta.env.BASE_URL;
 // O que cada cartão mostra e as marcas que os filtros leem (as mesmas regras do atlas: store.ts)
 const cartao = (m: Monumento) => {
   const d = m.data;
-  const maqueta = d.maquetas.find((x) => x.tipo === "estado-atual" && (x.validada || x.provisoria));
+  // "com maqueta" = maqueta concluída e publicada, a mesma regra que põe o monumento no mapa (lib/estado.ts)
+  const maqueta = estaNoMapa(m) ? maquetasPublicadas(m).find((x) => x.tipo === "estado-atual") : undefined;
   const visita = !!d.visita && Object.values(d.visita).some(Boolean);
-  const capa = maqueta?.capa ?? d.imagens[0]?.ficheiro;
+  const capa = imagemDe(m);
   return {
     id: m.id,
     nome: d.nome,
@@ -43,8 +44,9 @@ const nMaqueta = lista.filter((m) => cartao(m).maqueta).length;
   <main class="texto catalogo" data-catalogo>
     <h1>Castelos e fortalezas</h1>
     <p class="entrada">
-      {lista.length} fortificações no atlas, {nMaqueta} delas já com maqueta 3D. As fichas históricas e as maquetas são
-      publicadas à medida que ficam documentadas.
+      {lista.length} fortificações no catálogo. As {nMaqueta} que já têm maqueta 3D estão no mapa; as outras são as
+      <a href={`${base}proximas-adicoes/`}>próximas adições</a>. As fichas históricas e as maquetas são publicadas à
+      medida que ficam documentadas.
     </p>
 
     <form class="catalogo-filtros" role="search" aria-label="Pesquisar e filtrar o catálogo" hidden>

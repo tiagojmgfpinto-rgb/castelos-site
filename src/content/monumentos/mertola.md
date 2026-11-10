@@ -15,6 +15,8 @@ classificacao:
   categoria: "Monumento Nacional"
   sipa: "IPA.00001045"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Castelo de Mértola (Q5049803): classificação, concelho e coordenadas"

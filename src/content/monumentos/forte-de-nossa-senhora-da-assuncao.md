@@ -16,6 +16,8 @@ classificacao:
   categoria: "Imóvel de Interesse Público"
   sipa: "IPA.00005384"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Forte de Nossa Senhora da Assunção (Q10283826): classificação, concelho e coordenadas"

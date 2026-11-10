@@ -16,6 +16,8 @@ classificacao:
   categoria: "Monumento Nacional (1910)"
   sipa: "IPA.00000906"
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Castelo gótico com a torre de menagem mais alta do país"

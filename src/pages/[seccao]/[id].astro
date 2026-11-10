@@ -1,7 +1,8 @@
 ---
 import Base from "../../layouts/Base.astro";
 import Cabecalho from "../../components/Cabecalho.astro";
-import { resumo, todosMonumentos, type Monumento } from "../../lib/monumentos";
+import { estaNoMapa, faseDoMonumento, maquetasPublicadas, resumo, todosMonumentos, type Monumento } from "../../lib/monumentos";
+import { FASES } from "../../lib/estado";
 import { FichaConteudo } from "../../components/ui/FichaConteudo";
 import { REGIOES, TIPOLOGIAS } from "../../lib/tipologias";
 import { caminhoFicha, seccaoDe } from "../../lib/rotas";
@@ -15,7 +16,8 @@ const { m } = Astro.props as { m: Monumento };
 const d = m.data;
 const r = resumo(m);
 const base = import.meta.env.BASE_URL;
-const maqueta = d.maquetas.find((x) => x.tipo === "estado-atual" && (x.validada || x.provisoria));
+const maqueta = maquetasPublicadas(m).find((x) => x.tipo === "estado-atual");
+const noMapa = estaNoMapa(m);
 const vizinhos = (await todosMonumentos()).filter((x) => x.data.regiao === d.regiao && x.id !== m.id).slice(0, 10);
 ---
 <Base titulo={d.nome} descricao={d.resumo ?? `${d.nome}, ${d.localidade}. ${TIPOLOGIAS[d.tipologia].nome} no atlas 3D de Portugal.`} classe="pagina-texto">
@@ -28,7 +30,13 @@ const vizinhos = (await todosMonumentos()).filter((x) => x.data.regiao === d.reg
     <p class="entrada">{d.localidade}, {d.distrito}, {REGIOES[d.regiao]} · {d.subtitulo ?? `${TIPOLOGIAS[d.tipologia].nome}${d.seculoOrigem ? ` do ${d.seculoOrigem}` : ""}`}</p>
     <p class="ficha-pagina-acoes">
       {d.estado && <span class="ficha-pagina-estado">{d.estado}</span>}
-      <a class="botao-texto" href={`${base}#${m.id}`}>Ver no mapa 3D</a>
+      {noMapa ? (
+        <a class="botao-texto" href={`${base}#${m.id}`}>Ver no mapa 3D</a>
+      ) : (
+        <a class="ficha-pagina-proxima" href={`${base}proximas-adicoes/`} title="Entra no mapa 3D quando a maqueta estiver concluída e publicada">
+          Próxima adição ao mapa · {FASES[faseDoMonumento(m)]}
+        </a>
+      )}
     </p>
 
     {maqueta && (

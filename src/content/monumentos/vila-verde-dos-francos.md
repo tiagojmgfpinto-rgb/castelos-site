@@ -15,6 +15,8 @@ classificacao:
   categoria: "Imóvel de Interesse Público (classificado em 1957)"
   sipa: "IPA.00006263"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Castelo de Vila Verde dos Francos (Q5049844): classificação, concelho e coordenadas"

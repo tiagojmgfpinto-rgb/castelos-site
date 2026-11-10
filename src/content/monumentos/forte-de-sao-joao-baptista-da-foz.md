@@ -15,6 +15,8 @@ classificacao:
   categoria: "Imóvel de Interesse Público"
   sipa: "IPA.00005543"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Forte de São João Baptista da Foz (Q10284015): classificação, concelho e coordenadas"

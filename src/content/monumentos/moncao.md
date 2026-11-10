@@ -16,6 +16,8 @@ classificacao:
   categoria: "Monumento Nacional (1910)"
 altitude: 35
 estadoFicha: publicada
+estadoMaqueta: concluida
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Vila medieval cercada por baluartes do século XVII, sobre o rio Minho"

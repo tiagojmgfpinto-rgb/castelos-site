@@ -16,6 +16,8 @@ classificacao:
   categoria: "Imóvel de Interesse Público (1943); Património Mundial da UNESCO (Centro Histórico de Angra, 1983)"
   sipa: "IPA.00008105"
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Fortaleza filipina no istmo do Monte Brasil, na ilha Terceira"

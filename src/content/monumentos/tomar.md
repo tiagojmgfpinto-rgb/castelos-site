@@ -16,6 +16,8 @@ classificacao:
   categoria: "Monumento Nacional (1910); Património Mundial da UNESCO (Convento de Cristo, 1983)"
   sipa: "IPA.00003390"
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Castelo templário de Gualdim Pais, à volta do Convento de Cristo"

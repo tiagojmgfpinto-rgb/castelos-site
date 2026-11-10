@@ -15,6 +15,8 @@ classificacao:
   categoria: "Imóvel de Interesse Público"
   sipa: "IPA.00002820"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Castelo de Alcoutim (Q5050360): classificação, concelho e coordenadas"

@@ -16,6 +16,8 @@ classificacao:
   categoria: "Monumento Nacional (1921)"
   sipa: "IPA.00004056"
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Castelo da Beira com torre de menagem de porta em ferradura"

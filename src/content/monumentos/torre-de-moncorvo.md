@@ -15,6 +15,8 @@ classificacao:
   categoria: "Imóvel de Interesse Público (classificado em 1955)"
   sipa: "IPA.00002128"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Castelo de Torre de Moncorvo (Q5049835): classificação, concelho e coordenadas"

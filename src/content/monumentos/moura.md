@@ -17,6 +17,8 @@ classificacao:
   sipa: "IPA.00000993"
 altitude: 184
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Alcáçova muçulmana de taipa, castelo gótico e linha abaluartada"

@@ -17,6 +17,8 @@ classificacao:
   sipa: "IPA.00002593"
 altitude: 56
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Castelo sobre os campos do Mondego, com a igreja de Santa Maria da Alcáçova"

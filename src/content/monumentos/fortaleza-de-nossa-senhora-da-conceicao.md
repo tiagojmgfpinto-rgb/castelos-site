@@ -15,6 +15,8 @@ classificacao:
   categoria: "Imóvel de Interesse Público"
   sipa: "IPA.00000217"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Fortaleza de Nossa Senhora da Conceição (Q5049736): classificação, concelho e coordenadas"

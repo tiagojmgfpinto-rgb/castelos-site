@@ -15,6 +15,8 @@ classificacao:
   categoria: "Monumento Nacional (Decreto n.º 14 985, de 03-02-1928)"
   sipa: "IPA.00001382"
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Praça-forte abaluartada dos séculos XVII e XVIII"

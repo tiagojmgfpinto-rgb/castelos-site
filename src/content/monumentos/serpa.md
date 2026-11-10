@@ -17,6 +17,8 @@ classificacao:
   sipa: "IPA.00000579"
 altitude: 230
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Alcáçova e cerca da vila com aqueduto sobre a muralha"

@@ -15,6 +15,8 @@ classificacao:
   categoria: "Monumento Nacional (classificado em 1947)"
   sipa: "IPA.00002121"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Castelo de Vinhais (Q5049847): classificação, concelho e coordenadas"

@@ -17,6 +17,8 @@ classificacao:
   sipa: "IPA.00000298"
 altitude: 383
 estadoFicha: publicada
+estadoMaqueta: concluida
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Castelo românico no alto do Monte de Lanhoso, sobre as lajes de granito, ao lado do Santuário de Nossa Senhora do Pilar"

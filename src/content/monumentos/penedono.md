@@ -15,6 +15,8 @@ classificacao:
   categoria: "Monumento Nacional"
   sipa: "IPA.00003681"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Castelo de Penedono (Q5049815): classificação, concelho e coordenadas"

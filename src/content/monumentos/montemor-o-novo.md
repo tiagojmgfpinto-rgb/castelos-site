@@ -16,6 +16,8 @@ classificacao:
   categoria: "Monumento Nacional"
   sipa: "IPA.00007875"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Castelo de Montemor-o-Novo (Q5049796): classificação, concelho e data de origem e coordenadas"

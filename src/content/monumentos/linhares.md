@@ -17,6 +17,8 @@ classificacao:
   sipa: "IPA.00001402"
 altitude: 820
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Castelo de dois recintos em socalco sobre a aldeia de Linhares"

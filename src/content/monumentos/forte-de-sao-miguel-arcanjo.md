@@ -15,6 +15,8 @@ classificacao:
   categoria: "Imóvel de Interesse Público (classificado em 1978)"
   sipa: "IPA.00003294"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Forte de São Miguel Arcanjo (Q10284041): classificação, concelho e coordenadas"

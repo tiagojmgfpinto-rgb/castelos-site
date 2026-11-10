@@ -16,6 +16,8 @@ classificacao:
   categoria: "Monumento Nacional (classificado em 1933)"
   sipa: "IPA.00002007"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Castelo de São Filipe (Q8963003): classificação, concelho e data de origem e coordenadas"

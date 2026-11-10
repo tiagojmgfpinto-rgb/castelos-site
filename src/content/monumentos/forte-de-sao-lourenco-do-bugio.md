@@ -16,6 +16,8 @@ classificacao:
   categoria: "Imóvel de Interesse Público (classificado em 1957)"
   sipa: "IPA.00006548"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Forte de São Lourenço do Bugio (Q10284031): classificação, concelho e data de origem e coordenadas"

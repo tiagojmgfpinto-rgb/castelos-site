@@ -15,6 +15,8 @@ seculoOrigem: "século XVI"
 classificacao:
   categoria: "Imóvel de Interesse Público (1953)"
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Fortaleza abaluartada do século XVI no porto de Ponta Delgada"

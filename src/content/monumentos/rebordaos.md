@@ -16,6 +16,8 @@ classificacao:
   categoria: "Imóvel de Interesse Público"
   sipa: "IPA.00001057"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Castelo de Rebordãos (Q5049820): classificação, concelho e data de origem e coordenadas"

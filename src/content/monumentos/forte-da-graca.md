@@ -16,6 +16,8 @@ classificacao:
   categoria: "Monumento Nacional (1910); Património Mundial da UNESCO (2012)"
   sipa: "IPA.00003771"
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Forte abaluartado do século XVIII no Monte da Graça, sobre Elvas"

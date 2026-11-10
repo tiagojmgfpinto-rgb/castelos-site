@@ -15,6 +15,8 @@ classificacao:
   categoria: "Monumento Nacional"
   sipa: "IPA.00001987"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Castelo de Torres Novas (Q5049837): classificação, concelho e coordenadas"

@@ -15,6 +15,8 @@ classificacao:
   categoria: "Imóvel de Interesse Público"
   sipa: "IPA.00001780"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Castelo de Alcobaça (Q5049737): classificação, concelho e coordenadas"

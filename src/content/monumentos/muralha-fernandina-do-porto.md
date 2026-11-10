@@ -16,6 +16,8 @@ classificacao:
   categoria: "Monumento Nacional"
   sipa: "IPA.00005461"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Muralha Fernandina (Porto) (Q10333266): classificação, concelho e coordenadas"

@@ -16,6 +16,8 @@ classificacao:
   categoria: "Monumento Nacional (1940); Património Mundial da UNESCO (2012)"
   sipa: "IPA.00003244"
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Forte abaluartado da Guerra da Restauração a sul de Elvas"

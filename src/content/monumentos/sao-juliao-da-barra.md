@@ -16,6 +16,8 @@ classificacao:
   categoria: "Imóvel de Interesse Público (1957)"
   sipa: "IPA.00002343"
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Forte abaluartado da barra do Tejo, residência oficial do ministro da Defesa"

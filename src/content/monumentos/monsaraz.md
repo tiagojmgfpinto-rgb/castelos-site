@@ -16,6 +16,8 @@ classificacao:
   categoria: "Monumento Nacional (1946)"
   sipa: "IPA.00006512"
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Vila muralhada sobre o Guadiana, com castelo templário e forte seiscentista"
