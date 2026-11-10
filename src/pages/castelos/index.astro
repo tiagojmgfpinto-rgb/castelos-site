@@ -52,7 +52,7 @@ const nMaqueta = lista.filter((m) => cartao(m).maqueta).length;
     <form class="catalogo-filtros" role="search" aria-label="Pesquisar e filtrar o catálogo" hidden>
       <label class="catalogo-pesquisa">
         <span>Pesquisar</span>
-        <input type="search" name="q" placeholder="Nome, localidade ou distrito" autocomplete="off" />
+        <input type="search" name="q" placeholder="Nome, localidade ou distrito" autocomplete="off" maxlength="100" />
       </label>
       <label>
         <span>Região</span>

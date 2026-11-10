@@ -58,7 +58,13 @@ function useHash(monumentos: MonumentoResumo[], todos: MonumentoResumo[]) {
   const selecionado = useAtlas((s) => s.selecionado);
   useEffect(() => {
     const ler = () => {
-      const id = decodeURIComponent(location.hash.slice(1));
+      // Um # mal formado (ex.: #%E0) faria rebentar o decodeURIComponent; tratamos como "sem seleção".
+      let id = "";
+      try {
+        id = decodeURIComponent(location.hash.slice(1));
+      } catch {
+        return;
+      }
       const m = monumentos.find((x) => x.id === id);
       const fora = !m && todos.find((x) => x.id === id);
       if (fora) location.replace(`${BASE}${caminhoFicha(fora)}`);
