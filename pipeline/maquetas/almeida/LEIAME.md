@@ -1,0 +1,131 @@
+# Maqueta 3D da Praça-forte de Almeida (estado atual)
+
+Versão 0.1, **provisória** (10 de novembro de 2026). A maqueta é gerada por código, à escala 1:1 e georreferenciada.
+
+- **Origem:** centróide do anel da contraescarpa do fosso principal no OSM (retaining_wall fc68b085, 33,1 ha).
+  - WGS84: 40,725642, −6,906288.
+  - PT-TM06 (EPSG:3763): 103 646,77, 118 134,25.
+- **Eixos:** x para este, y para norte; no visor, −z é o norte. As cotas são altitudes.
+- **Área:** a praça dentro da contraescarpa, com os revelins e o fosso (41,7 ha de terreno).
+- **Medições:** relevo, traçado das escarpas, pontes, cotas, alturas e pegadas vêm do LiDAR da DGT de 2024 (voo de maio).
+
+## Como reconstruir
+
+```sh
+# 1. muralhas, casas da guarda, edifícios e ruas do OSM (via Overture Maps) -> dados/fontes.json
+python pipeline/maquetas/almeida/recolher.py
+
+# 2. LiDAR da DGT, folhas 303418, 303419, 304418 e 304419 (2024).
+#    Primeiro, os MDT/MDS que a DGT não deu (MDT de 303418, MDS de 303418 e 303419) a partir das nuvens LO-*.laz:
+python pipeline/maquetas/almeida/rasterizar.py PASTA            # --conferir 304419 compara com uma folha da DGT
+#    Depois -> dados/lidar.npz, dados/casas.json, dados/orto.jpg
+python pipeline/maquetas/almeida/lidar.py PASTA
+
+# 3. traçado das escarpas no MDT -> dados/escarpas.json; pontes (classe 26) -> dados/pontes.json
+python pipeline/maquetas/almeida/tracar.py
+python pipeline/maquetas/almeida/pontes.py PASTA
+
+# 4. maqueta em Blender (bpy 5.2.3, Python 3.13) -> public/maquetas/almeida/almeida.glb (Draco) e capa.jpg
+python pipeline/maquetas/almeida/construir.py --vistas
+```
+
+Opções do `construir.py`: as mesmas de Valença.
+
+| Opção | O que faz |
+|---|---|
+| `--sem-glb` | só monta a cena |
+| `--vistas` | grava a capa e as vistas em `vistas/` |
+| `--so=a,b` | grava só as vistas indicadas |
+| `--amostras=N` | número de amostras do Cycles |
+
+As vistas `p_<porta>`, `m_<monumento>` e `c_<foto>` são as de conferência; as `c_` foram feitas da posição das fotografias de comparação. Cada construção grava em `dados/medidas.json` as medidas e as âncoras das placas.
+
+## Dados do LiDAR
+
+- **Classes:**
+  - 2: chão, incluindo as muralhas, que estão no MDT. Por isso o traçado automático das escarpas funciona.
+  - 6: edifícios.
+  - 26: pontes.
+- **Folhas que faltavam:** o MDT de 303418 e os MDS de 303418 e 303419 não vieram da DGT e foram feitos com `rasterizar.py`.
+  - Método: média do chão e máximo das classes 1 a 6 por célula, com as falhas interpoladas.
+  - Conferência com a folha 304419 da DGT: mediana 0, e 99,9 % das células a menos de 25 cm.
+- **Cotas:** as altitudes vão de 710 a 763 m. O `lidar.npz` guarda-as em cm acima de 700 m (BASE = 700).
+
+## O que se mede e o que é estimativa
+
+**Escarpas** (`tracar.py`)
+- Método de Valença, aplicado numa faixa de 45 m à volta das muralhas do OSM e de 60 m à volta da contraescarpa.
+- Resultado: 64 panos, c. 8,6 km.
+- Altura acima do pé: 5,7 m em mediana e até 14,2 m.
+- Nos panos com mais de 7 m o cordão fica a meia altura (0,46 da altura), como nas fotografias das portas.
+
+**Portas**
+- Quatro portas das duas portas duplas (São Francisco ou da Cruz, a sul-sudeste; Santo António, a poente) e a Porta Nova.
+- A posição vem do OSM e do relevo; a soleira, do tabuleiro das pontes (classe 26) e do MDT.
+- O vão é aberto no pano (`vaos()`, como em Monção), sem cortar a escarpa. Na Porta Nova abre-se também a escarpa de dentro, onde o túnel sai.
+- Os frontispícios seguem as fotografias:
+  - colunas de tambores almofadados, frontão curvo, armas reais e guarita na porta de dentro de São Francisco;
+  - calçada com obeliscos na de fora;
+  - frontispício simples com guarita na de fora de Santo António.
+
+**Casas da guarda**
+- Pegada do OSM e altura do MDS (percentil 90).
+- Cobertura em duas águas baixas, com a cumeeira no eixo da passagem (fotografia 19 e foto de São Francisco), mais a chaminé de Santo António.
+- Cordão de meia-cana à altura do alto do arco.
+- Panos de remendo ligam a ponta da escarpa ao canto da casa.
+
+**Túneis**
+- Retos e com o comprimento lido no LiDAR. O terreno por cima fica acima do extradorso.
+- O degrau do terreno logo atrás da frontaria sai da malha. Sem isso, um campo de alturas tapa o vão: o teste de raios batia a 3,5 m.
+- **Hipótese:** o túnel de Santo António de dentro acaba num fundo escuro a 20 m. O traçado real, que deve dobrar para o pátio a c. (−150, −65), não se vê.
+
+**Pontes**
+- Comprimento, largura, tabuleiro e guardas medidos na classe 26: São Francisco 37,4 m; Santo António 44,7 m e 18,6 m.
+- Os arcos (vãos de c. 6,5 m) são estimativa.
+
+**Guaritas:** 25, postas automaticamente nos ângulos salientes. O número é estimado.
+
+**Monumentos**
+
+A pegada vem do OSM e as cotas do MDS. A orientação das fachadas foi conferida pelo GPS das fotografias do Commons.
+
+| Monumento | Fachada e fotografia | Medidas (MDS) |
+|---|---|---|
+| Igreja Matriz | fachada a poente; câmara de D. Perez a poente | nave 24 × 9,5 m, cumeeira 749,9; torre de 5 m a SW, remate 758,7 |
+| Misericórdia | fachada a nordeste, a meio do lado da Praça da República; câmara de D. Perez 7 m à frente | empena perpendicular à rua, cumeeira c. 752,4 |
+| Torre do Relógio | — | 5,5 m de lado; 762,7 → c. 786 m |
+| Quartel das Esquadras | arcaria no lado sudeste: a fotografia foi tirada a sudeste, com o edifício à direita | 105,5 × 14,6 m; cumeeira 755,8 |
+| Castelo | — | bases de três torres redondas (N, E, W) lidas no relevo e na ortoimagem; alturas estimadas |
+
+**Ficam no casario cinzento:** o Picadeiro, o Paiol e a Casa dos Governadores. As Casamatas são subterrâneas e só se veem no relevo do pátio.
+
+## Contradições
+
+- **Portas de Santo António:** a Wikipédia diz «rasgadas a Norte» e o SIPA (ficha) diz noroeste. O LiDAR e o OSM põem-nas a poente do centro. A maqueta segue o LiDAR.
+- **Porta da Cruz:** o SIPA chama assim a porta magistral do revelim da Cruz; o Município e o OSM chamam-lhe Portas de São Francisco.
+- **Área:** a Wikipédia dá 650 000 m², o que não bate com os 2,5 km de perímetro. A contraescarpa do OSM fecha 33 ha.
+
+## Verificações (fase 5)
+
+**Auditoria** (`auditoria-maquetas/ferramentas/auditar.py`)
+- GLB: 2,4 MB com Draco; 439 mil triângulos; 57 primitivas.
+- Sem z-fighting nem normais invertidas.
+- Árvores: 7 encostadas a obra (≤ 0,25 m de copa) e 1 a flutuar.
+- 160 peças «a flutuar»: são beirais e telhados separados das paredes (Valença tinha 130).
+- 447 peças «enterradas»: são as peças dos túneis debaixo do terrapleno, de propósito.
+
+**Teste de raios** (três alturas e três posições por porta)
+- As cinco passagens estão abertas.
+- Santo António de dentro termina no fundo escuro a 20 m (hipótese).
+
+**Visor real:** cores conferidas no Playwright.
+
+## Fontes
+
+- DGT, LiDAR 2024 (CC BY 4.0).
+- OpenStreetMap (ODbL), via Overture Maps.
+- Wikipédia, «Praça-forte de Almeida».
+- Município de Almeida (circuito).
+- Fotografias da Wikimedia Commons: David Perez (CC BY 3.0), Hovallef (CC BY-SA 4.0), Dinah Raphael (CC BY-SA 3.0), Xemenendura (CC BY-SA 4.0).
+- Capturas de referência enviadas pelo autor do projeto: só para conferência, não vão para a galeria.
+- O SIPA estava em baixo (503) durante o trabalho.
