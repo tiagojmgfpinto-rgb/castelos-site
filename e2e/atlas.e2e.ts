@@ -53,7 +53,7 @@ test("atlas: nos Açores aparecem o nome do arquipélago e das nove ilhas", asyn
   await fecharNovidadesSozinhas(page);
   // vista dos Açores (TERRITORIOS.acores) em coordenadas da cena
   await page.evaluate(() => (window as unknown as { __atlas: { getState(): { voar(v: object): void } } }).__atlas.getState().voar({ x: -1000, z: -900, distancia: 880, inclinacao: 36 }));
-  await expect(page.locator(".rotulo-arquipelago[data-visivel='1']")).toHaveText("Arquipélago dos Açores", { timeout: 60_000 });
+  await expect(page.locator(".rotulo-arquipelago[data-visivel='1']")).toHaveText(["Arquipélago dos Açores"], { timeout: 60_000 }); // lista: espera que a Madeira saia de vista durante o voo
   await page.waitForTimeout(2000);
   const ilhas = await page.$$eval(".rotulo-ilha[data-visivel='1']", (e) => e.map((x) => x.textContent).sort());
   expect(ilhas).toEqual(["Corvo", "Faial", "Flores", "Graciosa", "Pico", "Santa Maria", "São Jorge", "São Miguel", "Terceira"].sort());
