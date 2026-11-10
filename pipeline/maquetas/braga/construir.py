@@ -447,8 +447,10 @@ VAOS = {
     # NNO: uma janela em arco (1,1 m) a 211,9-213,3, um pouco a nascente do eixo (fotografia de 2006)
     "NNO": [(0.60 - 0.55, 0.60 + 0.55, 211.90, 213.30, True)],
     # ENE: a porta alta, no topo da escada, em arco de volta perfeita (Wikipédia: porta em arco no lado
-    # nordeste, com o escudo de D. Dinis por cima); janela em arco ao nível do telhado (estimativa)
-    "ENE": [(-1.65, -0.65, 196.60, 198.95, True), (-0.50, 0.50, 211.90, 213.30, True)],
+    # nordeste, com o escudo de D. Dinis por cima); janela em arco ao nível do telhado (estimativa).
+    # Na face ENE o eixo s aponta para sul (t = (0, -1)): a porta em s 0,65..1,65 fica em v -1,65..-0,65,
+    # a meio do patamar da escada (v -2,0..-0,3). Até à 0.2 estava em s negativo, c. 1 m a norte do patamar.
+    "ENE": [(0.65, 1.65, 196.60, 198.95, True), (-0.50, 0.50, 211.90, 213.30, True)],
     # OSO: janela em arco ao nível do telhado (Wikipédia: janelas em arco em todas as faces; estimativa)
     "OSO": [(-0.50, 0.50, 211.90, 213.30, True)],
 }
