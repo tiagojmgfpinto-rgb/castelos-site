@@ -16,6 +16,9 @@ const tituloCompleto = titulo ? `${titulo} · Castelos.site` : "Castelos.site ·
     <title>{tituloCompleto}</title>
     <meta name="description" content={descricao} />
     <meta name="theme-color" content="#15110d" />
+    {/* Política de segurança mínima: sem plugins, sem <base> alheio e formulários só para o próprio site. */}
+    <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'; form-action 'self'" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta property="og:title" content={tituloCompleto} />
     <meta property="og:description" content={descricao} />
     <meta property="og:locale" content="pt_PT" />

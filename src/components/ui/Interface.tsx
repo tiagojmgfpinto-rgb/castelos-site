@@ -182,6 +182,7 @@ function Indice({ monumentos, nProximas }: { monumentos: MonumentoResumo[]; nPro
         type="search"
         placeholder="Procurar por nome, concelho, século, classificação…"
         autoComplete="off"
+        maxLength={100}
         aria-label="Procurar castelo"
         value={q}
         onChange={(e) => setQ(e.target.value)}

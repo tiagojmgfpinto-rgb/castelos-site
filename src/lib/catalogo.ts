@@ -43,7 +43,7 @@ export function passa(item: ItemCatalogo, c: Criterios): boolean {
 export function lerCriterios(pesquisa: string): Criterios {
   const p = new URLSearchParams(pesquisa);
   return {
-    q: p.get("q") ?? "",
+    q: (p.get("q") ?? "").slice(0, 100),
     regiao: p.get("regiao") ?? "",
     tipo: p.get("tipo") ?? "",
     maqueta: p.get("maqueta") === "1",
