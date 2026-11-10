@@ -77,6 +77,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Forte de São João Baptista, n.º 4062 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=4062"
+imagens:
+  - ficheiro: "imagens/berlengas/forte-no-ilheu.jpg"
+    legenda: "O forte no ilhéu, ligado à ilha da Berlenga por uma ponte de pedra."
+    autor: "Alexkom000, Wikimedia Commons"
+    licenca: "CC BY 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:2026-06-21_Forte_de_S%C3%A3o_Jo%C3%A3o_Baptista_das_Berlengas_05.jpg"
+  - ficheiro: "imagens/berlengas/ponte-de-acesso.jpg"
+    legenda: "A ponte e o caminho de pedra que descem da ilha até ao forte."
+    autor: "Alexkom000, Wikimedia Commons"
+    licenca: "CC BY 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:2026-06-21_Forte_de_S%C3%A3o_Jo%C3%A3o_Baptista_das_Berlengas_06.jpg"
+  - ficheiro: "imagens/berlengas/do-mar.jpg"
+    legenda: "O forte visto do mar, encostado às rochas da ilha."
+    autor: "Alexkom000, Wikimedia Commons"
+    licenca: "CC BY 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:2026-06-21_Forte_de_S%C3%A3o_Jo%C3%A3o_Baptista_das_Berlengas_03.jpg"
+  - ficheiro: "imagens/berlengas/entrada.jpg"
+    legenda: "A fachada do forte com a porta de entrada."
+    autor: "Alexkom000, Wikimedia Commons"
+    licenca: "CC BY 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:2026-06-21_Forte_de_S%C3%A3o_Jo%C3%A3o_Baptista_das_Berlengas_11.jpg"
 ---
 
 Em 1513 instalou-se na Berlenga Grande um mosteiro da Ordem de São Jerónimo. Durante a Guerra da Restauração aproveitou-se a sua pedra para erguer um forte num ilhéu junto à ilha, ligado a ela por uma calçada sobre arcos, para vigiar o mar diante de Peniche.

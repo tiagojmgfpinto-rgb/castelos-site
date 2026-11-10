@@ -83,6 +83,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo e Cerca Urbana de Beja, IPA.00000906 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=906"
+imagens:
+  - ficheiro: "imagens/beja/patio-e-torre.jpg"
+    legenda: "O pátio do castelo entre as ameias, com a torre de menagem ao fundo."
+    autor: "Pedro J Pacheco, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Beja._Panorama.jpg"
+  - ficheiro: "imagens/beja/torre-de-menagem.jpg"
+    legenda: "A torre de menagem de mármore e granito, com o coroamento de ameias e balcões."
+    autor: "Costajosemanuel, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Torre_Castelo_de_Beja.jpg"
+  - ficheiro: "imagens/beja/torres-e-oliveiras.jpg"
+    legenda: "Duas torres do castelo por trás de oliveiras antigas."
+    autor: "V.B.Speranza, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castle_of_Beja.jpg"
+  - ficheiro: "imagens/beja/panorama-do-jardim.jpg"
+    legenda: "A cerca e as torres do castelo vistas do jardim a poente."
+    autor: "Dicklyon, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Beja_pano_from_the_garden.jpg"
 ---
 
 Beja foi a Pax Julia romana, e os muros da cidade antiga, dos séculos III e IV, estão na base do recinto medieval. D. Afonso Henriques tomou-a em 1159, mas abandonou-a quatro meses depois; a cidade mudou de mãos várias vezes até meados do século XIII. Em 1253 D. Afonso III começou a restaurar os muros, pagos durante dez anos com dois terços dos dízimos das igrejas de Beja, e no ano seguinte deu-lhe foral.
