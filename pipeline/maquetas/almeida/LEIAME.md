@@ -1,12 +1,12 @@
 # Maqueta 3D da Praça-forte de Almeida (estado atual)
 
-Versão 0.1, **provisória** (10 de novembro de 2026). A maqueta é gerada por código, à escala 1:1 e georreferenciada.
+Versão 0.2, **provisória** (10 de novembro de 2026). A 0.2 corrige o que o autor do projeto pediu e o que se viu no Google Maps e no Street View (ver «Correções da 0.2»). A maqueta é gerada por código, à escala 1:1 e georreferenciada.
 
 - **Origem:** centróide do anel da contraescarpa do fosso principal no OSM (retaining_wall fc68b085, 33,1 ha).
   - WGS84: 40,725642, −6,906288.
   - PT-TM06 (EPSG:3763): 103 646,77, 118 134,25.
 - **Eixos:** x para este, y para norte; no visor, −z é o norte. As cotas são altitudes.
-- **Área:** a praça dentro da contraescarpa, com os revelins e o fosso (41,7 ha de terreno).
+- **Área:** base redonda (pedido do autor), um círculo de 466 m de raio centrado na origem que leva a praça, os revelins, o fosso e a esplanada; o raio está limitado pela área do LiDAR.
 - **Medições:** relevo, traçado das escarpas, pontes, cotas, alturas e pegadas vêm do LiDAR da DGT de 2024 (voo de maio).
 
 ## Como reconstruir
@@ -93,11 +93,18 @@ A pegada vem do OSM e as cotas do MDS. A orientação das fachadas foi conferida
 |---|---|---|
 | Igreja Matriz | fachada a poente; câmara de D. Perez a poente | nave 24 × 9,5 m, cumeeira 749,9; torre de 5 m a SW, remate 758,7 |
 | Misericórdia | fachada a nordeste, a meio do lado da Praça da República; câmara de D. Perez 7 m à frente | empena perpendicular à rua, cumeeira c. 752,4 |
-| Torre do Relógio | — | 5,5 m de lado; 762,7 → c. 786 m |
-| Quartel das Esquadras | arcaria no lado sudeste: a fotografia foi tirada a sudeste, com o edifício à direita | 105,5 × 14,6 m; cumeeira 755,8 |
+| Torre do Relógio | remate de balaustrada, pináculos e lanterna pequena com cata-vento (Street View) | 5,5 m de lado; 762,7 → c. 786 m |
+| Quartel das Esquadras | arcaria nos DOIS lados compridos (Street View do Terreiro do Poço do Rancho e da Rua da Muralha); telha velha escura (ortofotomapa); chaminés na água noroeste; escadaria em V no topo nordeste (fotografia de D. Perez) | 105,5 × 14,6 m; cumeeira 755,8 |
 | Castelo | — | bases de três torres redondas (N, E, W) lidas no relevo e na ortoimagem; alturas estimadas |
 
 **Ficam no casario cinzento:** o Picadeiro, o Paiol e a Casa dos Governadores. As Casamatas são subterrâneas e só se veem no relevo do pátio.
+
+## Correções da 0.2 (10 nov., conferidas no Google Maps e no Street View)
+
+- **Base:** redonda em vez de recortada pelo traçado da praça.
+- **Quartel das Esquadras:** a 0.1 tinha a arcaria só no lado sudeste e a telha laranja. O Street View mostra arcaria dos dois lados, com uma porta verde ao fundo de cada arco e uma faixa de duas fiadas de granito por cima, e o ortofotomapa mostra a telha escura. Faltavam as chaminés e a escadaria em V do topo nordeste.
+- **Torre do Relógio:** o remate é uma lanterna pequena com cata-vento sobre a balaustrada, não uma cúpula grande.
+- **Árvores:** o pé passa a vir da malha do terreno já simplificada (com a base maior, o MDT ficava acima dela longe da praça). Os 500 troncos assentam no chão.
 
 ## Contradições
 
@@ -108,9 +115,9 @@ A pegada vem do OSM e as cotas do MDS. A orientação das fachadas foi conferida
 ## Verificações (fase 5)
 
 **Auditoria** (`auditoria-maquetas/ferramentas/auditar.py`)
-- GLB: 2,4 MB com Draco; 439 mil triângulos; 57 primitivas.
+- GLB: 2,6 MB com Draco; 473 mil triângulos; 56 primitivas (0.2, base redonda).
 - Sem z-fighting nem normais invertidas.
-- Árvores: 7 encostadas a obra (≤ 0,25 m de copa) e 1 a flutuar.
+- Árvores: 500 troncos medidos um a um, todos assentes no terreno; o auditor agrupa copas vizinhas e conta 31 grupos «a flutuar», que não são troncos soltos.
 - 160 peças «a flutuar»: são beirais e telhados separados das paredes (Valença tinha 130).
 - 447 peças «enterradas»: são as peças dos túneis debaixo do terrapleno, de propósito.
 

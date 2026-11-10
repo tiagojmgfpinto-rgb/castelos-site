@@ -463,7 +463,13 @@ def contorno_maqueta():
     if u.geom_type == "MultiPolygon":
         u = max(u.geoms, key=lambda g: g.area)
     u = shapely.Polygon(u.exterior).simplify(0.8)
-    return u, praca
+    # base redonda (pedido do Tiago, 10 nov.): o círculo que leva todas as obras exteriores, centrado na praça,
+    # dentro da área do LiDAR
+    c = praca.centroid
+    r = max(c.distance(shapely.Point(q)) for q in u.exterior.coords) + 6
+    r = min(r, c.x - LXS[0] - 3, LXS[-1] - c.x - 3, c.y - LYS[0] - 3, LYS[-1] - c.y - 3)
+    print(f"  base redonda: centro ({c.x:.1f}, {c.y:.1f}), raio {r:.1f} m")
+    return c.buffer(r, quad_segs=64), praca
 
 
 CONTORNO, PRACA = contorno_maqueta()
@@ -867,13 +873,16 @@ def construir_terreno():
 
     # base de maqueta de museu (saia e fundo) pelo contorno
     bxy = densificar(CONT_XY, 1.0, True)
+    x_, y_ = bxy[:, 0], bxy[:, 1]
+    if 0.5 * float(np.sum(x_ * np.roll(y_, -1) - np.roll(x_, -1) * y_)) > 0:  # anel no sentido horário: saia para fora
+        bxy = bxy[::-1].copy()
     bz = amostra(Z, bxy[:, 0], bxy[:, 1]) - 0.05
     fundo = float(bz.min()) - 10.0
     kk = len(bxy)
     anel = np.column_stack([bxy, bz])
-    verts = anel.tolist() + [[p[0], p[1], fundo] for p in anel]
+    verts = anel.tolist() + [[p[0], p[1], fundo] for p in anel] * 2
     fs = [[i, (i + 1) % kk, kk + (i + 1) % kk, kk + i] for i in range(kk)]
-    fs.append(list(range(2 * kk - 1, kk - 1, -1)))
+    fs.append(list(range(2 * kk, 3 * kk)))  # fundo com vértices próprios (normais não se misturam com as da saia)
     mb = bpy.data.meshes.new("base")
     mb.from_pydata(verts, [], fs)
     mb.update()
@@ -1584,8 +1593,8 @@ def portas():
 
 CAL, CAN, TEL, SOM, MAD, FER, BRO, VID, LOU, LIS = range(10)
 MAT_IGR = ["cal", "cantaria", "telha", "sombra", "madeira_verde", "ferro", "bronze", "vidro", "lousa", "cantaria_lisa", "ocre",
-           "vermelho", "alvenaria", "madeira"]
-OCR, VER, ALVI, MADC = 10, 11, 12, 13
+           "vermelho", "alvenaria", "madeira", "telha_quartel"]
+OCR, VER, ALVI, MADC, TELQ = 10, 11, 12, 13, 14
 
 
 def cruz(Q, s, z, d, alt=1.2, mat=FER, esp=0.08):
@@ -1844,6 +1853,28 @@ def torre(m, c, u, lado, z0, zcorpo, zsino, estilo, mw=CAL, faces_janela=(), zja
         m.esfera((c[0], c[1], zt + 2.75), 0.18, CAN)
         cruz(Qs, 0, zt + 2.9, 0, alt=1.2, mat=FER, esp=0.06)
         return zt + 4.1
+    if estilo == "lanterna":  # Torre do Relógio (Street View): balaustrada, pináculos, lanterna pequena e cata-vento
+        for Qf in QS:
+            Qf.bloco(-h - 0.2, h + 0.2, zt, zt + 0.12, -0.2, 0.2, CAN)
+            for s_ in np.arange(-h + 0.3, h - 0.2, 0.32):
+                Qf.m.cilindro(Qf.p(s_, 0, 0.0)[:2], 0.07, zt + 0.12, zt + 0.72, CAN, k=6)
+            Qf.bloco(-h - 0.2, h + 0.2, zt + 0.72, zt + 0.86, -0.2, 0.2, CAN)
+        for a, b in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+            cc = c + (u * a + w * b) * (h + 0.05)
+            pinaculo(Quadro(m, cc, u), 0, zt + 0.86, 0, esc=1.1, tipo="bola")
+        # pedestal em degraus e lanterna quadrada de cantaria com um arco por face, capelo e cata-vento
+        m.caixa(c, u, lado * 0.46, lado * 0.46, zt, zt + 0.55, mw)
+        m.caixa(c, u, lado * 0.52, lado * 0.52, zt + 0.55, zt + 0.7, CAN)
+        m.caixa(c, u, lado * 0.36, lado * 0.36, zt + 0.7, zt + 1.0, CAN)
+        lt = lado * 0.3
+        for a, b in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+            m.caixa(c + (u * a + w * b) * (lt / 2 - 0.1), u, 0.22, 0.22, zt + 1.0, zt + 2.0, CAN)
+        m.caixa(c, u, lt * 0.55, lt * 0.55, zt + 1.0, zt + 1.9, SOM)
+        m.caixa(c, u, lt + 0.12, lt + 0.12, zt + 2.0, zt + 2.15, CAN)
+        cupula(m, c, lt * 0.5, zt + 2.15, CAN, k=12, aneis=4, alt=0.55)
+        m.esfera((c[0], c[1], zt + 2.8), 0.12, CAN)
+        cruz(Qs, 0, zt + 2.9, 0, alt=1.1, mat=FER, esp=0.06)
+        return zt + 4.0
     if estilo == "cupula":  # Santo Estêvão: balaustrada, pináculos, tambor oitavado, cúpula, lanterna e cruz
         for Qf in QS:
             Qf.bloco(-h - 0.2, h + 0.2, zt, zt + 0.12, -0.2, 0.2, CAN)
@@ -1969,12 +2000,12 @@ def igreja_misericordia(m):
 def torre_relogio(m):
     """Torre do Relógio (fotografias de Hovallef e D. Perez, Commons): torre quadrada rebocada a ocre com
     cunhais e cornijas de granito, porta e janelas, mostrador do relógio, sineira com um arco por face e
-    remate com balaustrada, pináculos, tambor, cúpula e lanterna. Planta do OSM e do MDS (5,5 m de lado,
+    remate com balaustrada, pináculos nos cantos e uma lanterna pequena com cata-vento (Street View, 10 nov.). Planta do OSM e do MDS (5,5 m de lado,
     alinhada com os eixos); chão a 762,7 m, balaustrada a c. 781 m e lanterna a c. 786 m (MDS)."""
     c = np.array([-56.2, 37.6])
     u = np.array([1.0, 0.0])
     z0 = 762.7 - ZREF
-    torre(m, c, u, 5.5, z0, z0 + 12.9, z0 + 16.7, "cupula", mw=OCR, faces_janela=(0, 1, 2, 3), zjanela=z0 + 5.6,
+    torre(m, c, u, 5.5, z0, z0 + 12.9, z0 + 16.7, "lanterna", mw=OCR, faces_janela=(0, 1, 2, 3), zjanela=z0 + 5.6,
           oculo=(0, z0 + 10.6))
     Qe = Quadro(m, c + u * 2.75, u)
     porta_igreja(Qe, 0.0, z0, 1.2, 2.3, moldura=0.25, arco=True, folhas=MAD)
@@ -1984,53 +2015,69 @@ def torre_relogio(m):
 
 
 def quartel(m):
-    """Quartel das Esquadras (fotografia de D. Perez, Commons, tirada da ponta nordeste): corpo comprido de
-    dois pisos, paredes caiadas, soco, cunhais e cornija de granito, telhado de quatro águas; no rés-do-chão
-    do lado sudeste uma arcaria de granito de arcos plenos. Planta do OSM (105,5 x 14,6 m); beiral a c.
-    752,2 m e cumeeira a 755,8 m (MDS). O número de arcos (22) e as janelas do lado noroeste são estimativas."""
+    """Quartel das Esquadras (fotografia de D. Perez, Commons, e Street View de 10 nov. dos dois lados): corpo
+    comprido de dois pisos, paredes caiadas, soco, cunhais e cornija de granito, telhado de quatro águas de telha
+    velha, escura no ortofotomapa, com chaminés; no rés-do-chão dos DOIS lados compridos (Terreiro do Poço do
+    Rancho a noroeste e Rua da Muralha a sudeste) uma arcaria de arcos plenos sobre pilares de granito, com uma
+    porta verde ao fundo de cada arco, e por cima uma faixa de duas fiadas de granito; janelas pequenas no
+    andar. Planta do OSM (105,5 x 14,6 m); beiral a c. 752,2 m e cumeeira a 755,8 m (MDS). O número de arcos
+    (22 por lado), as janelas e as chaminés são contados por estimativa."""
     A, B, C, D = (np.array(p) for p in ((92.4, -135.2), (100.6, -147.3), (12.9, -206.0), (4.7, -193.9)))
     z0 = 743.9 - ZREF
     ze = z0 + 8.3
     base = np.array([D, C, B, A])
     m.prisma(base, z0 - 1.0, ze, CAL, topo=False)
-    m.prisma(np.array([p + unit(p - base.mean(0)) * 0.1 for p in base]), z0 - 1.0, z0 + 0.6, CAN, topo=False)
+    m.prisma(np.array([p + unit(p - base.mean(0)) * 0.1 for p in base]), z0 - 1.0, z0 + 0.3, CAN, topo=False)
     for p in base:  # cunhais
         k = unit(p - base.mean(0))
-        m.caixa(p - k * 0.25, B - A if np.allclose(p, A) or np.allclose(p, B) else A - D, 0.7, 0.7, z0 + 0.6, ze, CAN)
+        m.caixa(p - k * 0.25, B - A if np.allclose(p, A) or np.allclose(p, B) else A - D, 0.7, 0.7, z0 + 0.3, ze, CAN)
     m.prisma(np.array([p + unit(p - base.mean(0)) * 0.3 for p in base]), ze - 0.3, ze, CAN)
-    telhado_4aguas(m, base, ze, inclinacao=26, mat=TEL, beiral=0.35)
+    telhado_4aguas(m, base, ze, inclinacao=26, mat=TELQ, beiral=0.35)
     L = float(np.hypot(*(A - D)))
-    nw = unit(np.array([-(A - D)[1], (A - D)[0]]))
+    W = float(np.hypot(*(B - A)))
+    ax = unit(A - D)
+    nw = np.array([-ax[1], ax[0]])
     if nw @ (D - C) < 0:
         nw = -nw
-    # arcaria no lado sudeste (o da Rua da Muralha): a fotografia foi tirada a sudeste da ponta nordeste, com o
-    # edifício à direita, e mostra a arcaria virada para a câmara
     passo, nar = 4.2, 22
     s0 = (L - passo * nar) / 2
-    hn = 2.5  # arcos altos, com o fecho a c. 4 m (fotografia)
-    Qa = Quadro(m, C, -nw)
-    sg = 1 if Qa.t @ (A - D) > 0 else -1  # s a crescer de C para B
-    for k in range(nar):
-        sc = sg * (s0 + passo * (k + 0.5))
-        _vao_desloc(Qa, sc, 3.0, z0, hn, 0.012, SOM)
-        Qa.arco_sz(sc, 1.5, 1.85, z0 + hn, 0.0, 0.12, CAN, k=10, aduelas=True)
-    for k in range(nar + 1):
-        sp = sg * (s0 + passo * k)
-        Qa.bloco(sp - 0.6, sp + 0.6, z0, z0 + hn, 0.0, 0.14, CAN)
-        Qa.bloco(sp - 0.7, sp + 0.7, z0 + hn - 0.15, z0 + hn, 0.0, 0.18, CAN)  # impostas
-    sa, sb = sorted((sg * (s0 - 0.6), sg * (L - s0 + 0.6)))
-    Qa.bloco(sa, sb, z0 + 4.35, z0 + 4.65, 0.0, 0.2, CAN)  # friso sobre a arcaria
-    # lado noroeste: janelas nos dois pisos (estimativa)
-    Qs = Quadro(m, D, nw)
-    sg = 1 if Qs.t @ (A - D) > 0 else -1
-    for k in range(nar):
-        sc = sg * (s0 + passo * (k + 0.5))
-        for zz in (z0 + 1.4, z0 + 5.2):
-            janela(Qs, sc, zz, 0.9, 1.5, arco=False)
-    # topo nordeste: brasão e janela (fotografia)
-    Qn = Quadro(m, (A + B) / 2, unit(A - D))
-    Qn.escudo(0.0, z0 + 5.6, 1.0, 1.2, 0.0, 0.2, CAN)
-    janela(Qn, 0.0, z0 + 2.2, 1.0, 1.7, arco=False)
+    hn = 2.3  # impostas a c. 2,3 m e arcos plenos de 2,8 m de vão (Street View)
+    for lado_, o_ in ((-nw, C), (nw, D)):
+        Qa = Quadro(m, o_, lado_)
+        sg = 1 if Qa.t @ ax > 0 else -1
+        for k in range(nar):
+            sc = sg * (s0 + passo * (k + 0.5))
+            _vao_desloc(Qa, sc, 2.8, z0, hn, 0.012, CAL)  # fundo caiado da galeria
+            porta_igreja(Qa, sc, z0 + 0.15, 0.95, 2.0, moldura=0.18, arco=False, d=0.02)
+            Qa.arco_sz(sc, 1.4, 1.75, z0 + hn, 0.0, 0.12, CAN, k=10, aduelas=True)
+        for k in range(nar + 1):
+            sp = sg * (s0 + passo * k)
+            Qa.bloco(sp - 0.7, sp + 0.7, z0, z0 + hn, 0.0, 0.16, CAN)
+            Qa.bloco(sp - 0.78, sp + 0.78, z0 + hn - 0.15, z0 + hn, 0.0, 0.2, CAN)  # impostas
+        sa, sb = sorted((sg * (s0 - 0.7), sg * (L - s0 + 0.7)))
+        Qa.bloco(sa, sb, z0 + 3.9, z0 + 4.8, 0.0, 0.18, CAN)  # faixa de duas fiadas sobre a arcaria
+        for k in range(nar):  # janelas pequenas do andar, uma por arco
+            janela(Qa, sg * (s0 + passo * (k + 0.5)), z0 + 5.6, 0.75, 0.85, arco=False)
+    # chaminés de granito só na água noroeste (Street View do Terreiro; a fotografia do lado sudeste não as mostra)
+    for k in range(11):
+        q = (D + C) / 2 + ax * (s0 + passo * (2 * k + 1)) + nw * (W * 0.22)
+        m.caixa(q, ax, 0.7, 0.7, ze + W * 0.25 * math.tan(math.radians(26)), ze + 0.5 * W * math.tan(math.radians(26)) + 0.4, CAN)
+    m.caixa((A + B) / 2 - ax * 1.2, ax, 0.9, 0.9, ze + 1.0, ze + 0.5 * W * math.tan(math.radians(26)) + 0.8, CAN)  # a do topo
+    # topo nordeste (fotografia de D. Perez): brasão no alto e escadaria de granito em V encostada à empena,
+    # dois lanços que sobem do meio para os cantos até ao nível da faixa sobre a arcaria
+    Qn = Quadro(m, (A + B) / 2, ax)
+    Qn.escudo(0.0, z0 + 5.9, 1.0, 1.2, 0.0, 0.2, CAN)
+    n_deg, alto = 20, 4.4
+    larg = (W / 2 - 0.4) / n_deg
+    for sgn in (-1, 1):
+        for i in range(n_deg):
+            sa_, sb_ = sorted((sgn * (0.6 + i * larg), sgn * (0.6 + (i + 1) * larg)))
+            Qn.bloco(sa_, sb_, z0 - 1.0, z0 + (i + 1) * alto / n_deg, 0.0, 2.2, CAN)
+        for i in range(n_deg):  # guarda de cantaria por fora, em degraus
+            sa_, sb_ = sorted((sgn * (0.6 + i * larg), sgn * (0.6 + (i + 1) * larg)))
+            Qn.bloco(sa_, sb_, z0 + (i + 1) * alto / n_deg, z0 + (i + 1) * alto / n_deg + 0.9, 1.95, 2.2, CAN)
+    Qn.bloco(-0.6, 0.6, z0 - 1.0, z0 + 0.15, 0.0, 3.4, CAN)  # degraus de arranque ao meio
+    Qn.bloco(-2.2, 2.2, z0 - 1.0, z0 + 0.15, 2.2, 3.4, CAN)
     return base
 
 
@@ -2057,7 +2104,7 @@ VISTAS_PERTO = [("m_matriz", 300, 14, 42, (150.0, -45.0), 747.0), ("m_misericord
                 # das posições das fotografias de comparação (ver LEIAME)
                 ("c_sf_dentro", 145, 4, 30, (123.8, -175.8), 746.0), ("c_sa_fora", 319, 6, 20, (-326.6, -19.7), 748.5),
                 ("c_matriz", 292, 9, 24, (146.0, -44.5), 747.5), ("c_relogio", 63, 14, 34, (-56.2, 37.6), 773.0),
-                ("c_quartel", 64, 3, 60, (65.0, -172.0), 747.5)]
+                ("c_quartel", 72, 2.5, 78, (66.0, -162.0), 747.5)]
 
 
 def igrejas():
@@ -2105,6 +2152,8 @@ material("telha", (1, 1, 1), 0.8, imagem("telha", TEX_TELHA * np.array([0.78, 0.
          normal=imagem("telha_normal", normais(ALT_TELHA, 2.0)), forca=0.6)
 material("telha_velha", (1, 1, 1), 0.85, imagem("telha_v", TEX_TELHA * np.array([0.56, 0.40, 0.33])),
          normal=imagem("telha_v_normal", normais(ALT_TELHA, 2.0)), forca=0.6)
+material("telha_quartel", (1, 1, 1), 0.88, imagem("telha_q", TEX_TELHA * np.array([0.47, 0.38, 0.33])),
+         normal=imagem("telha_q_normal", normais(ALT_TELHA, 2.0)), forca=0.6)
 material("lousa", (0.42, 0.42, 0.43), 0.8)
 material("madeira_verde", (0.16, 0.33, 0.26), 0.7)
 material("madeira", (0.40, 0.26, 0.16), 0.8)
@@ -2292,6 +2341,21 @@ MEDIDAS["vila"] = {"edificios": len(pegadas), "do_osm": n_osm, "do_lidar": len(p
 print("vegetação…")
 pg_shp = shapely.union_all([shapely.Polygon(p).buffer(1.0) for p in pegadas] + [shapely.Polygon(z).buffer(1.5) for z in EVITAR])
 n_arv = 0
+# a cota do pé vem da malha do terreno já simplificada (com a base redonda, a simplificação tira mais vértices
+# longe da praça e o MDT chegava a ficar 2–5 m acima da malha: árvores a flutuar)
+from mathutils import Vector  # noqa: E402
+from mathutils.bvhtree import BVHTree  # noqa: E402
+_ter = bpy.data.objects["Terreno"]
+_bvh = BVHTree.FromObject(_ter, bpy.context.evaluated_depsgraph_get())
+_mw = _ter.matrix_world
+_mwi = _mw.inverted()
+
+
+def cota_malha(x, y, z_):
+    hit = _bvh.ray_cast(_mwi @ Vector((x, y, z_ + 200.0)), (_mwi.to_3x3() @ Vector((0, 0, -1))).normalized())
+    return float((_mw @ hit[0]).z) if hit[0] is not None else z_
+
+
 for x, y, topo, _, r in LID["arvores"]:
     x, y = float(x), float(y)
     if not CONTORNO.contains(shapely.Point(x, y).buffer(2.0)):
@@ -2302,6 +2366,7 @@ for x, y, topo, _, r in LID["arvores"]:
     h = float(topo) - ZREF - z
     if h < 2.5:
         continue
+    z = min(z, cota_malha(x, y, z)) - 0.1
     r = float(np.clip(r, 1.0, 6.5))
     especie = "pinheiro" if (h > 13 and r < 3.6 and rng.random() < 0.6) else "folhosa"
     alt = float(np.clip(h * 0.62, 1.6, 2.2 * r))
