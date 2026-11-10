@@ -36,7 +36,7 @@ O `bpy` do PyPI não traz o Draco, por isso o script comprime o GLB com `npx @gl
 - **Marco geodésico**: pico estreito de 2 m no MDS, no ponto mais alto.
 - **Portas**: Porta do Sol, porta entre os recintos e portal norte na posição do OSM; Porta da Fonte a 7 m da Porta do Sol pelo pano (fotografia). Soleira no MDT; tipo de arco pelo SIPA.
 - **Escada do portal norte**: lanço reto de degraus de 0,2 m, da soleira até onde o MDT desce 2,5 m (SIPA: escada metálica com guarda).
-- **Árvores**: castanheiros (souto cerrado da encosta poente) e sobreiros (lajes e mato aberto), segundo o autor do projeto; a espécie é atribuída pelo coberto à volta, com sorte.
+- **Árvores**: castanheiros (souto cerrado da encosta poente) e sobreiros (lajes e mato aberto), segundo o autor do projeto; a espécie é atribuída pelo coberto à volta, com sorte. Desde novembro de 2026 nenhuma copa entra nos panos (24 encolhidas até ao pano mais próximo), as árvores assentam no terreno da maqueta (rebaixado junto aos panos) e as moitas das encostas a pique assentam no lado de baixo (até 0,6 m abaixo do centro); as moitas encostadas a um pano não se plantam.
 - **Estimativas**: espessura das muralhas (1,7 m no castelo pela legenda de Duarte de Armas citada no SIPA; 2 m na cerca e 1,5 a 1,6 m nos troços baixos, pelas fotografias), coroamento plano, largura e altura dos vãos, aduelas, impostas e mísulas, terrapleno do reduto, forma do marco, das árvores e das moitas.
 - **Fora da maqueta**: a torre de menagem (destruída em 1659), as torres e o cubelo de Duarte de Armas, a cisterna, os alicerces do quartel e as escadas embutidas nas muralhas não se vêem no LiDAR e não há planta que os situe.
 

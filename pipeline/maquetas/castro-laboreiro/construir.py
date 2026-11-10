@@ -822,7 +822,28 @@ MEDIDAS["reduto"] = {"topo": topo_r + ZREF, "planta": [float(np.linalg.norm(b[1]
                      "acima_do_recinto": topo_r - chao_in}
 
 print("terreno e afloramentos…")
-construir_terreno()
+ZTER = construir_terreno()
+_XT = np.linspace(-RAIO, RAIO, ZTER.shape[0])
+
+
+def cota_t(x, y):
+    """Cota do terreno da maqueta (o MDT já rebaixado junto às muralhas), por interpolação bilinear."""
+    p_ = _XT[1] - _XT[0]
+    c = np.clip((np.asarray(x, float) + RAIO) / p_, 0, len(_XT) - 1.001)
+    r = np.clip((np.asarray(y, float) + RAIO) / p_, 0, len(_XT) - 1.001)
+    c0, r0 = np.floor(c).astype(int), np.floor(r).astype(int)
+    fc, fr = c - c0, r - r0
+    return (ZTER[r0, c0] * (1 - fc) * (1 - fr) + ZTER[r0, c0 + 1] * fc * (1 - fr)
+            + ZTER[r0 + 1, c0] * (1 - fc) * fr + ZTER[r0 + 1, c0 + 1] * fc * fr)
+
+
+def chao_sob(x, y, raio):
+    """Cota mais baixa do terreno debaixo de uma copa (centro e anel a 70 % do raio): nas encostas a pique
+    a copa assenta no lado de baixo e não fica a flutuar (auditoria de novembro de 2026)."""
+    a_ = np.linspace(0, 2 * math.pi, 9)[:-1]
+    xs_ = np.r_[x, x + 0.7 * raio * np.cos(a_)]
+    ys_ = np.r_[y, y + 0.7 * raio * np.sin(a_)]
+    return float(cota_t(xs_, ys_).min())
 
 print("muralhas…")
 for s_, d_ in PANOS.items():
@@ -1067,7 +1088,27 @@ evitar = [CAPELA]  # no miolo do reduto há mato (fotografia aérea)
 # Copas medidas no LiDAR (lidar.py): posição, topo e raio de cada árvore; a forma é esquemática. Os panos
 # aparecem por vezes na nuvem de pontos como vegetação alta: os "topos" a menos de 2,5 m de uma
 # muralha não são árvores.
+from mathutils import Vector  # noqa: E402
+from mathutils.bvhtree import BVHTree  # noqa: E402
+_ov, _of = [], []
+for _ob in bpy.data.objects:
+    if _ob.type != "MESH" or _ob.name in ("Terreno", "Afloramentos", "Base", "Vegetacao"):
+        continue
+    _b = len(_ov)
+    _ov.extend([tuple(_ob.matrix_world @ v.co) for v in _ob.data.vertices])
+    _of.extend([[_b + i for i in p_.vertices] for p_ in _ob.data.polygons])
+OBRA = BVHTree.FromPolygons(_ov, _of) if _of else None
+
+
+def folga_obra(pts):
+    if OBRA is None:
+        return 99.0
+    d = [OBRA.find_nearest(Vector(p_))[3] for p_ in pts]
+    return min([x for x in d if x is not None] or [99.0])
+
+
 n_arv = n_sob = 0
+n_afastadas = {"encolhidas": 0, "retiradas": 0}
 for x, y, topo, _, r in ARV_LIDAR:
     if np.hypot(x, y) > RAIO - 2:
         continue
@@ -1085,7 +1126,25 @@ for x, y, topo, _, r in ARV_LIDAR:
     p_sob = 0.2 + 0.6 * float(np.clip(1 - amostra(COBERTO, x, y) * 1.4, 0, 1))
     especie = "sobreiro" if rng.random() < p_sob else "castanheiro"
     alt = float(np.clip(h * (0.5 if especie == "sobreiro" else 0.65), 1.4, (1.5 if especie == "sobreiro" else 2.4) * r))
-    plantar(float(x), float(y), z, r, alt, especie, tronco=max(h - alt, 0.6))
+    # chão real da maqueta (rebaixado junto aos panos) em vez do MDT; o topo medido mantém-se
+    z_ = min(z, float(cota_t(x, y)))
+    h += z - z_
+    z = z_
+    tronco_ = max(h - alt, 0.6)
+    # nenhuma copa entra nos panos (auditoria de novembro de 2026: 12 tocavam)
+    if folga_obra([(x, y, z + tronco_ + alt * f) for f in (0.15, 0.5, 0.85)]) < r * 1.1 + 0.15:
+        f_ = folga_obra([(x, y, z + tronco_ + alt * f) for f in (0.15, 0.5, 0.85)])
+        if f_ < 1.2:
+            n_afastadas["retiradas"] += 1
+            continue
+        r = (f_ - 0.15) / 1.1
+        alt = min(alt, (1.5 if especie == "sobreiro" else 2.4) * r)
+        tronco_ = max(h - alt, 0.6)
+        if folga_obra([(x, y, z + tronco_ + alt * f) for f in (0.15, 0.5, 0.85)]) < r * 1.1 + 0.05:
+            n_afastadas["retiradas"] += 1
+            continue
+        n_afastadas["encolhidas"] += 1
+    plantar(float(x), float(y), z, r, alt, especie, tronco=tronco_)
     n_arv += 1
     n_sob += especie == "sobreiro"
 
@@ -1105,8 +1164,11 @@ for r_, c_ in zip(rr, cc):
             or np.hypot(x - MARCO[0], y - MARCO[1]) < 2.0:  # o marco geodésico sai como vegetação na nuvem
         continue
     h = float(np.clip(H[r_, c_], 0.5, 2.4))
-    z = float(cota(x, y))
     raio_ = 0.45 + 0.35 * h + 0.25 * rng.random()
+    z0_ = float(cota_t(x, y))
+    z = max(chao_sob(x, y, raio_), z0_ - 0.6)  # assenta no lado de baixo da encosta, sem se enterrar
+    if folga_obra([(x, y, z + h * 0.3), (x, y, z + h * 0.7)]) < raio_ + 0.1:
+        continue  # moita encostada a um pano
     cor = np.array((0.36, 0.42, 0.22) if rng.random() < 0.7 else (0.46, 0.46, 0.26)) * (0.9 + 0.2 * rng.random())
     b_ = len(mv)
     jit = rng.normal(0, 0.08, ico0.shape)
@@ -1116,7 +1178,8 @@ for r_, c_ in zip(rr, cc):
     luz = 0.65 + 0.45 * np.clip((pts[:, 2] - z) / max(h, 0.1), 0, 1)
     mc.extend(map(tuple, np.clip(cor[None, :] * luz[:, None], 0, 1)))
     n_mato += 1
-MEDIDAS["vegetacao"] = {"arvores": n_arv, "sobreiros": int(n_sob), "castanheiros": n_arv - int(n_sob), "moitas": n_mato}
+MEDIDAS["vegetacao"] = {"arvores": n_arv, "sobreiros": int(n_sob), "castanheiros": n_arv - int(n_sob), "moitas": n_mato,
+                        **n_afastadas}
 
 me = bpy.data.meshes.new("vegetacao")
 me.from_pydata(mv, [], mf)

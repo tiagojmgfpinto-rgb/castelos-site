@@ -148,9 +148,11 @@
  },
  "vegetacao": {
   "arvores": 327,
-  "sobreiros": 73,
-  "castanheiros": 254,
-  "moitas": 780
+  "sobreiros": 71,
+  "castanheiros": 256,
+  "moitas": 742,
+  "encolhidas": 24,
+  "retiradas": 0
  },
  "ancoras": {
   "castelo": [
