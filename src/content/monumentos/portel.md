@@ -16,6 +16,8 @@ classificacao:
   categoria: "Monumento Nacional (1910)"
   sipa: "IPA.00006510"
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Castelo gótico de torres circulares e paço dos duques de Bragança"

@@ -17,6 +17,8 @@ classificacao:
   sipa: "IPA.00003554"
 altitude: 190
 estadoFicha: publicada
+estadoMaqueta: concluida
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Cerca oval com a torre de menagem ao meio, no alto da vila, e o que resta da muralha medieval"

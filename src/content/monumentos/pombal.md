@@ -16,6 +16,8 @@ classificacao:
   categoria: "Monumento Nacional (1910)"
   sipa: "IPA.00003279"
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Castelo templário de Gualdim Pais, com museu na torre de menagem"

@@ -16,6 +16,8 @@ classificacao:
   categoria: "Monumento Nacional"
   sipa: "IPA.00003297"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Forte da Praia da Consolação (Q10283741): classificação, concelho e data de origem e coordenadas"

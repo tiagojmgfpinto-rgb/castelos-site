@@ -16,6 +16,8 @@ classificacao:
   categoria: "Monumento Nacional (1924)"
   sipa: "IPA.00001283"
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Muralha almóada de taipa no centro de Loulé, com o Museu Municipal"

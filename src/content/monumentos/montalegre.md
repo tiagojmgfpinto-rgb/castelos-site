@@ -17,6 +17,8 @@ classificacao:
   sipa: "1109"
 altitude: 1013
 estadoFicha: publicada
+estadoMaqueta: concluida
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Castelo gótico de quatro torres no alto da vila, cabeça das Terras de Barroso, com a torre de menagem de c. 27 m"

@@ -16,6 +16,8 @@ classificacao:
   categoria: "Monumento Nacional (classificado em 1910)"
   sipa: "IPA.00001059"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Castelo de Carrazeda (ruínas) (Q5050371): classificação, concelho e coordenadas"

@@ -17,6 +17,8 @@ classificacao:
   sipa: "IPA.00000444"
 altitude: 462
 estadoFicha: publicada
+estadoMaqueta: concluida
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Castelo medieval de fronteira envolvido por uma fortificação abaluartada, sobre a eira dos espigueiros"

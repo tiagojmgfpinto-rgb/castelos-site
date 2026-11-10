@@ -15,6 +15,8 @@ classificacao:
   categoria: "Imóvel de Interesse Público (classificado em 1936)"
   sipa: "IPA.00001470"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Castelo de Folgosinho (Q5049776): classificação, concelho e coordenadas"

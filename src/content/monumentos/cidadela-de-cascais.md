@@ -17,6 +17,8 @@ classificacao:
   categoria: "Imóvel de Interesse Público"
   sipa: "IPA.00006052"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Cidadela de Cascais (Q17390148): classificação, concelho e data de origem e coordenadas"

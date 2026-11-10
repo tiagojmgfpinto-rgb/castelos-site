@@ -16,6 +16,8 @@ classificacao:
   categoria: "Monumento Nacional (1910)"
   sipa: "IPA.00001152"
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Castelo e paço real da Rainha Santa Isabel, com a Torre das Três Coroas"

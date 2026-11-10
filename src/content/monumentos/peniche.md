@@ -16,6 +16,8 @@ classificacao:
   categoria: "Monumento Nacional (1938)"
 altitude: 17
 estadoFicha: publicada
+estadoMaqueta: concluida
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Fortaleza abaluartada sobre o mar, prisão política do Estado Novo e hoje museu"

@@ -6,6 +6,9 @@ import { REGIOES, TIPOLOGIAS, type Regiao, type Tipologia } from "../../lib/tipo
 import { camaraApi, vistaInicial as vistaDoTerritorio } from "../atlas/Camara";
 import { publicadoEm, temMaqueta, temVisita, useAtlas, visivel, type MonumentoResumo } from "../atlas/store";
 import { Escudo, IconeTipo, Rosa } from "./Icones";
+import { Recentes } from "./Recentes";
+import { FASES } from "../../lib/estado";
+import { caminhoFicha } from "../../lib/rotas";
 
 const normalizar = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
@@ -23,7 +26,11 @@ const DISTRITOS: { nome: string; chave: string; territorio: TerritorioId }[] = [
 
 const plural = (n: number) => `${n} ${n === 1 ? "castelo" : "castelos"}`;
 
-export function Interface({ monumentos, vistaInicial }: { monumentos: MonumentoResumo[]; vistaInicial: () => void }) {
+/**
+ * `monumentos` são os do mapa (maqueta concluída e publicada); `todos` inclui as próximas adições, para o painel
+ * dos adicionados nas últimas 24 h e para a aba Próximas adições.
+ */
+export function Interface({ monumentos, todos = monumentos, vistaInicial }: { monumentos: MonumentoResumo[]; todos?: MonumentoResumo[]; vistaInicial: () => void }) {
   const carregamento = useAtlas((s) => s.carregamento);
   const painel = useAtlas((s) => s.painel);
   const territorio = useAtlas((s) => s.territorio);
@@ -105,10 +112,11 @@ export function Interface({ monumentos, vistaInicial }: { monumentos: MonumentoR
         </button>
       </nav>
 
-      {painel === "indice" && <Indice monumentos={monumentos} />}
+      {painel === "indice" && <Indice monumentos={monumentos} nProximas={todos.length - monumentos.length} />}
       {painel === "distritos" && <Distritos monumentos={monumentos} />}
       {painel === "fontes" && <Fontes />}
-      {painel === "novidades" && <Novidades monumentos={monumentos} />}
+      {painel === "novidades" && <Novidades monumentos={monumentos} todos={todos} />}
+      <Recentes iniciais={todos} />
 
       <Leitura />
 
@@ -128,7 +136,7 @@ function Fechar({ rotulo }: { rotulo: string }) {
   );
 }
 
-function Indice({ monumentos }: { monumentos: MonumentoResumo[] }) {
+function Indice({ monumentos, nProximas }: { monumentos: MonumentoResumo[]; nProximas: number }) {
   const [q, setQ] = useState("");
   const filtrosTipologia = useAtlas((s) => s.filtrosTipologia);
   const filtroMaqueta = useAtlas((s) => s.filtroMaqueta);
@@ -143,7 +151,6 @@ function Indice({ monumentos }: { monumentos: MonumentoResumo[] }) {
     return c;
   }, [monumentos]);
 
-  const nMaqueta = useMemo(() => monumentos.filter(temMaqueta).length, [monumentos]);
   const nVisita = useMemo(() => monumentos.filter(temVisita).length, [monumentos]);
   const n = normalizar(q.trim());
   const lista = monumentos.filter(
@@ -201,9 +208,6 @@ function Indice({ monumentos }: { monumentos: MonumentoResumo[] }) {
           ))}
       </div>
       <div className="filtros" role="group" aria-label="Filtrar pelo que a ficha tem">
-        <button type="button" className="filtro" aria-pressed={filtroMaqueta} title="Só os monumentos com maqueta 3D publicada" onClick={() => useAtlas.setState({ filtroMaqueta: !filtroMaqueta })}>
-          Com maqueta 3D<small>{nMaqueta}</small>
-        </button>
         <button type="button" className="filtro" aria-pressed={filtroVisita} title="Só os monumentos com horário, acesso ou entrada indicados na ficha, a partir das fontes" onClick={() => useAtlas.setState({ filtroVisita: !filtroVisita })}>
           Com informação de visita<small>{nVisita}</small>
         </button>
@@ -239,6 +243,12 @@ function Indice({ monumentos }: { monumentos: MonumentoResumo[] }) {
             </div>
           );
         })}
+        {nProximas > 0 && (
+          <p className="indice-proximas">
+            O mapa mostra só os monumentos com maqueta 3D publicada.{" "}
+            <a href={`${BASE}proximas-adicoes/`}>Ver as {nProximas} próximas adições</a>
+          </p>
+        )}
       </div>
     </aside>
   );
@@ -298,7 +308,7 @@ const dataCurta = (d: string) => `${Number(d.slice(8, 10))} ${MESES[Number(d.sli
  * Novidades, como o aviso de "castillos nuevos" do castillos.site: os castelos que já têm maqueta, do mais
  * recente para o mais antigo, e numa segunda aba os nomes dos que ainda esperam pela sua.
  */
-function Novidades({ monumentos }: { monumentos: MonumentoResumo[] }) {
+function Novidades({ monumentos, todos }: { monumentos: MonumentoResumo[]; todos: MonumentoResumo[] }) {
   const [aba, setAba] = useState<"novos" | "proximos">("novos");
   const novos = useMemo(
     () =>
@@ -308,7 +318,8 @@ function Novidades({ monumentos }: { monumentos: MonumentoResumo[] }) {
         .sort((a, b) => b.data.localeCompare(a.data) || a.m.nome.localeCompare(b.m.nome, "pt")),
     [monumentos],
   );
-  const proximos = useMemo(() => monumentos.filter((m) => !temMaqueta(m)).sort((a, b) => a.nome.localeCompare(b.nome, "pt")), [monumentos]);
+  // a mesma regra do mapa: quem não tem maqueta concluída e publicada (lib/estado.ts)
+  const proximos = useMemo(() => todos.filter((m) => !m.noMapa).sort((a, b) => a.nome.localeCompare(b.nome, "pt")), [todos]);
   const escolher = (m: MonumentoResumo) => {
     const s = useAtlas.getState();
     if (s.territorio !== m.territorio) s.setTerritorio(m.territorio);
@@ -344,10 +355,20 @@ function Novidades({ monumentos }: { monumentos: MonumentoResumo[] }) {
         </ul>
       ) : (
         <div id="lista-proximos" role="tabpanel" aria-labelledby="aba-proximos">
-          <p className="nota-proximos">Castelos que já estão no mapa e cuja maqueta 3D ainda está por fazer.</p>
+          <p className="nota-proximos">
+            Entram no mapa quando a maqueta 3D estiver concluída e publicada. <a href={`${BASE}proximas-adicoes/`}>Ver o catálogo completo</a>
+          </p>
           <ul className="lista-proximos">
             {proximos.map((m) => (
-              <li key={m.id}>{m.nome}</li>
+              <li key={m.id} data-fase={m.fase}>
+                <a href={`${BASE}${caminhoFicha(m)}`}>
+                  <span className="proximo-imagem">{m.imagem ? <img src={`${BASE}${m.imagem}`} alt="" loading="lazy" decoding="async" /> : <IconeTipo tipo={m.tipologia} />}</span>
+                  <b>{m.nome}</b>
+                  <span>
+                    {[m.localidade, m.concelho].filter((x, i, a) => x && a.indexOf(x) === i).join(", ")} · {FASES[m.fase]}
+                  </span>
+                </a>
+              </li>
             ))}
           </ul>
         </div>

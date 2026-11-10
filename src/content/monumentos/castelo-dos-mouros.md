@@ -15,6 +15,8 @@ classificacao:
   categoria: "Monumento Nacional (Decreto de 16-06-1910)"
   sipa: "IPA.00004641"
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Castelo de origem muçulmana no alto da Serra de Sintra"

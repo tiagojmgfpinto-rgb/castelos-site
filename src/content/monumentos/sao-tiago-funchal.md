@@ -16,6 +16,8 @@ classificacao:
   categoria: "Integrada na Zona Velha do Funchal (Monumento de Interesse Regional)"
   sipa: "IPA.00002379"
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Fortaleza costeira que fecha a baía do Funchal pelo nascente"

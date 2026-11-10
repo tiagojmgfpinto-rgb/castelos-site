@@ -1,0 +1,85 @@
+---
+import Base from "../layouts/Base.astro";
+import Cabecalho from "../components/Cabecalho.astro";
+import { faseDoMonumento, imagemDe, todosMonumentos, type Monumento } from "../lib/monumentos";
+import { FASES, type Fase } from "../lib/estado";
+import { REGIOES, TIPOLOGIAS, type Regiao } from "../lib/tipologias";
+import { caminhoFicha } from "../lib/rotas";
+import { comVersao } from "../lib/versao";
+
+// Catálogo permanente dos monumentos que ainda não estão no mapa: sem maqueta, com a maqueta em construção ou
+// concluída mas por publicar. Quando a maqueta é publicada, o monumento sai daqui e entra no mapa sozinho
+// (a mesma regra, em lib/estado.ts, decide os dois lados); a ficha e o endereço não mudam.
+const todos = await todosMonumentos();
+const lista = todos.filter((m) => faseDoMonumento(m) !== "publicada");
+const base = import.meta.env.BASE_URL;
+const regioes = (Object.keys(REGIOES) as Regiao[]).filter((r) => lista.some((m) => m.data.regiao === r));
+const ordemFase: Fase[] = ["por-publicar", "em-curso", "por-fazer"];
+const contagem = Object.fromEntries(ordemFase.map((f) => [f, lista.filter((m) => faseDoMonumento(m) === f).length])) as Record<Fase, number>;
+
+const cartao = (m: Monumento) => {
+  const d = m.data;
+  const imagem = imagemDe(m);
+  return {
+    id: m.id,
+    nome: d.nome,
+    href: `${base}${caminhoFicha({ id: m.id, nome: d.nome })}`,
+    lugar: [d.localidade, d.concelho].filter((x, i, a) => x && a.indexOf(x) === i).join(", "),
+    distrito: d.distrito,
+    tipo: `${TIPOLOGIAS[d.tipologia].nome}${d.seculoOrigem ? `, ${d.seculoOrigem}` : ""}`,
+    classificacao: d.classificacao?.categoria.replace(/\s*\(.*$/, ""),
+    capa: imagem ? `${base}${comVersao(imagem)}` : undefined,
+    forma: TIPOLOGIAS[d.tipologia].forma,
+    fase: faseDoMonumento(m),
+    ficha: d.estadoFicha === "publicada",
+  };
+};
+---
+<Base titulo="Próximas adições" descricao={`${lista.length} castelos e fortalezas de Portugal que vão entrar no mapa 3D quando a sua maqueta estiver concluída e publicada.`} classe="pagina-texto">
+  <Cabecalho />
+  <main class="texto catalogo proximas" data-proximas>
+    <h1>Próximas adições</h1>
+    <p class="entrada">
+      {lista.length} fortificações que ainda não estão no mapa 3D. O mapa só mostra os monumentos com a maqueta
+      concluída e publicada; cada um destes passa para lá assim que a sua maqueta for publicada, com a mesma ficha e o
+      mesmo endereço.
+    </p>
+    <ul class="proximas-resumo" aria-label="Estado das maquetas">
+      {ordemFase.filter((f) => contagem[f] > 0).map((f) => <li data-fase={f}><b>{contagem[f]}</b> {FASES[f].toLowerCase()}</li>)}
+    </ul>
+
+    <nav class="ancoras" aria-label="Regiões">
+      {regioes.map((r) => <a href={`#${r}`}>{REGIOES[r]}</a>)}
+    </nav>
+
+    {regioes.map((r) => {
+      const doGrupo = lista.filter((m) => m.data.regiao === r).map(cartao);
+      return (
+        <section id={r} data-seccao={r}>
+          <h2>{REGIOES[r]} <span class="contagem">{doGrupo.length}</span></h2>
+          <ul class="catalogo-grelha">
+            {doGrupo.map((c) => (
+              <li class="catalogo-cartao" data-proxima={c.id} data-fase={c.fase}>
+                <a href={c.href}>
+                  <span class={`catalogo-imagem${c.capa ? "" : " catalogo-imagem--vazia"}`} data-forma={c.forma}>
+                    {c.capa && <img src={c.capa} alt="" loading="lazy" decoding="async" />}
+                  </span>
+                  <span class="catalogo-texto">
+                    <strong>{c.nome}</strong>
+                    <span>{c.lugar} · {c.distrito}</span>
+                    <span class="catalogo-tipo">{c.tipo}</span>
+                    {c.classificacao && <span class="catalogo-tipo">{c.classificacao}</span>}
+                  </span>
+                  <span class="catalogo-etiquetas">
+                    <span class={`catalogo-etiqueta catalogo-etiqueta--fase-${c.fase}`}>{FASES[c.fase]}</span>
+                    {c.ficha ? <span class="catalogo-etiqueta">Ficha publicada</span> : <span class="catalogo-etiqueta catalogo-etiqueta--prep">Ficha em preparação</span>}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      );
+    })}
+  </main>
+</Base>

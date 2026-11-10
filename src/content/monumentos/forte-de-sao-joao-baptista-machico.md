@@ -16,6 +16,8 @@ classificacao:
   categoria: "Imóvel de Interesse Público (classificado em 1940)"
   sipa: "IPA.00006591"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Forte de São João Baptista (Q10284016): classificação, concelho e data de origem e coordenadas"

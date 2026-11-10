@@ -17,6 +17,8 @@ classificacao:
   sipa: "IPA.00003930"
 altitude: 758
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Castelo templário em ruína no alto do monte de Monsanto"

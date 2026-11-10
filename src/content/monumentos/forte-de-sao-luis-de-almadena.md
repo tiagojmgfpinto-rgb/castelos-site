@@ -16,6 +16,8 @@ classificacao:
   categoria: "Imóvel de Interesse Público"
   sipa: "IPA.00002893"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Forte de São Luís de Almádena (Q10284036): classificação, concelho e data de origem e coordenadas"

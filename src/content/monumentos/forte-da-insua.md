@@ -15,6 +15,8 @@ classificacao:
   categoria: "Monumento Nacional"
   sipa: "IPA.00003607"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Forte da Ínsua (Q10283763): classificação, concelho e coordenadas"

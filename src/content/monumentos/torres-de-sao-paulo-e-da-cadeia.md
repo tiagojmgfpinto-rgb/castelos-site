@@ -16,6 +16,8 @@ classificacao:
   categoria: "Imóvel de Interesse Público"
   sipa: "IPA.00003566"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Torres de São Paulo e da Cadeia e o pequeno pano de muralha existente entre as duas torres (Q10333271): classificação, concelho e coordenadas"

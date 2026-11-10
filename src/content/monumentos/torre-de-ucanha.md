@@ -15,6 +15,8 @@ classificacao:
   categoria: "Monumento Nacional"
   sipa: "IPA.00003805"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Torre de Ucanha (Q9088953): classificação, concelho e coordenadas"

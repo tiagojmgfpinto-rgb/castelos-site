@@ -38,7 +38,7 @@ test("atlas: Novidades com as abas Novos castelos e Próximas adições", async 
   const novos = await painel.locator(".lista-novos b").allTextContents();
   expect(novos.length).toBeGreaterThan(0);
   await painel.getByRole("tab", { name: /Próximas adições/ }).click();
-  const proximos = await painel.locator(".lista-proximos li").allTextContents();
+  const proximos = await painel.locator(".lista-proximos li b").allTextContents();
   expect(proximos.length).toBeGreaterThan(0);
   // as duas listas não se repetem: quem tem maqueta não está nas próximas adições
   expect(proximos.filter((n) => novos.includes(n))).toEqual([]);

@@ -2,6 +2,7 @@ import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
 import { z } from "astro/zod";
 import { REGIOES, TIPOLOGIAS } from "./lib/tipologias";
+import { ESTADOS_MAQUETA } from "./lib/estado";
 
 const chaves = <T extends Record<string, unknown>>(o: T) => Object.keys(o) as [keyof T & string, ...(keyof T & string)[]];
 
@@ -80,6 +81,12 @@ const monumentos = defineCollection({
     seculoOrigem: z.string().optional(),
     classificacao: z.object({ categoria: z.string(), sipa: z.string().optional() }).optional(),
     estadoFicha: z.enum(["em-preparacao", "publicada"]),
+    // Estado da maqueta 3D. Só "concluida" com uma variante publicada (data `publicada` e GLB em public/) põe o
+    // monumento no mapa principal; os outros ficam em "Próximas adições". Regras em lib/estado.ts.
+    estadoMaqueta: z.enum(ESTADOS_MAQUETA).default("pendente"),
+    // Quando o monumento foi publicado no site (UTC), para o painel "Adicionados recentemente" (24 h).
+    // Se faltar, a compilação usa a data do merge em main que acrescentou o ficheiro (histórico do git).
+    adicionado: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?Z$/, "data e hora UTC, AAAA-MM-DDThh:mm:ssZ").optional(),
     prioritario: z.boolean().default(false),
     maquetas: z.array(maqueta).default([]),
     fontes: z.array(fonte).default([]),

@@ -16,6 +16,8 @@ classificacao:
   categoria: "Monumento Nacional"
   sipa: "IPA.00002632"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Cerca de Coimbra, designadamente o Arco de Almedina (Q66942209): classificação, concelho e coordenadas"

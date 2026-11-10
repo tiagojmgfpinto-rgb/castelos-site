@@ -16,6 +16,8 @@ classificacao:
   categoria: "Monumento Nacional (1939)"
   sipa: "IPA.00002833"
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Castelo islâmico e dionisino sobre a foz do Gilão"

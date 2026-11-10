@@ -17,6 +17,8 @@ classificacao:
   sipa: "IPA.00001593"
 altitude: 760
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Castelo e vila muralhada, com a Varanda de Pilatos"

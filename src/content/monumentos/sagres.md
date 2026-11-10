@@ -17,6 +17,8 @@ classificacao:
   sipa: "IPA.00001291"
 altitude: 40
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Muralha abaluartada que fecha o promontório de Sagres, ligado ao Infante D. Henrique"

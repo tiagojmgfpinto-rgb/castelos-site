@@ -16,6 +16,8 @@ classificacao:
   categoria: "Monumento Nacional (1938)"
   sipa: "IPA.00005693"
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Torre de menagem medieval no centro de Chaves, com museu militar"

@@ -16,6 +16,8 @@ classificacao:
   categoria: "Monumento Nacional (classificado em 1911)"
   sipa: "IPA.00003756"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Castelo de Campo Maior (Q5050370): classificação, concelho e data de origem e coordenadas"

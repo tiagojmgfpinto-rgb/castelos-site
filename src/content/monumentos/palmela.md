@@ -17,6 +17,8 @@ classificacao:
   sipa: "IPA.00004075"
 altitude: 240
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Castelo de três recintos que foi sede da Ordem de Santiago"

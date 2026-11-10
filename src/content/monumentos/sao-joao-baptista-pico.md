@@ -16,6 +16,8 @@ classificacao:
   categoria: "Imóvel de Interesse Público (1943)"
 altitude: 111
 estadoFicha: publicada
+estadoMaqueta: pendente
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Cidadela seiscentista no Pico dos Frias, sobre o Funchal"

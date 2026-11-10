@@ -16,6 +16,8 @@ classificacao:
   categoria: "Monumento Nacional (Decretos de 27-08-1908 e de 16-06-1910)"
   sipa: "IPA.00001060"
 estadoFicha: publicada
+estadoMaqueta: concluida
+adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
 subtitulo: "Castelo medieval dos séculos X a XIV"

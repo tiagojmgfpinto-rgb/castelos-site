@@ -15,6 +15,8 @@ classificacao:
   categoria: "Monumento Nacional (classificado em 1927)"
   sipa: "IPA.00002543"
 estadoFicha: em-preparacao
+estadoMaqueta: pendente
+adicionado: "2026-11-09T21:05:16Z"
 prioritario: false
 fontes:
   - titulo: "Wikidata — Castelo de Belmonte (Q5049758): classificação, concelho e coordenadas"

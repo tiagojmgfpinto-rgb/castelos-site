@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { TerritorioId } from "../../lib/territorios";
 import type { Regiao, Tipologia } from "../../lib/tipologias";
+import type { EstadoMaqueta, Fase } from "../../lib/estado";
 
 export interface Maqueta {
   tipo: "estado-atual" | "reconstituicao";
@@ -25,6 +26,15 @@ export interface MonumentoResumo {
   coordenadasVerificadas: boolean;
   estadoFicha: "em-preparacao" | "publicada";
   seculoOrigem?: string;
+  estadoMaqueta: EstadoMaqueta;
+  /** fase mostrada ao visitante: por fazer, em curso, por publicar, publicada */
+  fase: Fase;
+  /** maqueta concluída e publicada: aparece no mapa principal (senão, em Próximas adições) */
+  noMapa: boolean;
+  /** quando entrou no site (ISO, UTC), para o painel dos adicionados nas últimas 24 h */
+  adicionado: string;
+  /** capa da maqueta ou primeira fotografia da ficha, relativa à raiz pública */
+  imagem?: string;
   maquetas: Maqueta[];
   notas: string[];
   fontes: Fonte[];
