@@ -635,6 +635,13 @@ def textura_terreno():
     # nós da grelha (linha 0 = sul) -> células da imagem (linha 0 = norte)
     tc = (tapa[:-1, :-1] | tapa[1:, :-1] | tapa[:-1, 1:] | tapa[1:, 1:])[::-1]
     tc = ndi.binary_dilation(tc, iterations=1)
+    # As sombras do voo (faixas escuras e azuladas ao pé das muralhas e das árvores) também se tapam: na
+    # maqueta a luz é a do visor e as sombras carimbadas no chão saíam azuis (auditoria de novembro de 2026).
+    lum = img.mean(-1)
+    azul = img[..., 2] - (img[..., 0] + img[..., 1]) / 2
+    sombra = ((lum < 0.72 * ndi.median_filter(lum, size=31)) & (lum < 0.42)) | ((azul > 0.0) & (lum < 0.40))
+    sombra = ndi.binary_dilation(ndi.binary_opening(sombra, iterations=1), iterations=2)
+    tc |= sombra[:tc.shape[0], :tc.shape[1]]
     bom = (~tc).astype(float)
     out = img.copy()
     falta = tc.copy()
@@ -1697,6 +1704,9 @@ ti.extension = "EXTEND"
 mt.node_tree.links.new(ti.outputs["Color"], mt.node_tree.nodes["Principled BSDF"].inputs["Base Color"])
 
 PROPRIOS = set()  # plantas do OSM que são modeladas à parte (igrejas, capelas)
+# 6951d651: o OSM desenha como "edifício" o patamar lajeado por cima da Porta da Coroada (ortoimagem); partido
+# em casas, dava telhados deitados no terrapleno e uma casa alta encostada à porta (auditoria de novembro de 2026)
+PROPRIOS.add("6951d651")
 EVITAR = []       # plantas onde não vão casas nem árvores
 if "portas" in globals():
     print("portas…")
