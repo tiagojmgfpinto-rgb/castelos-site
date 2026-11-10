@@ -68,6 +68,17 @@ fontes:
     url: "https://whc.unesco.org/en/list/1367"
   - titulo: "SIPA — Forte de Santa Luzia, n.º 3244 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=3244"
+imagens:
+  - ficheiro: "imagens/forte-de-santa-luzia/panorama.jpg"
+    legenda: "O Forte de Santa Luzia no outeiro, com os baluartes e o reduto central."
+    autor: "Alvesgaspar, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Elvas_September_2013-18a.jpg"
+  - ficheiro: "imagens/forte-de-santa-luzia/aereo.jpg"
+    legenda: "O forte visto do ar: o traçado em estrela, os fossos e o reduto ao centro."
+    autor: "Jacinto Júlio Nozes César, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Forte_de_Santa_Luzia_-_Elvas,_Portugal.jpg"
 ---
 
 O Forte de Santa Luzia nasceu logo no primeiro ano da Guerra da Restauração, para defender Elvas pelo sul. Em 1641 Matias de Albuquerque fez o primeiro traçado, que Sebastião Frias redesenhou no mesmo ano como polígono estrelado; em 1642 o genovês Hieronimo Rozzeti apresentou um novo projeto, que levou a desavenças com o engenheiro francês Charles Lassart. O forte ficou acabado e foi inaugurado em 1648.

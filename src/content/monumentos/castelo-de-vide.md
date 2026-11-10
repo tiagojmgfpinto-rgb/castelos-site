@@ -73,6 +73,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo de Castelo de Vide, n.º 4572 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=4572"
+imagens:
+  - ficheiro: "imagens/castelo-de-vide/torre-de-menagem.jpg"
+    legenda: "A torre de menagem do castelo, com o coroamento de ameias."
+    autor: "Rodrigo Silva, Wikimedia Commons"
+    licenca: "CC BY 2.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Vide_(39166078251).jpg"
+  - ficheiro: "imagens/castelo-de-vide/adarve.jpg"
+    legenda: "O adarve da muralha junto a uma torre, com a serra ao fundo."
+    autor: "Rodrigo Silva, Wikimedia Commons"
+    licenca: "CC BY 2.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Vide_(39135730462).jpg"
+  - ficheiro: "imagens/castelo-de-vide/arco.jpg"
+    legenda: "Um arco de pedra no interior do recinto do castelo."
+    autor: "Rodrigo Silva, Wikimedia Commons"
+    licenca: "CC BY 2.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Vide_(39135732002).jpg"
+  - ficheiro: "imagens/castelo-de-vide/vila-da-muralha.jpg"
+    legenda: "A vila de Castelo de Vide e a paisagem do Alto Alentejo vistas da muralha."
+    autor: "GFreihalter, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Vide_924.jpg"
 ---
 
 Em 1232 Castelo de Vide já pertencia ao reino, e em 1276 tinha organização municipal. Em 1273 o infante D. Afonso Sanches, irmão de D. Dinis, recebeu o senhorio de Arronches, Castelo de Vide, Marvão e Portalegre, e em 1279 mandou murar a vila. Dois anos depois o rei cercou-a; uma embaixada de Aragão, que vinha propor-lhe o casamento com D. Isabel, ajudou a fazer a paz, e o infante aceitou demolir parte do que construíra. Os castelos alentejanos acabaram trocados por Sintra e Ourém e entregues ao alcaide Aires Pires Cabral.

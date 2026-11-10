@@ -82,6 +82,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo de Castro Marim, n.º 2825 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=2825"
+imagens:
+  - ficheiro: "imagens/castro-marim/cerca-e-torreoes.jpg"
+    legenda: "A cerca do castelo com os torreões redondos."
+    autor: "Marc Ryckaert, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castro_Marim_Castelo_R02.jpg"
+  - ficheiro: "imagens/castro-marim/igreja-e-castelo.jpg"
+    legenda: "A igreja matriz de Castro Marim e, por trás, o castelo no alto."
+    autor: "Dmitry Tonkonog, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castro_Marim_Church_and_Castle.jpg"
+  - ficheiro: "imagens/castro-marim/interior.jpg"
+    legenda: "O interior do castelo, com ruínas de casas e, ao fundo, o Forte de São Sebastião."
+    autor: "Dmitry Tonkonog, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castro_Marim_Castle_Inside_02.jpg"
+  - ficheiro: "imagens/castro-marim/muralha.jpg"
+    legenda: "Um pano da muralha do castelo, visto de fora."
+    autor: "Marc Ryckaert, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castro_Marim_Castelo_R04.jpg"
 ---
 
 Castro Marim foi conquistada em 1242 por D. Paio Peres Correia, mestre da Ordem de Santiago. D. Afonso III deu-lhe foral a 8 de julho de 1277, e uma inscrição de 1 de julho de 1279 regista obras no reinado de D. Dinis. Pela bula de 14 de março de 1319 a vila tornou-se a primeira sede da Ordem de Cristo.

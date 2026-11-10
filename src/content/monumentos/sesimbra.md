@@ -88,6 +88,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo de Sesimbra, n.º 6525 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=6525"
+imagens:
+  - ficheiro: "imagens/sesimbra/no-monte.jpg"
+    legenda: "O castelo e a cerca no alto do monte, sobre a encosta virada a Sesimbra."
+    autor: "Diego Delso, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castillo_de_Sesimbra,_Portugal,_2012-08-18,_DD_01.JPG"
+  - ficheiro: "imagens/sesimbra/porta.jpg"
+    legenda: "A porta do castelo entre torres, com ameias."
+    autor: "Joson74, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_sesimbra_portugal.JPG"
+  - ficheiro: "imagens/sesimbra/recinto.jpg"
+    legenda: "O recinto interior, com a muralha de ameias à volta."
+    autor: "Carjormartin, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Sesimbra_(Castelo)_-_Castelo_de_Sesimbra_-_cisterna.jpg"
+  - ficheiro: "imagens/sesimbra/vista-sobre-a-vila.jpg"
+    legenda: "A vila de Sesimbra e o mar vistos da muralha do castelo."
+    autor: "Carjormartin, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Sesimbra_(Castelo)_-_Castelo_de_Sesimbra_-_vista_sobre_a_vila.jpg"
 ---
 
 A enseada de Sesimbra foi ancoradouro desde a Antiguidade, e há vestígios romanos na área do castelo. A primeira fortificação terá sido muçulmana. D. Afonso Henriques tomou-a a 21 de fevereiro de 1165 e reforçou-a, mas em 1191 o califa almóada Iacube Almançor arrasou-a. D. Sancho I reconquistou Sesimbra por volta de 1200, com cruzados do norte da Europa, e no foral de 15 de agosto de 1201 mandou reconstruir o castelo desde os alicerces.

@@ -79,6 +79,27 @@ fontes:
     url: "https://whc.unesco.org/en/list/1367"
   - titulo: "SIPA — Forte de Nossa Senhora da Graça, n.º 3771 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=3771"
+imagens:
+  - ficheiro: "imagens/forte-da-graca/do-baluarte.jpg"
+    legenda: "O interior do forte visto de um baluarte, com os edifícios dos quartéis e a planície ao fundo."
+    autor: "Alvesgaspar, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Forte_da_Gra%C3%A7a_December_2016-6.jpg"
+  - ficheiro: "imagens/forte-da-graca/porta-e-ponte.jpg"
+    legenda: "A porta principal do forte, com a ponte sobre o fosso e a Casa do Governador por cima."
+    autor: "mmmmngai@rogers.com, Wikimedia Commons"
+    licenca: "CC BY-SA 2.0"
+    url: "https://commons.wikimedia.org/wiki/File:Portugal-Elvas-Forte_de_Nossa_Senhora_da_Gra%C3%A7aP1170667_(25893555315).jpg"
+  - ficheiro: "imagens/forte-da-graca/portal.jpg"
+    legenda: "O portal com as armas reais e a lápide, com a cúpula da Casa do Governador por trás."
+    autor: "Alvesgaspar, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Forte_da_Gra%C3%A7a_December_2016-2.jpg"
+  - ficheiro: "imagens/forte-da-graca/no-monte.jpg"
+    legenda: "O forte no alto do Monte da Graça, visto de longe."
+    autor: "Alvesgaspar, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Forte_da_Gra%C3%A7a_December_2016-3.jpg"
 ---
 
 O Monte da Graça domina Elvas pelo norte, e foi dali que as tropas espanholas apertaram a cidade no cerco de 1658, antes da batalha das Linhas de Elvas. Na Guerra dos Sete Anos a cidade voltou a ser cercada, em 1762. O marquês de Pombal chamou então o conde de Schaumburg-Lippe para reorganizar o exército português, e foi ele quem propôs fortificar a colina.

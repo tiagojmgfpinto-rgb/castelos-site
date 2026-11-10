@@ -74,6 +74,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo de Pombal, n.º 3279 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=3279"
+imagens:
+  - ficheiro: "imagens/pombal/muralhas.jpg"
+    legenda: "A cerca de muralhas com ameias e a torre de menagem do castelo."
+    autor: "MarioM, Wikimedia Commons"
+    licenca: "Domínio público"
+    url: "https://commons.wikimedia.org/wiki/File:Pombal1.jpg"
+  - ficheiro: "imagens/pombal/torre-de-menagem.jpg"
+    legenda: "A torre de menagem e os panos de muralha vistos do recinto."
+    autor: "Halley Oliveira from Guimarães, Portugal, Wikimedia Commons"
+    licenca: "CC BY-SA 2.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Pombal_(48759584456).jpg"
+  - ficheiro: "imagens/pombal/no-monte.jpg"
+    legenda: "O castelo no alto do monte, por cima do olival."
+    autor: "Daniel VILLAFRUELA., Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Pombal-Castelo_dos_Templ%C3%A1rios-19670802.jpg"
+  - ficheiro: "imagens/pombal/torres.jpg"
+    legenda: "As torres do castelo assentes sobre a rocha."
+    autor: "Celia Ascenso, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Pombal_8.jpg"
 ---
 
 O castelo de Pombal foi erguido pelos Templários, sob o mestre Gualdim Pais, no século XII; o artigo em português situa a obra entre 1159 e 1171 e o foral em 1174. Com a extinção dos Templários, passou para a Ordem de Cristo.

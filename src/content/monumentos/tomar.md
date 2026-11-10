@@ -86,6 +86,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo de Tomar, n.º 3390 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=3390"
+imagens:
+  - ficheiro: "imagens/tomar/cerca.jpg"
+    legenda: "A cerca do castelo templário com as torres e a charola do Convento de Cristo por trás."
+    autor: "João Carvalho, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Tomar_Castelo_0244.jpg"
+  - ficheiro: "imagens/tomar/torre-de-menagem.jpg"
+    legenda: "A torre de menagem do castelo, no interior da alcáçova."
+    autor: "Berthold Werner, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Tomar_BW_2018-10-08_09-48-25.jpg"
+  - ficheiro: "imagens/tomar/muralhas.jpg"
+    legenda: "As muralhas da alcáçova e a torre de menagem vistas do largo em frente."
+    autor: "Kent Wang, Wikimedia Commons"
+    licenca: "CC BY 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Walls_of_Castelo_de_Tomar_95.jpg"
+  - ficheiro: "imagens/tomar/porta-do-sol.jpg"
+    legenda: "O caminho junto à muralha até à Porta do Sol, entrada do recinto do castelo."
+    autor: "Hugo Ferreira, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Tomar2.jpg"
 ---
 
 O castelo de Tomar começou a ser construído a 1 de março de 1160, como regista uma inscrição na torre de menagem, pelo mestre templário D. Gualdim Pais, com o apoio de D. Afonso Henriques. Foi a sede dos Templários em Portugal, e a vila recebeu foral em 1162. Em julho de 1190 o califa almóada Iacube Almançor cercou o castelo durante alguns dias, sem o tomar.

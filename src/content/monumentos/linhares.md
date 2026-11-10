@@ -74,6 +74,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo de Linhares, n.º 1402 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=1402"
+imagens:
+  - ficheiro: "imagens/linhares/torres.jpg"
+    legenda: "As duas torres do castelo e a muralha assente sobre os afloramentos de granito."
+    autor: "Cardilio, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:IMGP3646_-_Castelo_de_Linhares_da_Beira.jpg"
+  - ficheiro: "imagens/linhares/recinto.jpg"
+    legenda: "O recinto do castelo, com a torre de menagem, a escada de acesso ao adarve e a serra ao fundo."
+    autor: "Yola76, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Linhares_(Celorico_da_Beira)_-_Castelo_de_Linhares_da_Beira_-_2026-10-10_18-11-35_003.jpg"
+  - ficheiro: "imagens/linhares/torre-de-menagem.jpg"
+    legenda: "A torre de menagem com a escada exterior e uma porta em arco na muralha."
+    autor: "Yola76, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Linhares_(Celorico_da_Beira)_-_Castelo_de_Linhares_da_Beira_-_2026-10-10_18-11-35_002.jpg"
+  - ficheiro: "imagens/linhares/muralha.jpg"
+    legenda: "A muralha e a torre vistas de fora, com a porta na cerca."
+    autor: "tiago186703274, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Linhares_da_Beira_-_panoramio.jpg"
 ---
 
 Linhares recebeu foral em 1169, confirmado em 1217. O castelo, a 820 metros de altitude, foi objeto de uma campanha de obras no reinado de D. Dinis e foi tomado em 1373. Em 1385 os homens de Linhares estiveram na batalha de Trancoso, ao lado do alcaide Gonçalo Vasques Coutinho.

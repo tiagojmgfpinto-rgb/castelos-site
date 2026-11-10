@@ -79,6 +79,27 @@ fontes:
   - titulo: "SIPA — Castelo de Óbidos / Castelo e cerca urbana de Óbidos / Pousada de Óbidos, ficha IPA.00003324"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=3324"
     consultado: "2026-10-27"
+imagens:
+  - ficheiro: "imagens/obidos/de-poente.jpg"
+    legenda: "O castelo e as muralhas de Óbidos vistos de poente, sobre a encosta."
+    autor: "Alvesgaspar, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Obidos_April_2009-4b.jpg"
+  - ficheiro: "imagens/obidos/fachada.jpg"
+    legenda: "A frente do castelo com as torres redondas e quadradas e a porta, onde hoje funciona a pousada."
+    autor: "Diego Delso, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castillo_de_%C3%93bidos,_%C3%93bidos,_Portugal,_2021-09-09,_DD_24.jpg"
+  - ficheiro: "imagens/obidos/muralha.jpg"
+    legenda: "O castelo visto do adarve da muralha da vila."
+    autor: "Diego Delso, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castillo_de_%C3%93bidos,_%C3%93bidos,_Portugal,_2021-09-09,_DD_32.jpg"
+  - ficheiro: "imagens/obidos/sobre-a-vila.jpg"
+    legenda: "O castelo por cima das casas brancas da vila."
+    autor: "P. Hughes, Wikimedia Commons"
+    licenca: "CC BY 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Obidos_-_Castelo_de_%C3%93bidos.jpg"
 ---
 
 O perímetro muralhado de Óbidos assenta num monte escarpado sobre o rio Arnoia, possivelmente ocupado já por um castro luso-romano. A cerca velha é dos séculos XII e XIII, e foi D. Sancho I quem reformou a muralha depois da ocupação cristã. A torre albarrã serviu nesse tempo de cadeia.

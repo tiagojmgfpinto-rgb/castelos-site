@@ -85,6 +85,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo de Tavira, n.º 2833 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=2833"
+imagens:
+  - ficheiro: "imagens/tavira/muralhas.jpg"
+    legenda: "Os panos de muralha e uma torre do castelo, com a porta em arco."
+    autor: "Heribert Bechen ***Thanks for more than 800.000 visits!*** from Bergisch Gladbach, Germany, Wikimedia Commons"
+    licenca: "CC BY-SA 2.0"
+    url: "https://commons.wikimedia.org/wiki/File:Portugal_DSC04548_-_TAVIRA_Kastell_-_castelo_(32438464864).jpg"
+  - ficheiro: "imagens/tavira/jardim-e-igreja.jpg"
+    legenda: "O interior do castelo, com o jardim entre as muralhas e a igreja de Santa Maria ao fundo."
+    autor: "Dicklyon, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Tavira_pano_with_church.jpg"
+  - ficheiro: "imagens/tavira/escada.jpg"
+    legenda: "A escada que sobe para o adarve, junto a uma porta da muralha."
+    autor: "Fabrizio Boscaglia, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Tavira_(escada).jpg"
+  - ficheiro: "imagens/tavira/vista-sobre-tavira.jpg"
+    legenda: "Tavira vista das muralhas do castelo, para nordeste."
+    autor: "Dicklyon, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Tavira_pano_with_city_view.jpg"
 ---
 
 Em 1997 as escavações no castelo de Tavira encontraram uma muralha fenícia do século VIII a.C. A povoação islâmica, at-Tabira, aparece nos textos na primeira metade do século XII, e a muralha mais antiga é almorávida, do fim do século XI ou do início do XII, reformada pelos almóadas em taipa. Em 1168 um cerco almóada submeteu a povoação.

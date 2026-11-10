@@ -76,6 +76,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo de Évora Monte, n.º 2720 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=2720"
+imagens:
+  - ficheiro: "imagens/evoramonte/aereo-torre.jpg"
+    legenda: "A torre de menagem de Évora Monte vista do ar, com os quatro cubelos redondos nos cantos."
+    autor: "Joseolgon, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Evoramonte_2021_(3).jpg"
+  - ficheiro: "imagens/evoramonte/aereo-vila.jpg"
+    legenda: "A torre e a pequena vila dentro da cerca, no alto do monte, vistas do ar."
+    autor: "Joseolgon, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Evoramonte_2021_(6).jpg"
+  - ficheiro: "imagens/evoramonte/torre.jpg"
+    legenda: "A torre de menagem vista de baixo, entre as ervas do recinto."
+    autor: "Carlasfonseca, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Evoramonte_-_Estremoz.jpg"
+  - ficheiro: "imagens/evoramonte/torre-de-perto.jpg"
+    legenda: "A torre de menagem no topo do monte, com os cubelos e o alambor."
+    autor: "Inês Leonardo, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_evoramonte_1.jpg"
 ---
 
 Évora Monte foi tomada aos mouros por volta de 1160 pelas forças de Geraldo Sem Pavor. D. Afonso III deu-lhe foral em 1248 e renovou-o em 1271, mas o povoamento custou a vingar. Em 1306 D. Dinis mandou fortificar a vila, e dessa obra chegaram até hoje a cerca e as portas. No reinado de D. João I o castelo foi dado a Nuno Álvares Pereira e entrou depois nos domínios da Casa de Bragança.

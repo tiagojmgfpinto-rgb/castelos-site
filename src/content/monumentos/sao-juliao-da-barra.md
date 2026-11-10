@@ -72,6 +72,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Forte de São Julião da Barra, n.º 2343 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=2343"
+imagens:
+  - ficheiro: "imagens/sao-juliao-da-barra/e-a-praia.jpg"
+    legenda: "O forte na ponta de São Julião, visto da praia de Carcavelos."
+    autor: "Adriao, Wikimedia Commons"
+    licenca: "CC BY 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Forte_de_S%C3%A3o_Juli%C3%A3o_da_Barra.jpg"
+  - ficheiro: "imagens/sao-juliao-da-barra/baluarte.jpg"
+    legenda: "Um baluarte do forte sobre as rochas batidas pelo mar."
+    autor: "Juntas, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Forte_de_S%C3%A3o_Juli%C3%A3o_da_Barra_by_Juntas_8.jpg"
+  - ficheiro: "imagens/sao-juliao-da-barra/do-mar.jpg"
+    legenda: "O forte e o farol sobre as rochas da barra do Tejo."
+    autor: "Juntas, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Forte_de_S%C3%A3o_Juli%C3%A3o_da_Barra_by_Juntas_9.jpg"
+  - ficheiro: "imagens/sao-juliao-da-barra/cortina.jpg"
+    legenda: "A cortina de muralha do forte vista do lado de terra."
+    autor: "Juntas, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Forte_de_S%C3%A3o_Juli%C3%A3o_da_Barra_by_Juntas_7.jpg"
 ---
 
 O forte de São Julião da Barra começou a ser construído em 1553, com projeto de Miguel de Arruda, para defender a entrada do Tejo, e a primeira fase ficou pronta em 1568. A partir de 1580 trabalharam nele Palearo e, a partir de 1597, Leonardo Torriani. Foi cercado em 1580, na crise dinástica, e em 1640, na Restauração.

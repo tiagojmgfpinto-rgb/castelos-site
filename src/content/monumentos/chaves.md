@@ -82,6 +82,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo de Chaves, n.º 5693 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=5693"
+imagens:
+  - ficheiro: "imagens/chaves/torre-de-menagem.jpg"
+    legenda: "A torre de menagem de Chaves, a única parte que resta do castelo, no meio do jardim."
+    autor: "Joseolgon, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Torre_de_Menagem,_Castelo_de_Chaves.jpg"
+  - ficheiro: "imagens/chaves/face-da-torre.jpg"
+    legenda: "Uma face da torre de menagem de perto, com as frestas, os mata-cães e o coroamento de ameias."
+    autor: "GFreihalter, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Chaves_Castelo_Torre_de_menagem_281.jpg"
+  - ficheiro: "imagens/chaves/torre-e-corpo.jpg"
+    legenda: "A torre de menagem e o corpo mais baixo encostado a ela, com a porta em arco."
+    autor: "João Carvalho, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Torre_de_Menagem_Chaves_01.jpg"
+  - ficheiro: "imagens/chaves/do-jardim.jpg"
+    legenda: "A torre de menagem vista do jardim, com a escada exterior."
+    autor: "Alegna13, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Chaves_009.jpg"
 ---
 
 Chaves nasceu como Aquae Flaviae, fundada pelos romanos no ano 78. O castelo medieval começou com o primeiro foral, em 1258, quando se iniciou a torre de menagem, que D. Dinis acabou. Em 1386 D. Nuno Álvares Pereira cercou o castelo. O Foral Novo é de 7 de dezembro de 1514.

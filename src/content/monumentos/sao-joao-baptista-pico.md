@@ -81,6 +81,27 @@ fontes:
   - titulo: "Wikipédia — Fortaleza de São João Baptista do Pico"
     url: "https://pt.wikipedia.org/wiki/Fortaleza_de_S%C3%A3o_Jo%C3%A3o_Baptista_do_Pico"
     consultado: "2026-11-09"
+imagens:
+  - ficheiro: "imagens/sao-joao-baptista-pico/no-pico.jpg"
+    legenda: "A fortaleza no alto do pico, por cima das casas do Funchal."
+    autor: "PESP/ Wikimedia, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Fortaleza_de_S%C3%A3o_Jo%C3%A3o_Baptista_do_Pico,_Funchal,_Madeira_-_IMG_8709.jpg"
+  - ficheiro: "imagens/sao-joao-baptista-pico/e-a-serra.jpg"
+    legenda: "A fortaleza e as montanhas da Madeira por trás."
+    autor: "PESP/ Wikimedia, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Fortaleza_de_S%C3%A3o_Jo%C3%A3o_Baptista_do_Pico,_Funchal,_Madeira_-_IMG_1293.jpg"
+  - ficheiro: "imagens/sao-joao-baptista-pico/muralha.jpg"
+    legenda: "A muralha de basalto da fortaleza, com o cordão e o parapeito."
+    autor: "PESP/ Wikimedia, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Fortaleza_de_S%C3%A3o_Jo%C3%A3o_Baptista_do_Pico,_Funchal,_Madeira_-_IMG_5522.jpg"
+  - ficheiro: "imagens/sao-joao-baptista-pico/sineira.jpg"
+    legenda: "O alto da muralha com uma pequena sineira de pedra."
+    autor: "PESP/ Wikimedia, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Fortaleza_de_S%C3%A3o_Jo%C3%A3o_Baptista_do_Pico,_Funchal,_Madeira_-_IMG_5516.jpg"
 ---
 
 Desde 1590 havia um projeto de Mateus Fernandes para fortificar o Pico, o cume que domina o Funchal, mas os padres da Companhia de Jesus, donos do terreno, opuseram-se. As obras só arrancaram com o governador Cristóvão Falcão de Sousa, nomeado em 1600: no fim de 1601 o sargento-mor Roque Borges de Sousa levou a planta a Lisboa, e o forte, primeiro em madeira, já tinha guarnição no início de 1602.

@@ -71,6 +71,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Fortaleza de Santa Catarina, n.º 1286 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=1286"
+imagens:
+  - ficheiro: "imagens/santa-catarina/fachada.jpg"
+    legenda: "A fachada principal da fortaleza, sobre a Praia da Rocha."
+    autor: "Bextrel, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Forte_de_Santa_Catarina,_Portim%C3%A3o._27-05-2020.jpg"
+  - ficheiro: "imagens/santa-catarina/arcadas.jpg"
+    legenda: "O terreiro interior com as arcadas, virado para o mar."
+    autor: "Girassolei, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Santa_Catarina_fortress_arcades_in_Portim%C3%A3o.jpg"
+  - ficheiro: "imagens/santa-catarina/muralha.jpg"
+    legenda: "A muralha da fortaleza, com o mar ao fundo."
+    autor: "Jose A., Wikimedia Commons"
+    licenca: "CC BY 2.0"
+    url: "https://commons.wikimedia.org/wiki/File:Fortress_of_Santa_Catarina,_Portim%C3%A3o.jpg"
+  - ficheiro: "imagens/santa-catarina/interior.jpg"
+    legenda: "Um edifício do interior da fortaleza, entre buganvílias, com o mar por trás."
+    autor: "Jose A., Wikimedia Commons"
+    licenca: "CC BY 2.0"
+    url: "https://commons.wikimedia.org/wiki/File:Fortress_of_Santa_Catarina,_Portim%C3%A3o_(4).jpg"
 ---
 
 Em 1621 o engenheiro Alexandre Massai fez os planos para uma fortaleza na foz do rio Arade, e as obras decorreram entre 1629 e 1633. A frente seiscentista tem três baluartes, e no interior construiu-se a capela de Santa Catarina.

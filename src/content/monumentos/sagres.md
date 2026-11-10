@@ -101,6 +101,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Torre e Muralhas de Sagres, n.º 1291 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=1291"
+imagens:
+  - ficheiro: "imagens/sagres/muralha-e-promontorio.jpg"
+    legenda: "A muralha da fortaleza a fechar o promontório de Sagres, sobre as arribas."
+    autor: "Norbert Nagel, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Fortress_wall_and_rocky_plateau_at_Sagres_-_Portugal_-_2015-08-03.jpg"
+  - ficheiro: "imagens/sagres/canhoes.jpg"
+    legenda: "Canhões em reparos de madeira no baluarte da muralha."
+    autor: "Norbert Nagel, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Row_of_cannons_on_the_rampart_of_Sagres_fortress_-_Portugal_-_2015-08-03.jpg"
+  - ficheiro: "imagens/sagres/rosa-dos-ventos.jpg"
+    legenda: "A grande rosa-dos-ventos de pedra no interior da fortaleza."
+    autor: "Monika Hoerath, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Fortaleza_de_Sagres,_Algarve,_Portugal.jpg"
+  - ficheiro: "imagens/sagres/baluarte.jpg"
+    legenda: "O baluarte da entrada visto do alto da muralha."
+    autor: "Rodw, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Fortaleza_de_Sagres_34.JPG"
 ---
 
 Depois da derrota de Tânger, em 1437, o Infante D. Henrique interessou-se pelo Cabo de São Vicente, e a 27 de outubro de 1443 a coroa deu-lhe esse território para toda a vida. A Vila do Infante, no promontório de Sagres, só começou a funcionar por volta de 1446; em 1454 recebeu Cadamosto, e ali morreu o Infante a 13 de novembro de 1460.

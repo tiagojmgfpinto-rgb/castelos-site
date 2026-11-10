@@ -79,6 +79,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo de Estremoz, n.º 1152 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=1152"
+imagens:
+  - ficheiro: "imagens/estremoz/muralha.jpg"
+    legenda: "A muralha do castelo com ameias e a escadaria que sobe para a porta."
+    autor: "Joseolgon, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Estremoz_2021.jpg"
+  - ficheiro: "imagens/estremoz/sobre-a-cidade.jpg"
+    legenda: "O castelo e o antigo paço real no alto, por cima da cidade de Estremoz."
+    autor: "GualdimG, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Estremoz,_Estremoz_02.jpg"
+  - ficheiro: "imagens/estremoz/aereo.jpg"
+    legenda: "A Torre das Três Coroas e o paço vistos do ar, com a planície alentejana ao fundo."
+    autor: "Joseolgon, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Aerial_photograph_of_Estremoz_(1).jpg"
+  - ficheiro: "imagens/estremoz/torre-a-noite.jpg"
+    legenda: "A Torre das Três Coroas e o paço iluminados à noite."
+    autor: "GualdimG, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Torre_de_Menagem_e_Pousada,_Castelo_de_Estremoz_07.jpg"
 ---
 
 Estremoz terá sido conquistada por volta de 1165, quando Geraldo Sem Pavor tomou Évora, mas perdeu-se pouco depois e só entrou em definitivo no reino em meados do século XIII. D. Afonso III deu-lhe foral em 1258, mandou reforçar o castelo e a cerca da vila, e por volta de 1260 começou a torre de menagem. D. Dinis continuou as muralhas e ergueu junto ao castelo um paço real.

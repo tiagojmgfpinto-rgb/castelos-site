@@ -94,6 +94,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo de São Jorge, n.º 3128 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=3128"
+imagens:
+  - ficheiro: "imagens/sao-jorge/porta-e-torres.jpg"
+    legenda: "A entrada do castelo, com a ponte sobre o fosso e as torres de ameias."
+    autor: "Berthold Werner, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Lisbon_Castelo_de_S%C3%A3o_Jorge_BW_2018-10-03_11-13-09.jpg"
+  - ficheiro: "imagens/sao-jorge/barbaca.jpg"
+    legenda: "A barbacã e o caminho entre as muralhas, junto a uma torre."
+    autor: "Simon Burchell, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_S%C3%A3o_Jorge,_Lisboa_34.jpg"
+  - ficheiro: "imagens/sao-jorge/patio.jpg"
+    legenda: "Um pátio interior do castelo com uma oliveira."
+    autor: "Simon Burchell, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_S%C3%A3o_Jorge,_Lisboa_116.jpg"
+  - ficheiro: "imagens/sao-jorge/vista-sobre-lisboa.jpg"
+    legenda: "Lisboa vista das muralhas do castelo ao fim da tarde."
+    autor: "Simon Burchell, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_S%C3%A3o_Jorge,_Lisboa_95.jpg"
 ---
 
 A colina do castelo tem vestígios de ocupação desde pelo menos o século VI a.C., e as primeiras muralhas são do século II a.C. No domínio islâmico, a partir do século VIII, ergueu-se ali a alcáçova de Al-Ushbuna, de planta quadrangular com cerca de 60 metros de lado. Em 1147 D. Afonso Henriques tomou Lisboa com a ajuda de cruzados, depois de um cerco de três meses.

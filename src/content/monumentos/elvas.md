@@ -83,6 +83,27 @@ fontes:
     url: "https://whc.unesco.org/en/list/1367"
   - titulo: "SIPA — Castelo de Elvas, n.º 3225 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=3225"
+imagens:
+  - ficheiro: "imagens/elvas/porta.jpg"
+    legenda: "A porta do castelo entre duas torres de cantaria, com ameias."
+    autor: "Nmmacedo, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Porta_do_Castelo_de_Elvas.jpg"
+  - ficheiro: "imagens/elvas/adarves.jpg"
+    legenda: "Os adarves e as ameias do castelo, com uma guarita de cúpula."
+    autor: "Jacinto Júlio Nozes César, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Elvas_em_Portugal.jpg"
+  - ficheiro: "imagens/elvas/torres.jpg"
+    legenda: "As torres quadradas da cerca, sobre o largo do castelo."
+    autor: "Pedro Paulo Palazzo, Wikimedia Commons"
+    licenca: "CC BY-SA 2.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Elvas_(30223053618).jpg"
+  - ficheiro: "imagens/elvas/porta-falsa.jpg"
+    legenda: "A porta falsa do castelo, um arco quebrado no pano de alvenaria."
+    autor: "Jacinto Júlio Nozes César, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Porta_falsa_do_Castelo_de_Elvas_em_Portugal.jpg"
 ---
 
 Elvas foi povoação romana e, a partir de 714, muçulmana; dessa época são as duas primeiras cinturas de muralhas. Geraldo Sem Pavor tomou-a por volta de 1166, mas a conquista definitiva só chegou com D. Sancho II, entre 1226 e 1230, e o foral em 1229. D. Dinis ampliou as defesas, e no século XIV a cidade ganhou a terceira cerca, com 22 torreões, barbacã e 11 portas.

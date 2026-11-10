@@ -76,6 +76,22 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo de Serpa, IPA.00000579 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=579"
+imagens:
+  - ficheiro: "imagens/serpa/muralha-e-aqueduto.jpg"
+    legenda: "O pano de muralha com o aqueduto assente sobre ela."
+    autor: "Senhormario, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Muralha_e_aqueduto.jpg"
+  - ficheiro: "imagens/serpa/torre-caida.jpg"
+    legenda: "O grande bloco da torre do castelo que ficou tombado depois da explosão de 1707."
+    autor: "Bunks, Wikimedia Commons"
+    licenca: "Domínio público"
+    url: "https://commons.wikimedia.org/wiki/File:Serpa_Burg.JPG"
+  - ficheiro: "imagens/serpa/entrada.jpg"
+    legenda: "Uma das entradas da cerca para a vila intramuros."
+    autor: "Senhormario, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Uma_das_entradas_do_castelo_para_a_zona_intramuros.jpg"
 ---
 
 Serpa terá tido uma fortificação romana a guardar a estrada de Beja para o sul da Hispânia, e foi depois uma praça muçulmana de muralhas de taipa. Geraldo Sem Pavor tomou-a em 1166, mas a ofensiva almóada de 1191 recuperou a região. A conquista definitiva veio em 1232, com D. Sancho II.

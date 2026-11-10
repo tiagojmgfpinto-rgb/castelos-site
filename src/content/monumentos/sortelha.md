@@ -67,6 +67,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo de Sortelha, n.º 1593 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=1593"
+imagens:
+  - ficheiro: "imagens/sortelha/castelo-e-pelourinho.jpg"
+    legenda: "O castelo sobre os penedos, com o pelourinho e as casas da aldeia em baixo."
+    autor: "Ken & Nyetta, Wikimedia Commons"
+    licenca: "CC BY 2.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Sortelha,_Portugal_-_Apr_2011.jpg"
+  - ficheiro: "imagens/sortelha/sobre-os-penedos.jpg"
+    legenda: "O castelo e a torre de menagem no alto dos penedos de granito."
+    autor: "Concierge.2C, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Sortelha_-_Torre%C3%A3o.jpg"
+  - ficheiro: "imagens/sortelha/torre-de-menagem.jpg"
+    legenda: "A torre de menagem assente sobre um penedo."
+    autor: "Lídia Maria Faria, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:CASTELO_DE_SORTELHA_4.jpg"
+  - ficheiro: "imagens/sortelha/porta.jpg"
+    legenda: "Uma porta em arco da muralha, com o adarve por cima."
+    autor: "Ken and Nyetta, Wikimedia Commons"
+    licenca: "CC BY 2.0"
+    url: "https://commons.wikimedia.org/wiki/File:Ken_at_the_Entrance_to_Castelo_de_Sortelha_(5796209629).jpg"
 ---
 
 Sortelha recebeu foral em 1228, e D. Manuel I deu-lhe Foral Novo em 1510. O castelo, a 760 metros de altitude, e a muralha da vila chegaram até hoje com as suas portas: a Porta do Castelo, com a Varanda de Pilatos, a Porta da Vila e a Porta Nova, onde estão gravadas a vara e o côvado.

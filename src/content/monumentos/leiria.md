@@ -91,6 +91,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo de Leiria, n.º 3312 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=3312"
+imagens:
+  - ficheiro: "imagens/leiria/vista-geral.jpg"
+    legenda: "O castelo no alto do morro, com o paço de D. João I e a galeria de arcos."
+    autor: "Jaimrsilva, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Leiria_(vista_geral).JPG"
+  - ficheiro: "imagens/leiria/paco.jpg"
+    legenda: "O paço real com a galeria de arcos virada para a cidade."
+    autor: "Joseolgon, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Leiria_(2).jpg"
+  - ficheiro: "imagens/leiria/torre-de-menagem.jpg"
+    legenda: "A torre de menagem, com o coroamento de ameias."
+    autor: "Joseolgon, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Leiria_2023_(4).jpg"
+  - ficheiro: "imagens/leiria/do-alto.jpg"
+    legenda: "Os adarves e as ameias vistos do alto, com a cidade de Leiria em baixo."
+    autor: "Joseolgon, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Leiria_2023_(5).jpg"
 ---
 
 D. Afonso Henriques fundou o castelo de Leiria em 1135. Perdido em 1137 ou 1139, foi recuperado em 1142, ano do primeiro foral, e entre 1144 e 1147 construiu-se no recinto a igreja de Santa Maria da Pena. D. Sancho I deu novo foral e muralhas em 1195, e em 1254 reuniram-se ali as Cortes.

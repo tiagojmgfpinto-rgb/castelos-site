@@ -74,6 +74,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo de Loulé, n.º 1283 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=1283"
+imagens:
+  - ficheiro: "imagens/loule/torres.jpg"
+    legenda: "As torres e o pano de muralha que restam do castelo, no centro de Loulé."
+    autor: "Lídia Maria Faria, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:CASTELO_DE_LOUL%C3%89_1.jpg"
+  - ficheiro: "imagens/loule/vista-geral.jpg"
+    legenda: "O conjunto das três torres e dos panos de muralha do castelo."
+    autor: "Bextrel, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Loule_-_22.06.2021.jpg"
+  - ficheiro: "imagens/loule/entre-as-casas.jpg"
+    legenda: "As torres do castelo entre as casas da cidade."
+    autor: "Lídia Maria Faria, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:CASTELO_DE_LOUL%C3%89_2.jpg"
+  - ficheiro: "imagens/loule/largo.jpg"
+    legenda: "O castelo visto do largo em frente, com o chafariz."
+    autor: "Jose A., Wikimedia Commons"
+    licenca: "CC BY 2.0"
+    url: "https://commons.wikimedia.org/wiki/File:Loule_(Portugal)_(40661376180).jpg"
 ---
 
 A povoação islâmica de al-Ulya ficou sob domínio muçulmano a partir de 715. A cerca que hoje se vê no centro de Loulé é almóada, de taipa, e fechava uma área de cerca de 5 hectares. D. Paio Peres Correia conquistou-a em 1249, e a vila teve foral em 1266.

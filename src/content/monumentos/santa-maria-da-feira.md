@@ -74,6 +74,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo de Santa Maria da Feira, n.º 1040 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=1040"
+imagens:
+  - ficheiro: "imagens/santa-maria-da-feira/torre-de-menagem.jpg"
+    legenda: "A torre de menagem com os quatro torreões de coruchéu cónico, vista do recinto."
+    autor: "António Amen, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_da_Feira_ou_Castelo_de_Santa_Maria_da_Feira_(1).jpg"
+  - ficheiro: "imagens/santa-maria-da-feira/fachada.jpg"
+    legenda: "A torre de menagem e a barbacã do lado da entrada."
+    autor: "Carlasfonseca, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Santa_Maria_da_Feira_-_Panor%C3%A2mica.jpg"
+  - ficheiro: "imagens/santa-maria-da-feira/cerca.jpg"
+    legenda: "A cerca exterior e a torre de menagem, com o parque à volta."
+    autor: "Jorge Lobo, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_St._Maria_Feira_(1).jpg"
+  - ficheiro: "imagens/santa-maria-da-feira/terraco.jpg"
+    legenda: "Os torreões de coruchéu no terraço do alto da torre de menagem."
+    autor: "Jorge Lobo, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_St._Maria_Feira_(7).jpg"
 ---
 
 A parte baixa da torre de menagem do castelo da Feira é do século XI. No século XV Fernão Pereira fez obras no castelo, que o artigo inglês data de 1448. A torre tem quatro torreões nos cantos, rematados por coruchéus cónicos. Em 1656 juntou-se uma capela de planta hexagonal.

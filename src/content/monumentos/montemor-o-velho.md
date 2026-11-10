@@ -77,6 +77,17 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo de Montemor-o-Velho, n.º 2593 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=2593"
+imagens:
+  - ficheiro: "imagens/montemor-o-velho/torre.jpg"
+    legenda: "Uma das torres do castelo, sobre o vale do Mondego."
+    autor: "Alvesgaspar, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_Montemor-o-Velho_Mar%C3%A7o_2022-1.jpg"
+  - ficheiro: "imagens/montemor-o-velho/igreja.jpg"
+    legenda: "A Igreja de Santa Maria de Alcáçova, dentro do recinto do castelo."
+    autor: "carlos p. gonçalves, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Montemor-o-Velho_2.jpg"
 ---
 
 O outeiro de Montemor-o-Velho foi disputado entre cristãos e muçulmanos: conquistado em 848, foi tomado por Almançor em 990. A povoação teve foral em 1095, e entre 1090 e 1095 ergueu-se na alcáçova a igreja de Santa Maria, mais tarde refeita em estilo manuelino por Francisco Pires.

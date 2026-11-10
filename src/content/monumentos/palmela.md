@@ -81,6 +81,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo de Palmela, n.º 4075 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=4075"
+imagens:
+  - ficheiro: "imagens/palmela/no-monte.jpg"
+    legenda: "O castelo no alto da serra, com a torre de menagem e o antigo convento de Santiago."
+    autor: "Reino Baptista, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Plamela_2004-04.jpg"
+  - ficheiro: "imagens/palmela/porta.jpg"
+    legenda: "Uma porta abobadada entre panos de muralha, com a torre de menagem por cima."
+    autor: "GualdimG, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Palmela_20.jpg"
+  - ficheiro: "imagens/palmela/praca-de-armas.jpg"
+    legenda: "A praça de armas no interior do castelo."
+    autor: "GualdimG, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Pra%C3%A7a_de_Armas_Castelo_de_Palmela_01.jpg"
+  - ficheiro: "imagens/palmela/sobre-a-vila.jpg"
+    legenda: "O castelo e o convento no alto, por cima das casas de Palmela."
+    autor: "GualdimG, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Palmela_Pousada_03.jpg"
 ---
 
 Palmela foi reconquistada a 24 de junho de 1165. Em 1186 o castelo foi entregue à Ordem de Santiago, que ali tinha a sede antes de 1210. Em 1384 D. Nuno Álvares Pereira mandou acender fogueiras nas torres, e em 1423 D. João I fez obras no castelo.

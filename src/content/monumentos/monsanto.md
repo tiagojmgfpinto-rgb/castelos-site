@@ -74,6 +74,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo de Monsanto, n.º 3930 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=3930"
+imagens:
+  - ficheiro: "imagens/monsanto/muralha-e-penedos.jpg"
+    legenda: "A muralha do castelo encaixada entre os grandes penedos de granito."
+    autor: "Axel Cotón Gutiérrez, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castillo_de_Monsanto_04.jpg"
+  - ficheiro: "imagens/monsanto/torre-entre-rochas.jpg"
+    legenda: "Restos da muralha e de uma torre entre os blocos de granito do cume."
+    autor: "Axel Cotón Gutiérrez, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castillo_de_Monsanto_01.jpg"
+  - ficheiro: "imagens/monsanto/capela-e-cerca.jpg"
+    legenda: "O interior da cerca, com uma capela e a porta na muralha."
+    autor: "Axel Cotón Gutiérrez, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castillo_de_Monsanto_14.jpg"
+  - ficheiro: "imagens/monsanto/escada.jpg"
+    legenda: "Uma escada de degraus de granito embutida no pano da muralha."
+    autor: "Alvesgaspar, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Stairway_Monsanto_Castle_April_2015-1.jpg"
 ---
 
 A 30 de novembro de 1165 D. Afonso Henriques doou Monsanto aos Templários e ao mestre Gualdim Pais. Em 1172 o castelo passou para a Ordem de Santiago, e em 1174 a povoação recebeu foral.
