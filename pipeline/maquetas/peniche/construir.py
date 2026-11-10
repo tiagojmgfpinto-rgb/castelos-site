@@ -1087,7 +1087,8 @@ def edificio(m, poly, zt, amarelo):
                 if amarelo:
                     janela(Q, s_, pz, 1.0, 2.0, arco=True, mat_vidro=VID, moldura=0.16, d=0.0)
                 else:
-                    janela(Q, s_, pz + 0.3, 0.75, 1.15, arco=False, mat_vidro=SOM, moldura=0.1, d=0.0, grade=True)
+                    # fotografia do pátio: vãos de c. 1 × 1,3 m com caixilho claro e grade
+                    janela(Q, s_, pz + 0.25, 0.95, 1.3, arco=False, mat_vidro=SOM, moldura=0.14, d=0.0, grade=True)
     return n
 
 
@@ -1521,6 +1522,14 @@ def textura_terreno():
     tapa = ((CLS == 6) & (H > 1.5) & ~_dentro_plat) | (VEG & (H > 1.8)) | ((CLS == 0) & ~AGUA)
     tc = (tapa[:-1, :-1] | tapa[1:, :-1] | tapa[:-1, 1:] | tapa[1:, 1:])[::-1]
     tc = ndi.binary_dilation(tc, iterations=1)
+    # As sombras do voo (ao pé dos muros, dos edifícios e das palmeiras) também se tapam: a maqueta faz as suas
+    # sombras (auditoria de novembro de 2026: sombras carimbadas no chão). A água fica como está.
+    lum = img.mean(-1)
+    azul = img[..., 2] - (img[..., 0] + img[..., 1]) / 2
+    sombra = ((lum < 0.72 * ndi.median_filter(lum, size=31)) & (lum < 0.42)) | ((azul > 0.0) & (lum < 0.40))
+    sombra = ndi.binary_dilation(ndi.binary_opening(sombra, iterations=1), iterations=2)
+    sombra &= ~(AGUA[:-1, :-1] | AGUA[1:, 1:])[::-1][:sombra.shape[0], :sombra.shape[1]]
+    tc |= sombra[:tc.shape[0], :tc.shape[1]]
     bom = (~tc).astype(float)
     out = img.copy()
     falta = tc.copy()
