@@ -48,7 +48,7 @@ from comum import (ALA_OESTE, ALA_SUL, CORREDOR, LAT0, LON0, MEIA_TORRE, PASSAGE
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # pipeline/, para o kit comum
 from kit.geometria import normais, amostra, quad, arco_pts, _sd, _anc  # noqa: E402
 from kit.texturas import ruido, fbm, textura_cantaria, textura_cubos, textura_rocha, textura_telha, textura_terra, imagem  # noqa: E402
-from kit.cena import uv_mundo  # noqa: E402
+from kit.cena import Obra, uv_mundo  # noqa: E402
 from kit.materiais import MATS, malha_rapida, material  # noqa: E402
 from kit.arquitetura import aduelas, contorno_vao, parede, passagem, vao  # noqa: E402
 
@@ -1412,6 +1412,9 @@ def construir_arvores(mon):
     f0 = [[x.index for x in fa.verts] for fa in bm.faces]
     bm.free()
     mon_l = mon.buffer(1.0)
+    # nenhuma copa entra nos muros nem passa da borda da maqueta (auditoria de novembro de 2026: 4 copas
+    # tocavam nos muros e 2 pendiam fora do terreno)
+    obra = Obra(excluir=("Terreno", "terreno", "base", "Base", "arvores"))
     n = 0
     for (r, c) in ndi.center_of_mass(topo, lab, range(1, k + 1)):
         r, c = int(round(r)), int(round(c))
@@ -1423,6 +1426,12 @@ def construir_arvores(mon):
         zt, zc = MDT[r, c], MDS[r, c]
         alt = zc - zt
         rad = float(np.clip(np.sqrt(veg[max(r - 10, 0):r + 11, max(c - 10, 0):c + 11].sum() * 0.25 / math.pi), 1.3, 5.5))
+        rad = min(rad, (min(x - X0, X1 - x, y - Y0, Y1 - y) - 0.3) / 1.1)
+        fo = obra.folga([(x, y, zc - alt * f) for f in (0.15, 0.35, 0.55)])
+        if fo < rad * 1.1 + 0.15:
+            rad = (fo - 0.15) / 1.1
+        if rad < 1.0 or obra.folga([(x, y, zt + 0.5), (x, y, zc - alt * 0.45)]) < 0.35:
+            continue
         for (dx, dy, dz, s) in ((0, 0, -0.35, 1.0), (0.4, 0.2, -0.5, 0.7), (-0.35, -0.3, -0.55, 0.7), (0.1, -0.4, -0.3, 0.6)):
             b = len(V)
             pts = (v0 + rng.normal(0, 0.06, v0.shape)) * np.array([rad * s, rad * s, alt * 0.30 * s]) + np.array([x + dx * rad, y + dy * rad, zc + dz * alt * 0.45])
