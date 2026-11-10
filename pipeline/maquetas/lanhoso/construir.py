@@ -1024,10 +1024,11 @@ def santuario():
     z_cc, z_ccume = 384.45, 386.6
     m.prisma(ccw(SL([(s_c0 - 0.2, -qc), (s_c1, -qc), (s_c1, qc), (s_c0 - 0.2, qc)])), z_fund, z_cc, 0, mat_topo=0)
     fc = Plano(S(14.5, qc), ES, n=EQ)
-    for s_ in (12.2, 16.6):
-        c = reto(s_, 0.85, 381.6, 383.0)
+    for s_ in (12.2, 16.6):              # s da nave; no plano fc conta-se a partir de s = 14,5 (antes ficavam 14,5 m a norte, no terreiro)
+        sf_ = s_ - 14.5
+        c = reto(sf_, 0.85, 381.6, 383.0)
         painel(m, fc, c, (), 4, d=0.02)
-        m.caixa_face(fc, s_ - 0.58, s_ + 0.58, 0.0, 0.06, 383.0, 383.15, 1)
+        m.caixa_face(fc, sf_ - 0.58, sf_ + 0.58, 0.0, 0.06, 383.0, 383.15, 1)
     m.prisma(ccw(SL([(s_c0, -qc - 0.25), (s_c1 + 0.25, -qc - 0.25), (s_c1 + 0.25, qc + 0.25), (s_c0, qc + 0.25)])), z_cc - 0.2, z_cc + 0.08, 1, mat_topo=1)
     for sgn in (-1, 1):
         ameias_cornija(m, s_c0 + 0.3, s_c1, sgn * (qc + 0.1), z_cc + 0.08, mat=1)
@@ -1051,8 +1052,8 @@ def santuario():
     m.face(orientar([(*S(s_s0 - 0.3, q_s0 - 0.35), 381.15), (*S(s_s1 + 0.3, q_s0 - 0.35), 381.15), (*S(s_s1 + 0.3, q_s1), 383.6), (*S(s_s0 - 0.3, q_s1), 383.6)], np.array([0, 0, 1.0])), 2)
     m.face(orientar([(*S(s_s0 - 0.3, q_s0 - 0.35), 381.03), (*S(s_s1 + 0.3, q_s0 - 0.35), 381.03), (*S(s_s1 + 0.3, q_s1), 383.48), (*S(s_s0 - 0.3, q_s1), 383.48)], np.array([0, 0, -1.0])), 2)
     fsw = Plano(S(15.0, q_s0), -ES, n=-EQ)
-    for s_ in (-13.3, -16.6):
-        painel(m, fsw, reto(s_, 0.7, 379.5, 380.6), (), 4, d=0.02)
+    for s_ in (13.3, 16.6):              # s da nave; no plano fsw (eixo -ES a partir de s = 15) é 15 - s (antes ficavam no terreiro)
+        painel(m, fsw, reto(15.0 - s_, 0.7, 379.5, 380.6), (), 4, d=0.02)
     m.objeto("santuario", "santuario", GRUPOS["Santuario"], uv=3.0, vcor=patine_igreja)
     # ---- adro e escadas (LiDAR: adro a 377,95 m de s -9,6 a -13,4; degraus para sul até 377,2 m)
     ma = Malha(["muro_topo", "calcada"])
