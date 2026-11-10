@@ -49,6 +49,8 @@ test("A: um monumento publicado depois de a página abrir aparece sem recarregar
   await page.clock.install({ time: agora });
   await page.route(/\.glb/, () => undefined);
   await page.goto("./");
+  // só depois de a interface montar é que o relógio do painel está a contar
+  await expect(page.getByRole("button", { name: "Novidades" })).toBeVisible();
   await expect(page.locator("#recentes")).toHaveCount(0);
 
   // nova publicação: o ficheiro de dados passa a ter um monumento de há 1 hora, sem maqueta
@@ -56,6 +58,7 @@ test("A: um monumento publicado depois de a página abrir aparece sem recarregar
   await page.route(/dados\/adicionados\.json/, (r) => r.fulfill({ json: [novo, ...lista.filter((x) => x.id !== novo.id)] }));
   await page.clock.fastForward(5 * 60 * 1000 + 1000);
   const painel = page.locator("#recentes");
+  await expect(painel).toBeVisible();
   if ((await painel.getAttribute("data-minimizado")) === "1") await painel.locator(".recentes-titulo").click();
   await expect(painel.locator(`li[data-id="${novo.id}"]`)).toContainText("Adicionado há 1 hora");
 
