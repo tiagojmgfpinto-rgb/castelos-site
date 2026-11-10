@@ -82,14 +82,14 @@
   "faces": 399
  },
  "vila": {
-  "edificios": 99,
-  "do_osm": 63,
+  "edificios": 98,
+  "do_osm": 62,
   "do_lidar": 36,
-  "medidos": 410,
+  "medidos": 408,
   "recusas": {
    "fora": 319,
    "evitar": 29,
-   "escarpa": 19
+   "escarpa": 16
   }
  },
  "vegetacao": {
