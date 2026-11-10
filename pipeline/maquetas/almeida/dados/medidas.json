@@ -36,7 +36,7 @@
  "sa_dentro": {
   "soleira": 749.4,
   "topo_muralha": 758.8,
-  "altura_frontaria": 10.0,
+  "altura_frontaria": 6.9,
   "vao": {
    "r": 1.6,
    "omb": 2.9,
@@ -65,7 +65,7 @@
  "sa_fora": {
   "soleira": 745.4,
   "topo_muralha": 753.4,
-  "altura_frontaria": 10.1,
+  "altura_frontaria": 11.1,
   "vao": {
    "r": 1.5,
    "omb": 2.6,
@@ -132,7 +132,7 @@
   "faces": 2196
  },
  "igreja_misericordia": {
-  "faces": 954
+  "faces": 665
  },
  "torre_relogio": {
   "faces": 2243

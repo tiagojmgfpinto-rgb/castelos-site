@@ -104,6 +104,11 @@ A pegada vem do OSM e as cotas do MDS. A orientação das fachadas foi conferida
 - **Base:** redonda em vez de recortada pelo traçado da praça.
 - **Quartel das Esquadras:** a 0.1 tinha a arcaria só no lado sudeste e a telha laranja. O Street View mostra arcaria dos dois lados, com uma porta verde ao fundo de cada arco e uma faixa de duas fiadas de granito por cima, e o ortofotomapa mostra a telha escura. Faltavam as chaminés e a escadaria em V do topo nordeste.
 - **Torre do Relógio:** o remate é uma lanterna pequena com cata-vento sobre a balaustrada, não uma cúpula grande.
+- **Portas de Santo António:** a de dentro não tem frontão nem guarita: pilastras almofadadas, painel do brasão entre duas seteiras, friso de tríglifos e cornija, e uma janela gradeada à direita. A de fora não tem empena: frontispício retangular com cornija, lápide, brasão e guarita por cima. Saiu um cordão da casa da guarda que ficava solto sobre o fosso.
+- **Muralhas:** a alvenaria escura de pedra miúda passou a cantaria de granito claro, com silhares maiores e manchas de líquen, como nas fotografias.
+- **Igreja da Misericórdia:** a porta é de arco pleno com colunelos e frontão curvo inteiro; as janelas são de sacada, com varandim; o brasão real está na empena e não há óculo.
+- **Janelas:** as janelas fora do eixo de cada fachada (Quartel, Misericórdia) eram desenhadas todas no centro; agora cada uma fica no seu lugar. Peniche, Valença e Monção usam a mesma função e têm o mesmo erro.
+- **Conferido sem mudanças:** Portas de São Francisco (as duas), Porta Nova, pontes e Igreja Matriz.
 - **Árvores:** o pé passa a vir da malha do terreno já simplificada (com a base maior, o MDT ficava acima dela longe da praça). Os 500 troncos assentam no chão.
 
 ## Contradições
@@ -115,11 +120,11 @@ A pegada vem do OSM e as cotas do MDS. A orientação das fachadas foi conferida
 ## Verificações (fase 5)
 
 **Auditoria** (`auditoria-maquetas/ferramentas/auditar.py`)
-- GLB: 2,6 MB com Draco; 473 mil triângulos; 56 primitivas (0.2, base redonda).
-- Sem z-fighting nem normais invertidas.
+- GLB: 2,6 MB com Draco; 473 mil triângulos; 55 primitivas (0.2, base redonda).
+- Sem z-fighting. A base tem 7,5 % das faces com a normal trocada segundo o auditor, por ter o rebordo e o fundo a partilhar o anel; não se vê no visor.
 - Árvores: 500 troncos medidos um a um, todos assentes no terreno; o auditor agrupa copas vizinhas e conta 31 grupos «a flutuar», que não são troncos soltos.
-- 160 peças «a flutuar»: são beirais e telhados separados das paredes (Valença tinha 130).
-- 447 peças «enterradas»: são as peças dos túneis debaixo do terrapleno, de propósito.
+- 209 peças «a flutuar»: são beirais e telhados separados das paredes (Valença tinha 130).
+- 461 peças «enterradas»: são as peças dos túneis debaixo do terrapleno, de propósito.
 
 **Teste de raios** (três alturas e três posições por porta)
 - As cinco passagens estão abertas.
