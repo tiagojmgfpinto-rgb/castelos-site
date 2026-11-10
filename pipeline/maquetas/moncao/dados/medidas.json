@@ -15,8 +15,8 @@
  "passadico": 356.9,
  "chao": {
   "fonte": "DGT OrtoSat 2023 (WMS ortosat2023), 25 cm, acertado ao LiDAR 2025",
-  "trocos_limpos": 301,
-  "rua_limpa_pct": 41.4
+  "trocos_limpos": 300,
+  "rua_limpa_pct": 37.7
  },
  "porta_rosal": {
   "soleira": 30.9,
@@ -71,7 +71,9 @@
   }
  },
  "vegetacao": {
-  "arvores": 1678
+  "arvores": 1633,
+  "encolhidas": 115,
+  "retiradas": 45
  },
  "ancoras": {
   "porta_rosal": [
