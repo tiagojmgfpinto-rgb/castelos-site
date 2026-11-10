@@ -110,6 +110,27 @@ fontes:
     consultado: "2026-10-27"
   - titulo: "Parques de Sintra — Visitas guiadas ao Castelo dos Mouros"
     url: "https://www.parquesdesintra.pt/pt/planear-a-visita/visitas-guiadas/castelo-dos-mouros/"
+imagens:
+  - ficheiro: "imagens/castelo-dos-mouros/sobre-os-penedos.jpg"
+    legenda: "As muralhas do castelo no alto dos penedos de granito da serra de Sintra."
+    autor: "Ввласенко, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_dos_Mouros._Sintra,_Portugal.jpg"
+  - ficheiro: "imagens/castelo-dos-mouros/muralha-e-torres.jpg"
+    legenda: "A muralha a subir pela encosta entre as torres, com Sintra em baixo."
+    autor: "Diego Delso, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_dos_Mouros,_Sintra,_Portugal,_2019-05-25,_DD_82.jpg"
+  - ficheiro: "imagens/castelo-dos-mouros/vista-sobre-sintra.jpg"
+    legenda: "Uma torre do castelo e, em baixo, a vila de Sintra com o Palácio Nacional."
+    autor: "Jakub Hałun, Wikimedia Commons"
+    licenca: "CC BY 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_dos_Mouros,_Sintra,_20250606_1155_0098.jpg"
+  - ficheiro: "imagens/castelo-dos-mouros/interior.jpg"
+    legenda: "Vista panorâmica do interior do castelo, com os adarves e as torres."
+    autor: "Diego Delso, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_dos_Mouros,_Sintra,_Portugal,_2019-05-25,_DD_112-121_PAN.jpg"
 ---
 
 O castelo foi erguido no período muçulmano num dos topos da Serra de Sintra,, entre blocos de granito. Em 1031, depois da queda de Córdova, a taifa de Badajoz entregou Sintra a Afonso VI de Leão e Castela, mas o castelo voltou a perder-se. Só depois da conquista de Lisboa, em 1147, se entregou aos cristãos. D. Afonso Henriques confiou a sua guarda a trinta povoadores e deu foral à vila em 1154.

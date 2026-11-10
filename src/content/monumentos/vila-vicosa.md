@@ -73,6 +73,22 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo de Vila Viçosa, n.º 3927 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=3927"
+imagens:
+  - ficheiro: "imagens/vila-vicosa/porta.jpg"
+    legenda: "Uma porta em arco da cerca do castelo, entre panos de muralha com ameias."
+    autor: "Alvesgaspar, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Vila_Vi%C3%A7osa_September_2013-35.jpg"
+  - ficheiro: "imagens/vila-vicosa/fosso.jpg"
+    legenda: "O fosso e a muralha da fortaleza abaluartada, com um torreão redondo."
+    autor: "Rui Ornelas [2], Wikimedia Commons"
+    licenca: "CC BY 2.0"
+    url: "https://commons.wikimedia.org/wiki/File:VilaVicosaCastle.jpg"
+  - ficheiro: "imagens/vila-vicosa/pelourinho.jpg"
+    legenda: "O pelourinho manuelino em frente à muralha do castelo."
+    autor: "Alvesgaspar, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Vila_Vi%C3%A7osa_September_2013-18.jpg"
 ---
 
 Vila Viçosa recebeu foral de D. Afonso III a 5 de junho de 1270, e o castelo começou por essa época. D. Dinis acabou-o e mandou erguer a cerca da vila, e D. Fernando fez obras importantes, entre elas a torre de menagem, afastada do castelo e ligada à cerca por um passadiço. Depois da crise de 1383 a 1385 os domínios foram dados a Nuno Álvares Pereira.

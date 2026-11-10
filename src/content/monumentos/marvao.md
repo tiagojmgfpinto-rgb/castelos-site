@@ -82,6 +82,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Fortificações de Marvão, IPA.00003234 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=3234"
+imagens:
+  - ficheiro: "imagens/marvao/castelo-e-jardim.jpg"
+    legenda: "O castelo no alto da escarpa de granito, com o jardim de buxo em baixo."
+    autor: "Elemaki, Wikimedia Commons"
+    licenca: "CC BY 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:CastillodeMarvao.jpg"
+  - ficheiro: "imagens/marvao/torre-de-menagem.jpg"
+    legenda: "A torre de menagem e o recinto do castelo, com a serra de São Mamede ao fundo."
+    autor: "Hugo Ferreira, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Marv%C3%A3o_5.jpg"
+  - ficheiro: "imagens/marvao/cisterna.jpg"
+    legenda: "A grande cisterna abobadada do castelo."
+    autor: "Brian Wee, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Marv%C3%A3o_-_cistern.jpg"
+  - ficheiro: "imagens/marvao/recinto.jpg"
+    legenda: "O recinto entre as muralhas, visto do alto, com a paisagem do Alto Alentejo."
+    autor: "Hugo Ferreira, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Marv%C3%A3o_9.jpg"
 ---
 
 O monte de Marvão deve o nome a Ibne Maruane, que ali se instalou em 876 e 877; no século X o lugar era a Amaia de Ibne Maruane. D. Afonso Henriques terá tomado o castelo entre 1160 e 1166, e em 1214 Marvão já estava em terras portuguesas. D. Sancho II deu-lhe foral em 1226, e em 1271 D. Afonso III entregou os domínios à Ordem do Hospital.

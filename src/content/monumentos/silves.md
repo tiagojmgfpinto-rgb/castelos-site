@@ -92,6 +92,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo de Silves, n.º 1288 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=1288"
+imagens:
+  - ficheiro: "imagens/silves/sobre-a-cidade.jpg"
+    legenda: "O castelo de grés vermelho por cima das casas da cidade velha."
+    autor: "Norbert Nagel, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Silves_above_the_old_town_houses_-_2015-08-13.jpg"
+  - ficheiro: "imagens/silves/escavacoes.jpg"
+    legenda: "As escavações do interior, com as fundações do palácio e a muralha à volta."
+    autor: "Norbert Nagel, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Excavations_and_rampart_inside_Castelo_de_Silves_-_2015-08-13.jpg"
+  - ficheiro: "imagens/silves/torre.jpg"
+    legenda: "Uma torre quadrada de grés vermelho, com ameias."
+    autor: "Norbert Nagel, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Crenellated_sandstone_tower_of_Castelo_de_Silves_-_2015-08-13.jpg"
+  - ficheiro: "imagens/silves/muralha.jpg"
+    legenda: "O pano exterior da muralha com uma torre, visto do adarve."
+    autor: "Norbert Nagel, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Defensive_wall_and_tower_of_Castelo_de_Silves_-_2015-08-13.jpg"
 ---
 
 As primeiras defesas de Silves são dos primeiros anos do domínio muçulmano, no século VIII, e no século XI a cidade foi capital de uma taifa. A alcáçova que se vê hoje é provavelmente almóada, de taipa revestida de grés de Silves. Em 1189 D. Sancho I tomou a cidade com a ajuda de cruzados, mas em 1191 o califa Almançor recuperou-a. A reconquista definitiva, por D. Paio Peres Correia, foi em 1249, e D. Afonso III deu-lhe foral em 1266.

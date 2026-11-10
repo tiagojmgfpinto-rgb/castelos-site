@@ -83,6 +83,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo de Trancoso, n.º 4056 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=4056"
+imagens:
+  - ficheiro: "imagens/trancoso/torre-de-menagem.jpg"
+    legenda: "A torre de menagem, de planta trapezoidal, e a cerca do castelo sobre os afloramentos de granito."
+    autor: "Cardilio, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:IMGP3676_-_Castelo_de_Trancoso.jpg"
+  - ficheiro: "imagens/trancoso/castelo.jpg"
+    legenda: "O castelo visto de fora, com as torres e a porta na muralha."
+    autor: "Gerd Eichmann, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Trancoso-Castelo-04-2011-gje.jpg"
+  - ficheiro: "imagens/trancoso/porta-del-rei.jpg"
+    legenda: "A Porta d'El-Rei, a principal entrada da muralha da vila, com o brasão por cima do arco."
+    autor: "Alvesgaspar, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Trancoso_July_2016-2.jpg"
+  - ficheiro: "imagens/trancoso/interior.jpg"
+    legenda: "O recinto do castelo, com uma torre e um cruzeiro."
+    autor: "Gerd Eichmann, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Trancoso-Castelo-10-2011-gje.jpg"
 ---
 
 A primeira notícia de um castelo em Trancoso é de 960, quando Mumadona Dias o deixou, com outros bens, ao Mosteiro de Guimarães. Fernando Magno reconquistou a região em 1057 ou 1058. Em 1140 uma coluna muçulmana saqueou Trancoso e cercou o castelo, e D. Afonso Henriques venceu-a na batalha de Trancoso. A fundação do castelo está comprovada em 1159, e nesta fase a velha torre passou a torre de menagem.

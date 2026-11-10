@@ -86,6 +86,27 @@ fontes:
   - titulo: "Visit Azores — Military Museum of the Azores"
     url: "https://visitazores.com/en/explore/military-museum-of-the-azores"
     consultado: "2026-11-09"
+imagens:
+  - ficheiro: "imagens/sao-bras/panorama.jpg"
+    legenda: "O Forte de São Brás à beira-mar em Ponta Delgada, com a guarita de cúpula no ângulo."
+    autor: "Diego Delso, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Fuerte_de_San_Blas,_Ponta_Delgada,_isla_de_San_Miguel,_Azores,_Portugal,_2020-07-28,_DD_13.jpg"
+  - ficheiro: "imagens/sao-bras/baluarte.jpg"
+    legenda: "Um baluarte do forte com a guarita e, por trás, o edifício do comando."
+    autor: "Reis Quarteu, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Forte_de_S%C3%A3o_Br%C3%A1s_-_Ponta_Delgada,_Ilha_de_S%C3%A3o_Miguel,_A%C3%A7ores_-_03.jpg"
+  - ficheiro: "imagens/sao-bras/do-porto.jpg"
+    legenda: "O forte visto do porto, com a muralha a cair sobre a água."
+    autor: "Robert Cutts from Bristol, England, UK, Wikimedia Commons"
+    licenca: "CC BY 2.0"
+    url: "https://commons.wikimedia.org/wiki/File:Forte_de_S%C3%A3o_Br%C3%A1s,_Ponta_Delgada_(16241093614).jpg"
+  - ficheiro: "imagens/sao-bras/muralha.jpg"
+    legenda: "A muralha em talude de basalto, com um canhão no jardim em frente."
+    autor: "José Luís Ávila Silveira/Pedro Noronha e Costa, Wikimedia Commons"
+    licenca: "Domínio público"
+    url: "https://commons.wikimedia.org/wiki/File:Forte_de_S%C3%A3o_Br%C3%A1s,_muralha,_Ponta_Delgada,_ilha_de_S%C3%A3o_Miguel,_A%C3%A7ores.JPG"
 ---
 
 Em 1543 Bartolomeu Ferraz recomendou a D. João III a fortificação dos Açores. Em Ponta Delgada, depois de um primeiro esboço de Manuel Machado, Isidoro de Almeida fez em 1553 a traça de uma fortaleza para o porto, paga com um imposto de 2% sobre o pastel e o açúcar. Em 1554 chegou à ilha a confraria de bombardeiros, com o condestável Lourenço Baldaíque.

@@ -84,6 +84,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo e Cerca Urbana de Moura, IPA.00000993 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=993"
+imagens:
+  - ficheiro: "imagens/moura/torre-de-menagem.jpg"
+    legenda: "A torre de menagem e um pano de muralha, vistos do interior do castelo."
+    autor: "MTeresaSoares, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:20200803_114846_Pano_da_muralha_e_torre_vista_do_interior_do_Castelo_de_Moura.jpg"
+  - ficheiro: "imagens/moura/muralha.jpg"
+    legenda: "A muralha interior do castelo, com o coroamento de ameias."
+    autor: "Senhormario, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Muralha_interior_do_castelo_de_Moura.jpg"
+  - ficheiro: "imagens/moura/torre-do-relogio.jpg"
+    legenda: "A Torre do Relógio, no interior do castelo."
+    autor: "MTeresaSoares, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:20200803_114009_Torre_do_Rel%C3%B3gio,_no_interior_do_Castelo_de_Moura.jpg"
+  - ficheiro: "imagens/moura/recinto.jpg"
+    legenda: "O recinto do castelo, com a Torre do Relógio ao fundo."
+    autor: "Senhormario, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Torre_do_rel%C3%B3gio_de_Moura_vista_do_interior_do_castelo.jpg"
 ---
 
 Moura nasceu de um castro da Idade do Ferro e foi, no tempo muçulmano, capital da província de Al-Manijah. Da fortificação de taipa dos séculos XI e XII resta a Torre da Salúquia. Os irmãos Pedro e Álvaro Rodrigues tomaram a vila em 1166, mas ela mudou de mãos várias vezes até ficar em definitivo do lado cristão, a partir de 1232.

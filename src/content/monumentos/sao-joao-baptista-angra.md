@@ -87,6 +87,22 @@ fontes:
     url: "https://whc.unesco.org/en/list/206"
   - titulo: "SIPA — Igreja de São João Baptista do Castelo, Fortaleza e Muralhas, n.º 8105 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=8105"
+imagens:
+  - ficheiro: "imagens/sao-joao-baptista-angra/baluartes.jpg"
+    legenda: "Baluartes e fossos da fortaleza no Monte Brasil, com Angra do Heroísmo ao fundo."
+    autor: "José Luís Ávila Silveira/Pedro Noronha e Costa 13:37, 18 July 2007 (UTC), Wikimedia Commons"
+    licenca: "Domínio público"
+    url: "https://commons.wikimedia.org/wiki/File:Fortaleza_de_S%C3%A3o_Jo%C3%A3o_Baptista,_Monte_Brasil,_ilha_Terceira,_A%C3%A7ores,_a_cidade_de_Angra_do_Hero%C3%ADsmo_ao_fundo.JPG"
+  - ficheiro: "imagens/sao-joao-baptista-angra/monte-brasil.jpg"
+    legenda: "A muralha da fortaleza na encosta do Monte Brasil."
+    autor: "GualdimG, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Fortaleza_de_S%C3%A3o_Jo%C3%A3o_Baptista_do_Monte_Brasil_01.jpg"
+  - ficheiro: "imagens/sao-joao-baptista-angra/cortina.jpg"
+    legenda: "A cortina de muralha da fortaleza vista da cidade."
+    autor: "GualdimG, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Fortaleza_de_S%C3%A3o_Jo%C3%A3o_Baptista_do_Monte_Brasil_02.jpg"
 ---
 
 Depois de Álvaro de Bazán conquistar a Terceira para Filipe II, em 1583, a coroa mandou fortificar o istmo do Monte Brasil. Tiburzio Spannocchi visitou a ilha em 1583 e 1584, e em 1593 lançou-se a primeira pedra, no baluarte de Santa Catarina, sob a direção de Giovanni Vicenzo Casale, com Spannocchi e Antão Colla. A fortaleza chamou-se então Castelo de São Filipe.

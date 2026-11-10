@@ -75,6 +75,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Fortaleza de São Tiago, n.º 2379 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=2379"
+imagens:
+  - ficheiro: "imagens/sao-tiago-funchal/do-mar.jpg"
+    legenda: "A fortaleza amarela à beira-mar, na zona velha do Funchal."
+    autor: "TeWeBs, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Funchal_Fortaleza_Sao_Tiago.JPG"
+  - ficheiro: "imagens/sao-tiago-funchal/terrapleno.jpg"
+    legenda: "O terrapleno da fortaleza, com o parapeito de ameias e uma guarita sobre o mar."
+    autor: "H. Zell, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Forte_de_S%C3%A3o_Tiago_-_Funchal_05.jpg"
+  - ficheiro: "imagens/sao-tiago-funchal/guarita.jpg"
+    legenda: "Uma guarita de cúpula no ângulo da muralha, virada para o mar."
+    autor: "H. Zell, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Forte_de_S%C3%A3o_Tiago_-_Funchal_06.jpg"
+  - ficheiro: "imagens/sao-tiago-funchal/baluarte.jpg"
+    legenda: "Um baluarte com guarita e parapeito pintados de amarelo e cantaria escura."
+    autor: "H. Zell, Wikimedia Commons"
+    licenca: "CC BY-SA 3.0"
+    url: "https://commons.wikimedia.org/wiki/File:Forte_de_S%C3%A3o_Tiago_-_Funchal_02.jpg"
 ---
 
 A Fortaleza de São Tiago fecha pelo nascente a cintura defensiva da baía do Funchal. Foi começada na dinastia filipina, com projeto atribuído a Mateus Fernandes e modificado por Jerónimo Jorge, fortificador régio desde 1595; em 1611 as obras estavam em curso, e a inscrição sobre o primitivo Portão de Armas tem a data de 1614. As obras complementares acabaram por volta de 1637, e em 1654 Bartolomeu João, filho de Jerónimo Jorge, desenhou-a com três ordens de baterias.

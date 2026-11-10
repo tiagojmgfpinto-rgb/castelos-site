@@ -74,6 +74,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo de Monsaraz, n.º 6512 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=6512"
+imagens:
+  - ficheiro: "imagens/monsaraz/porta.jpg"
+    legenda: "Uma porta em arco da cerca de Monsaraz, com a rua da vila do lado de dentro."
+    autor: "Cardilio, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:IMGP4198_-_Porta_do_Castelo_de_Monsaraz.jpg"
+  - ficheiro: "imagens/monsaraz/praca-de-armas.jpg"
+    legenda: "A praça de armas do castelo, com as bancadas de pedra, e a torre de menagem."
+    autor: "Herbert wie, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Monsaraz_Pra%C3%A7a_de_Armas_Monsaraz_Portugal.jpg"
+  - ficheiro: "imagens/monsaraz/adarve.jpg"
+    legenda: "O adarve e as torres do lado sul do castelo, com a planície e o Alqueva ao fundo."
+    autor: "Herbert wie, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Monsaraz_Panorama_Mosaraz_Portugal.jpg"
+  - ficheiro: "imagens/monsaraz/vila-no-monte.jpg"
+    legenda: "A vila de Monsaraz no alto do monte, dentro da sua cerca de muralhas."
+    autor: "Pmvandrade, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:70568_-_Fortifica%C3%A7%C3%A3o_da_Vila_de_Monsaraz_e_todo_o_conjunto_intramuros.jpg"
 ---
 
 O nome de Monsaraz vem do árabe e o monte terá sido ocupado desde a pré-história. Geraldo Sem Pavor tomou-o em 1167, mas os almóadas recuperaram-no em 1173. A conquista definitiva veio em 1232, com D. Sancho II e os Templários, que ficaram com a vila. D. Afonso III deu-lhe foral em 1276, e o alcaide Martim Anes Zagalo começou então a nova alcáçova.

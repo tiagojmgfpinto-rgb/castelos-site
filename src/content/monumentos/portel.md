@@ -74,6 +74,27 @@ fontes:
     consultado: "2026-11-09"
   - titulo: "SIPA — Castelo de Portel, n.º 6510 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=6510"
+imagens:
+  - ficheiro: "imagens/portel/vista-exterior.jpg"
+    legenda: "O castelo visto de fora: a cerca com os cubelos e a torre de menagem."
+    autor: "Carlos Vieira Romão, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Portel_-_vista_geral_exterior.jpg"
+  - ficheiro: "imagens/portel/torre-de-menagem.jpg"
+    legenda: "A torre de menagem, com o coroamento de ameias."
+    autor: "Carlos Vieira Romão, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Portel_-_vista_da_torre_de_menagem.jpg"
+  - ficheiro: "imagens/portel/sobre-o-olival.jpg"
+    legenda: "A cerca e a torre de menagem por cima do olival."
+    autor: "GualdimG, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Portel_03.jpg"
+  - ficheiro: "imagens/portel/igreja-e-castelo.jpg"
+    legenda: "A Igreja Matriz de Portel e, por trás, o castelo."
+    autor: "GualdimG, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Igreja_Matriz_e_Castelo_de_Portel_02.jpg"
 ---
 
 Portel começou como honra de D. João de Aboim, um dos homens de confiança de D. Afonso III, que recebeu do rei domínios entre Évora e Beja, na serra de Portel. Em 1261, demarcada a jurisdição, o rei autorizou-o a erguer um castelo, e a 1 de dezembro de 1262 Aboim deu foral aos povoadores. Depois da sua morte, o castelo voltou à Coroa em 1289, e as obras prosseguiram com D. Dinis, a quem se atribui também a cerca da vila, que não chegou aos nossos dias.
