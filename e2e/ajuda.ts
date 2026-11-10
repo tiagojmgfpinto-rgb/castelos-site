@@ -27,3 +27,16 @@ export function transbordos(): string[] {
   }
   return r;
 }
+
+/**
+ * Nas 36 h depois de entrar uma maqueta nova, as Novidades abrem sozinhas ao carregar o atlas (Interface.tsx)
+ * e tapam o painel dos recentes e parte do mapa. Os testes que não são sobre isso fecham-nas.
+ */
+export async function fecharNovidadesSozinhas(pg: Page) {
+  await pg.getByRole("button", { name: "Novidades" }).waitFor();
+  await pg.waitForTimeout(500);
+  await pg.evaluate(() => {
+    const a = (window as unknown as { __atlas?: { getState(): { painel: string | null }; setState(s: object): void } }).__atlas;
+    if (a?.getState().painel === "novidades") a.setState({ painel: null });
+  });
+}
