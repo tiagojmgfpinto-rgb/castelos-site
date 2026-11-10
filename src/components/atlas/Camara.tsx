@@ -155,6 +155,7 @@ export function Camara({ territorio }: { territorio: TerritorioId }) {
     // planos de recorte e escala adaptados à distância
     const dist = camera.position.distanceTo(c.target);
     relevo.escala = escalaRelevo(dist);
+    relevo.distancia = dist;
     camera.near = Math.max(0.01, dist / 400);
     camera.far = Math.max(4000, dist * 8);
     camera.updateProjectionMatrix();

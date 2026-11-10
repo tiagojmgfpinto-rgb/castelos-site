@@ -370,8 +370,8 @@ function Fontes() {
       </p>
       <dl>
         <div><dt>Relevo</dt><dd>Copernicus DEM GLO-30 (Agência Espacial Europeia, via AWS Open Data)</dd></div>
-        <div><dt>Costa e fronteiras</dt><dd>Natural Earth 1:10m (domínio público)</dd></div>
-        <div><dt>Limites dos distritos</dt><dd>Natural Earth, provisório até à CAOP da DGT</dd></div>
+        <div><dt>Linha de costa</dt><dd>Natural Earth 1:10m (domínio público)</dd></div>
+        <div><dt>Fronteira, distritos, concelhos e ilhas</dt><dd>Carta Administrativa Oficial de Portugal (CAOP 2025), Direção-Geral do Território</dd></div>
         <div><dt>Rios</dt><dd>Natural Earth 1:10m (domínio público)</dd></div>
       </dl>
       <p className="nota">

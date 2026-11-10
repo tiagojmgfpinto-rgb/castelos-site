@@ -196,6 +196,11 @@ button { font: inherit; color: inherit; }
 .rotulo-cidade.nivel-1 { font-size: 14.5px; font-weight: 700; }
 .rotulo-cidade.nivel-1 .ponto { width: 8px; height: 8px; background: #7a2a1c; }
 .rotulo-cidade[data-visivel="0"] { opacity: 0; }
+.rotulo-arquipelago { font-size: 13.5px; letter-spacing: 0.26em; color: rgba(30, 48, 60, 0.9); }
+/* nomes das ilhas: versaletes como os distritos, mais pequenos e em tom de mar, junto à costa */
+.rotulo-ilha { white-space: nowrap; font: 700 11.5px/1 var(--versaletes); letter-spacing: 0.16em; color: rgba(28, 40, 48, 0.92); transition: opacity 0.35s;
+  text-shadow: 0 0 2px #fbf1d6, 0 0 4px #fbf1d6, 0 0 8px rgba(251, 241, 214, 0.9), 0 0 12px rgba(251, 241, 214, 0.7); }
+.rotulo-ilha[data-visivel="0"] { opacity: 0; }
 .rotulo-mar { white-space: nowrap; font: italic 400 15px/1 var(--texto); letter-spacing: 0.32em; color: rgba(34, 72, 96, 0.72); transition: opacity 0.35s; }
 .rotulo-mar[data-visivel="0"] { opacity: 0; }
 

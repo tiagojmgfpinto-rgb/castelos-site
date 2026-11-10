@@ -43,3 +43,16 @@ test("atlas: Novidades com as abas Novos castelos e Próximas adições", async 
   // as duas listas não se repetem: quem tem maqueta não está nas próximas adições
   expect(proximos.filter((n) => novos.includes(n))).toEqual([]);
 });
+
+test("atlas: nos Açores aparecem o nome do arquipélago e das nove ilhas", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.route(/\.glb/, () => undefined);
+  await page.goto("./");
+  await page.waitForSelector('.estado[data-visivel="0"]', { state: "attached", timeout: 150_000 });
+  // vista dos Açores (TERRITORIOS.acores) em coordenadas da cena
+  await page.evaluate(() => (window as unknown as { __atlas: { getState(): { voar(v: object): void } } }).__atlas.getState().voar({ x: -1000, z: -900, distancia: 880, inclinacao: 36 }));
+  await expect(page.locator(".rotulo-arquipelago[data-visivel='1']")).toHaveText("Arquipélago dos Açores", { timeout: 60_000 });
+  await page.waitForTimeout(2000);
+  const ilhas = await page.$$eval(".rotulo-ilha[data-visivel='1']", (e) => e.map((x) => x.textContent).sort());
+  expect(ilhas).toEqual(["Corvo", "Faial", "Flores", "Graciosa", "Pico", "Santa Maria", "São Jorge", "São Miguel", "Terceira"].sort());
+});

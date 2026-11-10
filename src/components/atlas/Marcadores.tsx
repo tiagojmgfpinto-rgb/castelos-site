@@ -347,7 +347,8 @@ function GestorMapa() {
       }
       const [w, h] = wh;
       // além do sítio exato, o rótulo pode subir ou descer meia altura ou uma altura inteira
-      const caixas = (r.fixo ? [0] : DESVIOS_MAPA).map((f): Caixa => [x - w / 2 - 2, y + f * h - h / 2 - 1, x + w / 2 + 2, y + f * h + h / 2 + 1]);
+      const desv = r.desvios ?? (r.fixo ? [0] : DESVIOS_MAPA);
+      const caixas = desv.map((f): Caixa => [x - w / 2 - 2, y + f * h - h / 2 - 1, x + w / 2 + 2, y + f * h + h / 2 + 1]);
       const jaVisivel = r.el.dataset.visivel === "1";
       cand.push({ id: i, prio: r.prio, caixas, jaVisivel, anterior: jaVisivel ? Number(r.el.dataset.desvio ?? 0) : undefined });
       alturas[i] = h;
@@ -359,7 +360,8 @@ function GestorMapa() {
       if (r.el.dataset.visivel !== novo) r.el.dataset.visivel = novo;
       if (k !== undefined && r.el.dataset.desvio !== String(k)) {
         r.el.dataset.desvio = String(k);
-        r.el.style.transform = k ? `translateY(${DESVIOS_MAPA[k] * alturas[i]}px)` : "";
+        const f = (r.desvios ?? DESVIOS_MAPA)[k];
+        r.el.style.transform = f ? `translateY(${f * alturas[i]}px)` : "";
       }
     });
   });
