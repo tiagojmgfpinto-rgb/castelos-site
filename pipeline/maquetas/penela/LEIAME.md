@@ -64,7 +64,9 @@ Tudo o que é interpretação está em `src/data/maquetas/penela.json`: estado (
 | Terreno | estado-atual | alta | — | lidar, orto |
 | Vila de Penela | estado-atual | média | 60 edifícios (28 do OSM, 32 da nuvem de pontos), cume medido em 58. | osm, lidar |
 | Caminhos e ruas | estado-atual | média | — | osm, orto |
-| Vegetação | estado-atual | média | — | lidar, fotos |
+| Restos baixos no recinto | hipotese | baixa | Dois polígonos que o OSM marca como edifícios. O LiDAR 2024 não tem lá nada acima de 0,6 m e a ortofoto de 2025 mostra um murete e um canteiro lajeado: ficam como alvenaria baixa à altura medida (0,3–1 m). Até novembro de 2026 eram caixas castanhas de 3 m. | osm, lidar, orto |
+| Penedos de calcário | estado-atual | média | Faces do terreno com mais de c. 40° de declive e sem mato, a cinzento claro (canto sudoeste, debaixo das torres), como na fotografia aérea. A forma é a do MDT de 50 cm. | lidar, fotos |
+| Vegetação | estado-atual | média | Copas medidas no LiDAR. Desde novembro de 2026 nenhuma copa entra em muros ou casas: 34 encolhidas e 35 retiradas. As 3 árvores altas e estreitas do recinto são ciprestes (fotografia aérea, ao lado da igreja). | lidar, fotos |
 
 Fontes: `sipa` SIPA IPA.00001597 · `pc` Património Cultural 69810 · `cmp` CM Penela · `visite` Visite Penela · `wiki` Wikipédia · `osm` OpenStreetMap via Overture 2026-10-21.0 · `lidar` DGT LiDAR 2024 (CC BY 4.0) · `orto` DGT ORTOS 2025 (CC BY 4.0) · `foto_fachada` fotografia da fachada da igreja · `fotos` fotografias aéreas e de pormenor fornecidas.
 

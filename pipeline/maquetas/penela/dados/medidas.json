@@ -152,7 +152,10 @@
   "do_lidar": 32,
   "medidos": 58
  },
+ "ciprestes": 3,
  "vegetacao": {
-  "arvores": 639
+  "arvores": 604,
+  "encolhidas": 34,
+  "retiradas": 35
  }
 }
