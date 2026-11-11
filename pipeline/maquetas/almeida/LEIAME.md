@@ -108,6 +108,7 @@ A pegada vem do OSM e as cotas do MDS. A orientação das fachadas foi conferida
 - **Muralhas:** a alvenaria escura de pedra miúda passou a cantaria de granito claro, com silhares maiores e manchas de líquen, como nas fotografias.
 - **Igreja da Misericórdia:** a porta é de arco pleno com colunelos e frontão curvo inteiro; as janelas são de sacada, com varandim; o brasão real está na empena e não há óculo.
 - **Janelas:** as janelas fora do eixo de cada fachada (Quartel, Misericórdia) eram desenhadas todas no centro; agora cada uma fica no seu lugar. Peniche, Valença e Monção usam a mesma função e têm o mesmo erro.
+- **Muralhas sobrepostas:** o MDT de 50 cm parte muitas escarpas altas em dois degraus (a face de cima, um patamar de 4 a 6 m, que é o MDT interpolado ao pé do pano, e a de baixo), e o `tracar.py` dava dois panos paralelos a c. 5 m. No ortofotomapa o pano é um só. O `construir.py` (`fundir_degraus`) tira o troço de baixo quando corre paralelo, mais baixo e do lado do fosso de outro em mais de 60 % do comprimento (7 troços, c. 1 km, sobretudo a nordeste e a leste); o pano de cima desce até ao fosso e o patamar passa a ser chão do fosso. Os dentes do traçado (duas viragens contrárias num troço de menos de 6 m) também saem.
 - **Conferido sem mudanças:** Portas de São Francisco (as duas), Porta Nova, pontes e Igreja Matriz.
 - **Árvores:** o pé passa a vir da malha do terreno já simplificada (com a base maior, o MDT ficava acima dela longe da praça). Os 500 troncos assentam no chão.
 

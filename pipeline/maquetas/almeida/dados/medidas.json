@@ -1,12 +1,12 @@
 {
  "escarpas": {
-  "panos": 64,
-  "comprimento": 8592.5,
+  "panos": 57,
+  "comprimento": 7649.8,
   "altura_p50": 5.7,
-  "altura_p90": 10.4,
-  "altura_max": 14.2
+  "altura_p90": 11.6,
+  "altura_max": 15.3
  },
- "guaritas": 25,
+ "guaritas": 22,
  "terreno": {
   "vertices": 152311,
   "triangulos": 300000,
@@ -155,7 +155,7 @@
   }
  },
  "vegetacao": {
-  "arvores": 500
+  "arvores": 506
  },
  "ancoras": {
   "sa_dentro": [
