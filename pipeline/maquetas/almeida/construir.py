@@ -41,6 +41,82 @@ RAIZ = AQUI.parents[2]
 F = json.loads((AQUI / "dados" / "fontes.json").read_text())
 CFG = json.loads((RAIZ / "src" / "data" / "maquetas" / "almeida.json").read_text())
 ESC = json.loads((AQUI / "dados" / "escarpas.json").read_text())
+
+
+def fundir_degraus(esc):
+    """O MDT de 50 cm parte muitas escarpas altas em dois degraus (a face de cima, um patamar de 4 a 6 m que é
+    o MDT interpolado ao pé do pano, e a de baixo), e o tracar.py dava dois panos paralelos a c. 5 m, um à
+    frente do outro: na maqueta pareciam muralhas sobrepostas. No ortofotomapa e no Street View o pano é um
+    só, do fosso ao parapeito. Aqui, um troço que corre paralelo, mais baixo e do lado do fosso de outro (a
+    2,5-9,5 m, em mais de 60 % do comprimento) sai, e o pé do pano de cima desce ao pé dele. Devolve as
+    escarpas que ficam e, para o terreno, os pontos do degrau tirado (xy, normal, pé, largura do patamar)."""
+    def amostras(e):
+        lin = np.array(e["linha"], float)
+        sg = np.r_[0, np.cumsum(np.linalg.norm(np.diff(lin, axis=0), axis=1))]
+        ss = np.arange(0, sg[-1] + 1e-6, 1.0)
+        P_ = np.column_stack([np.interp(ss, sg, lin[:, 0]), np.interp(ss, sg, lin[:, 1])])
+        k = np.clip(np.searchsorted(sg, ss, side="right") - 1, 0, len(lin) - 2)
+        T_ = lin[k + 1] - lin[k]
+        T_ /= np.maximum(np.linalg.norm(T_, axis=1), 1e-9)[:, None]
+        return P_, T_, np.interp(ss, sg, e["topo"]), np.interp(ss, sg, e["pe"])
+    # dentes: duas viragens seguidas, de sentido contrário e de mais de 25°, num troço de menos de 6 m (o
+    # esqueleto saltou entre duas linhas do MDT): os dois vértices do meio saem e o pano segue reto
+    for i_, e in enumerate(esc):
+        lin = np.array(e["linha"], float)
+        tira = set()
+        for v in range(1, len(lin) - 2):
+            if v in tira or v - 1 in tira:
+                continue
+            a0, a1, a2 = (math.atan2(*(lin[k + 1] - lin[k])[::-1]) for k in (v - 1, v, v + 1))
+            t0 = (math.degrees(a1 - a0) + 180) % 360 - 180
+            t1 = (math.degrees(a2 - a1) + 180) % 360 - 180
+            if abs(t0) > 25 and abs(t1) > 25 and t0 * t1 < 0 and np.linalg.norm(lin[v + 1] - lin[v]) < 6:
+                tira |= {v, v + 1}
+        if tira:
+            fica = [k for k in range(len(lin)) if k not in tira]
+            esc[i_] = dict(e, **{c: [e[c][k] for k in fica] for c in ("linha", "topo", "pe", "aresta", "fim")})
+    S_ = [amostras(e) for e in esc]
+    sai, bermas = set(), []
+    for j, e in enumerate(esc):
+        P_, T_, top_, pe_ = S_[j]
+        dono = np.full(len(P_), -1)
+        gap = np.zeros(len(P_))
+        for i in range(len(esc)):
+            if i == j:
+                continue
+            Pa, Ta, ta, _ = S_[i]
+            dd = np.linalg.norm(P_[:, None, :] - Pa[None, :, :], axis=2)
+            k = dd.argmin(1)
+            r_ = P_ - Pa[k]
+            na = np.column_stack([Ta[k, 1], -Ta[k, 0]])
+            u = np.einsum("ij,ij->i", r_, na)
+            ok = (dd[np.arange(len(P_)), k] < 9.5) & (u > 2.5) & (np.einsum("ij,ij->i", Ta[k], T_) > 0.75) & (ta[k] > top_ + 2)
+            novo = ok & (dono < 0)
+            dono[novo], gap[novo] = i, u[novo]
+        if (dono >= 0).mean() > 0.6:
+            sai.add(j)
+            nb = np.column_stack([T_[:, 1], -T_[:, 0]])
+            # o chão do patamar fica à cota do fosso logo à frente do degrau (sem vala ao pé do pano)
+            frente = np.min([cota(*(P_ + nb * u_).T) for u_ in (1.5, 2.5, 3.5)], axis=0) + ZREF
+            bermas.append(dict(xy=P_, nr=nb, pe=frente, gap=np.where(dono >= 0, gap, 0.0)))
+    for i in range(len(esc)):  # o pé dos panos de cima desce ao pé do degrau tirado
+        if i in sai:
+            continue
+        lin = np.array(esc[i]["linha"], float)
+        pe = np.array(esc[i]["pe"], float)
+        for v in range(len(lin)):
+            t_ = lin[min(v + 1, len(lin) - 1)] - lin[max(v - 1, 0)]
+            t_ /= max(np.linalg.norm(t_), 1e-9)
+            n_ = np.array([t_[1], -t_[0]])
+            for b in bermas:
+                r_ = b["xy"] - lin[v]
+                u, w = r_ @ n_, np.abs(r_ @ t_)
+                m_ = (u > 2.5) & (u < 9.5) & (w < 2.0) & (b["gap"] > 0)
+                if m_.any():
+                    pe[v] = min(pe[v], float(b["pe"][m_].min()))
+        esc[i] = dict(esc[i], pe=pe.tolist())
+    return [e for j, e in enumerate(esc) if j not in sai], bermas
+
 SAIDA = RAIZ / "public" / "maquetas" / "almeida"
 
 LAT0, LON0 = CFG["origem"]["lat"], CFG["origem"]["lon"]
@@ -97,6 +173,9 @@ def amostra(G, x, y):
 def cota(x, y):
     """Terreno: MDT LiDAR de 50 cm (solo sem edifícios nem vegetação)."""
     return amostra(MDT, x, y)
+
+
+ESC, BERMAS = fundir_degraus(ESC)
 
 
 def celulas(poly=None, centro=None, raio=None, sem_veg=True, G=None):
@@ -742,7 +821,7 @@ def construir_terreno():
     cat = lambda k: np.concatenate([np.broadcast_to(d[k], (len(d["xy"]),) + np.shape(d[k])[1:]) for d in ESC_DADOS])
     NR, A_, BT, TP, PE, ZC = cat("nr"), cat("a"), cat("bt"), cat("topo"), cat("pe"), cat("zc")
     arv = cKDTree(pts)
-    sel = np.nonzero(arv.query(np.column_stack([X.ravel(), Y.ravel()]), distance_upper_bound=7.0)[0] < 7.0)[0]
+    sel = np.nonzero(arv.query(np.column_stack([X.ravel(), Y.ravel()]), distance_upper_bound=10.0)[0] < 10.0)[0]
     q = np.column_stack([X.ravel()[sel], Y.ravel()[sel]])
     _, k = arv.query(q)
     rel = q - pts[k]
@@ -764,6 +843,17 @@ def construir_terreno():
     zr = Z.ravel()
     zz = zr[sel]
     zz[ok] = np.minimum(zz[ok], lim[ok])
+    # patamares dos degraus fundidos (fundir_degraus): o chão entre o pano e o antigo degrau desce ao pé
+    for b in BERMAS:
+        arvb = cKDTree(b["xy"])
+        db, kb = arvb.query(q, distance_upper_bound=10.0)
+        m_ = np.isfinite(db)
+        kb_ = np.where(m_, kb, 0)
+        rb = q - b["xy"][kb_]
+        ub = np.einsum("ij,ij->i", rb, b["nr"][kb_])
+        wb = np.abs(rb[:, 0] * -b["nr"][kb_, 1] + rb[:, 1] * b["nr"][kb_, 0])
+        faixa = m_ & (b["gap"][kb_] > 0) & (wb < 1.2) & (ub < 1.5) & (ub > -(b["gap"][kb_] - 0.6))
+        zz[faixa] = np.minimum(zz[faixa], b["pe"][kb_][faixa] - ZREF + 0.1 + 0.3 * np.maximum(ub[faixa], 0))
     # calçadas das portas com corredor: lajeado plano à cota da soleira, entre os muros
     for d_ in PORTAS.values():
         if d_.get("corredor") and "soleira" in d_:
@@ -2127,7 +2217,10 @@ VISTAS_PERTO = [("m_matriz", 300, 14, 42, (150.0, -45.0), 747.0), ("m_misericord
                 ("c_matriz", 292, 9, 24, (146.0, -44.5), 747.5), ("c_relogio", 63, 14, 34, (-56.2, 37.6), 773.0),
                 ("c_quartel", 72, 2.5, 78, (66.0, -162.0), 747.5)]
 if "--zoom" in sys.argv:  # vistas de trabalho
-    VISTAS_PERTO += [("z_safora_topo", 180, 88, 70, (-322.0, -26.0), 750.0)]
+    VISTAS_PERTO += [("z_safora_topo", 180, 88, 70, (-322.0, -26.0), 750.0), ("z_canto_ne", 238, 20, 45, (-25.0, 233.0), 748.0)]
+if "--grelha" in sys.argv:  # vistas de trabalho: grelha de 5 x 5 sobre toda a fortificação
+    VISTAS_PERTO += [(f"g_{i}{j}", 200, 60, 190, (-345.0 + 160.0 * i, -270.0 + 160.0 * j), 745.0)
+                     for i in range(5) for j in range(5)]
 
 
 def igrejas():
