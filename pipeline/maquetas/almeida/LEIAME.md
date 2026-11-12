@@ -142,3 +142,7 @@ A pegada vem do OSM e as cotas do MDS. A orientação das fachadas foi conferida
 - Fotografias da Wikimedia Commons: David Perez (CC BY 3.0), Hovallef (CC BY-SA 4.0), Dinah Raphael (CC BY-SA 3.0), Xemenendura (CC BY-SA 4.0).
 - Capturas de referência enviadas pelo autor do projeto: só para conferência, não vão para a galeria.
 - O SIPA estava em baixo (503) durante o trabalho.
+
+## Realismo (12 nov. 2026)
+
+- Pedra e telha fotográficas (`kit/fotos.py`, fotos CC0 da Poly Haven): silharia das escarpas e cantaria das portas em `stone_brick_wall_001` (fiadas de c. 0,5 m nas escarpas), recolorida para o granito claro bege-acinzentado do Street View; telhas `roof_09` com os três tons (viva, velha e do Quartel). Créditos em `dados/medidas.json` (`texturas_foto`). As casas já eram cinzentas.
