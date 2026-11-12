@@ -883,7 +883,8 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia: d
         maxDistance={maxDistancia}
         minPolarAngle={0.08}
         maxPolarAngle={1.36}
-        zoomSpeed={0.9}
+        // cada passo da roda do rato aproxima ~11 % (com 0,9 eram ~4,5 % e o zoom parecia lento)
+        zoomSpeed={2.2}
       />
     </>
   );
