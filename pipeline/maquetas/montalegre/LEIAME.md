@@ -64,3 +64,7 @@ O MunWebGis (`sig.cm-montalegre.pt/MunWebGis/Viewer.aspx?serviceName=pdm`) serve
 ## Limitações
 
 As mesmas do visor (`visor.py`): sem planta cotada; a face sul da torre está tapada no LiDAR; as linhas de muralha exteriores de Duarte de Armas já não existem; o modelo do Sketchfab de 2019 (Rui Oliveira) é uma reconstituição de fases históricas e só serviu de referência de forma.
+
+## Realismo (12 nov. 2026)
+
+- Pedra fotográfica (`kit/fotos.py`, fotos CC0 da Poly Haven) com o cinzento do granito de Montalegre: torres em silhares (`stone_brick_wall_001`, fiadas de c. 0,37 m), cerca em alvenaria irregular (`old_stone_wall`). Créditos em `dados/medidas.json` (`texturas_foto`). As casas da envolvente já eram cinzentas.
