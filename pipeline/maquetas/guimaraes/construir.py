@@ -25,9 +25,11 @@ import bmesh
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # pipeline/, para o kit comum
-from kit.geometria import unit, area, densificar, dentro, distancia, desvio, mediana_movel, arco, arco_quebrado, _retangulo, _arred  # noqa: E402
+from kit.geometria import unit, area, densificar, dentro, distancia, desvio, mediana_movel, arco, arco_quebrado, _retangulo, _arred, normais  # noqa: E402
 from kit.texturas import imagem  # noqa: E402
 from kit.cena import Obra, limpar, arvore_modelo  # noqa: E402
+from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
+from kit.materiais import material as material_kit  # noqa: E402  (com mapa de normais)
 from kit.arquitetura import piramide  # noqa: E402
 
 AQUI = Path(__file__).resolve().parent
@@ -1442,9 +1444,14 @@ for g in ["Terreno", "Muralhas", "Torres", "Torre_Menagem", "Portas", "Paco", "I
 
 MERLAO_PACO = {"altura": 0.55, "largura": 0.55, "intervalo": 0.45}  # ameias miúdas do Paço (fotografias)
 
-pedra = imagem("pedra", textura_pedra())
+# Pedra fotografada (kit.fotos, foto CC0 da Poly Haven; créditos em medidas.json "texturas_foto"): silhares de
+# granito em fiadas de c. 0,4 m, recoloridos para o bege-dourado com manchas cinzentas das fotografias do castelo (3 m por imagem,
+# o que os UV de 3 m cobrem), agora com relevo nas juntas.
+_TEX_P, _ALT_P = textura_foto("stone_brick_wall_001", n=1024, metros=3.0, cor=(0.70, 0.65, 0.57), contraste=1.2, saturacao=0.8,
+                              metros_foto=3.0, liquen=0.06, semente=61)
+pedra = imagem("pedra", _TEX_P)
 grao = imagem("grao", textura_grao())
-material("pedra", (1, 1, 1), 0.92, pedra)
+MATS["pedra"] = material_kit("pedra", (1, 1, 1), 0.92, pedra, normal=imagem("pedra_n", normais(_ALT_P, 3.0)), forca=0.8)
 material("sombra", (0.12, 0.11, 0.10), 1.0)
 material("cal", (0.94, 0.93, 0.89), 0.85)
 material("telha", (0.66, 0.36, 0.25), 0.8)
@@ -1455,6 +1462,8 @@ material("telha_velha", (0.50, 0.38, 0.32), 0.85)  # telhado da igreja, escureci
 material("madeira_escura", (0.40, 0.20, 0.14), 0.75)  # armação da capela, pintada de vermelho-escuro
 material("cantaria", (0.80, 0.78, 0.73), 0.9)
 material("terreno", (1, 1, 1), 0.97, grao, vcor=True)
+# casas da vila: um só cinzento claro, paredes e telhados, para o destaque ficar no castelo, Paço e igreja
+material("cinza_viz", (0.74, 0.74, 0.73), 0.9)
 material("base", (0.33, 0.26, 0.20), 0.95)
 material("caminho", (0.80, 0.76, 0.67), 0.95)
 material("asfalto", (0.33, 0.33, 0.34), 0.9)
@@ -1814,7 +1823,7 @@ for c_ in json.loads((AQUI / "dados" / "casas.json").read_text()):
         continue
     n_med += casa(m, poly, 6.0)[1]
     pegadas.append(poly)
-m.objeto("Edificios_Vila", "vila", ["cal", "telha"], GRUPOS["Vila"], uv=None)
+m.objeto("Edificios_Vila", "vila", ["cinza_viz", "cinza_viz"], GRUPOS["Vila"], uv=None)
 MEDIDAS["vila"] = {"edificios": len(pegadas), "do_osm": n_osm, "do_lidar": len(pegadas) - n_osm, "medidos": n_med}
 
 print("caminhos…")
@@ -1983,6 +1992,7 @@ novo_objeto("Vegetacao", me, "vegetacao", mat="arvore", pai=GRUPOS["Vegetacao"])
 
 (AQUI / "saida").mkdir(exist_ok=True)
 np.savez(AQUI / "saida" / "perfis.npz", **PERFIS)
+MEDIDAS["texturas_foto"] = fontes_fotos()  # créditos da foto de pedra
 (AQUI / "dados" / "medidas.json").write_text(json.dumps(_arred(MEDIDAS), ensure_ascii=False, indent=1))
 print(json.dumps(_arred(MEDIDAS), ensure_ascii=False))
 
