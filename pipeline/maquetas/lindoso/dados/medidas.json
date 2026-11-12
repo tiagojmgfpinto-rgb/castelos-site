@@ -907,5 +907,34 @@
    0.45,
    0.98
   ]
+ },
+ "texturas_foto": {
+  "old_stone_wall": {
+   "titulo": "Old Stone Wall",
+   "autores": [
+    "Charlotte Baglioni"
+   ],
+   "licenca": "CC0 1.0 (domínio público)",
+   "pagina": "https://polyhaven.com/a/old_stone_wall",
+   "metros": [
+    2.0,
+    2.0
+   ],
+   "uso": "alvenaria de pedra irregular (muralhas, cercas, muros)"
+  },
+  "stone_brick_wall_001": {
+   "titulo": "Stone Brick Wall 001",
+   "autores": [
+    "Dimitrios Savva",
+    "Rico Cilliers"
+   ],
+   "licenca": "CC0 1.0 (domínio público)",
+   "pagina": "https://polyhaven.com/a/stone_brick_wall_001",
+   "metros": [
+    2.5,
+    2.5
+   ],
+   "uso": "cantaria de silhares grandes e rústicos (torres, cubelos)"
+  }
  }
 }

@@ -48,6 +48,7 @@ from comum import (ALA_OESTE, ALA_SUL, CORREDOR, LAT0, LON0, MEIA_TORRE, PASSAGE
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # pipeline/, para o kit comum
 from kit.geometria import normais, amostra, quad, arco_pts, _sd, _anc  # noqa: E402
 from kit.texturas import ruido, fbm, textura_cantaria, textura_cubos, textura_rocha, textura_telha, textura_terra, imagem  # noqa: E402
+from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
 from kit.cena import Obra, uv_mundo  # noqa: E402
 from kit.materiais import MATS, malha_rapida, material  # noqa: E402
 from kit.arquitetura import aduelas, contorno_vao, parede, passagem, vao  # noqa: E402
@@ -345,24 +346,24 @@ for g in ["Terreno", "Torre", "Muralhas", "Museu", "Espigueiros", "Envolvente", 
 # 0,55 m); a muralha abaluartada é de alvenaria miúda, mais cinzenta e com mais líquenes.
 PAL_T = np.array([(0.615, 0.600, 0.565), (0.670, 0.655, 0.620), (0.545, 0.530, 0.500), (0.640, 0.605, 0.535),
                   (0.590, 0.585, 0.570)])
-TEX, ALT = textura_cantaria(fiada=(0.36, 0.52), comp=(0.55, 1.35), liquen=0.74, paleta=PAL_T, prob=[0.45, 0.17, 0.16, 0.12, 0.10],
-                            var=(0.93, 1.07), liq_forca=0.45, tinta=(1.0, 1.0, 0.985))
+# Pedra fotografada (kit.fotos, fotos CC0 da Poly Haven; créditos em medidas.json "texturas_foto"), com o tom das
+# fotografias de Lindoso. Com uv=3,0 e escala=0,5 cada imagem cobre 6 m: torre e cerca medieval em silhares (2 fotos
+# de 3 m, fiadas de c. 0,37 m); muralha abaluartada (escala 0,8: 3,75 m) em alvenaria miúda.
+TEX, ALT = textura_foto("stone_brick_wall_001", metros=6.0, cor=(0.60, 0.585, 0.55), contraste=1.35, saturacao=0.8, variacao=0.15, metros_foto=3.0,
+                        liquen=0.10, semente=91)
 material("cantaria_torre", (1, 1, 1), 0.9, imagem("cantaria_torre", TEX), normal=imagem("cantaria_torre_n", normais(ALT, 3.0)),
          forca=0.8, escala=0.5, vcor=True)
-TEX, ALT = textura_cantaria(semente=1258, fiada=(0.32, 0.56), comp=(0.45, 1.5), liquen=0.70, paleta=PAL_T,
-                            prob=[0.42, 0.16, 0.20, 0.12, 0.10], junta_m=0.010, irregular=0.03, var=(0.90, 1.09),
-                            liq_forca=0.45, tinta=(1.0, 1.0, 0.98))
+TEX, ALT = textura_foto("stone_brick_wall_001", metros=6.0, cor=(0.59, 0.575, 0.54), contraste=1.35, saturacao=0.8, variacao=0.15, metros_foto=3.0,
+                        liquen=0.10, semente=92, rodar=True)
 material("muro_medieval", (1, 1, 1), 0.92, imagem("muro_medieval", TEX), normal=imagem("muro_medieval_n", normais(ALT, 3.2)),
          forca=0.9, escala=0.5, vcor=True)
 PAL_M = np.array([(0.575, 0.565, 0.540), (0.650, 0.640, 0.610), (0.460, 0.450, 0.430), (0.600, 0.570, 0.510),
                   (0.530, 0.525, 0.510)])
-TEX, ALT = textura_cantaria(semente=1662, fiada=(0.16, 0.34), comp=(0.22, 0.65), liquen=0.66, paleta=PAL_M,
-                            prob=[0.36, 0.18, 0.22, 0.10, 0.14], junta_m=0.016, irregular=0.09, tinta=(1.03, 1.0, 0.95),
-                            var=(0.88, 1.10), liq_forca=0.48)
+TEX, ALT = textura_foto("old_stone_wall", metros=3.75, cor=(0.58, 0.565, 0.53), contraste=1.0, metros_foto=3.75,
+                        liquen=0.12, semente=93)
 material("alvenaria", (1, 1, 1), 0.95, imagem("alvenaria", TEX), normal=imagem("alvenaria_n", normais(ALT, 4.0)), forca=1.0, escala=0.8, vcor=True)
-TEX, ALT = textura_cantaria(semente=1663, fiada=(0.20, 0.45), comp=(0.25, 0.80), liquen=0.60, paleta=PAL_M,
-                            prob=[0.38, 0.18, 0.18, 0.12, 0.14], junta_m=0.018, irregular=0.08, tinta=(0.98, 1.02, 0.93),
-                            var=(0.92, 1.07), liq_forca=0.40)
+TEX, ALT = textura_foto("old_stone_wall", metros=6.0, cor=(0.58, 0.575, 0.54), contraste=0.95, metros_foto=3.0,
+                        liquen=0.12, semente=94, rodar=True)
 material("muro_topo", (1, 1, 1), 0.95, imagem("muro_topo", TEX), normal=imagem("muro_topo_n", normais(ALT, 3.5)), forca=1.0, escala=0.5, vcor=True)
 # espigueiros: granito mais claro e liso (cantaria fina dos esteios, das mesas e das empenas), muito liquenado
 PAL_E = np.array([(0.660, 0.650, 0.615), (0.700, 0.690, 0.660), (0.590, 0.580, 0.555), (0.640, 0.615, 0.560)])
@@ -1523,6 +1524,7 @@ MEDIDAS["olhar"] = {
     "museu": _olhar(0.3, 1, 0.6),
     "espigueiros": _olhar(0.2, -1, 0.45),
 }
+MEDIDAS["texturas_foto"] = fontes_fotos()  # créditos das fotos de pedra
 (AQUI / "dados" / "medidas.json").write_text(json.dumps(MEDIDAS, ensure_ascii=False, indent=1))
 print(json.dumps({k: v for k, v in MEDIDAS.items() if k not in ("ancoras", "olhar", "espigueiros")}, ensure_ascii=False))
 
