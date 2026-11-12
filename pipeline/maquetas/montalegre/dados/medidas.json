@@ -24,7 +24,13 @@
   "pe": 1013.99,
   "patamar": 1017.6,
   "espelho": 0.181,
-  "largura": 1.04
+  "largura": 1.04,
+  "guarda_patamar": {
+   "comprimento": 3.05,
+   "retorno": 1.15,
+   "altura": 1.0
+  },
+  "patamar_fundura": 1.25
  },
  "torre_se": {
   "lados": [

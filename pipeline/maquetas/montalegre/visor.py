@@ -27,7 +27,7 @@ def el(i, nome, grupo, conf, desc, med, fontes, resumo):
 
 d = {
     "monumento": "montalegre", "titulo": "Castelo de Montalegre", "variante": "estado-atual",
-    "versao": "0.4 provisória", "data": "2026-11-05",
+    "versao": "0.5 provisória", "data": "2026-11-12",
     "origem": {"lat": 41.826068, "lon": -7.790920,
                "nota": "Centro da torre de menagem (LiDAR). Eixos da maqueta: x para este, y para norte (PT-TM06 menos a origem), no visor -z é o norte, em metros à escala 1:1; as cotas são altitudes."},
     "fontes": {
@@ -67,7 +67,7 @@ d = {
            "A porta fica alta, na face voltada ao pátio, em arco de volta perfeita, sobre um patamar de pedra com cornija.",
            f"Patamar a c. {n(T['porta'], 2)} m, c. 5 m acima do pátio (estimado nas fotografias).", ["fotos"], "Porta alta sobre o patamar"),
         el("escada_torre", "Escada de aço", "Torre", "média",
-           "Uma escada moderna de aço corten, com chapas cheias de guarda, sobe do pátio ao patamar da porta ao longo da face sul.",
+           "Uma escada moderna de aço corten, com chapas cheias de guarda, sobe do pátio ao patamar da porta ao longo da face sul. Lá em cima, a chapa de fora vira e continua como guarda do patamar, pela frente da cornija até para lá da porta, e volta até à parede.",
            f"{E['degraus']} degraus de c. {n(E['espelho'] * 100, 0)} cm, de {n(E['pe'], 2)} a {n(E['patamar'], 2)} m (estimado nas fotografias).", ["fotos"], "Escada de aço corten"),
         el("torre_se", "Torre de sueste", "Torres", "alta",
            "A maior das três torres do sul, quadrada, com onze merlões piramidais por face e telhado de telha por dentro do adarve.",
