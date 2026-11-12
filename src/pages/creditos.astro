@@ -2,6 +2,8 @@
 import Base from "../layouts/Base.astro";
 import Cabecalho from "../components/Cabecalho.astro";
 import { getCollection } from "astro:content";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 
 // As contagens das fotografias saem das próprias fichas, para não ficarem desatualizadas.
 const fichas = await getCollection("monumentos");
@@ -12,6 +14,24 @@ const dgt = imagens.filter((i) => /Direção-Geral do Território/.test(i.autor)
 
 const CC_BY_4 = "https://creativecommons.org/licenses/by/4.0/deed.pt";
 const ODBL = "https://opendatacommons.org/licenses/odbl/1-0/";
+
+// Texturas fotográficas (Poly Haven, CC0): cada maqueta grava as que usa em dados/medidas.json («texturas_foto»).
+// Lê-se no build, para a lista acompanhar as maquetas sem editar esta página.
+type FotoTextura = { titulo: string; autores: string[]; pagina: string; uso: string };
+const pastaMaquetas = join(process.cwd(), "pipeline", "maquetas");
+const usoTexturas = new Map<string, { foto: FotoTextura; maquetas: string[] }>();
+for (const id of existsSync(pastaMaquetas) ? readdirSync(pastaMaquetas).sort() : []) {
+  const medidas = join(pastaMaquetas, id, "dados", "medidas.json");
+  if (!existsSync(medidas)) continue;
+  const texturas: Record<string, FotoTextura> = JSON.parse(readFileSync(medidas, "utf8")).texturas_foto ?? {};
+  const ficha = fichas.find((f) => f.id === id);
+  for (const [tid, foto] of Object.entries(texturas)) {
+    const e = usoTexturas.get(tid) ?? { foto, maquetas: [] };
+    e.maquetas.push(ficha?.data.nome ?? id);
+    usoTexturas.set(tid, e);
+  }
+}
+const texturasFoto = [...usoTexturas.values()].sort((a, b) => a.foto.titulo.localeCompare(b.foto.titulo));
 ---
 <Base titulo="Créditos e licenças" classe="pagina-texto">
   <Cabecalho />
@@ -41,7 +61,19 @@ const ODBL = "https://opendatacommons.org/licenses/odbl/1-0/";
     <h2>Fotografias</h2>
     <p>As fotografias das fichas são, na maior parte, da <a href="https://commons.wikimedia.org/" rel="noopener">Wikimedia Commons</a> ({doCommons} fotografias). Cada uma leva junto a ela o seu autor e a sua licença, com a ligação para a página do ficheiro.</p>
     <p>Há também {cedidas} fotografias cedidas ao castelos.site, com utilização autorizada, e {dgt} imagens de ortofotomapa e de relevo da Direção-Geral do Território (CC BY 4.0).</p>
-    <p>As texturas de pedra das maquetas são geradas por programa e não vêm de fotografias. Na Praça-forte de Almeida, a orientação das fachadas foi conferida com fotografias da Wikimedia Commons:</p>
+    {texturasFoto.length > 0 ? (
+      <>
+        <p>As texturas de pedra, telha e rocha das maquetas saem de fotografias da <a href="https://polyhaven.com/" rel="noopener">Poly Haven</a>, em domínio público (<a href="https://creativecommons.org/publicdomain/zero/1.0/deed.pt" rel="noopener">CC0</a>), recoloridas com o tom medido nas fotografias de cada monumento. Nas maquetas ainda não atualizadas, as texturas são geradas por programa.</p>
+        <ul>
+          {texturasFoto.map(({ foto, maquetas }) => (
+            <li><a href={foto.pagina} rel="noopener">{foto.titulo}</a>, {foto.autores.join(" e ")}, CC0, em {maquetas.join(", ")}: {foto.uso}</li>
+          ))}
+        </ul>
+      </>
+    ) : (
+      <p>As texturas de pedra das maquetas são geradas por programa e não vêm de fotografias.</p>
+    )}
+    <p>Na Praça-forte de Almeida, a orientação das fachadas foi conferida com fotografias da Wikimedia Commons:</p>
     <ul>
       <li>David Perez, <a href="https://creativecommons.org/licenses/by/3.0/deed.pt" rel="noopener">CC BY 3.0</a></li>
       <li>Hovallef, <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.pt" rel="noopener">CC BY-SA 4.0</a></li>
