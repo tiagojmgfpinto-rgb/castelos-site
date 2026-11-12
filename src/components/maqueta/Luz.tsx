@@ -49,8 +49,11 @@ export function Ambiente() {
   return null;
 }
 
-/** A oclusão ambiental calcula-se a metade da resolução do ecrã (um quarto dos píxeis); o filtro de ruído alisa-a. */
-const ESCALA_AO = 0.5;
+/**
+ * Resolução da oclusão ambiental em relação ao ecrã. A metade (PR #95) poupava, mas as arestas da oclusão
+ * cintilavam com o giro; fica a resolução inteira (a densidade de píxeis já está limitada a 1,5).
+ */
+const ESCALA_AO = 1;
 /** Tempo médio por fotograma acima do qual o visor baixa a qualidade (33 ms = menos de 30 fotogramas por segundo). */
 const FOTOGRAMA_LENTO = 1 / 30;
 
