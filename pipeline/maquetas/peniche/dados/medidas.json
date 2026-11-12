@@ -1,11 +1,16 @@
 {
  "parapeitos": {
-  "troços": 52,
-  "comprimento": 1595.7
+  "troços": 50,
+  "comprimento": 1579.4,
+  "duplicados_tirados": 2
+ },
+ "escarpas": {
+  "troços": 39,
+  "celulas_limpas": 76556
  },
  "terreno": {
   "triangulos": 319999,
-  "rocha": 29317,
+  "rocha": 22872,
   "area_ha": 11.6
  },
  "muralhas": {
@@ -31,12 +36,18 @@
    5.0
   ]
  },
+ "tunel": {
+  "comprimento": 27.2,
+  "largura": 3.8,
+  "fecho": 3.2,
+  "agua": 0.4
+ },
  "mar": {
   "nivel": 0.4,
-  "triangulos": 70000
+  "triangulos": 69999
  },
  "relvados": 766,
- "rochedos": 318,
+ "rochedos": 315,
  "vila": {
   "edificios": 36,
   "do_osm": 35
@@ -86,6 +97,11 @@
    6.0,
    70.0
   ],
+  "tunel": [
+   82.5,
+   8.2,
+   -45.0
+  ],
   "vila": [
    60.0,
    24.0,
@@ -93,6 +109,21 @@
   ]
  },
  "texturas_foto": {
+  "cliff_side": {
+   "titulo": "Cliff Side",
+   "autores": [
+    "Dario Barresi",
+    "James Ray Cock",
+    "Jenelle van Heerden"
+   ],
+   "licenca": "CC0 1.0 (domínio público)",
+   "pagina": "https://polyhaven.com/a/cliff_side",
+   "metros": [
+    1.8,
+    1.8
+   ],
+   "uso": "calcário de arriba em camadas partidas (arribas de Peniche)"
+  },
   "old_stone_wall": {
    "titulo": "Old Stone Wall",
    "autores": [

@@ -2,8 +2,8 @@
   "monumento": "peniche",
   "titulo": "Fortaleza de Peniche",
   "variante": "estado-atual",
-  "versao": "0.2 provisória",
-  "data": "2026-11-02",
+  "versao": "0.3 provisória",
+  "data": "2026-11-12",
   "origem": {
     "lat": 39.353123,
     "lon": -9.381143,
@@ -32,24 +32,34 @@
     },
     "fotos": {
       "titulo": "Fotografias da fortaleza (vistas aéreas, ponte de arcos, Fortim Redondo, guarita, muralha costeira) fornecidas pelo autor do projeto como referência, novembro de 2026"
+    },
+    "commons": {
+      "titulo": "Wikimedia Commons, fotografias do Museu Nacional Resistência e Liberdade e da Fortaleza de Peniche (GualdimG, CC BY-SA 4.0, 2023): painel junto ao fosso com a boca do túnel e entrada do museu",
+      "url": "https://commons.wikimedia.org/wiki/Category:Museu_Nacional_Resist%C3%AAncia_e_Liberdade"
+    },
+    "polyhaven": {
+      "titulo": "Poly Haven, «Cliff Side» (CC0): fotografia de calcário de arriba usada como textura das arribas",
+      "url": "https://polyhaven.com/a/cliff_side"
     }
   },
   "limitacoes": [
     "Não foi usada planta cotada. Os terraplenos e os edifícios são a classe 6 da nuvem de pontos, partidos pelos degraus do MDS e com o topo triangulado sobre o MDS de 50 cm (erro esperado de 0,5 a 1 m em planta e de 0,3 m na vertical). Por baixo deles o MDT é interpolado, por isso os panos que descem para o mar são tirados do relevo e não de uma medição da face.",
-    "Por baixo dos parapeitos da costa há uma escarpa de alvenaria em talude, do chão de dentro até ao pé medido 2 a 3,6 m para fora (no máximo 9 m); o terreno à frente desce ao pé do pano e, por baixo, fica a rocha. Os panos das plataformas foram endireitados (contorno simplificado a 0,75 m, coroamento filtrado ao longo do pano) e levam cordão de pedra quando passam de 3,5 m. Os parapeitos da costa vêm classificados como solo; foram traçados pelo relevo local do MDS (mais de 0,45 m acima da envolvente). A altura segue o LiDAR; os merlões ficam onde o LiDAR mostra dentes, espaçados a 3,2 m, e são amarelos junto ao mar e de pedra para o lado da vila, como nas fotografias. As canhoneiras e as banquetas não se modelam um a um.",
+    "Por baixo dos parapeitos da costa há uma escarpa de alvenaria em talude, do chão de dentro até ao pé medido 2 a 4,5 m para fora (no máximo 12 m); o terreno à frente desce ao pé do pano e, por baixo, fica a rocha. Junto às escarpas tiram-se do MDT os picos e as covas estreitas (abertura e fecho morfológicos), e quando o relevo dá dois traços para o mesmo parapeito fica só o mais comprido. Os panos das plataformas foram endireitados (contorno simplificado a 0,75 m, coroamento filtrado ao longo do pano) e levam cordão de pedra quando passam de 3,5 m. Os parapeitos da costa vêm classificados como solo; foram traçados pelo relevo local do MDS (mais de 0,45 m acima da envolvente). A altura segue o LiDAR; os merlões ficam onde o LiDAR mostra dentes, espaçados a 3,2 m, e são amarelos junto ao mar e de pedra para o lado da vila, como nas fotografias. As canhoneiras e as banquetas não se modelam um a um.",
     "As guaritas ficam nos ângulos salientes com mais de 45° e desnível de mais de 5 m: saem 10, mais a da porta. A forma segue a fotografia de uma guarita; não se mediu cada uma.",
     "O Fortim Redondo tem o raio, o terrapleno, o pátio da frente e o parapeito medidos no LiDAR: o círculo do lado do mar, dois panos retos para a praça e a frente reta com o portal; o terrapleno só ocupa a parte sul e entre ele e a frente há um pátio à cota da praça. A altura da sineira passa um pouco a do MDS (o pináculo, fino, não aparece); o portal (frontão triangular, cartela e armas), a sineira com varanda e o sino seguem as fotografias e a descrição do MNRL, com medidas aproximadas.",
     "A ponte de quatro arcos, a porta com guarita e o túnel seguem a fotografia, com o tabuleiro e o vão medidos no LiDAR. Os vãos dos arcos são aproximados. Debaixo da ponte o MDT é interpolado (o tabuleiro é classe 6): o chão foi rebaixado para os arcos ficarem abertos, e o fundo do fosso é rocha.",
     "Os pavilhões da prisão (o atual museu) e a torre branca têm a pegada e a altura medidas no MDS. As janelas, a platibanda e o topo amarelo são tipos lidos nas fotografias, não um levantamento de cada fachada. A capela de Santa Bárbara, as casamatas e os quartéis do lado da vila não são peças próprias.",
     "O mar é um plano a 0,4 m de altitude (nível médio), com o fundo rebaixado para dar a cor da água mais funda; a espuma marca a linha da costa. As marés, as ondas e os rochedos submersos não estão medidos; os rochedos à tona vêm da nuvem de pontos e têm forma esquemática.",
     "Os relvados com lancil branco em frente do Fortim e ao longo da muralha da costa seguem as fotografias (na ortoimagem de junho de 2024 a relva está seca); a forma é aproximada.",
-    "O casario da vila é feito de volumes simples a partir do OpenStreetMap, com a altura medida no MDS. O terreno é o MDT simplificado para 320 mil triângulos, com as arribas a textura de calcário em estratos. As árvores e as palmeiras estão nas posições medidas, com forma esquemática."
+    "O casario da vila é feito de volumes simples a partir do OpenStreetMap, com a altura medida no MDS. O terreno é o MDT simplificado para 320 mil triângulos, com as arribas a textura de calcário em estratos. As árvores e as palmeiras estão nas posições medidas, com forma esquemática.",
+    "O túnel da água do mar tem as duas bocas nos entalhes que o MDT mostra na baía e no fosso, e o arco da boca do fosso segue as fotografias. O traçado por dentro (uma reta entre as bocas), a largura (3,8 m) e a altura da abóbada são estimativas: a nuvem de pontos não vê por baixo da muralha."
   ],
   "distancia": 700,
   "placas": [
     "fortim",
     "ponte",
     "porta",
+    "tunel",
     "prisao",
     "muralhas",
     "guaritas",
@@ -103,7 +113,7 @@
       "grupo": "Fortificação",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "Porta em arco de pedra no topo da ponte, com uma guarita por cima, e o túnel que atravessa a muralha.",
+      "descricao": "Porta em arco de pedra no topo da ponte, com uma guarita por cima.",
       "medidas": "Largura e altura aproximadas, a partir da fotografia.",
       "fontes": [
         "fotos",
@@ -117,19 +127,39 @@
       ]
     },
     {
+      "id": "tunel",
+      "nome": "Túnel da água do mar",
+      "grupo": "Fortificação",
+      "estado": "estado-atual",
+      "confianca": "baixa",
+      "descricao": "Túnel de abóbada por baixo da muralha que leva a água do mar da baía para o fosso da ponte, o charco junto à entrada. As duas bocas em arco ficam ao nível da água; a do fosso vê-se nas fotografias, a da baía ao pé da muralha da costa.",
+      "medidas": "c. 25 m de comprimento; vão de 3,8 m com o fecho a c. 3,2 m de altitude (estimativas).",
+      "fontes": [
+        "fotos",
+        "commons",
+        "lidar"
+      ],
+      "resumo": "Leva o mar até ao fosso da entrada",
+      "ancora": [
+        82.5,
+        8.2,
+        -45.0
+      ]
+    },
+    {
       "id": "prisao",
-      "nome": "Pavilhões da prisão e torre",
+      "nome": "Museu Nacional Resistência e Liberdade",
       "grupo": "Edifícios",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "Os pavilhões brancos da prisão política (1934–1974), hoje o Museu Nacional Resistência e Liberdade, com o topo sudeste pintado de amarelo e a torre branca a norte.",
+      "descricao": "Os pavilhões brancos da antiga prisão política do Estado Novo (1934–1974), onde hoje funciona o Museu Nacional Resistência e Liberdade, inaugurado em 2024. O topo sudeste está pintado de amarelo e a torre branca fica a norte.",
       "medidas": "Pegadas e alturas medidas no MDS de 50 cm; torre com c. 36 m de altitude no topo.",
       "fontes": [
         "lidar",
         "fotos",
         "wikipedia"
       ],
-      "resumo": "A prisão política, hoje museu",
+      "resumo": "A antiga prisão política (1934–1974)",
       "ancora": [
         5.0,
         34.0,
@@ -223,11 +253,12 @@
       "grupo": "Envolvente",
       "estado": "estado-atual",
       "confianca": "alta",
-      "descricao": "Terreno do LiDAR com a cor da nuvem de pontos e as arribas de calcário em estratos.",
+      "descricao": "Terreno do LiDAR com a cor da nuvem de pontos; as arribas de calcário com textura fotográfica de rocha em camadas partidas, no cinzento das fotografias.",
       "medidas": "11.6 ha; 319 mil triângulos.",
       "fontes": [
         "lidar",
-        "orto"
+        "orto",
+        "polyhaven"
       ],
       "resumo": "O chão e as arribas medidos no LiDAR"
     },

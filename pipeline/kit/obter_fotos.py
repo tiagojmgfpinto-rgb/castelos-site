@@ -27,6 +27,7 @@ TEXTURAS = {
     "castle_wall_slates": "alvenaria de xisto e lajes (muros de xisto, Penela)",
     "roof_09": "telha de canudo velha (telhados dos monumentos)",
     "rock_01": "granito em afloramento (penedos e rocha à vista)",
+    "cliff_side": "calcário de arriba em camadas partidas (arribas de Peniche)",
 }
 
 
