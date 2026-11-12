@@ -1,24 +1,59 @@
 ---
 import Base from "../layouts/Base.astro";
 import Cabecalho from "../components/Cabecalho.astro";
+import { getCollection } from "astro:content";
+
+// As contagens das fotografias saem das próprias fichas, para não ficarem desatualizadas.
+const fichas = await getCollection("monumentos");
+const imagens = fichas.flatMap((f) => f.data.imagens);
+const doCommons = imagens.filter((i) => i.url && /wikimedia\.org/.test(i.url)).length;
+const cedidas = imagens.filter((i) => /autorizada/i.test(i.licenca)).length;
+const dgt = imagens.filter((i) => /Direção-Geral do Território/.test(i.autor)).length;
+
+const CC_BY_4 = "https://creativecommons.org/licenses/by/4.0/deed.pt";
+const ODBL = "https://opendatacommons.org/licenses/odbl/1-0/";
 ---
 <Base titulo="Créditos e licenças" classe="pagina-texto">
   <Cabecalho />
-  <main class="texto">
+  <main class="texto creditos-pagina">
     <h1>Créditos e licenças</h1>
-    <h2>Relevo</h2>
+
+    <h2>Mapa</h2>
+    <p class="credito-rotulo">Relevo</p>
+    <p>Copernicus DEM GLO-30 © DLR e. V. 2010–2014 e © Airbus Defence and Space GmbH 2014–2018, fornecido no âmbito do programa Copernicus da União Europeia (Agência Espacial Europeia). Acesso via AWS Open Data.</p>
+    <p class="credito-rotulo">Batimetria</p>
+    <p>Terrain Tiles da Mapzen (AWS Open Data), que no mar provêm do ETOPO1 (NOAA) e do GEBCO.</p>
+    <p class="credito-rotulo">Limites e nomes</p>
+    <p>Fronteira com Espanha, limites dos distritos e dos concelhos e nomes das ilhas: Carta Administrativa Oficial de Portugal (CAOP 2025), © <a href="https://www.dgterritorio.gov.pt/" rel="noopener">Direção-Geral do Território</a>, <a href={CC_BY_4} rel="noopener">CC BY 4.0</a>.</p>
+    <p class="credito-rotulo">Costa e rios</p>
+    <p>Natural Earth, domínio público.</p>
+
+    <h2>Maquetas</h2>
+    <p class="credito-rotulo">Relevo, alturas e ortofotomapas</p>
+    <p>Nuvens de pontos LiDAR classificadas, modelos digitais do terreno e de superfície (MDT e MDS de 50 cm, 2024 e 2025) e ortofotomapas (Ortos 2021, Ortos 2025 e OrtoSat 2023): © <a href="https://cdd.dgterritorio.gov.pt/" rel="noopener">Direção-Geral do Território</a>, Centro de Dados da DGT, <a href={CC_BY_4} rel="noopener">CC BY 4.0</a>. Algumas ortoimagens, feitas com a cor dos pontos LiDAR, e os sombreados de relevo das fichas são obra derivada destes dados, feita pelo castelos.site, também em CC BY 4.0.</p>
+    <p class="credito-rotulo">Edifícios, muralhas e ruas</p>
+    <p>© <a href="https://www.openstreetmap.org/copyright" rel="noopener">colaboradores do OpenStreetMap</a>, obtidos através da <a href="https://overturemaps.org/" rel="noopener">Overture Maps Foundation</a> (versão 2026-10-21.0), dados disponíveis sob a <a href={ODBL} rel="noopener">Open Database License (ODbL)</a>.</p>
+    <p class="credito-rotulo">Geoportais municipais</p>
+    <p>Consultados só para conferir plantas, sem reprodução dos dados: © Município de Ponte da Barca, <a href="https://pontedabarca.city-platform.com/v2/app?a=pdm" rel="noopener">plataforma de informação geográfica</a> (Lindoso); © Câmara Municipal de Melgaço, <a href="https://geotools.cm-melgaco.pt/geoportal" rel="noopener">Geoportal</a> (Melgaço); © Município de Montalegre, <a href="https://sig.cm-montalegre.pt/MunWebGis/Viewer.aspx?serviceName=pdm" rel="noopener">MunWebGis</a>, ortofotomapa de 2011 (Montalegre).</p>
+    <p class="credito-rotulo">Documentação</p>
+    <p>A história, as medidas e a descrição de cada maqueta apoiam-se no <a href="http://www.monumentos.gov.pt/" rel="noopener">SIPA</a> (Património Cultural, I.P.), na Wikipédia, nos sítios dos municípios e dos monumentos e em fotografias de referência. Cada maqueta lista as suas fontes no painel «Fontes», com a ligação para cada uma.</p>
+
+    <h2>Fotografias</h2>
+    <p>As fotografias das fichas são, na maior parte, da <a href="https://commons.wikimedia.org/" rel="noopener">Wikimedia Commons</a> ({doCommons} fotografias). Cada uma leva junto a ela o seu autor e a sua licença, com a ligação para a página do ficheiro.</p>
+    <p>Há também {cedidas} fotografias cedidas ao castelos.site, com utilização autorizada, e {dgt} imagens de ortofotomapa e de relevo da Direção-Geral do Território (CC BY 4.0).</p>
+    <p>As texturas de pedra das maquetas são geradas por programa e não vêm de fotografias. Na Praça-forte de Almeida, a orientação das fachadas foi conferida com fotografias da Wikimedia Commons:</p>
     <ul>
-      <li>Copernicus DEM GLO-30 © DLR e. V. 2010–2014 e © Airbus Defence and Space GmbH 2014–2018, fornecido no âmbito do programa Copernicus da União Europeia (Agência Espacial Europeia). Acesso via AWS Open Data.</li>
+      <li>David Perez, <a href="https://creativecommons.org/licenses/by/3.0/deed.pt" rel="noopener">CC BY 3.0</a></li>
+      <li>Hovallef, <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.pt" rel="noopener">CC BY-SA 4.0</a></li>
+      <li>Dinah Raphael, <a href="https://creativecommons.org/licenses/by-sa/3.0/deed.pt" rel="noopener">CC BY-SA 3.0</a></li>
+      <li>Xemenendura, <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.pt" rel="noopener">CC BY-SA 4.0</a></li>
     </ul>
-    <h2>Cartografia</h2>
-    <ul>
-      <li>Fronteira com Espanha, limites dos distritos e dos concelhos e nomes das ilhas: Carta Administrativa Oficial de Portugal (CAOP 2025), Direção-Geral do Território.</li>
-      <li>Linha de costa e rios: Natural Earth, domínio público.</li>
-    </ul>
+
+    <h2>Textos</h2>
+    <p>Os textos das fichas foram escritos para o castelos.site a partir das fontes indicadas no fim de cada ficha. Quando uma ficha se apoia na <a href="https://pt.wikipedia.org/" rel="noopener">Wikipédia</a>, o conteúdo usado está disponível sob a licença <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.pt" rel="noopener">CC BY-SA 4.0</a>.</p>
+
     <h2>Programas</h2>
-    <ul>
-      <li>three.js e React Three Fiber (licença MIT), Astro (MIT), proj4js (MIT).</li>
-      <li>Tipografia: Grenze Gotisch, Alegreya e Alegreya Sans SC (SIL Open Font License).</li>
-    </ul>
+    <p>three.js e React Three Fiber (licença MIT), Astro (MIT), proj4js (MIT). Compressão das maquetas com Draco (Apache 2.0) e glTF Transform (MIT); maquetas construídas no Blender (GPL).</p>
+    <p>Tipografia: Grenze Gotisch, Alegreya e Alegreya Sans SC (SIL Open Font License).</p>
   </main>
 </Base>
