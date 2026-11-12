@@ -2,8 +2,8 @@
   "monumento": "montalegre",
   "titulo": "Castelo de Montalegre",
   "variante": "estado-atual",
-  "versao": "0.4 provisória",
-  "data": "2026-11-05",
+  "versao": "0.5 provisória",
+  "data": "2026-11-12",
   "origem": {
     "lat": 41.826068,
     "lon": -7.79092,
@@ -180,7 +180,7 @@
       "grupo": "Torre",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "Uma escada moderna de aço corten, com chapas cheias de guarda, sobe do pátio ao patamar da porta ao longo da face sul.",
+      "descricao": "Uma escada moderna de aço corten, com chapas cheias de guarda, sobe do pátio ao patamar da porta ao longo da face sul. Lá em cima, a chapa de fora vira e continua como guarda do patamar, pela frente da cornija até para lá da porta, e volta até à parede.",
       "medidas": "20 degraus de c. 18 cm, de 1013,99 a 1017,60 m (estimado nas fotografias).",
       "fontes": [
         "fotos"

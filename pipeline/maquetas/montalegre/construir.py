@@ -682,6 +682,8 @@ def setor(a0, a1, r0=8.0, r1=30.0, passo=1.0):
 TM = Torre("menagem")
 Z_ADARVE_TM, Z_SILL_TM, Z_M1_TM, Z_MP_TM = 1037.53, 1038.35, 1039.05, 1039.72
 Z_PLAT = 1017.60     # patamar de pedra da porta (face sul), estimado nas fotografias
+D_PLAT = 1.25        # fundura do patamar sem a cornija (a guarda de aço da escada vira na frente, fotografia 0e257)
+S_GUARDA_W = -1.6    # ponta poente da guarda do patamar, c. 0,8 m para lá da porta, com retorno até à parede (fotografias)
 Z_PISO_BAL = 1034.0  # piso dos balcões e das guaritas (LiDAR: pontos dos parapeitos a 1035,4)
 
 
@@ -717,12 +719,14 @@ def torre_menagem():
     f, _ = fs["+u"]
     for s in (-0.55, 0.55):
         misula(m, f, s, 1026.9, larg=0.36, sal=0.6, n=2, alt=0.36)
-    # patamar de pedra da porta, com cornija (fotografia da escada de aço)
+    # patamar de pedra da porta, com cornija de duas fiadas (fotografias da escada de aço, de drone de nascente e do
+    # alto da torre sueste): a frente do patamar fica na linha da chapa de fora da escada, onde a guarda de aço vira
     f, _ = fs["-v"]
-    zp0 = chao_min(shapely.Polygon([f.xy(-6.05, 0), f.xy(1.5, 0), f.xy(1.5, 2.3), f.xy(-6.05, 2.3)]), 0.5) - 0.6
-    m.caixa_face(f, -6.05, 1.5, -0.05, 2.3, zp0, Z_PLAT - 0.25, 0, topo=False)
-    m.caixa_face(f, -6.05, 1.62, -0.05, 2.42, Z_PLAT - 0.25, Z_PLAT, 1, topo=False)
-    m.face(orientar([f.p(-6.05, -0.05, Z_PLAT), f.p(1.62, -0.05, Z_PLAT), f.p(1.62, 2.42, Z_PLAT), f.p(-6.05, 2.42, Z_PLAT)], np.array([0, 0, 1.0])), 4)
+    zp0 = chao_min(shapely.Polygon([f.xy(-6.05, 0), f.xy(1.5, 0), f.xy(1.5, D_PLAT), f.xy(-6.05, D_PLAT)]), 0.5) - 0.6
+    m.caixa_face(f, -6.05, 1.5, -0.05, D_PLAT, zp0, Z_PLAT - 0.45, 0, topo=False)
+    m.caixa_face(f, -6.05, 1.56, -0.05, D_PLAT + 0.06, Z_PLAT - 0.45, Z_PLAT - 0.25, 1, topo=False)
+    m.caixa_face(f, -6.05, 1.62, -0.05, D_PLAT + 0.12, Z_PLAT - 0.25, Z_PLAT, 1, topo=False)
+    m.face(orientar([f.p(-6.05, -0.05, Z_PLAT), f.p(1.62, -0.05, Z_PLAT), f.p(1.62, D_PLAT + 0.12, Z_PLAT), f.p(-6.05, D_PLAT + 0.12, Z_PLAT)], np.array([0, 0, 1.0])), 4)
     m.objeto("torre_menagem", "torre", GRUPOS["Torre"], uv=3.0, vcor=patine_torre)
     # telhado e casota da escada
     t = Malha(["telha", "cantaria_lisa", "sombra", "madeira_porta"])
@@ -787,8 +791,17 @@ def escada_aco():
         cont = [(-s, z) for s, z in cont]      # o painel quer contornos válidos; s ao contrário para ficar anti-horário
         fr = Plano(f.xy(0, d), -f.t, n=f.n)
         placa(m, fr, cont, 0.025, 0)
+    # guarda do patamar (fotografia do pé da escada e do alto da torre sueste): a chapa de fora da escada vira no topo
+    # e segue a direito pela frente do patamar, por cima da cornija, até para lá da porta, e volta até à parede;
+    # chapa cheia de corten, 1 m acima do piso, com o rebordo de cima dobrado como nas chapas da escada
+    dg = d1 + 0.025
+    m.caixa_face(f, S_GUARDA_W, s_topo - 0.05, dg - 0.025, dg, Z_PLAT - 0.02, Z_PLAT + 1.0, 0, fundo=True)
+    m.caixa_face(f, S_GUARDA_W, S_GUARDA_W + 0.025, 0.0, dg - 0.025, Z_PLAT - 0.02, Z_PLAT + 1.0, 0, fundo=True)
+    m.caixa_face(f, S_GUARDA_W, s_topo - 0.05, dg - 0.06, dg, Z_PLAT + 0.985, Z_PLAT + 1.0, 1, fundo=True)
     m.objeto("escada_aco", "escada_torre", GRUPOS["Torre"], uv=1.0)
-    MEDIDAS["escada_torre"] = {"degraus": n, "pe": round(z_pe, 2), "patamar": Z_PLAT, "espelho": round(esp_d, 3), "largura": round(d1 - d0, 2)}
+    MEDIDAS["escada_torre"] = {"degraus": n, "pe": round(z_pe, 2), "patamar": Z_PLAT, "espelho": round(esp_d, 3), "largura": round(d1 - d0, 2),
+                               "guarda_patamar": {"comprimento": round(s_topo - 0.05 - S_GUARDA_W, 2), "retorno": round(dg, 2), "altura": 1.0},
+                               "patamar_fundura": D_PLAT}
 
 
 # ---------------------------------------------------------------- torres do sul
@@ -1622,6 +1635,9 @@ if "--vistas" in sys.argv:
         # escada do adarve poente, de dentro do pátio (fotografias de nascente e de norte)
         vista("escada_adarve", (-9.0, -15.0), 1030.0, (-21.0, -22.0), 1017.0, lente=30, res=(1000, 750), perto=0.3)
         vista("escada_adarve_norte", (-19.0, -6.0), 1016.0, (-21.5, -23.0), 1018.0, lente=30, res=(1000, 750), perto=0.3)
+        # guarda de aço do patamar da porta, de perto: de sueste, um pouco acima, e de sudoeste
+        vista("patamar_guarda", tuple(TM.W(7.0, -13.0)), 1021.5, tuple(TM.W(0.0, -6.8)), 1018.0, lente=28, res=(1000, 750), perto=0.2)
+        vista("patamar_guarda_poente", tuple(TM.W(-7.5, -12.0)), 1020.5, tuple(TM.W(0.0, -6.8)), 1017.8, lente=28, res=(1000, 750), perto=0.2)
         # coroamento da torre de menagem de perto, de sudoeste
         vista("coroamento", tuple(TM.W(-10.0, -12.0)), 1042.0, (0.0, 0.0), 1036.0, lente=30, res=(1000, 750), perto=0.3)
         # planta (ortográfica, norte para cima), para comparar com o ortofotomapa
