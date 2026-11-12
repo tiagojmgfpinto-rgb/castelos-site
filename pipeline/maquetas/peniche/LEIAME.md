@@ -49,3 +49,8 @@ Opções do `construir.py`: `--sem-glb` (só a cena), `--vistas` (capa e vistas 
 - **Estimativas**: perfil e espessura dos panos, merlões, guaritas, portal e sineira do Fortim, janelas da prisão, arcos da ponte, cor das casas, forma das árvores e dos rochedos.
 
 As fotografias que o autor do projeto mandou serviram só de referência para as formas e as cores; não estão no repositório.
+
+## Realismo (12 nov. 2026)
+
+- Alvenaria e cantaria fotográficas (`kit/fotos.py`, fotos CC0 da Poly Haven: `old_stone_wall` e `stone_brick_wall_001`), recoloridas para o calcário cinzento-amarelado das fotografias; telha `roof_09`. As arribas mantêm a textura de estratos própria. Créditos em `dados/medidas.json` (`texturas_foto`).
+- As casas da vila, fora da fortaleza, ficam num só cinzento claro (paredes e telhados), como em Melgaço, para o destaque ficar na fortaleza.
