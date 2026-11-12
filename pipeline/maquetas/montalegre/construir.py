@@ -28,6 +28,7 @@ import comum as C  # noqa: E402
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # pipeline/, para o kit comum
 from kit.geometria import ccw, orientar, normais, amostra, quad, arco_pts, ogiva, redondo, reto, _sd, _anc  # noqa: E402
 from kit.texturas import ruido, fbm, textura_cantaria, textura_cubos, textura_relva, textura_rocha, textura_telha, textura_terra, imagem  # noqa: E402
+from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
 from kit.cena import uv_mundo  # noqa: E402
 from kit.materiais import MATS, malha_rapida, material  # noqa: E402
 from kit.arquitetura import aduelas, contorno_vao, corrimao, merlao, painel, parede, passagem, tunel, vao  # noqa: E402
@@ -349,17 +350,18 @@ for g in ["Terreno", "Torre", "Torres", "Muralhas", "Envolvente", "Vegetacao"]:
 # irregular na cerca (fotografias de 2005, 2018 e 2023).
 PAL_T = np.array([(0.560, 0.555, 0.530), (0.600, 0.592, 0.565), (0.515, 0.512, 0.495), (0.575, 0.556, 0.520),
                   (0.535, 0.540, 0.522)])
-TEX, ALT = textura_cantaria(semente=1273, fiada=(0.30, 0.45), comp=(0.45, 1.15), liquen=0.70, paleta=PAL_T,
-                            prob=[0.40, 0.18, 0.18, 0.10, 0.14], var=(0.94, 1.05), liq_forca=0.30, tinta=(1.0, 1.0, 0.985))
+# Pedra fotografada (kit.fotos, fotos CC0 da Poly Haven; créditos em medidas.json "texturas_foto"), com o tom das
+# fotografias de Montalegre. Com uv=3,0 e escala=0,5 cada imagem cobre 6 m: torres em silhares (2 fotos de 3 m,
+# fiadas de c. 0,37 m), cerca em alvenaria irregular.
+TEX, ALT = textura_foto("stone_brick_wall_001", metros=6.0, cor=(0.56, 0.553, 0.525), contraste=1.35, saturacao=0.8, variacao=0.15,
+                        metros_foto=3.0, liquen=0.10, semente=101)
 material("cantaria_torre", (1, 1, 1), 0.9, imagem("cantaria_torre", TEX), normal=imagem("cantaria_torre_n", normais(ALT, 3.0)),
          forca=0.8, escala=0.5, vcor=True)
-TEX, ALT = textura_cantaria(semente=1331, fiada=(0.20, 0.40), comp=(0.30, 0.85), liquen=0.68, paleta=PAL_T,
-                            prob=[0.38, 0.16, 0.22, 0.10, 0.14], junta_m=0.012, irregular=0.06, var=(0.90, 1.08),
-                            liq_forca=0.32, tinta=(0.99, 1.0, 0.975))
+TEX, ALT = textura_foto("old_stone_wall", metros=6.0, cor=(0.56, 0.553, 0.525), contraste=1.0, metros_foto=3.0,
+                        liquen=0.10, semente=102)
 material("muro", (1, 1, 1), 0.93, imagem("muro", TEX), normal=imagem("muro_n", normais(ALT, 3.4)), forca=0.95, escala=0.5, vcor=True)
-TEX, ALT = textura_cantaria(semente=1332, fiada=(0.35, 0.70), comp=(0.40, 0.95), liquen=0.62, paleta=PAL_T,
-                            prob=[0.38, 0.18, 0.18, 0.12, 0.14], junta_m=0.016, irregular=0.07, var=(0.92, 1.07),
-                            liq_forca=0.42, tinta=(0.99, 1.0, 0.97))
+TEX, ALT = textura_foto("old_stone_wall", metros=6.0, cor=(0.55, 0.55, 0.52), contraste=0.95, metros_foto=3.0,
+                        liquen=0.12, semente=103, rodar=True)
 material("muro_topo", (1, 1, 1), 0.95, imagem("muro_topo", TEX), normal=imagem("muro_topo_n", normais(ALT, 3.5)), forca=1.0, escala=0.5, vcor=True)
 material("cantaria_lisa", (0.50, 0.495, 0.47), 0.85)
 material("intradorso", (0.34, 0.335, 0.32), 0.95)
@@ -1511,6 +1513,7 @@ MEDIDAS["olhar"] = {
     "barbaca": _olhar(1, 0.2, 0.4),
     "patio": _olhar(0.1, -1, 0.8),
 }
+MEDIDAS["texturas_foto"] = fontes_fotos()  # créditos das fotos de pedra
 (AQUI / "dados" / "medidas.json").write_text(json.dumps(MEDIDAS, ensure_ascii=False, indent=1))
 print(json.dumps({k: v for k, v in MEDIDAS.items() if k not in ("ancoras", "olhar")}, ensure_ascii=False))
 
