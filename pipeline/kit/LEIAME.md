@@ -13,6 +13,14 @@ from kit.geometria import unit, area, densificar  # noqa: E402
 - `materiais.py`: Materiais do Blender (Principled BSDF com texturas, normais e cor por vértice) e o registo MATS onde ficam. (`malha_rapida`, `material`)
 - `arquitetura.py`: Peças de arquitetura: referencial de fachada (Quadro), vãos, arcos, aduelas, telhados, guaritas, merlões, escadas e portas. (`Quadro`, `_vao_desloc`, `aduelas`, `altura_telhado`, `barra`, `contorno_vao`, `corrimao`, `cupula`, `faixa_inclinada`, `guardas_corredor`, `guarita`, `merlao`, `oitavado`, `painel`, `parede`, `passagem`, `piramide`, `porta_revelim`, `porta_tunel`, `telhado_4aguas`, `telhado_generico`, `tunel`, `vao`)
 
+- `fotos.py` (novembro de 2026): texturas fotográficas. `textura_foto(id, metros=..., cor=...)` devolve o mesmo par (cor, relevo) que `textura_cantaria`, a partir de fotos CC0 da Poly Haven guardadas em `fotos/` (`obter_fotos.py` descarrega-as; autores, licença e tamanho real em `fotos/fontes.json`). A foto dá o desenho real das pedras e juntas; a cor média é a do monumento, medida nas fotografias dele. `metros` tem de ser o que a imagem cobre de facto na maqueta (UV do `uv_mundo` × `KHR_texture_transform`): com `uv=2.0` e `escala=0.5` são 4 m. `fontes_fotos()` dá os créditos das fotos usadas, para gravar em `medidas.json` (`texturas_foto`).
+
+### Padrão das maquetas (12 nov. 2026)
+
+- Pedra, telha e rocha dos monumentos com `textura_foto`: `stone_brick_wall_001` para silhares (torres, portas), `old_stone_wall` para alvenaria (cercas, muralhas), `castle_wall_slates` para xisto, `roof_09` para telha, `rock_01` para granito à vista. Fiadas com o tamanho das fotos do monumento (c. 0,3–0,5 m).
+- Casas da envolvente num só cinzento claro, sem textura (`cinza_viz`, 0,74/0,74/0,73), paredes e telhados; os monumentos com nome mantêm cor e detalhe.
+- GLB com Draco (`gltf-transform draco`). WebP foi testado em Melgaço e não ganha nada sobre o JPEG (2,49 → 2,49 MB), por isso não se usa.
+
 ## Regras
 
 - **O kit não muda resultados.** Cada função saiu sem alterações do `construir.py` de onde veio. Só saiu de cada maqueta a variante idêntica à do kit, e só quando as funções do kit que ela chama também eram idênticas nessa maqueta. As variantes próprias (por exemplo, o `uv_mundo` com outra escala, a `Malha` que usa o referencial `W` da torre) continuam no `construir.py` da maqueta.
