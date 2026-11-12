@@ -35,6 +35,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # pipeline/, para 
 from kit.geometria import unit, area, densificar, dentro, simplificar, mediana_movel, angulos, partir, _retangulo, _ang, _arred  # noqa: E402
 from kit.texturas import ruido, fbm, imagem  # noqa: E402
 from kit.cena import Obra, arvore_modelo  # noqa: E402
+from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
 from kit.arquitetura import _vao_desloc, altura_telhado, barra, cupula, faixa_inclinada, guardas_corredor, guarita, oitavado, porta_tunel, telhado_4aguas, telhado_generico  # noqa: E402
 
 AQUI = Path(__file__).resolve().parent
@@ -2196,10 +2197,15 @@ for g in ["Terreno", "Muralhas", "Guaritas", "Portas", "Igrejas", "Vila", "Veget
     e.parent = RAIZ_OB
     GRUPOS[g] = e
 
-TEX_ALV, ALT_ALV = textura_alvenaria()
+# Pedra fotografada (kit.fotos, fotos CC0 da Poly Haven; créditos em medidas.json "texturas_foto"), com o tom
+# medido nas fotografias de Monção (granito bege rosado). A alvenaria cobre 8 m (UV de 4 m com escala 0,5):
+# duas fotos de 4 m, fiadas de c. 0,3–0,5 m como no Street View da Porta do Rosal.
+TEX_ALV, ALT_ALV = textura_foto("old_stone_wall", n=1024, metros=8.0, cor=(0.66, 0.57, 0.49), contraste=0.9, metros_foto=4.0,
+                                saturacao=1.0, liquen=0.06, semente=41)
 NRM_ALV = imagem("alvenaria_normal", normais(ALT_ALV, 2.5))
 material("alvenaria", (1, 1, 1), 0.93, imagem("alvenaria", TEX_ALV), normal=NRM_ALV, escala=0.5)  # textura de 8 m nos UV de 4 m
-TEX_CANT, ALT_CANT = textura_cantaria()
+TEX_CANT, ALT_CANT = textura_foto("stone_brick_wall_001", n=1024, metros=3.0, cor=(0.68, 0.63, 0.56), contraste=0.9,
+                                  metros_foto=3.0, liquen=0.05, semente=42)
 NRM_CANT = imagem("cantaria_normal", normais(ALT_CANT, 3.0))
 material("cantaria", (1, 1, 1), 0.88, imagem("cantaria", TEX_CANT), normal=NRM_CANT, forca=0.7)
 material("cantaria_lisa", (0.70, 0.68, 0.63), 0.88)
@@ -2208,10 +2214,10 @@ material("sombra", (0.08, 0.075, 0.07), 1.0)
 material("cal", (0.93, 0.92, 0.88), 0.85)
 material("ocre", (0.86, 0.72, 0.42), 0.85)
 material("rosa", (0.88, 0.76, 0.70), 0.85)
-TEX_TELHA, ALT_TELHA = textura_telha()
-material("telha", (1, 1, 1), 0.8, imagem("telha", TEX_TELHA * np.array([0.78, 0.40, 0.25])),
+TEX_TELHA, ALT_TELHA = textura_foto("roof_09", n=512, metros=2.0, cor=(0.50, 0.50, 0.50), metros_foto=2.0, saturacao=0.3, variacao=0.06)
+material("telha", (1, 1, 1), 0.8, imagem("telha", np.clip(TEX_TELHA * np.array([1.40, 0.80, 0.56]), 0, 1)),
          normal=imagem("telha_normal", normais(ALT_TELHA, 2.0)), forca=0.6)
-material("telha_velha", (1, 1, 1), 0.85, imagem("telha_v", TEX_TELHA * np.array([0.56, 0.40, 0.33])),
+material("telha_velha", (1, 1, 1), 0.85, imagem("telha_v", np.clip(TEX_TELHA * np.array([1.04, 0.80, 0.68]), 0, 1)),
          normal=imagem("telha_v_normal", normais(ALT_TELHA, 2.0)), forca=0.6)
 material("lousa", (0.42, 0.42, 0.43), 0.8)
 material("madeira_verde", (0.16, 0.33, 0.26), 0.7)
@@ -2219,6 +2225,8 @@ material("madeira", (0.40, 0.26, 0.16), 0.8)
 material("ferro", (0.16, 0.17, 0.18), 0.5)
 material("bronze", (0.24, 0.30, 0.25), 0.5)
 material("vidro", (0.20, 0.24, 0.32), 0.25)
+# casas da vila: um só cinzento claro, paredes e telhados, para o destaque ficar nas muralhas, portas e igrejas
+material("cinza_viz", (0.74, 0.74, 0.73), 0.9)
 material("base", (0.33, 0.26, 0.20), 0.95)
 material("terreno", (1, 1, 1), 0.95)
 material("rio", (1, 1, 1), 0.1, None, vcor=True, normal=imagem("ondas_normal", normais(textura_ondas(), 1.2)), forca=0.3)
@@ -2417,7 +2425,7 @@ for c_ in json.loads((AQUI / "dados" / "casas.json").read_text()):
     for pp in partir(poly):
         n_med += casa(m, pp, 6.0)[1]
     pegadas.append(poly)
-m.objeto("Casario", "vila", ["cal", "telha", "ocre", "cantaria", "rosa"], GRUPOS["Vila"], uv=3.0)
+m.objeto("Casario", "vila", ["cinza_viz"] * 5, GRUPOS["Vila"], uv=3.0)  # as 5 cores antigas, todas a cinzento
 MEDIDAS["vila"] = {"edificios": len(pegadas), "do_osm": n_osm, "do_lidar": len(pegadas) - n_osm, "medidos": n_med, "recusas": RECUSAS}
 
 print("vegetação…")
@@ -2481,6 +2489,7 @@ if GUARITAS:
 MEDIDAS["ancoras"]["rio"] = [150.0, 10.0, -275.0]
 MEDIDAS["ancoras"]["vila"] = ancora(-60, 60, 18.0)
 (AQUI / "saida").mkdir(exist_ok=True)
+MEDIDAS["texturas_foto"] = fontes_fotos()  # créditos das fotos de pedra e telha
 (AQUI / "dados" / "medidas.json").write_text(json.dumps(_arred(MEDIDAS), ensure_ascii=False, indent=1))
 print(json.dumps(_arred(MEDIDAS), ensure_ascii=False))
 
