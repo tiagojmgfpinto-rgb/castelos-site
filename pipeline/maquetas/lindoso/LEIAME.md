@@ -65,3 +65,7 @@ O visor procura o grupo `Muralhas_grupo` para enquadrar e o objeto `Terreno` par
 ## Vistas de verificação
 
 `vistas/` repete os pontos de vista das fotografias (`f296_sul`, `73c3_norte`, `5a85_sudoeste`, `26f5_torre`, `d049_porta_norte`, `guarita_se`, `33d8_espigueiro`, `d846_espigueiros`) e do Street View (`sv_porta_norte`, `sv_postigo`, `sv_cerca_sul`), e acrescenta `porta_sul`, `perto_postigo`, `perto_porta_sul`, `ar_oeste` e `topo` (para comparar com o ortofotomapa).
+
+## Realismo (12 nov. 2026)
+
+- Pedra fotográfica (`kit/fotos.py`, fotos CC0 da Poly Haven) com o cinzento claro do granito de Lindoso: torre e cerca medieval em silhares (`stone_brick_wall_001`, fiadas de c. 0,37 m, contraste forte entre pedras), muralha abaluartada em alvenaria miúda (`old_stone_wall`). Espigueiros e telha mantêm as texturas próprias. Créditos em `dados/medidas.json` (`texturas_foto`). As casas da envolvente já eram cinzentas.
