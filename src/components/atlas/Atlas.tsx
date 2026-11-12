@@ -1,5 +1,5 @@
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { paraCena, projectar, TERRITORIOS, type TerritorioId } from "../../lib/territorios";
 import { Camara, vistaInicial } from "./Camara";
@@ -101,6 +101,37 @@ function useVooSelecao(monumentos: MonumentoResumo[]) {
   }, [selecionado, territorio, monumentos]);
 }
 
+/**
+ * Com a ficha aberta, o mapa fica parado (só se redesenha se algo o pedir) depois de o voo acabar e enquanto o rato
+ * não está sobre ele: assim o mapa (terreno e sombras de 4096 px) não disputa a placa gráfica com a maqueta 3D.
+ */
+function useRepouso(fichaAberta: boolean) {
+  const [ativo, setAtivo] = useState(false);
+  const sobre = useRef(false);
+  const relogio = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const agendar = (ms: number) => {
+    clearTimeout(relogio.current);
+    relogio.current = setTimeout(() => !sobre.current && setAtivo(true), ms);
+  };
+  useEffect(() => {
+    setAtivo(false);
+    if (fichaAberta) agendar(4000);
+    return () => clearTimeout(relogio.current);
+  }, [fichaAberta]); // eslint-disable-line react-hooks/exhaustive-deps
+  return {
+    ativo: fichaAberta && ativo,
+    acordar: () => {
+      sobre.current = true;
+      clearTimeout(relogio.current);
+      setAtivo(false);
+    },
+    adormecer: () => {
+      sobre.current = false;
+      if (fichaAberta) agendar(2500);
+    },
+  };
+}
+
 export default function Atlas({ monumentos: todos }: { monumentos: MonumentoResumo[] }) {
   // o mapa principal só mostra os monumentos com a maqueta concluída e publicada; os outros estão em Próximas adições
   const monumentos = useMemo(() => todos.filter((x) => x.noMapa), [todos]);
@@ -109,14 +140,16 @@ export default function Atlas({ monumentos: todos }: { monumentos: MonumentoResu
   const m = monumentos.find((x) => x.id === selecionado) ?? null;
   useHash(monumentos, todos);
   useVooSelecao(monumentos);
+  const repouso = useRepouso(!!m);
 
   // com a ficha aberta, o mapa encolhe para a metade esquerda e o monumento fica ao centro dela
   return (
     <div className="atlas" data-ficha={m ? "1" : "0"}>
-      <div className="atlas-mapa">
+      <div className="atlas-mapa" onPointerEnter={repouso.acordar} onPointerLeave={repouso.adormecer}>
         <Canvas
           shadows="percentage"
-          dpr={[1, 2]}
+          dpr={[1, 1.5]}
+          frameloop={repouso.ativo ? "demand" : "always"}
           camera={{ fov: 32, near: 0.5, far: 6000, position: [0, 500, 400] }}
           gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
           onCreated={({ gl }) => {

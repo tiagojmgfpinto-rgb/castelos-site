@@ -703,6 +703,10 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia: d
     c.target.z = THREE.MathUtils.clamp(c.target.z, area.min.z + mz, area.max.z - mz);
     c.target.y = THREE.MathUtils.clamp(c.target.y, centro.y - 40, centro.y + 40);
     manterAcimaDoChao();
+    // A câmara olha já para o alvo deste fotograma: o desenho e as placas usam exatamente a mesma câmara
+    // (antes a orientação vinha do fotograma anterior, e no giro as placas e o 3D desencontravam-se e tremiam)
+    camera.lookAt(c.target);
+    camera.updateMatrixWorld();
     if (bussola.current) bussola.current.style.transform = `rotate(${THREE.MathUtils.radToDeg(c.getAzimuthalAngle())}deg)`;
     if (escala.current) {
       const d = camera.position.distanceTo(c.target);
