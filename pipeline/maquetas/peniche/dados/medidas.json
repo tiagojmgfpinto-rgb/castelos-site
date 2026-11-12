@@ -1,22 +1,23 @@
 {
  "parapeitos": {
-  "troços": 50,
-  "comprimento": 1579.4,
-  "duplicados_tirados": 2
+  "troços": 53,
+  "comprimento": 1380.2,
+  "duplicados_tirados": 4,
+  "com_troços_a_descer": 32
  },
  "escarpas": {
-  "troços": 39,
-  "celulas_limpas": 76556
+  "troços": 40,
+  "celulas_limpas": 73945
  },
  "terreno": {
   "triangulos": 319999,
-  "rocha": 22872,
+  "rocha": 24457,
   "area_ha": 11.6
  },
  "muralhas": {
   "plataformas": 13,
-  "merloes": 99,
-  "guaritas": 10
+  "merloes": 54,
+  "guaritas": 8
  },
  "fortim": {
   "raio": 11.8,

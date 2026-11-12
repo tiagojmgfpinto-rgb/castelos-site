@@ -961,10 +961,69 @@ def parapeitos(mq):
     comp = 0.0
     guaritas = []
     edif = shapely.union_all([p.buffer(1.0) for p, *_ in EDIFICIOS]) if EDIFICIOS else shapely.Point(1e6, 1e6)
-    validos = [mu for mu in MUROS if np.median(mu["relevo"]) >= 0.6]
-    linhas_ = [shapely.LineString(mu["linha"]) for mu in validos]
+    linhas_ = [(io_, shapely.LineString(mu["linha"])) for io_, mu in enumerate(MUROS) if np.median(mu["relevo"]) >= 0.6]
     n_dup = 0
-    for mu in MUROS:
+    # Um parapeito anda de nível: onde o topo do traço cai mais de 2,5 m abaixo do nível do parapeito (mediana em
+    # 20 m), ou numa ponta que sobe ou desce mais de 0,6 m por metro, o "relevo" do MDS é a aresta da arriba, não
+    # um muro (12 nov. 2026: troços amarelos a descer pela rocha). Esses bocados saem e o resto parte-se em peças
+    # de 4 m ou mais.
+    from shapely.ops import substring
+    pecas_ = []
+    n_ingr = 0
+    for io_, mu in enumerate(MUROS):
+        mu = dict(mu, origem=io_)
+        cota_ = np.array(mu["cota"])
+        rel_ = np.clip(np.array(mu["relevo"]), 0, None)
+        if len(cota_) < 6:
+            pecas_.append(mu)
+            continue
+        top_ = ndi.percentile_filter(cota_, 20, size=9, mode="nearest")
+        ref_ = ndi.median_filter(top_, size=41, mode="nearest")  # o nível do parapeito em 20 m
+        def declive_(t):  # quanto o topo sobe ou desce por metro, em 4 m
+            d = np.zeros(len(t))
+            d[4:-4] = np.abs(t[8:] - t[:-8]) / 4.0
+            d[:4], d[-4:] = d[4], d[-5]
+            return d
+        # o topo que se desenha (base + 0,6 a 2,4 m) também conta: na ponta de um traço sobre a aresta da arriba a
+        # base cai e o parapeito descia a pique até à água
+        bd_ = ndi.median_filter(cota_ - rel_, size=9, mode="nearest")
+        td_ = bd_ + np.clip(top_ - bd_, 0.6, 2.4)
+        dz_ = np.maximum(declive_(top_), declive_(td_))
+        # saem os mergulhos (2,5 m abaixo do nível, com 1 m de margem) e, em cada ponta, tudo até ao primeiro
+        # bocado de 4 m seguidos sem mergulho e sem subir ou descer mais de 0,6 m por metro (os degraus a meio
+        # de um parapeito ficam); dos bocados que restam, saem os de menos de 4 m e os que ficam 2,5 m ou mais
+        # abaixo do nível do traço (o pé da arriba)
+        ingr = ndi.binary_dilation((top_ < ref_ - 2.5) | (td_ < ref_ - 2.5), iterations=2)
+        bom_ = np.convolve(((dz_ <= 0.6) & ~ingr).astype(int), np.ones(8, int), "valid") == 8
+        if bom_.any():
+            j_ = np.nonzero(bom_)[0]
+            ingr[:j_[0]] = True
+            ingr[j_[-1] + 8:] = True
+        else:
+            ingr[:] = True
+        lab_, nl_ = ndi.label(~ingr)
+        med_ = np.median(top_)
+        for q_ in range(1, nl_ + 1):
+            idx_ = np.nonzero(lab_ == q_)[0]
+            if len(idx_) < 8 or np.median(top_[idx_]) < med_ - 2.5:
+                ingr[idx_] = True
+        ln_ = shapely.LineString(mu["linha"])
+        if not ingr.any():
+            pecas_.append(mu)
+            continue
+        n_ingr += 1
+        lab_, nl_ = ndi.label(~ingr)
+        for q_ in range(1, nl_ + 1):
+            idx_ = np.nonzero(lab_ == q_)[0]
+            if len(idx_) < 8:
+                continue
+            i0_, i1_ = idx_[0], idx_[-1]
+            sub = substring(ln_, i0_ * 0.5, min(i1_ * 0.5, ln_.length))
+            if sub.geom_type != "LineString" or sub.length < 3.5:
+                continue
+            pecas_.append(dict(mu, linha=np.array(sub.coords).tolist(), cota=cota_[i0_:i1_ + 1].tolist(),
+                               relevo=np.array(mu["relevo"])[i0_:i1_ + 1].tolist()))
+    for mu in pecas_:
         ln = shapely.LineString(mu["linha"])
         if np.median(mu["relevo"]) < 0.6 or ln.intersection(edif).length > 0.5 * ln.length:
             continue
@@ -972,7 +1031,8 @@ def parapeitos(mq):
         # curto, se tiver metade ou mais a menos de 3,5 m de um mais comprido, sai (dois panos paralelos faziam
         # uma vala entre eles, e a muralha parecia partir-se na rocha)
         if perto_do_mar(*np.array(ln.centroid.coords[0])) < 30 and any(
-                o.length > ln.length and ln.intersection(o.buffer(3.5)).length >= 0.5 * ln.length for o in linhas_):
+                io_ != mu["origem"] and o.length > ln.length and ln.intersection(o.buffer(3.5)).length >= 0.5 * ln.length
+                for io_, o in linhas_):
             n_dup += 1
             continue
         cf = ln.centroid
@@ -1073,7 +1133,7 @@ def parapeitos(mq):
                 bis, zf = -bis, zd
             if z_ - zf > 5.0:
                 guaritas.append((q[i], bis, z_ - 0.95, abs(ang)))
-    MEDIDAS["parapeitos"] = {"troços": n_lin, "comprimento": comp, "duplicados_tirados": n_dup}
+    MEDIDAS["parapeitos"] = {"troços": n_lin, "comprimento": comp, "duplicados_tirados": n_dup, "com_troços_a_descer": n_ingr}
     return n_merl, guaritas
 
 
@@ -1089,14 +1149,35 @@ def escolher_guaritas(cands, dmin=26.0):
 
 # ---------------------------------------------------------------- edifícios da prisão
 
+PAINEL = 0.3  # espessura do paramento das fachadas da prisão, para os vãos ficarem fundos
+
+
 def edificio(m, poly, zt, amarelo):
     """Paredes caiadas (ou amarelas) já estão nas plataformas: aqui vão as janelas por pisos, com grade
-    nos pavilhões prisionais, o soco, a platibanda com capeamento e os cunhais."""
+    nos pavilhões prisionais, o soco, a platibanda com capeamento e os cunhais. As janelas são vãos fundos:
+    cada fachada leva um paramento de 0,3 m furado nos vãos, com o caixilho escuro lá atrás (12 nov. 2026:
+    as janelas pintadas na parede não pareciam buracos)."""
+    e = PAINEL
     q = np.array(poly.simplify(1.3).exterior.coords)[:-1]
     n = len(q)
+    # a parede vem do contorno em grelha de 50 cm, que sai até c. 0,6 m da fachada simplificada: as fachadas
+    # (paramento, vãos e platibanda) ficam à frente do ponto mais saliente, para nenhum dente tapar um vão
+    bd = densificar(np.array(poly.exterior.coords)[:-1], 0.25, True)
+    D = 0.0
+    for i in range(n):
+        a, b = q[i], q[(i + 1) % n]
+        t = unit(b - a)
+        nr_ = np.array([t[1], -t[0]])
+        rel = bd - (a + b) / 2
+        su, dd = rel @ t, rel @ nr_
+        k_ = (np.abs(su) < np.linalg.norm(b - a) / 2) & (np.abs(dd) < 1.5)
+        if k_.any():
+            D = max(D, float(dd[k_].max()))
+    D = min(D, 1.0)
+    e_ = e + D
     # platibanda e cornija
-    perfil = [(0.02, zt - 0.5), (0.18, zt - 0.5), (0.18, zt - 0.3), (0.02, zt - 0.3), (0.02, zt + 0.75), (-0.22, zt + 0.75),
-              (-0.22, zt - 0.05)]
+    perfil = [(e_ + 0.02, zt - 0.5), (e_ + 0.18, zt - 0.5), (e_ + 0.18, zt - 0.3), (e_ + 0.02, zt - 0.3), (e_ + 0.02, zt + 0.75),
+              (-0.22, zt + 0.75), (-0.22, zt - 0.05)]
     varrer(m, np.vstack([q, q[:1]]), perfil, [CAL, CAL, CAL, CAL, CAL, CAL], fechar=False)
     for i in range(n):
         a, b = q[i], q[(i + 1) % n]
@@ -1107,27 +1188,60 @@ def edificio(m, poly, zt, amarelo):
         mid = (a + b) / 2
         g = float(np.median(cota_t(*(np.linspace(a, b, 5) + nr * 1.2).T)))
         g = min(g, zt - 2.5)
-        Q = Quadro(m, mid, nr)
-        Q.bloco(-L / 2, L / 2, g - 0.6, g + 0.6, -0.1, 0.06, LIS)  # soco
+        Q = Quadro(m, mid + nr * D, nr)
+        mp = OCR if amarelo else CAL
+        L = L + 2 * D  # nos cantos, o paramento fecha com o da fachada vizinha
+        Q.bloco(-L / 2 - e, L / 2 + e, g - 0.6, g + 0.6, -0.1, e + 0.06, LIS)  # soco
         if amarelo:  # cunhais e cornija brancos (fotografias)
-            Q.bloco(L / 2 - 0.5, L / 2 + 0.02, g, zt - 0.3, -0.02, 0.08, CAL)
-            Q.bloco(-L / 2 - 0.02, -L / 2 + 0.5, g, zt - 0.3, -0.02, 0.08, CAL)
-            Q.bloco(-L / 2, L / 2, zt - 0.95, zt - 0.6, -0.02, 0.1, CAL)
-        if L < 3.2:
-            continue
-        pisos = np.arange(g + 1.1, zt - 2.0, 3.1)
-        passo = 3.2 if amarelo else 2.6
-        k = int((L - 1.6) // passo)
-        if k < 1:
-            continue
-        ss = (np.arange(k) - (k - 1) / 2) * passo
-        for pz in pisos:
-            for s_ in ss:
-                if amarelo:
-                    janela(Q, s_, pz, 1.0, 2.0, arco=True, mat_vidro=VID, moldura=0.16, d=0.0)
-                else:
-                    # fotografia do pátio: vãos de c. 1 × 1,3 m com caixilho claro e grade
-                    janela(Q, s_, pz + 0.25, 0.95, 1.3, arco=False, mat_vidro=SOM, moldura=0.14, d=0.0, grade=True)
+            Q.bloco(L / 2 - 0.5, L / 2 + e + 0.02, g, zt - 0.3, -0.02, e + 0.08, CAL)
+            Q.bloco(-L / 2 - e - 0.02, -L / 2 + 0.5, g, zt - 0.3, -0.02, e + 0.08, CAL)
+            Q.bloco(-L / 2, L / 2, zt - 0.95, zt - 0.6, -0.02, e + 0.1, CAL)
+        vaos = []
+        if L >= 3.2:
+            pisos = np.arange(g + 1.1, zt - 2.0, 3.1)
+            passo = 3.2 if amarelo else 2.6
+            k = int((L - 1.6) // passo)
+            ss = (np.arange(max(k, 0)) - (k - 1) / 2) * passo
+            for pz in pisos:
+                for s_ in ss:
+                    if amarelo:
+                        vaos.append((s_, pz, 1.0, 2.0, True))
+                    else:
+                        # fotografia do pátio: vãos de c. 1 × 1,3 m com caixilho claro e grade
+                        vaos.append((s_, pz + 0.25, 0.95, 1.3, False))
+        # paramento furado: grelha cortada pelos vãos (cada vão em retângulo; o arco leva tímpano por cima)
+        z0p, z1p = g + 0.6, zt - 0.5 if not amarelo else zt - 0.95
+        sb = sorted({-L / 2 - e, L / 2 + e} | {v[0] + sg * v[2] / 2 for v in vaos for sg in (-1, 1)})
+        zb = sorted({z0p, z1p} | {v[1] + dz for v in vaos for dz in (0.0, v[3])})
+        for s0, s1 in zip(sb[:-1], sb[1:]):
+            for za, zb_ in zip(zb[:-1], zb[1:]):
+                if zb_ <= z0p or za >= z1p:
+                    continue
+                sc, zc = (s0 + s1) / 2, (za + zb_) / 2
+                if any(abs(sc - v[0]) < v[2] / 2 and v[1] < zc < v[1] + v[3] for v in vaos):
+                    continue
+                Q.bloco(s0, s1, max(za, z0p), min(zb_, z1p), 0.0, e, mp)
+        for s_, z_, w_, h_, arco in vaos:
+            hn = h_ - (w_ / 2 if arco else 0)
+            # fundo do vão (caixilho escuro) e ombreiras por dentro
+            Q.vao(w_, z_, hn, 0.012, VID if arco else SOM, reto=not arco)
+            if arco:  # tímpano do arco: o paramento enche o retângulo por cima do arco
+                r_ = w_ / 2
+                arc = [(s_ + r_ * math.cos(math.pi * k_ / 10), z_ + hn + r_ * math.sin(math.pi * k_ / 10)) for k_ in range(11)]
+                for (sa, za), (sb2, zb2) in zip(arc[:-1], arc[1:]):
+                    Q.placa([(sa, za), (sb2, zb2), (sb2, z_ + h_), (sa, z_ + h_)], 0.0, e, mp)
+            # moldura de cantaria à face do paramento
+            for sg in (-1, 1):
+                s2 = sorted((s_ + sg * w_ / 2, s_ + sg * (w_ / 2 + 0.15)))
+                Q.bloco(s2[0], s2[1], z_, z_ + hn, e, e + 0.07, CAN)
+            Q.bloco(s_ - w_ / 2 - 0.21, s_ + w_ / 2 + 0.21, z_ - 0.14, z_, 0.0, e + 0.12, CAN)  # peitoril
+            if arco:
+                Q.arco_sz(s_, w_ / 2, w_ / 2 + 0.16, z_ + hn, e, e + 0.07, CAN, k=10, aduelas=True)
+            else:
+                Q.bloco(s_ - w_ / 2 - 0.14, s_ + w_ / 2 + 0.14, z_ + hn, z_ + hn + 0.18, e, e + 0.07, CAN)
+                for k_ in range(1, 4):  # grade a meio do vão
+                    sx = s_ - w_ / 2 + w_ * k_ / 4
+                    Q.bloco(sx - 0.015, sx + 0.015, z_, z_ + hn, e * 0.5, e * 0.5 + 0.03, FER)
     return n
 
 
