@@ -1224,7 +1224,14 @@ def edificio(m, poly, zt, amarelo):
         for s_, z_, w_, h_, arco in vaos:
             hn = h_ - (w_ / 2 if arco else 0)
             # fundo do vão (caixilho escuro) e ombreiras por dentro
-            Q.vao(w_, z_, hn, 0.012, VID if arco else SOM, reto=not arco)
+            # (em placa fina, que tem as duas faces: o Q.vao faz uma face só, virada para dentro nestas
+            # fachadas, e o visor não a desenhava; via-se a parede caiada através do vão)
+            w2 = w_ / 2
+            pv = [(s_ - w2, z_), (s_ + w2, z_), (s_ + w2, z_ + hn)]
+            if arco:
+                pv += [(s_ + w2 * math.cos(math.pi * k_ / 14), z_ + hn + w2 * math.sin(math.pi * k_ / 14)) for k_ in range(1, 14)]
+            pv += [(s_ - w2, z_ + hn)]
+            Q.placa(pv, 0.0, 0.012, VID if arco else SOM)
             if arco:  # tímpano do arco: o paramento enche o retângulo por cima do arco
                 r_ = w_ / 2
                 arc = [(s_ + r_ * math.cos(math.pi * k_ / 10), z_ + hn + r_ * math.sin(math.pi * k_ / 10)) for k_ in range(11)]
