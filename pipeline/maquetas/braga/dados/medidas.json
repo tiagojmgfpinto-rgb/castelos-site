@@ -69,5 +69,34 @@
    0.25,
    -0.89
   ]
+ },
+ "texturas_foto": {
+  "roof_09": {
+   "titulo": "Roof 09",
+   "autores": [
+    "Rob Tuytel"
+   ],
+   "licenca": "CC0 1.0 (domínio público)",
+   "pagina": "https://polyhaven.com/a/roof_09",
+   "metros": [
+    4.0,
+    4.0
+   ],
+   "uso": "telha de canudo velha (telhados dos monumentos)"
+  },
+  "stone_brick_wall_001": {
+   "titulo": "Stone Brick Wall 001",
+   "autores": [
+    "Dimitrios Savva",
+    "Rico Cilliers"
+   ],
+   "licenca": "CC0 1.0 (domínio público)",
+   "pagina": "https://polyhaven.com/a/stone_brick_wall_001",
+   "metros": [
+    2.5,
+    2.5
+   ],
+   "uso": "cantaria de silhares grandes e rústicos (torres, cubelos)"
+  }
  }
 }

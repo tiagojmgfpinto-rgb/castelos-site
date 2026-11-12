@@ -40,3 +40,7 @@ Os ficheiros de `dados/` estão no repositório. Opções do `construir.py`: `--
 ## Fotografias
 
 As cinco fotografias enviadas pelo Tiago (duas com marca de autor de terceiros) serviram só de referência e não estão no repositório nem na ficha.
+
+## Realismo (12 nov. 2026)
+
+- Cantaria da torre e da escada com granito fotografado (`kit/fotos.py`, `stone_brick_wall_001`, foto CC0 da Poly Haven) em vez da cantaria procedimental: a imagem cobre 4 m (UV 2,0 × escala 0,5), com fiadas de c. 0,3–0,4 m na torre e silhares maiores na escada, recolorida para o cinzento quente medido nas fotografias. A patine por vértice mantém-se. Telha `roof_09`. Créditos em `dados/medidas.json` (`texturas_foto`). As casas da envolvente já eram cinzentas.

@@ -32,9 +32,10 @@ from scipy.spatial import cKDTree
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # pipeline/, para o kit comum
 from kit.geometria import normais, quad, arco_pts  # noqa: E402
-from kit.texturas import ruido, fbm, textura_telha, imagem  # noqa: E402
+from kit.texturas import ruido, fbm, imagem  # noqa: E402
 from kit.cena import uv_mundo  # noqa: E402
 from kit.materiais import MATS, malha_rapida, material  # noqa: E402
+from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
 
 AQUI = Path(__file__).resolve().parent
 RAIZ = AQUI.parents[2]
@@ -310,11 +311,15 @@ for g in ["Terreno", "Torre", "Envolvente", "Vegetacao"]:
     e.parent = RAIZ_OB
     GRUPOS[g] = e
 
-TEX_T, ALT_T = textura_cantaria_torre(tinta=(1.08, 1.07, 1.05), sat=0.45)
+# granito fotografado (stone_brick_wall_001, Poly Haven CC0) com a cor medida nas fotografias da torre; a imagem
+# cobre 4 m (UV 2,0 x escala 0,5). A cantaria procedimental (textura_cantaria_torre) fica como alternativa.
+TEX_T, ALT_T = textura_foto("stone_brick_wall_001", metros=4.0, cor=(0.62, 0.60, 0.56), contraste=1.3, saturacao=0.4,
+                            variacao=0.14, metros_foto=2.0, liquen=0.08, semente=31)
 material("cantaria", (1, 1, 1), 0.9, imagem("cantaria", TEX_T), normal=imagem("cantaria_normal", normais(ALT_T, 3.0)),
          forca=0.8, escala=0.5, vcor=True)
 # a escada: silhares maiores (fiadas de c. 0,5 m), granito mais claro e cinzento, com mais líquenes (fotografias)
-TEX_E, ALT_E = textura_cantaria_torre(semente=1400, fiada=(0.42, 0.58), comp=(0.7, 1.5), liquen=0.70, tinta=(1.05, 1.05, 1.04), sat=0.45)
+TEX_E, ALT_E = textura_foto("stone_brick_wall_001", metros=4.0, cor=(0.66, 0.65, 0.62), contraste=1.2, saturacao=0.35,
+                            variacao=0.12, metros_foto=4.0, liquen=0.12, semente=32)
 material("cantaria_escada", (1, 1, 1), 0.9, imagem("cantaria_escada", TEX_E), normal=imagem("cantaria_escada_normal", normais(ALT_E, 3.0)),
          forca=0.8, escala=0.5, vcor=True)
 material("cantaria_lisa", (0.60, 0.59, 0.57), 0.85)
@@ -323,8 +328,8 @@ material("vitral", (1, 1, 1), 0.3, imagem("vitral", textura_vitral()))
 material("madeira", (0.24, 0.16, 0.10), 0.8)
 material("madeira_azul", (0.16, 0.24, 0.42), 0.6)
 material("ferro", (0.13, 0.13, 0.14), 0.45)
-TEX_TELHA, ALT_TELHA = textura_telha()
-material("telha", (1, 1, 1), 0.8, imagem("telha", TEX_TELHA * np.array([0.74, 0.42, 0.28])),
+TEX_TELHA, ALT_TELHA = textura_foto("roof_09", n=512, metros=2.0, cor=(0.70, 0.42, 0.30), metros_foto=2.0, saturacao=0.6, variacao=0.06)
+material("telha", (1, 1, 1), 0.8, imagem("telha", TEX_TELHA),
          normal=imagem("telha_normal", normais(ALT_TELHA, 2.0)), forca=0.6)
 TEX_CUB, ALT_CUB = textura_cubos()
 material("cubos", (1, 1, 1), 0.92, imagem("cubos", TEX_CUB), normal=imagem("cubos_normal", normais(ALT_CUB, 1.5)), forca=0.5)
@@ -1039,6 +1044,7 @@ MEDIDAS["ancoras"] = {"torre": _anc(0, 0, 219.5), "balcoes": _anc(-A - 0.3, -B -
                       "padrao": _anc(PAD_U, PAD_V, CHAO + 2.9)}
 MEDIDAS["olhar"] = {"janela_geminada": _olhar(0, -1), "porta": _olhar(1, -0.25), "escada": _olhar(0.3, -1, 0.5),
                     "balcoes": _olhar(-0.7, -0.7, 0.3), "padrao": _olhar(-0.2, 1, 0.25)}
+MEDIDAS["texturas_foto"] = fontes_fotos()  # créditos das fotos de pedra e telha
 (AQUI / "dados" / "medidas.json").write_text(json.dumps(MEDIDAS, ensure_ascii=False, indent=1))
 print(MEDIDAS)
 
