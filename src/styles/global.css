@@ -671,3 +671,7 @@ html[data-redimensionar] .atlas canvas { pointer-events: none; }
   /* no telemóvel o mapa não tem espaço livre em baixo: a nota passa para o painel Fontes */
   .pagina-atlas .rodape-site { display: none; }
 }
+/* ——— Página de créditos: rótulos em versaletes, como no castillos.site ——— */
+.creditos-pagina h2 { padding-bottom: 6px; border-bottom: 1px solid rgba(42, 37, 28, 0.2); }
+.creditos-pagina .credito-rotulo { margin: 18px 0 2px; font: 700 13px/1.2 var(--versaletes); letter-spacing: 0.14em; color: #8e2a1c; }
+.creditos-pagina .credito-rotulo + p { margin-top: 0; }
