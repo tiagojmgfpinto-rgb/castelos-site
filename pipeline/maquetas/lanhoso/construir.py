@@ -373,7 +373,7 @@ PAL_T = np.array([(0.600, 0.595, 0.570), (0.660, 0.655, 0.630), (0.530, 0.525, 0
 # Pedra fotografada (kit.fotos, fotos CC0 da Poly Haven; créditos em medidas.json "texturas_foto"), com o tom das
 # fotografias de Lanhoso. Com uv=3,0 e escala=0,5 cada imagem cobre 6 m: torre em silhares (2 fotos de 3 m, fiadas
 # de c. 0,37 m); cerca em alvenaria de pedras maiores e irregulares (1 foto de 6 m, fiadas de c. 0,4 m).
-TEX, ALT = textura_foto("stone_brick_wall_001", metros=6.0, cor=(0.61, 0.60, 0.575), contraste=1.0, metros_foto=3.0,
+TEX, ALT = textura_foto("stone_brick_wall_001", metros=6.0, cor=(0.59, 0.58, 0.555), contraste=1.35, saturacao=0.8, variacao=0.15, metros_foto=3.0,
                         liquen=0.10, semente=81)
 material("cantaria_torre", (1, 1, 1), 0.9, imagem("cantaria_torre", TEX), normal=imagem("cantaria_torre_n", normais(ALT, 3.0)),
          forca=0.8, escala=0.5, vcor=True)
