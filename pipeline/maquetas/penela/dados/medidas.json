@@ -157,5 +157,20 @@
   "arvores": 604,
   "encolhidas": 34,
   "retiradas": 35
+ },
+ "texturas_foto": {
+  "old_stone_wall": {
+   "titulo": "Old Stone Wall",
+   "autores": [
+    "Charlotte Baglioni"
+   ],
+   "licenca": "CC0 1.0 (domínio público)",
+   "pagina": "https://polyhaven.com/a/old_stone_wall",
+   "metros": [
+    2.0,
+    2.0
+   ],
+   "uso": "alvenaria de pedra irregular (muralhas, cercas, muros)"
+  }
  }
 }
