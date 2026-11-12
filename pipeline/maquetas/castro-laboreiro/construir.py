@@ -27,6 +27,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # pipeline/, para o kit comum
 from kit.geometria import unit, area, densificar, dentro, distancia, desvio, mediana_movel, arco, arco_quebrado, _arred  # noqa: E402
 from kit.texturas import imagem  # noqa: E402
+from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
 from kit.cena import arvore_modelo  # noqa: E402
 from kit.arquitetura import piramide  # noqa: E402
 
@@ -751,8 +752,13 @@ for g in ["Terreno", "Afloramentos", "Castelo", "Cerca", "Portas", "Reduto", "Ve
     e.parent = RAIZ_OB
     GRUPOS[g] = e
 
-TEX_PEDRA = textura_pedra()
-NRM_PEDRA = imagem("pedra_normal", normais(PEDRA_ALT[0], 3.0))
+# Pedra fotografada (kit.fotos, fotos CC0 da Poly Haven; créditos em medidas.json "texturas_foto"), com o tom das
+# fotografias de Castro Laboreiro: silhares de granito cinzento-escuro em fiadas de c. 0,37 m, salpicados de
+# líquen (3 m por imagem); afloramentos de granito com líquen (4 m por imagem, UV em caixa), quase sem cor: o tom
+# vem da cor por vértice, como antes.
+TEX_PEDRA, _ALT_PEDRA = textura_foto("stone_brick_wall_001", n=1024, metros=3.0, cor=(0.57, 0.57, 0.55), contraste=1.3,
+                                     saturacao=0.6, variacao=0.12, metros_foto=3.0, liquen=0.12, semente=111)
+NRM_PEDRA = imagem("pedra_normal", normais(_ALT_PEDRA, 3.0))
 material("pedra", (1, 1, 1), 0.92, imagem("pedra", TEX_PEDRA), normal=NRM_PEDRA)
 material("sombra", (0.10, 0.09, 0.08), 1.0)
 material("cantaria", (0.72, 0.71, 0.67), 0.9, normal=NRM_PEDRA, forca=0.5)
@@ -760,9 +766,10 @@ material("coroamento", (1, 1, 1), 0.97, imagem("coroa", TEX_PEDRA * np.array([0.
 material("erva_seca", (1, 1, 1), 0.97, imagem("erva", textura_grao() * np.array([0.72, 0.63, 0.42])))
 material("cal", (0.95, 0.95, 0.93), 0.8)
 material("terreno", (1, 1, 1), 0.97, imagem("grao", textura_grao()), vcor=True)
-TEX_GRANITO = textura_granito()
+TEX_GRANITO, _ALT_GRANITO = textura_foto("rock_01", n=1024, metros=4.0, cor=(0.86, 0.86, 0.86), contraste=0.9,
+                                         saturacao=0.15, liquen=0.10, liquen_cor=(0.95, 0.97, 0.92), semente=112)
 material("granito", (1, 1, 1), 0.9, imagem("granito", TEX_GRANITO), vcor=True,
-         normal=imagem("granito_normal", normais(GRANITO_ALT[0], 6.0)), forca=0.8)
+         normal=imagem("granito_normal", normais(_ALT_GRANITO, 6.0)), forca=0.8)
 material("base", (0.33, 0.26, 0.20), 0.95)
 material("trilho", (0.74, 0.66, 0.52), 0.97)
 material("arvore", (1, 1, 1), 0.9, None, vcor=True)
@@ -1207,6 +1214,7 @@ for pid, (i, p, t, n_, sole) in PONTOS_PORTA.items():
 
 (AQUI / "saida").mkdir(exist_ok=True)
 np.savez(AQUI / "saida" / "perfis.npz", **PERFIS)
+MEDIDAS["texturas_foto"] = fontes_fotos()  # créditos das fotos de pedra e rocha
 (AQUI / "dados" / "medidas.json").write_text(json.dumps(_arred(MEDIDAS), ensure_ascii=False, indent=1))
 print(json.dumps(_arred(MEDIDAS), ensure_ascii=False))
 

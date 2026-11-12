@@ -50,3 +50,7 @@ Fontes: `sipa` SIPA IPA.00002273 · `cdp` Castelos de Portugal · `wiki` Wikipé
 
 - Planta cotada (levantamento da DGEMN ou das escavações de 1975–1980) para confirmar a espessura das muralhas, a posição da cisterna, do quartel e das escadas embutidas, e o traçado da frente poente.
 - Fotografias de perto do portal norte, da Porta da Fonte e do reduto, para as medidas dos vãos e o remate do reduto.
+
+## Realismo (12 nov. 2026)
+
+- Pedra das muralhas fotográfica (`kit/fotos.py`, `stone_brick_wall_001` da Poly Haven, CC0): silhares de granito cinzento-escuro em fiadas de c. 0,37 m, salpicados de líquen, como na fotografia da muralha com os penedos. Afloramentos com a textura de granito `rock_01` (o tom continua a vir da cor por vértice). Créditos em `dados/medidas.json` (`texturas_foto`). Não há casas na maqueta.
