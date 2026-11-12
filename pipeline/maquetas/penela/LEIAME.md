@@ -75,3 +75,8 @@ Fontes: `sipa` SIPA IPA.00001597 · `pc` Património Cultural 69810 · `cmp` CM 
 - Planta cotada (levantamento DGEMN/IPPAR ou da Câmara) para confirmar a espessura das muralhas e o traçado onde o OSM foi corrigido.
 - Posição da cisterna, das seteiras, troneiras e bombardeiras, e das aberturas da Porta da Traição.
 - Confirmação no local das identificações de cada torre e da Porta da Vila.
+
+## Realismo (12 nov. 2026)
+
+- A pedra das muralhas, torres e igreja passa a fotográfica (`kit/fotos.py`, `old_stone_wall` da Poly Haven, CC0): alvenaria irregular em fiadas baixas recolorida para o ocre-bege das fotografias de Penela, com mapa de relevo nas juntas. Créditos em `dados/medidas.json` (`texturas_foto`).
+- As casas da vila ficam num só cinzento claro (paredes e telhados), como em Melgaço. A Casa Paroquial, dentro do recinto, mantém a cal e a telha.
