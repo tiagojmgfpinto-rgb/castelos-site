@@ -263,5 +263,21 @@
   "encolhidas": 17,
   "retiradas": 12,
   "tiradas_da_estrada": 16
+ },
+ "texturas_foto": {
+  "stone_brick_wall_001": {
+   "titulo": "Stone Brick Wall 001",
+   "autores": [
+    "Dimitrios Savva",
+    "Rico Cilliers"
+   ],
+   "licenca": "CC0 1.0 (domínio público)",
+   "pagina": "https://polyhaven.com/a/stone_brick_wall_001",
+   "metros": [
+    2.5,
+    2.5
+   ],
+   "uso": "cantaria de silhares grandes e rústicos (torres, cubelos)"
+  }
  }
 }

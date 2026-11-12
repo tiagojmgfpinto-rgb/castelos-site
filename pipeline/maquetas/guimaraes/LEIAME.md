@@ -78,3 +78,8 @@ Fontes: `sipa` SIPA IPA.00001060 · `mm` Museus e Monumentos de Portugal · `pac
 - Planta cotada (levantamento DGEMN ou da Museus e Monumentos) para confirmar a espessura das muralhas, a planta das torres das portas e o interior da praça de armas (escadas, vestígios escavados).
 - Posição das frestas e seteiras, da antiga porta entaipada da torre sul e do medalhão.
 - Guaritas, janelas e arcarias do Paço a partir de alçados ou fotografias de cada fachada.
+
+## Realismo (12 nov. 2026)
+
+- A pedra do castelo, Paço, igreja e muros passa a fotográfica (`kit/fotos.py`, `stone_brick_wall_001` da Poly Haven, CC0): silhares em fiadas de c. 0,4 m recoloridos para o bege-dourado das fotografias, com mapa de relevo nas juntas. Créditos em `dados/medidas.json` (`texturas_foto`).
+- Os edifícios da cidade à volta ficam num só cinzento claro (paredes e telhados), como em Melgaço; o castelo, o Paço e a Igreja de São Miguel mantêm cor e detalhe.
