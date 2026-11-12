@@ -488,7 +488,8 @@ html[data-redimensionar] .atlas canvas { pointer-events: none; }
   background: radial-gradient(ellipse at 50% 42%, #f1ebde 0%, #e2d9c6 55%, #cfc3aa 100%);
 }
 .maqueta--ampliada { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; padding: 14px; background: #e4dccb; }
-.maqueta--ampliada .maqueta-palco { flex: 1; aspect-ratio: auto; }
+.maqueta--ampliada .maqueta-palco { flex: 1; aspect-ratio: auto; max-height: none; min-height: 0; } /* sem o limite de 62vh da ficha */
+.maqueta:focus-visible .maqueta-palco { outline: 2px solid var(--m-vermelho); outline-offset: 2px; }
 .maqueta--ampliada .maqueta-botoes { max-width: 720px; }
 .maqueta-botoes { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; max-width: 640px !important; }
 .maqueta-botoes button[aria-pressed="true"] { background: var(--m-vermelho); border-color: var(--m-vermelho); }
