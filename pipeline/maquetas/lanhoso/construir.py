@@ -48,6 +48,7 @@ import comum as C  # noqa: E402
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # pipeline/, para o kit comum
 from kit.geometria import ccw, orientar, normais, amostra, quad, arco_pts, ogiva, redondo, reto, _sd, _anc  # noqa: E402
 from kit.texturas import ruido, fbm, textura_cantaria, textura_cubos, textura_relva, textura_rocha, textura_telha, textura_terra, imagem  # noqa: E402
+from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
 from kit.cena import uv_mundo  # noqa: E402
 from kit.materiais import MATS, malha_rapida, material  # noqa: E402
 from kit.arquitetura import aduelas, contorno_vao, corrimao, merlao, painel, parede, passagem, tunel, vao  # noqa: E402
@@ -369,22 +370,23 @@ for g in ["Terreno", "Torre", "Muralhas", "Santuario", "Envolvente", "Vegetacao"
 # silhares grandes em fiadas de 0,30 a 0,45 m na torre; a cerca e os torreões em silhares mais irregulares.
 PAL_T = np.array([(0.600, 0.595, 0.570), (0.660, 0.655, 0.630), (0.530, 0.525, 0.505), (0.615, 0.590, 0.545),
                   (0.570, 0.570, 0.560)])
-TEX, ALT = textura_cantaria(semente=1121, fiada=(0.30, 0.46), comp=(0.50, 1.25), liquen=0.70, paleta=PAL_T,
-                            prob=[0.42, 0.18, 0.16, 0.10, 0.14], var=(0.93, 1.07), liq_forca=0.50, tinta=(1.0, 1.0, 0.99))
+# Pedra fotografada (kit.fotos, fotos CC0 da Poly Haven; créditos em medidas.json "texturas_foto"), com o tom das
+# fotografias de Lanhoso. Com uv=3,0 e escala=0,5 cada imagem cobre 6 m: torre em silhares (2 fotos de 3 m, fiadas
+# de c. 0,37 m); cerca em alvenaria de pedras maiores e irregulares (1 foto de 6 m, fiadas de c. 0,4 m).
+TEX, ALT = textura_foto("stone_brick_wall_001", metros=6.0, cor=(0.59, 0.58, 0.555), contraste=1.35, saturacao=0.8, variacao=0.15, metros_foto=3.0,
+                        liquen=0.10, semente=81)
 material("cantaria_torre", (1, 1, 1), 0.9, imagem("cantaria_torre", TEX), normal=imagem("cantaria_torre_n", normais(ALT, 3.0)),
          forca=0.8, escala=0.5, vcor=True)
-TEX, ALT = textura_cantaria(semente=1128, fiada=(0.26, 0.50), comp=(0.40, 1.30), liquen=0.66, paleta=PAL_T,
-                            prob=[0.40, 0.16, 0.20, 0.10, 0.14], junta_m=0.010, irregular=0.04, var=(0.90, 1.09),
-                            liq_forca=0.50, tinta=(1.0, 1.0, 0.985))
+TEX, ALT = textura_foto("old_stone_wall", metros=6.0, cor=(0.60, 0.595, 0.57), contraste=0.95, metros_foto=6.0,
+                        liquen=0.10, semente=82)
 material("muro", (1, 1, 1), 0.92, imagem("muro", TEX), normal=imagem("muro_n", normais(ALT, 3.2)), forca=0.9, escala=0.5, vcor=True)
-TEX, ALT = textura_cantaria(semente=1129, fiada=(0.35, 0.70), comp=(0.40, 0.95), liquen=0.62, paleta=PAL_T,
-                            prob=[0.38, 0.18, 0.18, 0.12, 0.14], junta_m=0.016, irregular=0.07, var=(0.92, 1.07),
-                            liq_forca=0.42, tinta=(0.99, 1.01, 0.96))
+TEX, ALT = textura_foto("old_stone_wall", metros=6.0, cor=(0.59, 0.59, 0.56), contraste=0.95, metros_foto=6.0,
+                        liquen=0.12, semente=83, rodar=True)
 material("muro_topo", (1, 1, 1), 0.95, imagem("muro_topo", TEX), normal=imagem("muro_topo_n", normais(ALT, 3.5)), forca=1.0, escala=0.5, vcor=True)
 # santuário: cantaria de granito mais regular e mais clara (fachada de 1680, fotografia de frente)
 PAL_I = np.array([(0.640, 0.635, 0.610), (0.690, 0.685, 0.660), (0.585, 0.580, 0.560), (0.650, 0.630, 0.590)])
-TEX, ALT = textura_cantaria(semente=1680, fiada=(0.32, 0.42), comp=(0.6, 1.2), liquen=0.80, paleta=PAL_I,
-                            prob=[0.45, 0.25, 0.18, 0.12], junta_m=0.004, var=(0.96, 1.04), liq_forca=0.35)
+TEX, ALT = textura_foto("stone_brick_wall_001", metros=6.0, cor=(0.655, 0.65, 0.625), contraste=0.8, metros_foto=3.0,
+                        liquen=0.05, semente=84)
 material("cantaria_igreja", (1, 1, 1), 0.88, imagem("cantaria_igreja", TEX), normal=imagem("cantaria_igreja_n", normais(ALT, 2.0)),
          forca=0.5, escala=0.5, vcor=True)
 material("cantaria_lisa", (0.47, 0.465, 0.445), 0.85)
@@ -399,10 +401,10 @@ material("vidro", (0.16, 0.19, 0.21), 0.2)
 material("imagem", (0.78, 0.76, 0.70), 0.6)          # imagem de Nossa Senhora no nicho
 material("bandeira_verde", (0.0, 0.40, 0.18), 0.8)
 material("bandeira_vermelha", (0.80, 0.08, 0.10), 0.8)
-TEX, ALT = textura_telha()
+TEX, ALT = textura_foto("roof_09", n=512, metros=2.0, cor=(0.5, 0.5, 0.5), metros_foto=2.0, saturacao=0.3, variacao=0.06)
 # telhado da torre: telha castanho-avermelhada (fotografia de drone); santuário: telha alaranjada
-material("telha_torre", (1, 1, 1), 0.8, imagem("telha_torre", TEX * np.array([0.50, 0.29, 0.22])), normal=imagem("telha_n", normais(ALT, 2.0)), forca=0.6)
-material("telha", (1, 1, 1), 0.8, imagem("telha", TEX * np.array([0.84, 0.47, 0.30])), normal=imagem("telha_n2", normais(ALT, 2.0)), forca=0.6)
+material("telha_torre", (1, 1, 1), 0.8, imagem("telha_torre", np.clip(TEX * np.array([0.84, 0.50, 0.38]), 0, 1)), normal=imagem("telha_n", normais(ALT, 2.0)), forca=0.6)
+material("telha", (1, 1, 1), 0.8, imagem("telha", np.clip(TEX * np.array([1.40, 0.80, 0.52]), 0, 1)), normal=imagem("telha_n2", normais(ALT, 2.0)), forca=0.6)
 TEX, ALT = textura_cubos(base=(0.62, 0.61, 0.58))
 material("calcada", (1, 1, 1), 0.92, imagem("calcada", TEX), normal=imagem("calcada_n", normais(ALT, 1.5)), forca=0.5)
 TEX, ALT = textura_relva()
@@ -1439,6 +1441,7 @@ MEDIDAS["olhar"] = {
     "patio": _olhar(*W(0.1, 1), 0.7),
     "fachada": _olhar(*(-ES), 0.15),
 }
+MEDIDAS["texturas_foto"] = fontes_fotos()  # créditos das fotos de pedra e telha
 (AQUI / "dados" / "medidas.json").write_text(json.dumps(MEDIDAS, ensure_ascii=False, indent=1))
 print(json.dumps({k: v for k, v in MEDIDAS.items() if k not in ("ancoras", "olhar")}, ensure_ascii=False))
 

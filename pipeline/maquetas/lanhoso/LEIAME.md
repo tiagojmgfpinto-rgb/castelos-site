@@ -62,3 +62,7 @@ O visor procura o grupo `Muralhas_grupo` para enquadrar e o objeto `Terreno` par
 ## Vistas de verificação
 
 `vistas/` repete os pontos de vista das fotografias (`d74a_sul`, `84ef_ene`, `84ef_drone`, `3cd5_norte`, `fa66_porta`, `i10_porta_frente`, `5b79_patio`, `8ae8_ne`, `6c4d_adarve`, `00e6_fachada`, `00e6_perto`) e acrescenta `coroamento` e `topo` (para comparar com o ortofotomapa).
+
+## Realismo (12 nov. 2026)
+
+- Pedra e telha fotográficas (`kit/fotos.py`, fotos CC0 da Poly Haven), com o cinzento claro e frio do granito de Lanhoso: torre e santuário em silhares (`stone_brick_wall_001`, fiadas de c. 0,37 m), cerca e torreões em alvenaria de pedras grandes e irregulares (`old_stone_wall`), telha `roof_09`. Créditos em `dados/medidas.json` (`texturas_foto`). As casas da envolvente já eram cinzentas.
