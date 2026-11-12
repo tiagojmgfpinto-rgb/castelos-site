@@ -1,5 +1,5 @@
 import { useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
@@ -49,27 +49,43 @@ export function Ambiente() {
   return null;
 }
 
+/** A oclusão ambiental calcula-se a metade da resolução do ecrã (um quarto dos píxeis); o filtro de ruído alisa-a. */
+const ESCALA_AO = 0.5;
+/** Tempo médio por fotograma acima do qual o visor baixa a qualidade (33 ms = menos de 30 fotogramas por segundo). */
+const FOTOGRAMA_LENTO = 1 / 30;
+
 /**
- * Oclusão ambiental (GTAO): escurece os cantos, a base das torres, as ameias e os vãos, como a luz indireta do
- * Cycles. Corre num EffectComposer que passa a desenhar a cena (useFrame com prioridade 1 desliga o render
- * automático do R3F). `raio` é o raio da maqueta em metros: a oclusão trabalha à escala das ameias (1–2,5 m).
+ * Desenho da cena, só quando é preciso: a câmara mexeu-se ou `sujo` pede mais fotogramas (o componente que muda
+ * a cena põe lá um número). Com a maqueta parada não se desenha nada e o computador descansa.
+ *
+ * No computador corre num EffectComposer com oclusão ambiental (GTAO), que escurece os cantos, a base das torres,
+ * as ameias e os vãos, como a luz indireta do Cycles; `raio` é o raio da maqueta em metros (a oclusão trabalha à
+ * escala das ameias, 1–2,5 m). Nos ecrãs táteis desenha-se direto, sem oclusão.
+ *
+ * Se os fotogramas forem lentos (computadores fracos, ecrãs 4K), a qualidade baixa sozinha, uma vez por cada
+ * passo: primeiro a densidade de píxeis para 1, depois a oclusão desliga-se. Não volta a subir (não oscila).
  */
-export function Oclusao({ raio }: { raio: number }) {
-  const { gl, scene, camera, size } = useThree();
+export function Desenho({ raio, tatil, sujo }: { raio: number; tatil: boolean; sujo: React.RefObject<number> }) {
+  const { gl, scene, camera, size, setDpr, viewport } = useThree();
+  const [oclusao, setOclusao] = useState(!tatil);
   const composer = useMemo(() => {
+    if (tatil) return null;
     const alvo = new THREE.WebGLRenderTarget(16, 16, { samples: 4, type: THREE.HalfFloatType });
     const c = new EffectComposer(gl, alvo);
     c.addPass(new RenderPass(scene, camera));
     const ao = new GTAOPass(scene, camera, 16, 16);
+    const mudarTamanho = ao.setSize.bind(ao);
+    ao.setSize = (w: number, h: number) => mudarTamanho(Math.max(1, Math.round(w * ESCALA_AO)), Math.max(1, Math.round(h * ESCALA_AO)));
     corrigirGtao(ao);
     ao.blendIntensity = luz.oclusao.intensidade;
     ao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 5, radiusExponent: 1.4, rings: 2, samples: 12 });
     c.addPass(ao);
     c.addPass(new OutputPass());
     return { c, ao };
-  }, [gl, scene, camera]);
+  }, [gl, scene, camera, tatil]);
 
   useEffect(() => {
+    if (!composer) return;
     const o = luz.oclusao;
     composer.ao.updateGtaoMaterial({
       radius: THREE.MathUtils.clamp(raio * o.fator, o.raioMin, o.raioMax) || o.raio,
@@ -83,16 +99,51 @@ export function Oclusao({ raio }: { raio: number }) {
   }, [composer, raio]);
 
   useEffect(() => {
-    composer.c.setPixelRatio(gl.getPixelRatio());
-    composer.c.setSize(size.width, size.height);
-  }, [composer, gl, size.width, size.height]);
+    if (composer) composer.ao.enabled = oclusao;
+    sujo.current = Math.max(sujo.current, 2);
+  }, [composer, oclusao, sujo]);
+
+  useEffect(() => {
+    composer?.c.setPixelRatio(viewport.dpr);
+    composer?.c.setSize(size.width, size.height);
+    sujo.current = Math.max(sujo.current, 2);
+  }, [composer, viewport.dpr, size.width, size.height, sujo]);
 
   useEffect(() => () => {
-    composer.ao.dispose();
-    composer.c.dispose();
+    composer?.ao.dispose();
+    composer?.c.dispose();
   }, [composer]);
 
-  useFrame(() => composer.c.render(), 1);
+  const ultima = useMemo(() => new THREE.Matrix4(), []);
+  const medida = useRef({ antes: 0, soma: 0, n: 0, desde: performance.now() + 2500 });
+  useFrame(() => {
+    camera.updateMatrixWorld();
+    const mexeu = !ultima.equals(camera.matrixWorld);
+    const m = medida.current;
+    const agora = performance.now();
+    if (!mexeu && sujo.current <= 0) {
+      m.antes = 0;
+      return;
+    }
+    ultima.copy(camera.matrixWorld);
+    sujo.current = Math.max(0, sujo.current - 1);
+    if (composer) composer.c.render();
+    else gl.render(scene, camera);
+    // Medir só fotogramas seguidos (os primeiros segundos não contam: compilação dos shaders e texturas)
+    if (m.antes && agora > m.desde) {
+      m.soma += (agora - m.antes) / 1000;
+      if (++m.n >= 45) {
+        if (m.soma / m.n > FOTOGRAMA_LENTO) {
+          if (viewport.dpr > 1.01) setDpr(1);
+          else if (oclusao) setOclusao(false);
+          m.desde = agora + 1500;
+        }
+        m.soma = 0;
+        m.n = 0;
+      }
+    }
+    m.antes = agora;
+  }, 1);
   return null;
 }
 

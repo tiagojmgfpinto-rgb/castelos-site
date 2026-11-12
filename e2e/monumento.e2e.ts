@@ -63,3 +63,45 @@ for (const [nome, viewport] of [["computador", { width: 1280, height: 860 }], ["
     expect([...new Set(problemas)]).toEqual([]);
   });
 }
+
+test("visor 3D: teclado, enquadramento centrado e ecrã grande com a altura toda", async ({ page }) => {
+  const erros = errosDaPagina(page);
+  await page.setViewportSize({ width: 1280, height: 860 });
+  await page.emulateMedia({ reducedMotion: "reduce" }); // sem giro: a câmara só se mexe com o teclado
+  const [pagina] = (await paginasComMaqueta(page)).filter((p) => p.includes("braga"));
+  await page.goto(pagina);
+  await page.locator(".maqueta").scrollIntoViewIfNeeded();
+  await expect(page.locator(".maqueta-carregar")).toHaveCount(0, { timeout: 150_000 });
+  type Visor = { camera: { position: { x: number; y: number; z: number }; updateMatrixWorld(): void; matrixWorldInverse: unknown; projectionMatrix: unknown }; controlos: { current: { target: { x: number; y: number; z: number } } } };
+  const camara = () => page.evaluate(() => {
+    const m = (window as unknown as { __maqueta: Visor }).__maqueta;
+    const p = m.camera.position, t = m.controlos.current.target;
+    return { p: [p.x, p.y, p.z], t: [t.x, t.y, t.z], d: Math.hypot(p.x - t.x, p.y - t.y, p.z - t.z) };
+  });
+  const antes = await camara();
+
+  // + aproxima, setas deslocam, Q roda
+  await page.locator(".maqueta-palco canvas").click({ position: { x: 20, y: 300 } });
+  await page.keyboard.down("Equal");
+  await page.waitForTimeout(2000); // o swiftshader do CI desenha poucos fotogramas por segundo
+  await page.keyboard.up("Equal");
+  const perto = await camara();
+  expect(perto.d).toBeLessThan(antes.d - 1);
+  await page.keyboard.down("ArrowRight");
+  await page.waitForTimeout(2000); // o swiftshader do CI desenha poucos fotogramas por segundo
+  await page.keyboard.up("ArrowRight");
+  const lado = await camara();
+  expect(Math.hypot(lado.t[0] - perto.t[0], lado.t[2] - perto.t[2])).toBeGreaterThan(0.5);
+  await page.keyboard.down("KeyQ");
+  await page.waitForTimeout(2000); // o swiftshader do CI desenha poucos fotogramas por segundo
+  await page.keyboard.up("KeyQ");
+  const rodada = await camara();
+  expect(Math.hypot(rodada.p[0] - lado.p[0], rodada.p[2] - lado.p[2])).toBeGreaterThan(0.5);
+
+  // Enquadrar volta a pôr o monumento no centro; Ampliar usa a altura toda da janela
+  await page.locator(".maqueta-botoes button", { hasText: "Enquadrar" }).click();
+  await page.waitForTimeout(2500);
+  await page.locator(".maqueta-botoes button", { hasText: "Ampliar" }).click();
+  await expect.poll(async () => (await page.locator(".maqueta-palco").boundingBox())?.height ?? 0, { timeout: 20_000 }).toBeGreaterThan(860 * 0.75);
+  expect(erros).toEqual([]);
+});
