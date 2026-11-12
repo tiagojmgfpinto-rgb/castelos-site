@@ -77,5 +77,20 @@
    1.5
   ],
   "uso": "granito em afloramento (penedos e rocha à vista)"
+ },
+ "cliff_side": {
+  "titulo": "Cliff Side",
+  "autores": [
+   "Dario Barresi",
+   "James Ray Cock",
+   "Jenelle van Heerden"
+  ],
+  "licenca": "CC0 1.0 (domínio público)",
+  "pagina": "https://polyhaven.com/a/cliff_side",
+  "metros": [
+   1.8300000429153442,
+   1.8300000429153442
+  ],
+  "uso": "calcário de arriba em camadas partidas (arribas de Peniche)"
  }
 }

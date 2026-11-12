@@ -691,11 +691,47 @@ def chao_s(x, y):
     return amostra(SMDS, x, y)
 
 
+# Túnel por onde a água do mar entra no fosso da ponte (fotografias: a boca em arco no canto sul do fosso, com
+# água dentro, e a do lado da baía, ao nível do mar). Eixo e bocas pelos entalhes que o MDT tem nas duas margens
+# (a 21 m na baía, x 72, e a 43 m no fosso, x 82,5); o traçado de dentro é estimativa (reta entre as bocas).
+TUNEL = dict(eixo=np.array([(72.0, 20.3), (72.0, 24.5), (82.5, 39.5), (82.5, 44.2)]),
+             # (boca, normal para fora, comprimento do canal, topo do paramento ou None = 1,6 m acima do fecho)
+             bocas=[(np.array([72.0, 20.3]), np.array([0.0, -1.0]), 3.6, 9.0),   # baía: paramento até ao parapeito
+                    (np.array([82.5, 44.2]), np.array([0.0, 1.0]), 4.0, None)],  # fosso, na face do pano em talude
+             largura=3.8, nascenca=NIVEL + 0.9, fundo=NIVEL - 1.4)
+TUNEL["fecho"] = TUNEL["nascenca"] + TUNEL["largura"] / 2
+TUNEL["paramento"] = TUNEL["fecho"] + 1.6  # topo do paramento das bocas
+
+
+def boca_perto(x, y):
+    """Pontos à frente ou à volta de uma boca do túnel, onde os panos e as escarpas param acima do paramento."""
+    k = np.zeros(np.shape(x), bool)
+    for b, n, _, topo in TUNEL["bocas"]:
+        if topo is not None:  # esta boca tem paramento próprio até cima: os panos não se cortam
+            continue
+        t = np.array([n[1], -n[0]])
+        rs = (np.asarray(x) - b[0]) * t[0] + (np.asarray(y) - b[1]) * t[1]
+        rd = (np.asarray(x) - b[0]) * n[0] + (np.asarray(y) - b[1]) * n[1]
+        k |= (np.abs(rs) < TUNEL["largura"] / 2 + 3.4) & (rd > -4.0) & (rd < 3.0)
+    return k
+
+
+def canais_tunel(X, Y):
+    """Células dos canais de água entre cada boca do túnel e o mar (ou o fosso)."""
+    k = np.zeros(X.shape, bool)
+    for b, n, comp, _ in TUNEL["bocas"]:
+        t = np.array([n[1], -n[0]])
+        rel_s = (X - b[0]) * t[0] + (Y - b[1]) * t[1]
+        rel_d = (X - b[0]) * n[0] + (Y - b[1]) * n[1]
+        k |= (np.abs(rel_s) < TUNEL["largura"] / 2 + 0.3) & (rel_d > -0.2) & (rel_d < comp)
+    return k
+
+
 # mar: células abaixo do nível, em manchas grandes (o mar aberto, o porto e o fosso da ponte, que enche com a maré)
 _ag = MDT < NIVEL
 _lab, _k = ndi.label(_ag)
 _tam = ndi.sum(np.ones_like(_lab), _lab, np.arange(1, _k + 1)) * LPASSO ** 2
-AGUA = np.isin(_lab, np.nonzero(_tam > 150)[0] + 1)
+AGUA = np.isin(_lab, np.nonzero(_tam > 150)[0] + 1) | canais_tunel(XG, YG)
 _maior = np.argmax(_tam) + 1
 MAR_ABERTO = _lab == _maior
 D_AGUA = ndi.distance_transform_edt(AGUA) * LPASSO        # distância à costa, dentro de água
@@ -722,21 +758,6 @@ def textura_reboco(cor, n=512, metros=6.0, semente=7, gasto=0.5):
     esc = 0.5 + 0.5 * np.sin(2 * math.pi * (xx * 14 + 0.4 * f1))                 # escorrências
     c = c * (0.96 + 0.05 * esc[..., None] * (yy[..., None] > 0.0))
     return np.clip(c, 0, 1)
-
-
-def textura_rocha(n=512, metros=8.0, semente=99):
-    """Calcário das arribas de Peniche: estratos horizontais cinzento-amarelados, fendas escuras e a
-    faixa escura das algas junto à água (por cima do relevo dá-se a sombra das fendas)."""
-    yy, xx = np.mgrid[0:n, 0:n] / n
-    f = fbm(xx * 8, yy * 8, 1.0, semente)
-    g = fbm(xx * 30, yy * 30, 1.0, semente + 3)
-    estr = np.sin(2 * math.pi * (yy * 5 + 0.9 * f + 0.25 * g)) * 0.5 + 0.5
-    base = np.array([0.70, 0.66, 0.57])[None, None, :] * (0.82 + 0.25 * g[..., None])
-    base = np.where((f > 0.62)[..., None], base * np.array([1.02, 0.94, 0.80]), base)   # ocre
-    fenda = ((estr < 0.06) & (g > 0.45)) | ((g > 0.76) & (f < 0.38))
-    base = np.where(fenda[..., None], base * 0.6, base * (0.94 + 0.08 * estr[..., None]))
-    alt = estr * 0.6 + g * 0.5 - fenda * 0.8
-    return np.clip(base, 0, 1), ndi.gaussian_filter(alt, 1.0)
 
 
 def textura_ondas(n=256):
@@ -890,6 +911,8 @@ def plataforma(p, m):
                     perf = [(off, zz - 0.16), (off + 0.16, zz - 0.1), (off + 0.21, zz), (off + 0.16, zz + 0.1), (off, zz + 0.16)]
                     varrer(m, lin_, perf, CANT_, fechar=False)
                 k = j
+        if not edif:  # sobre as bocas do túnel o pano para no topo do paramento
+            zg = np.where(boca_perto(base[:, 0], base[:, 1]), np.maximum(zg, TUNEL["paramento"] - 0.2), zg)
         for i in range(n):
             j = (i + 1) % n
             mt_ = mat_lado
@@ -938,9 +961,79 @@ def parapeitos(mq):
     comp = 0.0
     guaritas = []
     edif = shapely.union_all([p.buffer(1.0) for p, *_ in EDIFICIOS]) if EDIFICIOS else shapely.Point(1e6, 1e6)
-    for mu in MUROS:
+    linhas_ = [(io_, shapely.LineString(mu["linha"])) for io_, mu in enumerate(MUROS) if np.median(mu["relevo"]) >= 0.6]
+    n_dup = 0
+    # Um parapeito anda de nível: onde o topo do traço cai mais de 2,5 m abaixo do nível do parapeito (mediana em
+    # 20 m), ou numa ponta que sobe ou desce mais de 0,6 m por metro, o "relevo" do MDS é a aresta da arriba, não
+    # um muro (12 nov. 2026: troços amarelos a descer pela rocha). Esses bocados saem e o resto parte-se em peças
+    # de 4 m ou mais.
+    from shapely.ops import substring
+    pecas_ = []
+    n_ingr = 0
+    for io_, mu in enumerate(MUROS):
+        mu = dict(mu, origem=io_)
+        cota_ = np.array(mu["cota"])
+        rel_ = np.clip(np.array(mu["relevo"]), 0, None)
+        if len(cota_) < 6:
+            pecas_.append(mu)
+            continue
+        top_ = ndi.percentile_filter(cota_, 20, size=9, mode="nearest")
+        ref_ = ndi.median_filter(top_, size=41, mode="nearest")  # o nível do parapeito em 20 m
+        def declive_(t):  # quanto o topo sobe ou desce por metro, em 4 m
+            d = np.zeros(len(t))
+            d[4:-4] = np.abs(t[8:] - t[:-8]) / 4.0
+            d[:4], d[-4:] = d[4], d[-5]
+            return d
+        # o topo que se desenha (base + 0,6 a 2,4 m) também conta: na ponta de um traço sobre a aresta da arriba a
+        # base cai e o parapeito descia a pique até à água
+        bd_ = ndi.median_filter(cota_ - rel_, size=9, mode="nearest")
+        td_ = bd_ + np.clip(top_ - bd_, 0.6, 2.4)
+        dz_ = np.maximum(declive_(top_), declive_(td_))
+        # saem os mergulhos (2,5 m abaixo do nível, com 1 m de margem) e, em cada ponta, tudo até ao primeiro
+        # bocado de 4 m seguidos sem mergulho e sem subir ou descer mais de 0,6 m por metro (os degraus a meio
+        # de um parapeito ficam); dos bocados que restam, saem os de menos de 4 m e os que ficam 2,5 m ou mais
+        # abaixo do nível do traço (o pé da arriba)
+        ingr = ndi.binary_dilation((top_ < ref_ - 2.5) | (td_ < ref_ - 2.5), iterations=2)
+        bom_ = np.convolve(((dz_ <= 0.6) & ~ingr).astype(int), np.ones(8, int), "valid") == 8
+        if bom_.any():
+            j_ = np.nonzero(bom_)[0]
+            ingr[:j_[0]] = True
+            ingr[j_[-1] + 8:] = True
+        else:
+            ingr[:] = True
+        lab_, nl_ = ndi.label(~ingr)
+        med_ = np.median(top_)
+        for q_ in range(1, nl_ + 1):
+            idx_ = np.nonzero(lab_ == q_)[0]
+            if len(idx_) < 8 or np.median(top_[idx_]) < med_ - 2.5:
+                ingr[idx_] = True
+        ln_ = shapely.LineString(mu["linha"])
+        if not ingr.any():
+            pecas_.append(mu)
+            continue
+        n_ingr += 1
+        lab_, nl_ = ndi.label(~ingr)
+        for q_ in range(1, nl_ + 1):
+            idx_ = np.nonzero(lab_ == q_)[0]
+            if len(idx_) < 8:
+                continue
+            i0_, i1_ = idx_[0], idx_[-1]
+            sub = substring(ln_, i0_ * 0.5, min(i1_ * 0.5, ln_.length))
+            if sub.geom_type != "LineString" or sub.length < 3.5:
+                continue
+            pecas_.append(dict(mu, linha=np.array(sub.coords).tolist(), cota=cota_[i0_:i1_ + 1].tolist(),
+                               relevo=np.array(mu["relevo"])[i0_:i1_ + 1].tolist()))
+    for mu in pecas_:
         ln = shapely.LineString(mu["linha"])
         if np.median(mu["relevo"]) < 0.6 or ln.intersection(edif).length > 0.5 * ln.length:
+            continue
+        # junto ao mar, o relevo do MDS dá às vezes dois traços para o mesmo parapeito (a crista e o pé): o mais
+        # curto, se tiver metade ou mais a menos de 3,5 m de um mais comprido, sai (dois panos paralelos faziam
+        # uma vala entre eles, e a muralha parecia partir-se na rocha)
+        if perto_do_mar(*np.array(ln.centroid.coords[0])) < 30 and any(
+                io_ != mu["origem"] and o.length > ln.length and ln.intersection(o.buffer(3.5)).length >= 0.5 * ln.length
+                for io_, o in linhas_):
+            n_dup += 1
             continue
         cf = ln.centroid
         ponte_shp = shapely.LineString([PONTE["a"], PONTE["b"]]).buffer(PONTE["largura"] / 2 + 1.5)
@@ -979,18 +1072,23 @@ def parapeitos(mq):
         e = 0.42
         so = 1.0 if np.median(za - zb_) < 0 else -1.0
         nout = nr * so
-        zf = np.min([cota_t(*(lin + nout * o).T) for o in (2.0, 2.8, 3.6)], axis=0)
+        zf = np.min([cota_t(*(lin + nout * o).T) for o in (2.0, 2.8, 3.6, 4.5)], axis=0)
         zf = ndi.minimum_filter(ndi.median_filter(zf, size=7, mode="nearest"), size=3, mode="nearest")
-        zf = np.maximum(np.maximum(zf, zbase - 9.0), NIVEL + 0.3)
-        alto = (zbase - zf) > 1.5
+        zf = np.maximum(np.maximum(zf, zbase - 12.0), NIVEL + 0.3)
+        # pano contínuo: os intervalos curtos (até c. 4 m) entre troços altos também levam escarpa; sem isto
+        # ficavam dentes de rocha entre panos e a muralha parecia desfazer-se na arriba
+        alto = ndi.binary_closing((zbase - zf) > 1.2, structure=np.ones(9, bool), border_value=0) | ((zbase - zf) > 1.2)
         if alto.sum() >= 3:
             bat = 0.12 * (zbase - zf)
             top_ = lin + nout * e
             pe_ = lin + nout * (e + bat)[:, None]
             zt_e = np.minimum(zlow, zbase)
+            # junto à água o pano entra no mar (sem fresta escura entre o pé e a água)
+            zpe_ = np.where(zf < NIVEL + 1.0, NIVEL - 1.0, zf - 0.3)
+            zpe_ = np.where(boca_perto(pe_[:, 0], pe_[:, 1]), np.maximum(zpe_, TUNEL["paramento"] - 0.2), zpe_)
             for i in range(len(lin) - 1):
                 if alto[i] and alto[i + 1]:
-                    f_ = [(*top_[i], zt_e[i]), (*top_[i + 1], zt_e[i + 1]), (*pe_[i + 1], zf[i + 1] - 0.3), (*pe_[i], zf[i] - 0.3)]
+                    f_ = [(*top_[i], zt_e[i]), (*top_[i + 1], zt_e[i + 1]), (*pe_[i + 1], zpe_[i + 1]), (*pe_[i], zpe_[i])]
                     mq.face(f_ if so < 0 else f_[::-1], 0)
             ESCARPAS.append(dict(linha=lin, nout=nout, pe=zf - 0.3, alto=alto))
         mw, mc = (1, 3) if amarelo else (0, 2)
@@ -1035,7 +1133,7 @@ def parapeitos(mq):
                 bis, zf = -bis, zd
             if z_ - zf > 5.0:
                 guaritas.append((q[i], bis, z_ - 0.95, abs(ang)))
-    MEDIDAS["parapeitos"] = {"troços": n_lin, "comprimento": comp}
+    MEDIDAS["parapeitos"] = {"troços": n_lin, "comprimento": comp, "duplicados_tirados": n_dup, "com_troços_a_descer": n_ingr}
     return n_merl, guaritas
 
 
@@ -1051,14 +1149,35 @@ def escolher_guaritas(cands, dmin=26.0):
 
 # ---------------------------------------------------------------- edifícios da prisão
 
+PAINEL = 0.3  # espessura do paramento das fachadas da prisão, para os vãos ficarem fundos
+
+
 def edificio(m, poly, zt, amarelo):
     """Paredes caiadas (ou amarelas) já estão nas plataformas: aqui vão as janelas por pisos, com grade
-    nos pavilhões prisionais, o soco, a platibanda com capeamento e os cunhais."""
+    nos pavilhões prisionais, o soco, a platibanda com capeamento e os cunhais. As janelas são vãos fundos:
+    cada fachada leva um paramento de 0,3 m furado nos vãos, com o caixilho escuro lá atrás (12 nov. 2026:
+    as janelas pintadas na parede não pareciam buracos)."""
+    e = PAINEL
     q = np.array(poly.simplify(1.3).exterior.coords)[:-1]
     n = len(q)
+    # a parede vem do contorno em grelha de 50 cm, que sai até c. 0,6 m da fachada simplificada: as fachadas
+    # (paramento, vãos e platibanda) ficam à frente do ponto mais saliente, para nenhum dente tapar um vão
+    bd = densificar(np.array(poly.exterior.coords)[:-1], 0.25, True)
+    D = 0.0
+    for i in range(n):
+        a, b = q[i], q[(i + 1) % n]
+        t = unit(b - a)
+        nr_ = np.array([t[1], -t[0]])
+        rel = bd - (a + b) / 2
+        su, dd = rel @ t, rel @ nr_
+        k_ = (np.abs(su) < np.linalg.norm(b - a) / 2) & (np.abs(dd) < 1.5)
+        if k_.any():
+            D = max(D, float(dd[k_].max()))
+    D = min(D, 1.0)
+    e_ = e + D
     # platibanda e cornija
-    perfil = [(0.02, zt - 0.5), (0.18, zt - 0.5), (0.18, zt - 0.3), (0.02, zt - 0.3), (0.02, zt + 0.75), (-0.22, zt + 0.75),
-              (-0.22, zt - 0.05)]
+    perfil = [(e_ + 0.02, zt - 0.5), (e_ + 0.18, zt - 0.5), (e_ + 0.18, zt - 0.3), (e_ + 0.02, zt - 0.3), (e_ + 0.02, zt + 0.75),
+              (-0.22, zt + 0.75), (-0.22, zt - 0.05)]
     varrer(m, np.vstack([q, q[:1]]), perfil, [CAL, CAL, CAL, CAL, CAL, CAL], fechar=False)
     for i in range(n):
         a, b = q[i], q[(i + 1) % n]
@@ -1069,27 +1188,67 @@ def edificio(m, poly, zt, amarelo):
         mid = (a + b) / 2
         g = float(np.median(cota_t(*(np.linspace(a, b, 5) + nr * 1.2).T)))
         g = min(g, zt - 2.5)
-        Q = Quadro(m, mid, nr)
-        Q.bloco(-L / 2, L / 2, g - 0.6, g + 0.6, -0.1, 0.06, LIS)  # soco
+        Q = Quadro(m, mid + nr * D, nr)
+        mp = OCR if amarelo else CAL
+        L = L + 2 * D  # nos cantos, o paramento fecha com o da fachada vizinha
+        Q.bloco(-L / 2 - e, L / 2 + e, g - 0.6, g + 0.6, -0.1, e + 0.06, LIS)  # soco
         if amarelo:  # cunhais e cornija brancos (fotografias)
-            Q.bloco(L / 2 - 0.5, L / 2 + 0.02, g, zt - 0.3, -0.02, 0.08, CAL)
-            Q.bloco(-L / 2 - 0.02, -L / 2 + 0.5, g, zt - 0.3, -0.02, 0.08, CAL)
-            Q.bloco(-L / 2, L / 2, zt - 0.95, zt - 0.6, -0.02, 0.1, CAL)
-        if L < 3.2:
-            continue
-        pisos = np.arange(g + 1.1, zt - 2.0, 3.1)
-        passo = 3.2 if amarelo else 2.6
-        k = int((L - 1.6) // passo)
-        if k < 1:
-            continue
-        ss = (np.arange(k) - (k - 1) / 2) * passo
-        for pz in pisos:
-            for s_ in ss:
-                if amarelo:
-                    janela(Q, s_, pz, 1.0, 2.0, arco=True, mat_vidro=VID, moldura=0.16, d=0.0)
-                else:
-                    # fotografia do pátio: vãos de c. 1 × 1,3 m com caixilho claro e grade
-                    janela(Q, s_, pz + 0.25, 0.95, 1.3, arco=False, mat_vidro=SOM, moldura=0.14, d=0.0, grade=True)
+            Q.bloco(L / 2 - 0.5, L / 2 + e + 0.02, g, zt - 0.3, -0.02, e + 0.08, CAL)
+            Q.bloco(-L / 2 - e - 0.02, -L / 2 + 0.5, g, zt - 0.3, -0.02, e + 0.08, CAL)
+            Q.bloco(-L / 2, L / 2, zt - 0.95, zt - 0.6, -0.02, e + 0.1, CAL)
+        vaos = []
+        if L >= 3.2:
+            pisos = np.arange(g + 1.1, zt - 2.0, 3.1)
+            passo = 3.2 if amarelo else 2.6
+            k = int((L - 1.6) // passo)
+            ss = (np.arange(max(k, 0)) - (k - 1) / 2) * passo
+            for pz in pisos:
+                for s_ in ss:
+                    if amarelo:
+                        vaos.append((s_, pz, 1.0, 2.0, True))
+                    else:
+                        # fotografia do pátio: vãos de c. 1 × 1,3 m com caixilho claro e grade
+                        vaos.append((s_, pz + 0.25, 0.95, 1.3, False))
+        # paramento furado: grelha cortada pelos vãos (cada vão em retângulo; o arco leva tímpano por cima)
+        z0p, z1p = g + 0.6, zt - 0.5 if not amarelo else zt - 0.95
+        sb = sorted({-L / 2 - e, L / 2 + e} | {v[0] + sg * v[2] / 2 for v in vaos for sg in (-1, 1)})
+        zb = sorted({z0p, z1p} | {v[1] + dz for v in vaos for dz in (0.0, v[3])})
+        for s0, s1 in zip(sb[:-1], sb[1:]):
+            for za, zb_ in zip(zb[:-1], zb[1:]):
+                if zb_ <= z0p or za >= z1p:
+                    continue
+                sc, zc = (s0 + s1) / 2, (za + zb_) / 2
+                if any(abs(sc - v[0]) < v[2] / 2 and v[1] < zc < v[1] + v[3] for v in vaos):
+                    continue
+                Q.bloco(s0, s1, max(za, z0p), min(zb_, z1p), 0.0, e, mp)
+        for s_, z_, w_, h_, arco in vaos:
+            hn = h_ - (w_ / 2 if arco else 0)
+            # fundo do vão (caixilho escuro) e ombreiras por dentro
+            # (em placa fina, que tem as duas faces: o Q.vao faz uma face só, virada para dentro nestas
+            # fachadas, e o visor não a desenhava; via-se a parede caiada através do vão)
+            w2 = w_ / 2
+            pv = [(s_ - w2, z_), (s_ + w2, z_), (s_ + w2, z_ + hn)]
+            if arco:
+                pv += [(s_ + w2 * math.cos(math.pi * k_ / 14), z_ + hn + w2 * math.sin(math.pi * k_ / 14)) for k_ in range(1, 14)]
+            pv += [(s_ - w2, z_ + hn)]
+            Q.placa(pv, 0.0, 0.012, VID if arco else SOM)
+            if arco:  # tímpano do arco: o paramento enche o retângulo por cima do arco
+                r_ = w_ / 2
+                arc = [(s_ + r_ * math.cos(math.pi * k_ / 10), z_ + hn + r_ * math.sin(math.pi * k_ / 10)) for k_ in range(11)]
+                for (sa, za), (sb2, zb2) in zip(arc[:-1], arc[1:]):
+                    Q.placa([(sa, za), (sb2, zb2), (sb2, z_ + h_), (sa, z_ + h_)], 0.0, e, mp)
+            # moldura de cantaria à face do paramento
+            for sg in (-1, 1):
+                s2 = sorted((s_ + sg * w_ / 2, s_ + sg * (w_ / 2 + 0.15)))
+                Q.bloco(s2[0], s2[1], z_, z_ + hn, e, e + 0.07, CAN)
+            Q.bloco(s_ - w_ / 2 - 0.21, s_ + w_ / 2 + 0.21, z_ - 0.14, z_, 0.0, e + 0.12, CAN)  # peitoril
+            if arco:
+                Q.arco_sz(s_, w_ / 2, w_ / 2 + 0.16, z_ + hn, e, e + 0.07, CAN, k=10, aduelas=True)
+            else:
+                Q.bloco(s_ - w_ / 2 - 0.14, s_ + w_ / 2 + 0.14, z_ + hn, z_ + hn + 0.18, e, e + 0.07, CAN)
+                for k_ in range(1, 4):  # grade a meio do vão
+                    sx = s_ - w_ / 2 + w_ * k_ / 4
+                    Q.bloco(sx - 0.015, sx + 0.015, z_, z_ + hn, e * 0.5, e * 0.5 + 0.03, FER)
     return n
 
 
@@ -1325,15 +1484,66 @@ def porta_ponte(m, mg):
     return F0, ztop
 
 
-def tunel(m, p, n, z0, w=4.2):
-    """Boca do túnel por onde a água do mar entra no fosso da ponte (fotografia): arco de volta perfeita
-    com aduelas de pedra, escuro por dentro."""
-    Q = Quadro(m, p, n)
-    Q.vao(w, z0, 1.2, 0.02, 1)
-    Q.arco_sz(0.0, w / 2, w / 2 + 0.45, z0 + 1.2, 0.0, 0.2, 0, k=13, aduelas=True)
-    for sg in (-1, 1):
-        s0, s1 = sorted((sg * w / 2, sg * (w / 2 + 0.45)))
-        Q.bloco(s0, s1, z0 - 0.5, z0 + 1.2, 0.0, 0.2, 0)
+def tunel_agua(m):
+    """O túnel da água do mar entre a baía e o fosso: abóbada de berço em alvenaria (só a face de dentro, que se vê
+    pelas bocas), a água lá dentro à cota do mar e, em cada boca, um paramento de alvenaria com o arco de aduelas
+    (fotografias). Materiais: 0 cantaria, 1 alvenaria, 2 água escura."""
+    w, zn, zf_ = TUNEL["largura"], TUNEL["nascenca"], TUNEL["fundo"]
+    r = w / 2
+    eixo = densificar(TUNEL["eixo"], 1.0)
+    k = 12
+    # perfil de dentro: (afastamento lateral, cota), do fundo de um lado ao fundo do outro, pela abóbada
+    perf = [(-r, zf_), (-r, zn)] + [(-r * math.cos(math.pi * i / k), zn + r * math.sin(math.pi * i / k)) for i in range(1, k)] \
+        + [(r, zn), (r, zf_)]
+    n_ = len(eixo)
+    tang = np.array([unit(eixo[min(i + 1, n_ - 1)] - eixo[max(i - 1, 0)]) for i in range(n_)])
+    lado = np.column_stack([-tang[:, 1], tang[:, 0]])
+    anel = [[(*(eixo[i] + lado[i] * o), z) for o, z in perf] for i in range(n_)]
+    for i in range(n_ - 1):
+        c_ax = np.array([*(eixo[i] + eixo[i + 1]) / 2, zn])
+        for j in range(len(perf) - 1):
+            f_ = [anel[i][j], anel[i + 1][j], anel[i + 1][j + 1], anel[i][j + 1]]
+            P_ = np.array(f_)
+            nn = np.cross(P_[1] - P_[0], P_[3] - P_[0])
+            if nn @ (c_ax - P_.mean(0)) < 0:
+                f_ = f_[::-1]
+            m.face(f_, 1)
+    # a água dentro do túnel
+    for i in range(n_ - 1):
+        q_ = [eixo[i] - lado[i] * r, eixo[i + 1] - lado[i + 1] * r, eixo[i + 1] + lado[i + 1] * r, eixo[i] + lado[i] * r]
+        if area(np.array(q_)) < 0:
+            q_ = q_[::-1]
+        m.face([(*p, NIVEL - 0.03) for p in q_], 2)
+    # bocas: paramento com o vão em arco (furado), aduelas e pés-direitos de cantaria
+    for b, n, comp, topo in TUNEL["bocas"]:
+        Q = Quadro(m, b, n)
+        largo, z_alto = r + 2.2, (topo or TUNEL["paramento"])
+        # paramento à volta do arco, na face d = 0, virado para fora (normal n)
+        arco = [(r * math.cos(math.pi * i / k), zn + r * math.sin(math.pi * i / k)) for i in range(k + 1)]  # de s=+r a s=-r
+        pecas = [[(r, zf_), (largo, zf_), (largo, z_alto), (r + 0.0, zn)],
+                 [(-largo, zf_), (-r, zf_), (-r, zn), (-largo, z_alto)]]
+        for (sa, za), (sb, zb) in zip(arco[:-1], arco[1:]):
+            pecas.append([(sa, za), (sb, zb), (sb, z_alto), (sa, z_alto)])
+        pecas.append([(r, zn), (largo, z_alto), (r, z_alto)])
+        pecas.append([(-largo, z_alto), (-r, zn), (-r, z_alto)])
+        for pc in pecas:
+            P_ = [Q.p(s_, z_, 0.0) for s_, z_ in pc]
+            A_ = np.array(P_)
+            nn = np.cross(A_[1] - A_[0], A_[2] - A_[0])
+            if nn[:2] @ n < 0:
+                P_ = P_[::-1]
+            m.face(P_, 1)
+        # o paramento entra 1,5 m pelo terreno dos lados e por cima (sem frestas para o escuro de dentro)
+        for sg in (-1, 1):
+            Q.bloco(sg * largo, sg * (largo + 1.5), zf_, z_alto, -2.5, 0.0, 1)
+        Q.bloco(-largo - 1.5, largo + 1.5, z_alto, z_alto + 0.8, -2.5, 0.0, 1)
+        # arco de aduelas e pés-direitos
+        Q.arco_sz(0.0, r, r + 0.5, zn, 0.0, 0.18, 0, k=13, aduelas=True)
+        for sg in (-1, 1):
+            s0, s1 = sorted((sg * r, sg * (r + 0.5)))
+            Q.bloco(s0, s1, zf_ + 0.6, zn, 0.0, 0.18, 0)
+    MEDIDAS["tunel"] = {"comprimento": float(np.sum(np.linalg.norm(np.diff(TUNEL["eixo"], axis=0), axis=1))),
+                        "largura": w, "fecho": TUNEL["fecho"], "agua": NIVEL}
 
 
 def cruzeiro(m, c):
@@ -1579,15 +1789,17 @@ def construir_terreno():
         & (Y > FORTIM["corda"] - 0.5) & (Y < FORTIM["frente"] + 0.3)
     Z = np.where(patio, np.minimum(Z, FORTIM["chao"] - 0.05), Z)
     # em frente das escarpas de alvenaria da costa, o terreno desce ao pé do pano (o MDT faz uma rampa)
+    Z0 = Z.copy()
     for es in ESCARPAS:
         lin, nout, pe, alto = es["linha"], es["nout"], es["pe"], es["alto"]
         for i in range(len(lin) - 1):
             if not (alto[i] and alto[i + 1]):
                 continue
             quad = shapely.Polygon([lin[i] - nout[i] * 0.3, lin[i + 1] - nout[i + 1] * 0.3,
-                                    lin[i + 1] + nout[i + 1] * 3.4, lin[i] + nout[i] * 3.4])
+                                    lin[i + 1] + nout[i + 1] * 4.6, lin[i] + nout[i] * 4.6])
             if not quad.is_valid or quad.area < 0.05:
                 continue
+            quad = quad.buffer(0.45)  # sobrepõe os vizinhos: nos ângulos não ficam células por rebaixar
             x0, y0, x1, y1 = quad.bounds
             c0, c1 = np.searchsorted(LXS, [x0, x1])
             r0, r1 = np.searchsorted(LYS, [y0, y1])
@@ -1598,6 +1810,25 @@ def construir_terreno():
             zp = 0.5 * (pe[i] + pe[i + 1])
             blk = Z[r0:r1 + 1, c0:c1 + 1]
             blk[k_] = np.minimum(blk[k_], zp)
+    # túnel: os canais das bocas descem abaixo da água; por cima das bocas, até 2,5 m para dentro, o terreno fica
+    # pelo menos 0,5 m acima do fecho da abóbada (o MDT tem aí o entalhe da boca, que furaria a abóbada)
+    Z = np.where(canais_tunel(X, Y), np.minimum(Z, TUNEL["fundo"] - 0.3), Z)
+    for b, n, _, _ in TUNEL["bocas"]:
+        t = np.array([n[1], -n[0]])
+        rs = (X - b[0]) * t[0] + (Y - b[1]) * t[1]
+        rd = (X - b[0]) * n[0] + (Y - b[1]) * n[1]
+        teto = (np.abs(rs) < TUNEL["largura"] / 2 + 1.2) & (rd <= -0.2) & (rd > -2.5)
+        Z = np.where(teto, np.maximum(Z, TUNEL["fecho"] + 0.9), Z)
+    # sem agulhas de rocha à frente das escarpas: até 8 m delas, uma abertura morfológica (2,5 m) tira os picos
+    # estreitos que o MDT deixa entre o pano e a arriba (o terreno só desce, nunca sobe)
+    # e sem covas: onde duas escarpas se viram uma para a outra, o rebaixamento ao pé de uma abria um poço atrás
+    # da outra; um fecho morfológico (4,5 m) enche essas covas sem subir acima do MDT (os declives para o mar ficam)
+    if ESCARPAS:
+        pe_lin = shapely.union_all([shapely.LineString(es["linha"]) for es in ESCARPAS])
+        zona = shapely.contains_xy(pe_lin.buffer(8.0), X, Y) & ~AGUA
+        Z = np.where(zona, np.minimum(Z0, ndi.grey_closing(Z, size=9)), Z)
+        Z = np.where(zona, np.minimum(Z, ndi.grey_opening(Z, size=5)), Z)
+        MEDIDAS["escarpas"] = {"troços": len(ESCARPAS), "celulas_limpas": int(zona.sum())}
     ZTER[:] = [Z]
     dentro_ = shapely.contains_xy(CONTORNO, X + LPASSO / 2, Y + LPASSO / 2)[:-1, :-1]
     usados = np.zeros(X.shape, bool)
@@ -1706,7 +1937,7 @@ for g in ["Terreno", "Muralhas", "Guaritas", "Portas", "Edificios", "Fortim", "P
 
 # Pedra fotografada (kit.fotos, fotos CC0 da Poly Haven; créditos em medidas.json "texturas_foto"), com o tom
 # das fotografias da fortaleza: alvenaria de calcário cinzento-amarelado (4 m por imagem) e cantaria clara
-# (3 m). As arribas continuam com a textura de estratos própria (o calcário em camadas não tem foto no kit).
+# (3 m).
 TEX_ALV, ALT_ALV = textura_foto("old_stone_wall", n=1024, metros=4.0, cor=(0.64, 0.61, 0.54), contraste=0.9, metros_foto=4.0,
                                 saturacao=0.6, liquen=0.05, liquen_cor=(0.80, 0.74, 0.45), semente=51)
 material("alvenaria", (1, 1, 1), 0.93, imagem("alvenaria", TEX_ALV), normal=imagem("alvenaria_normal", normais(ALT_ALV, 2.5)))
@@ -1723,8 +1954,12 @@ material("chao", (1, 1, 1), 0.95)
 _yy, _xx = np.mgrid[0:256, 0:256] / 256
 _f = fbm(_xx * 8, _yy * 8, 1.0, 77)
 material("relva", (1, 1, 1), 0.95, imagem("relva", np.stack([0.24 + 0.06 * _f, 0.38 + 0.08 * _f, 0.15 + 0.03 * _f], -1)))
-TEX_R, ALT_R = textura_rocha()
-material("rocha", (1, 1, 1), 0.92, imagem("rocha", TEX_R), normal=imagem("rocha_normal", normais(ALT_R, 3.0)), forca=1.2)
+# Arribas: calcário fotografado (cliff_side, Poly Haven CC0), em blocos partidos por camadas, recolorido para o
+# cinzento das rochas de Peniche nas fotografias (12 nov. 2026: a antiga textura de estratos desenhada à mão
+# fazia um ondulado amarelo que não existe). 8 m por imagem, como a UV das arribas.
+TEX_R, ALT_R = textura_foto("cliff_side", n=1024, metros=8.0, cor=(0.56, 0.55, 0.52), contraste=1.15, metros_foto=4.0,
+                            saturacao=0.25, variacao=0.12, liquen=0.04, liquen_cor=(0.70, 0.62, 0.45), semente=61)
+material("rocha", (1, 1, 1), 0.93, imagem("rocha", TEX_R), normal=imagem("rocha_normal", normais(ALT_R, 3.0)), forca=1.0)
 TEX_TELHA, ALT_TELHA = textura_foto("roof_09", n=512, metros=2.0, cor=(0.50, 0.50, 0.50), metros_foto=2.0, saturacao=0.3, variacao=0.06)
 material("telha", (1, 1, 1), 0.8, imagem("telha", np.clip(TEX_TELHA * np.array([1.44, 0.84, 0.56]), 0, 1)),
          normal=imagem("telha_normal", normais(ALT_TELHA, 2.0)), forca=0.6)
@@ -1737,6 +1972,7 @@ material("vidro", (0.18, 0.22, 0.28), 0.25)
 # casas da vila: um só cinzento claro, paredes e telhados, para o destaque ficar na fortaleza
 material("cinza_viz", (0.74, 0.74, 0.73), 0.9)
 material("base", (0.33, 0.26, 0.20), 0.95)
+material("agua_tunel", (0.05, 0.16, 0.17), 0.15)  # água à sombra, dentro do túnel
 material("terreno", (1, 1, 1), 0.95)
 material("arvore", (1, 1, 1), 0.9, None, vcor=True)
 material("pedra_vc", (1, 1, 1), 0.92, None, vcor=True)
@@ -1792,9 +2028,10 @@ L_ponte = ponte_arcos(mp)
 mp.objeto("Ponte", "ponte", MAT_P, GRUPOS["Ponte"], uv=2.5)
 mpo = Malha()
 F0_porta, ztop_porta = porta_ponte(mpo, mg)
-tunel(mpo, np.array([84.0, 41.2]), np.array([0.24, 0.97]), NIVEL - 0.4)
-tunel(mpo, np.array([73.8, 20.6]), np.array([0.0, -1.0]), NIVEL - 0.4)
 mpo.objeto("Porta_da_ponte", "porta", ["cantaria", "sombra", "madeira_verde"], GRUPOS["Portas"], uv=2.5)
+mt_ = Malha()
+tunel_agua(mt_)
+mt_.objeto("Tunel_da_agua", "tunel", ["cantaria", "alvenaria", "agua_tunel"], GRUPOS["Portas"], uv=2.5, recalc=False)
 mg.objeto("Guaritas", "guaritas", ["cantaria_lisa", "cantaria", "sombra"], GRUPOS["Guaritas"], uv=2.0)
 
 print("mar…")
@@ -1823,6 +2060,8 @@ for i in sel:
     x, y = LXS[cc_[i]], LYS[cr[i]]
     if not CONTORNO.contains(shapely.Point(x, y).buffer(3)) or (PLAT_UNIAO is not None and PLAT_UNIAO.distance(shapely.Point(x, y)) < 2.0):
         continue
+    if any(np.hypot(x - b[0], y - b[1]) < 7.0 for b, *_ in TUNEL["bocas"]):
+        continue  # as bocas do túnel ficam desimpedidas
     if abs(x - 85) < 14 and abs(y - 58) < 18:
         r_ = rng.uniform(0.5, 1.3)  # no fosso da ponte, pedras miúdas
     else:
@@ -1833,7 +2072,7 @@ for i in sel:
 ar, ac = np.nonzero(AGUA & (D_AGUA > 2.5) & (D_AGUA < 9))
 for i in rng.choice(len(ar), size=min(len(ar), 120), replace=False):
     x, y = LXS[ac[i]], LYS[ar[i]]
-    if not CONTORNO.contains(shapely.Point(x, y).buffer(3)):
+    if not CONTORNO.contains(shapely.Point(x, y).buffer(3)) or any(np.hypot(x - b[0], y - b[1]) < 9.0 for b, *_ in TUNEL["bocas"]):
         continue
     r_ = rng.uniform(0.6, 2.0)
     rochedo(x, y, NIVEL - 0.35 * r_, r_, rng.uniform(0.4, 0.7), int(rng.integers(1e6)))
@@ -1949,6 +2188,7 @@ MEDIDAS["ancoras"] = {
     "muralhas": ancora(-95.0, 22.0, 30.0),
     "guaritas": ancora(*(GUAR[0][0] if GUAR else (0, 0)), (GUAR[0][2] if GUAR else 15) + 7),
     "mar": ancora(40.0, -70.0, 6.0),
+    "tunel": ancora(82.5, 45.0, TUNEL["fecho"] + 5.0),
     "vila": ancora(60.0, 125.0, 24.0),
 }
 MEDIDAS["texturas_foto"] = fontes_fotos()  # créditos das fotos de pedra e telha
