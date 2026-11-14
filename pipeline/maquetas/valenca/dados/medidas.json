@@ -3,12 +3,12 @@
   "panos": 88,
   "comprimento": 7142.2,
   "altura_p50": 7.4,
-  "altura_p90": 12.2,
+  "altura_p90": 12.3,
   "altura_max": 17.1
  },
  "guaritas": 37,
  "terreno": {
-  "vertices": 152293,
+  "vertices": 152508,
   "triangulos": 300000,
   "area_ha": 30.8
  },
@@ -18,6 +18,12 @@
   "altura_frontaria": 10.4,
   "ponte": 0.0
  },
+ "porta_coroada_dentro": {
+  "soleira": 74.3,
+  "topo_muralha": 80.0,
+  "altura_frontaria": 5.2,
+  "ponte": 0.0
+ },
  "porta_revelim": {
   "soleira": 71.4,
   "topo_muralha": 76.2,
@@ -25,8 +31,8 @@
   "ponte": 0.0
  },
  "porta_revelim_fora": {
-  "soleira": 67.9,
-  "topo_muralha": 76.8,
+  "soleira": 69.9,
+  "topo_muralha": 76.7,
   "altura_frontaria": 5.2,
   "ponte": 0.0
  },
@@ -38,30 +44,30 @@
  },
  "porta_meio_sul": {
   "soleira": 71.8,
-  "topo_muralha": 77.6,
-  "altura_frontaria": 7.4,
+  "topo_muralha": 77.8,
+  "altura_frontaria": 7.6,
   "ponte": 0.0
  },
  "portas_sol": {
-  "soleira": 59.2,
-  "topo_muralha": 69.7,
+  "soleira": 60.1,
+  "topo_muralha": 71.2,
   "altura_frontaria": 8.5,
   "ponte": 0.0
  },
  "portas_sol_dentro": {
-  "soleira": 62.9,
+  "soleira": 63.1,
   "topo_muralha": 69.6,
   "altura_frontaria": 5.2,
   "ponte": 0.0
  },
  "porta_gaviarra": {
-  "soleira": 44.3,
-  "topo_muralha": 48.3,
+  "soleira": 44.4,
+  "topo_muralha": 48.9,
   "altura_frontaria": 8.5,
   "ponte": 0.0
  },
  "porta_gaviarra_dentro": {
-  "soleira": 54.9,
+  "soleira": 55.0,
   "topo_muralha": 62.5,
   "altura_frontaria": 5.2,
   "ponte": 0.0
@@ -88,8 +94,8 @@
   "medidos": 408,
   "recusas": {
    "fora": 319,
-   "evitar": 29,
-   "escarpa": 16
+   "evitar": 28,
+   "escarpa": 17
   }
  },
  "vegetacao": {
@@ -99,26 +105,26 @@
   "porta_coroada": [
    -3.0,
    84.4,
-   327.0
+   329.4
   ],
   "porta_revelim": [
-   0.3,
+   0.9,
    82.4,
-   377.4
+   376.5
   ],
   "porta_meio": [
-   79.2,
+   79.4,
    81.9,
-   60.0
+   59.4
   ],
   "portas_sol": [
-   154.2,
-   70.2,
-   34.6
+   156.3,
+   71.1,
+   35.9
   ],
   "porta_gaviarra": [
-   73.6,
-   55.3,
+   72.8,
+   55.4,
    -319.0
   ],
   "igreja_anjos": [
@@ -157,9 +163,9 @@
    300.0
   ],
   "guaritas": [
-   11.6,
-   75.7,
-   407.7
+   12.2,
+   75.8,
+   411.4
   ],
   "vila": [
    55.0,

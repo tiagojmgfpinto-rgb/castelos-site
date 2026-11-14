@@ -51,6 +51,52 @@ class Quadro:
                  (s0 + r1 * math.cos(t1), zn + r1 * math.sin(t1)), (s0 + r0 * math.cos(t1), zn + r0 * math.sin(t1))]
             self.placa(q, d0, d1, mat)
 
+    def pano_vao(self, s0, s1, z0, z1, d0, d1, mat, w, zs, zn, reto=False):
+        """Pano de parede (como bloco) com o vão de uma porta aberto de lado a lado: arco pleno de raio w
+        com nascença em zn (ou verga reta em zn) e soleira em zs. As faces do recorte são o intradorso."""
+        sz = [(s0, z0), (-w, z0), (-w, zn)]
+        if not reto:
+            sz += [(-w * math.cos(math.pi * k / 14), zn + w * math.sin(math.pi * k / 14)) for k in range(1, 14)]
+        sz += [(w, zn), (w, z0), (s1, z0), (s1, z1), (s0, z1)]
+        self.placa(sz, d0, d1, mat)
+        if zs > z0 + 0.01:
+            self.bloco(-w, w, z0, zs, d0, d1, mat)  # soleira
+
+    def tunel(self, w, zs, zn, d0, comprimento, mat_lado, mat_fundo, mat_folha=None, reto=False):
+        """Passagem por trás de um vão (revisão de 13 nov. 2026: os vãos eram um plano preto à face):
+        paredes, abóbada e chão de cantaria de d0 para dentro. Com mat_folha, as duas folhas da porta ficam
+        abertas e encostadas às paredes, logo atrás do vão.
+        Opções no quadro (Q): tunel_zs1, cota do chão no fim (a passagem sobe ou desce em rampa), e
+        tunel_aberto, sem o fundo escuro (a passagem continua noutra peça ou sai do outro lado)."""
+        d1 = d0 - comprimento
+        zs1 = getattr(self, "tunel_zs1", None)
+        zs1 = zs if zs1 is None else zs1
+        if getattr(self, "tunel_aberto", False):
+            mat_fundo = None
+        h = zn - zs
+        self.topo_tunel = zn + (0.0 if reto else w) + 0.3
+        self.topo_tunel1 = self.topo_tunel + (zs1 - zs)
+        if reto:
+            perfil = [(-w, 0.0), (-w, h), (w, h), (w, 0.0)]
+        else:
+            perfil = [(-w, 0.0)] + [(-w * math.cos(math.pi * k / 12), h + w * math.sin(math.pi * k / 12)) for k in range(13)] + [(w, 0.0)]
+        perfil = perfil + [perfil[0]]  # o chão fecha o anel
+        n = max(1, int(math.ceil(comprimento / 1.0)))
+        for i in range(n):
+            da, db = d0 - comprimento * i / n, d0 - comprimento * (i + 1) / n
+            za, zb = zs + (zs1 - zs) * i / n, zs + (zs1 - zs) * (i + 1) / n
+            for (s_a, h_a), (s_b, h_b) in zip(perfil[:-1], perfil[1:]):
+                self.m.face([self.p(s_a, za + h_a, da), self.p(s_b, za + h_b, da),
+                             self.p(s_b, zb + h_b, db), self.p(s_a, zb + h_a, db)], mat_lado)
+        if mat_fundo is not None:
+            self.m.face([self.p(s, zs1 + hh, d1) for s, hh in perfil[:-1]], mat_fundo)
+        self.tunel_fim = dict(w=w, h=h, d=d1, zs=zs1, reto=reto)  # para ligar a outra passagem
+        if mat_folha is not None:
+            hf = h + (0.0 if reto else w * 0.55)
+            for sg in (-1, 1):
+                a, b = sorted((sg * (w - 0.06), sg * (w - 0.01)))
+                self.bloco(a, b, zs, zs + hf, d0 - 0.15 - w, d0 - 0.15, mat_folha)
+
     def vao(self, largura, z0, nascenca, d, mat, reto=False):
         """Vão escuro (arco pleno, ou verga reta) no plano d."""
         w = largura / 2
@@ -397,10 +443,9 @@ def porta_revelim(Q, sole):
     perfeita com porta de madeira, e cartela com as armas reais por cima da cornija."""
     c, s_ = 0, 1
     z = sole
-    Q.bloco(-3.0, 3.0, z - 0.5, z + 4.1, -1.4, 0.25, c)
     w, zn = 1.15, z + 2.35
-    Q.vao(2 * w, z, zn - z, 0.26, s_)
-    Q.placa([(-w + 0.05, z), (w - 0.05, z), (w - 0.05, zn), (-w + 0.05, zn)], 0.2, 0.24, 2)  # porta de ferro/madeira
+    Q.pano_vao(-3.0, 3.0, z - 0.5, z + 4.1, -1.4, 0.25, c, w, z, zn)
+    Q.tunel(w, z, zn, 0.25, getattr(Q, "tunel_comp", 5.0), c, s_, mat_folha=2)  # porta de madeira aberta
     Q.arco_sz(0.0, w, w + 0.4, zn, 0.25, 0.36, c, k=11, aduelas=True)
     for sg in (-1, 1):
         s0, s1 = sorted((sg * 1.7, sg * 2.25))
@@ -422,9 +467,9 @@ def porta_tunel(Q, sole):
     a porta de madeira verde de duas folhas encostada."""
     c, s_ = 0, 1
     z = sole
-    Q.bloco(-3.6, 3.6, z - 0.5, z + 5.2, -1.4, 0.22, c)
     w, zn = 1.8, z + 2.7
-    Q.vao(2 * w, z, zn - z, 0.23, s_)
+    Q.pano_vao(-3.6, 3.6, z - 0.5, z + 5.2, -1.4, 0.22, c, w, z, zn)
+    Q.tunel(w, z, zn, 0.22, getattr(Q, "tunel_comp", 5.0), c, s_)
     Q.arco_sz(0.0, w, w + 0.55, zn, 0.18, 0.28, c, k=13, aduelas=True)
     Q.bloco(-0.22, 0.22, zn + w - 0.05, zn + w + 0.6, 0.22, 0.34, c)
     Q.placa([(-w, z), (-w + 0.08, z), (-w + 0.08, zn + 0.6), (-w, zn + 0.6)], 0.24, 1.0, 2)  # folha aberta

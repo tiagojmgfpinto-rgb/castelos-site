@@ -42,6 +42,44 @@ RAIZ = AQUI.parents[2]
 F = json.loads((AQUI / "dados" / "fontes.json").read_text())
 CFG = json.loads((RAIZ / "src" / "data" / "maquetas" / "valenca.json").read_text())
 ESC = json.loads((AQUI / "dados" / "escarpas.json").read_text())
+
+
+def _vertices_portas():
+    """Revisão de 13 nov. 2026: nas Portas da Coroada e da Gaviarra o traçado das escarpas passa pela
+    frontaria. Os muros da calçada sobem em diagonal até ao pano e a escarpa da Gaviarra atravessa a
+    porta a subir para o baluarte, o que deixava uma lâmina de muro à frente do arco ou por cima dele.
+    Aqui os vértices junto às portas são refeitos no referencial de cada porta (s ao longo da face, d para
+    fora): os muros da calçada chegam à frontaria a direito, à sua cota, e o pano recomeça nos lados da
+    frontaria (meia largura de 4,9 m na Coroada e de 3,8 m nas portas com frontão)."""
+    por_id = {e["id"]: e for e in ESC}
+
+    def ponto(p0, n, s, d):
+        n = np.array(n, float) / np.hypot(*n)
+        return (np.array(p0) + np.array([-n[1], n[0]]) * s + n * d).round(2).tolist()
+
+    def refazer(eid, i0, i1, novos):
+        """Troca os vértices i0..i1-1 da escarpa eid pelos novos [(xy, vértice de onde copiar os valores)]."""
+        e = por_id[eid]
+        chaves = ("topo", "pe", "aresta", "fim")
+        base = {k: list(e[k]) for k in chaves}
+        e["linha"][i0:i1] = [xy for xy, _ in novos]
+        for k in chaves:
+            e[k][i0:i1] = [base[k][j] for _, j in novos]
+
+    cor, nc = (-3.0, -325.6), (0.0, -1.0)  # Porta da Coroada
+    # e002: calçada (v2) -> frontaria a direito (s 2,6) -> pano a partir do lado da frontaria (s 4,95)
+    refazer("e002", 3, 4, [(ponto(cor, nc, 2.6, 0.9), 2), (ponto(cor, nc, 4.95, -0.05), 3)])
+    # e000: pano até ao lado da frontaria (s −4,95) -> calçada a partir da frontaria (s −2,6)
+    refazer("e000", 33, 34, [(ponto(cor, nc, -4.95, -0.05), 33), (ponto(cor, nc, -2.6, 0.9), 34)])
+    gav, ng = (71.5, 317.8), (0.84, 0.55)  # Porta da Gaviarra
+    # e024: muro do caminho fundo até ao lado da frontaria, recua por trás dela e só então sobe ao baluarte
+    refazer("e024", 7, 7, [(ponto(gav, ng, -3.9, 0.3), 6), (ponto(gav, ng, -3.9, -5.15), 7)])
+    # e049: a face à direita da porta começa no lado da frontaria, não a meio do arco
+    refazer("e049", 0, 1, [(ponto(gav, ng, 3.9, -0.02), 0)])
+
+
+_vertices_portas()
+TUNEL = 5.0  # comprimento das passagens desenhadas atrás dos vãos das portas (m)
 SAIDA = RAIZ / "public" / "maquetas" / "valenca"
 
 LAT0, LON0 = CFG["origem"]["lat"], CFG["origem"]["lon"]
@@ -704,9 +742,82 @@ def construir_terreno():
             zz[plano] = sole_ - 0.03
     zr[sel] = zz
     Z = zr.reshape(Z.shape)
+    # passagens das portas (revisão de 13 nov. 2026). Cada porta abre uma passagem pelo maciço: as portas
+    # com face de fora e de dentro (Revelim, Meio, Sol, Gaviarra) ligam-se por uma galeria entre as duas,
+    # com o chão em rampa de uma soleira à outra; a da Coroada vai até onde o terrapleno acaba (MDT). À
+    # frente do vão o chão fica à cota da soleira; por cima da passagem o terreno é tirado onde ficaria
+    # abaixo da abóbada e a alvenaria de enchimento (portas()) tapa o buraco até à borda.
+    ZTER[:] = [Z]
+    TUN.clear()
+    for pid, d_ in PORTAS.items():
+        r_ = quadro_porta(d_)
+        if r_ is not None:
+            TUN[pid] = {"quadro": r_}
+    TROCOS.clear()
+    for pid, tu in TUN.items():
+        F0_, n_, sole_, _, _ = tu["quadro"]
+        par = PARES.get(pid)
+        if par in TUN:
+            tu["L"] = BOCA
+            F1_, n1_, sole1_, _, _ = TUN[par]["quadro"]
+            TROCOS.append((pid, F0_, F0_ - n_ * BOCA, sole_, sole_))
+            if pid < par:
+                lat = float((F1_ - F0_) @ np.array([-n_[1], n_[0]]))
+                TROCOS.append((pid + "+", F0_ - n_ * BOCA, F1_ - n1_ * BOCA, sole_, sole1_))
+                print(f"  passagem {pid} <-> {par}: {np.hypot(*(F1_ - F0_)):.1f} m, desvio lateral {lat:.1f} m, "
+                      f"soleiras {sole_:.1f}/{sole1_:.1f}")
+        else:
+            L_ = 6.0
+            for dd in np.arange(-6.0, -40.0, -0.5):
+                if cota(*(F0_ + n_ * dd)) < sole_ + 3.0:
+                    L_ = -dd + 1.0
+                    break
+            tu["L"] = L_
+            TROCOS.append((pid, F0_, F0_ - n_ * L_, sole_, sole_))
+            print(f"  passagem {pid}: {L_:.1f} m")
+    # altura do fecho da abóbada (com o extradorso) acima do chão, pelo estilo de cada porta; nas galerias a maior
+    ABOBADA.clear()
+    for pid in TUN:
+        ABOBADA[pid] = FECHO.get(PORTAS[pid]["estilo"].__name__, 5.5)
+    for tid, *_ in TROCOS:
+        if tid.endswith("+"):
+            ABOBADA[tid[:-1]] = max(ABOBADA[tid[:-1]], ABOBADA[PARES[tid[:-1]]])
+    for pid, d_ in PORTAS.items():  # à frente do vão e debaixo da frontaria, o chão à cota da soleira
+        if pid not in TUN:
+            continue
+        F0_, n_, sole_, _, _ = TUN[pid]["quadro"]
+        rr = np.column_stack([X.ravel(), Y.ravel()]) - F0_
+        s_, dd_ = rr @ np.array([-n_[1], n_[0]]), rr @ n_
+        frente = (np.abs(s_) < 3.5) & (dd_ < 3.0) & (dd_ > -1.5)
+        zr = Z.ravel()
+        zr[frente] = np.minimum(zr[frente], sole_ - 0.06)
+        # a calçada que sai da porta à cota da soleira (o MDT vê-a, mas o rebaixamento à frente das
+        # escarpas apagava-a, menos uma fiada no eixo, que ficava em crista)
+        calcada = (np.abs(s_) < 3.5) & (dd_ < 10.0) & (dd_ > -1.5) & (np.abs(MDT.ravel() - sole_) < 0.6)
+        zr[calcada] = sole_ - 0.03
+        Z = zr.reshape(Z.shape)
+    BURACO = np.zeros(X.shape, bool)
+    cx, cy = X[:-1, :-1] + LPASSO / 2, Y[:-1, :-1] + LPASSO / 2
+    zmin = np.minimum.reduce([Z[:-1, :-1], Z[1:, :-1], Z[:-1, 1:], Z[1:, 1:]])
+    zmax = np.maximum.reduce([Z[:-1, :-1], Z[1:, :-1], Z[:-1, 1:], Z[1:, 1:]])
+    BORDA.clear()
+    for tid, A, B, za, zb in TROCOS:
+        L_ = float(np.hypot(*(B - A)))
+        u_ = (B - A) / L_
+        cu = (cx - A[0]) * u_[0] + (cy - A[1]) * u_[1]
+        cs = (cx - A[0]) * -u_[1] + (cy - A[1]) * u_[0]
+        u0 = 1.0 if not tid.endswith("+") else -0.3  # junto à face a frontaria e o pano tapam
+        piso = za + (zb - za) * np.clip(cu / L_, 0, 1)
+        bur = (np.abs(cs) < 2.6) & (cu > u0) & (cu < L_ + 0.3) & (zmin < piso + ABOBADA[tid.rstrip("+")] + 0.3)
+        BURACO[:-1, :-1] |= bur
+        borda = []
+        for a in np.arange(0.0, L_, 1.0):
+            sel_ = bur & (cu >= a) & (cu < a + 1.0)
+            borda.append((float(a), float(min(a + 1.0, L_)), float(zmax[sel_].max()) if sel_.any() else None))
+        BORDA[tid] = borda
     ZTER[:] = [Z]
 
-    dentro_ = shapely.contains_xy(CONTORNO, X + LPASSO / 2, Y + LPASSO / 2)[:-1, :-1]
+    dentro_ = shapely.contains_xy(CONTORNO, X + LPASSO / 2, Y + LPASSO / 2)[:-1, :-1] & ~BURACO[:-1, :-1]
     usados = np.zeros(X.shape, bool)
     usados[:-1, :-1] |= dentro_
     usados[1:, :-1] |= dentro_
@@ -765,6 +876,12 @@ def construir_terreno():
 
 
 ZTER = []
+TUN = {}  # passagens das portas: quadro e comprimento da boca L
+TROCOS = []  # troços retos das passagens: (id, início, fim, chão no início, chão no fim)
+BORDA = {}  # por troço: (de, até, cota mais alta do buraco tirado ao terreno) em troços de 1 m
+ABOBADA = {}
+FECHO = {"porta_coroada": 5.4, "porta_frontao": 4.8, "porta_meio_armas": 4.45, "porta_revelim": 3.8, "porta_tunel": 4.8}
+BOCA = 2.0  # comprimento da boca das portas com duas faces, antes da galeria que as liga
 
 
 def cota_t(x, y):
@@ -859,7 +976,9 @@ def porta_coroada(Q, sole):
     armas reais entre volutas, remate curvo com cruz e pináculos em bola nos extremos."""
     c, s_ = 0, 1  # cantaria, sombra
     z = sole
-    Q.bloco(-4.9, 4.9, z - 0.6, z + 6.7, -1.6, 0.30, c)  # pano de cantaria da frontaria
+    w, zn = 1.65, z + 3.45
+    Q.pano_vao(-4.9, 4.9, z - 0.6, z + 6.7, -1.6, 0.30, c, w, z, zn)  # pano de cantaria da frontaria, com o vão aberto
+    Q.tunel(w, z, zn, 0.30, getattr(Q, "tunel_comp", TUNEL), c, s_, mat_folha=2)
     for sg in (-1, 1):
         for a0, a1 in ((2.0, 2.8), (3.3, 4.1)):
             s0, s1 = sorted((sg * a0, sg * a1))
@@ -867,8 +986,6 @@ def porta_coroada(Q, sole):
             Q.almofadas(s0, s1, z + 0.55, z + 6.15, 0.30, 0.72, c)
             Q.bloco(s0 - 0.06, s1 + 0.06, z + 6.15, z + 6.45, 0.28, 0.78, c)  # capitel
     # arco de volta perfeita com aduelas salientes e fecho com o escudo coroado
-    w, zn = 1.65, z + 3.45
-    Q.vao(2 * w, z, zn - z, 0.31, s_)
     Q.arco_sz(0.0, w, w + 0.6, zn, 0.30, 0.42, c, k=13, aduelas=True)
     for k, zz in enumerate(np.arange(z, zn - 0.2, 0.5)):  # ombreiras em silhares alternados
         e_ = 0.6 if k % 2 == 0 else 0.42
@@ -912,9 +1029,9 @@ def porta_frontao(Q, sole):
     tímpano e pináculos em bola."""
     c, s_ = 0, 1
     z = sole
-    Q.bloco(-3.8, 3.8, z - 0.5, z + 5.6, -1.5, 0.28, c)
     w, zn = 1.5, z + 3.0
-    Q.vao(2 * w, z, zn - z, 0.29, s_)
+    Q.pano_vao(-3.8, 3.8, z - 0.5, z + 5.6, -1.5, 0.28, c, w, z, zn)
+    Q.tunel(w, z, zn, 0.28, getattr(Q, "tunel_comp", TUNEL), c, s_, mat_folha=2)
     Q.arco_sz(0.0, w, w + 0.5, zn, 0.28, 0.4, c, k=13, aduelas=True)
     Q.placa([(-0.25, zn + w - 0.1), (0.25, zn + w - 0.1), (0.32, zn + w + 0.55), (-0.32, zn + w + 0.55)], 0.28, 0.5, c)
     for sg in (-1, 1):
@@ -944,8 +1061,8 @@ def porta_meio_armas(Q, sole):
     z = sole
     topo = getattr(Q, "topo", z + 6.0)
     w, zn = 1.45, z + 2.7
-    Q.bloco(-2.9, 2.9, z - 0.4, z + 4.9, -1.5, 0.22, c)  # pano de cantaria da moldura
-    Q.vao(2 * w, z, zn - z, 0.23, s_)
+    Q.pano_vao(-2.9, 2.9, z - 0.4, z + 4.9, -1.5, 0.22, c, w, z, zn)  # pano de cantaria da moldura
+    Q.tunel(w, z, zn, 0.22, getattr(Q, "tunel_comp", TUNEL), c, s_, mat_folha=2)
     Q.arco_sz(0.0, w, w + 0.45, zn, 0.22, 0.36, c, k=13, aduelas=True)
     Q.placa([(-0.24, zn + w - 0.05), (0.24, zn + w - 0.05), (0.3, zn + w + 0.5), (-0.3, zn + w + 0.5)], 0.22, 0.44, c)
     for sg in (-1, 1):
@@ -975,6 +1092,10 @@ PORTAS = {
     # a Porta da Coroada abre a meio do pano sul, no topo da calçada entre muros que vai ao revelim
     "porta_coroada": dict(ponto=(-3.0, -325.6), normal=(0.0, -1.0), estilo=porta_coroada, elemento="porta_coroada",
                           fixo=True, corredor=True, soleira=73.4),  # a calçada tem 3 a 4 m de largura, à cota 73,4
+    # face de dentro da Porta da Coroada: a passagem atravessa o terrapleno (26 m no MDT) e sai na escarpa
+    # interior e033, à cota 74
+    "porta_coroada_dentro": dict(ponto=(-3.0, -303.0), normal=(0.0, 1.0), estilo=porta_tunel, elemento="porta_coroada",
+                                 fixo=True),
     "porta_revelim": dict(ponto=(-1.3, -379.0), normal=(0.66, 0.75), estilo=porta_revelim, elemento="porta_revelim"),
     "porta_revelim_fora": dict(ponto=(-12.8, -390.9), normal=(-0.66, -0.75), estilo=porta_tunel, elemento="porta_revelim"),
     "porta_meio": dict(ponto=(78.0, -62.9), normal=(0.38, 0.92), estilo=porta_frontao, elemento="porta_meio"),
@@ -987,6 +1108,11 @@ PORTAS = {
     "porta_gaviarra_dentro": dict(ponto=(51.2, 307.8), normal=(-0.71, -0.71), estilo=porta_tunel, elemento="porta_gaviarra"),
 }
 PONTOS_PORTA = {}
+# faces de fora e de dentro da mesma porta, ligadas por uma passagem
+PARES = {"porta_coroada": "porta_coroada_dentro", "porta_revelim": "porta_revelim_fora", "porta_meio": "porta_meio_sul",
+         "portas_sol": "portas_sol_dentro",
+         "porta_gaviarra": "porta_gaviarra_dentro"}
+PARES.update({b: a for a, b in PARES.items()})
 
 
 def ponte(m, F0, n, t, sole, largura=4.4):
@@ -1011,38 +1137,109 @@ def ponte(m, F0, n, t, sole, largura=4.4):
     return L
 
 
-def portas():
+def quadro_porta(d_):
+    """Eixo da porta na face da escarpa: (F0, normal, soleira, índice do ponto da escarpa) ou None."""
     pts = np.vstack([d["xy"] for d in ESC_DADOS])
     cat = lambda k: np.concatenate([np.broadcast_to(d[k], (len(d["xy"]),) + np.shape(d[k])[1:]) for d in ESC_DADOS])
     NR, A_, BT, TP, PE, ZC = cat("nr"), cat("a"), cat("bt"), cat("topo"), cat("pe"), cat("zc")
+    p0, n0 = np.array(d_["ponto"], float), unit(np.array(d_["normal"], float))
+    dist = np.hypot(*(pts - p0).T)
+    ok = (dist < 7.0) & (NR @ n0 > (0.97 if d_.get("fixo") else 0.6))
+    if not ok.any():
+        return None
+    k = int(np.nonzero(ok)[0][np.argmin(dist[ok])])
+    n = n0 if d_.get("fixo") else NR[k]
+    # o eixo da porta é o ponto projetado na face (a escarpa está aberta no vão, o ponto mais perto fica na borda)
+    q = pts[k] + np.array([-n[1], n[0]]) * float((p0 - pts[k]) @ np.array([-n[1], n[0]]))
+    sole = float(np.median([cota_t(*(q + n * (A_[k] + BT[k] * (ZC[k] - PE[k]) + dd))) for dd in (1.5, 2.5, 3.5)]))
+    sole = min(max(sole, PE[k]), ZC[k] - 2.5)
+    if "soleira" in d_:
+        sole = d_["soleira"] - ZREF
+    F0 = q + n * (A_[k] + BT[k] * (ZC[k] - sole) + 0.02)
+    return F0, n, sole, k, float(TP[k])
+
+
+def portas():
+    pts = np.vstack([d["xy"] for d in ESC_DADOS])
+    cat = lambda k: np.concatenate([np.broadcast_to(d[k], (len(d["xy"]),) + np.shape(d[k])[1:]) for d in ESC_DADOS])
+    NR, A_, TP = cat("nr"), cat("a"), cat("topo")
+    def enchimento(Q, tid, z_abob, dz, topo_min):
+        """Alvenaria por cima de um troço de passagem, da abóbada até à borda do buraco no terreno (ou até
+        ao topo da muralha junto às faces). z_abob(u): chão a u metros do início; dz: abóbada acima do chão."""
+        for a, b, borda in BORDA.get(tid, []):
+            z0 = max(z_abob(a), z_abob(b)) + dz
+            z1 = max(borda if borda is not None else -1e9, topo_min(a, b))
+            if z1 > z0 + 0.1:
+                Q.bloco(-2.9, 2.9, z0, z1 + 0.05, -b, -a, 3)
+            zp = min(z_abob(a), z_abob(b))  # alicerce por baixo do chão (o terreno está tirado por cima e à volta)
+            Q.bloco(-2.9, 2.9, zp - 4.0, zp - 0.02, -b, -a, 3)
+
     for pid, d_ in PORTAS.items():
-        p0, n0 = P(0, 0) * 0 + np.array(d_["ponto"]), unit(np.array(d_["normal"], float))
-        dist = np.hypot(*(pts - p0).T)
-        ok = (dist < 7.0) & (NR @ n0 > (0.97 if d_.get("fixo") else 0.6))
-        if not ok.any():
+        if pid not in TUN:
             print("  porta sem escarpa:", pid)
             continue
-        k = int(np.nonzero(ok)[0][np.argmin(dist[ok])])
-        n = n0 if d_.get("fixo") else NR[k]
-        q = pts[k] + np.array([-n[1], n[0]]) * float((p0 - pts[k]) @ np.array([-n[1], n[0]])) if d_.get("fixo") else pts[k]
-        sole = float(np.median([cota_t(*(q + n * (A_[k] + BT[k] * (ZC[k] - PE[k]) + dd))) for dd in (1.5, 2.5, 3.5)]))
-        sole = min(max(sole, PE[k]), ZC[k] - 2.5)
-        if "soleira" in d_:
-            sole = d_["soleira"] - ZREF
-        F0 = q + n * (A_[k] + BT[k] * (ZC[k] - sole) + 0.02)
+        tu = TUN[pid]
+        F0, n, sole, k, topo_k = tu["quadro"]
         m = Malha()
         Q = Quadro(m, F0, n)
-        Q.topo = float(TP[k])
+        Q.topo = topo_k
+        Q.tunel_comp, Q.tunel_aberto = tu["L"], True
         alt = d_["estilo"](Q, sole)
+        tu["fim"], tu["t"], tu["dz"] = Q.tunel_fim, Q.t, Q.topo_tunel - sole
+        Q.bloco(-2.9, 2.9, sole - 4.0, sole - 0.45, -1.5, 0.25, 0)  # embasamento da frontaria, onde o chão desce
+        # a escarpa está aberta no vão (cortar): por cima da passagem fecha-se com alvenaria até ao topo do
+        # parapeito (1 m), ao alto do maciço (até 4 m) e, mais para dentro, até à borda do buraco no terreno
+        enchimento(Q, pid, lambda u: sole, tu["dz"], lambda a, b: topo_k if b <= 1.0 else topo_k - 0.15 if b <= 4.0 else -1e9)
         L = ponte(m, F0, n, Q.t, sole) if d_.get("ponte") else 0.0
         if d_.get("corredor"):
             guardas_corredor(m, F0, n, pts, NR, A_, TP)
-        m.objeto(pid.title(), d_["elemento"], ["cantaria", "sombra", "madeira_verde"], GRUPOS["Portas"], uv=2.5)
+        m.objeto(pid.title(), d_["elemento"], ["cantaria", "sombra", "madeira_verde", "alvenaria"], GRUPOS["Portas"], uv=2.5)
         PONTOS_PORTA[pid] = (F0, n, sole)
         tt = np.array([-n[1], n[0]])  # passagem livre de casas e árvores à frente da porta
         EVITAR.append(np.array([F0 + tt * 3 + n * 0.3, F0 + tt * 3 + n * 9, F0 - tt * 3 + n * 9, F0 - tt * 3 + n * 0.3]))
-        MEDIDAS[pid] = {"soleira": sole + ZREF, "topo_muralha": float(TP[k] + ZREF), "altura_frontaria": alt, "ponte": L}
-        print(f"  {pid}: soleira {sole:.1f}, topo da muralha {TP[k]:.1f}, ponte {L:.1f} m")
+        MEDIDAS[pid] = {"soleira": sole + ZREF, "topo_muralha": topo_k + ZREF, "altura_frontaria": alt, "ponte": L}
+        print(f"  {pid}: soleira {sole:.1f}, topo da muralha {topo_k:.1f}, ponte {L:.1f} m")
+    # galerias entre a face de fora e a de dentro: abóbada de cantaria lançada entre o fim das duas bocas
+    # (as faces nem sempre estão alinhadas: a galeria pode ir em diagonal e mudar de largura)
+    m = Malha()
+    for tid, A, B, za, zb in TROCOS:
+        if not tid.endswith("+"):
+            continue
+        pa, pb = tid[:-1], PARES[tid[:-1]]
+        ta, tb = TUN[pa], TUN[pb]
+        fa, fb = ta["fim"], tb["fim"]
+
+        def anel(tu, f, sinal):
+            F0_, n_, _, _, _ = tu["quadro"]
+            w, h = f["w"], f["h"]
+            if f["reto"]:
+                prf = [(-w, 0.0), (-w, h), (w, h), (w, 0.0)]
+            else:
+                prf = [(-w, 0.0)] + [(-w * math.cos(math.pi * k / 12), h + w * math.sin(math.pi * k / 12)) for k in range(13)] + [(w, 0.0)]
+            prf = prf + [prf[0]]
+            c = F0_ + n_ * f["d"]
+            return np.array([[*(c + tu["t"] * s_ * sinal), f["zs"] + hh] for s_, hh in prf])
+
+        RA, RB = anel(ta, fa, 1.0), anel(tb, fb, -1.0)  # a direita de uma face é a esquerda da outra
+        if len(RA) != len(RB):
+            print("  galeria sem ligação (perfis diferentes):", tid)
+            continue
+        L_ = float(np.hypot(*(RB[0, :2] - RA[0, :2])))
+        nseg = max(1, int(math.ceil(L_ / 1.0)))
+        aneis = [RA + (RB - RA) * (i_ / nseg) for i_ in range(nseg + 1)]
+        for R0, R1 in zip(aneis[:-1], aneis[1:]):
+            for j_ in range(len(R0) - 1):
+                m.face([tuple(R0[j_]), tuple(R0[j_ + 1]), tuple(R1[j_ + 1]), tuple(R1[j_])], 0)
+        # alvenaria por cima, num quadro ao longo da galeria
+        u_ = (B - A) / np.hypot(*(B - A))
+        Qg = Quadro(m, A, -u_)
+        Lg = float(np.hypot(*(B - A)))
+        dz = max(ta["dz"], tb["dz"])
+        topo_a, topo_b = ta["quadro"][4], tb["quadro"][4]
+        enchimento(Qg, tid, lambda u: za + (zb - za) * np.clip(u / Lg, 0, 1), dz,
+                   lambda a, b: max(topo_a - 0.15 if a < 2.0 else -1e9, topo_b - 0.15 if b > Lg - 2.0 else -1e9))
+        print(f"  galeria {pa} <-> {pb}: {L_:.1f} m, desnível {zb - za:+.1f} m")
+    m.objeto("Galerias_Portas", None, ["cantaria", "sombra", "madeira_verde", "alvenaria"], GRUPOS["Portas"], uv=2.5)
 
 
 # ---------------------------------------------------------------- igrejas e estátua
@@ -1616,7 +1813,7 @@ TEX_CANT, ALT_CANT = textura_foto("stone_brick_wall_001", n=1024, metros=3.0, co
 NRM_CANT = imagem("cantaria_normal", normais(ALT_CANT, 3.0))
 material("cantaria", (1, 1, 1), 0.88, imagem("cantaria", TEX_CANT), normal=NRM_CANT, forca=0.7)
 material("cantaria_lisa", (0.70, 0.68, 0.63), 0.88)
-material("relva", (0.47, 0.52, 0.30), 0.97, imagem("grao_relva", textura_grao()))
+material("relva", (0.47, 0.52, 0.30), 0.97, imagem("grao_relva", textura_grao() * np.array([0.47, 0.52, 0.30])))
 material("sombra", (0.08, 0.075, 0.07), 1.0)
 material("cal", (0.93, 0.92, 0.88), 0.85)
 material("ocre", (0.86, 0.72, 0.42), 0.85)
@@ -1644,50 +1841,74 @@ print("escarpas…")
 m = Malha()
 mq = Malha()
 LINHAS_ESC = []
-def cortar(e):
-    """Corta as peças no vão das portas fixas: um vértice que cai dentro da passagem (até 1,9 m para cada
-    lado do eixo e atrás da face) passa para a borda da passagem, ao longo do segmento que vem de fora;
-    se os dois vizinhos também estão dentro, sai."""
-    lin = np.array(e["linha"], float)
+def cortar(e, g=2.2, d0=-3.5, d1=2.5):
+    """Abre as escarpas no vão de todas as portas (revisão de 13 nov. 2026: antes só se encostavam os
+    vértices à borda da passagem e o pano continuava por trás do vão, que era um plano preto). Cada
+    segmento que atravessa a caixa da passagem (até g para cada lado do eixo, de d0 a d1 da face) é
+    cortado nas bordas; a escarpa fica partida em peças e a frontaria tapa as pontas."""
+    pecas = [e]
     chaves = ("topo", "pe", "aresta", "fim")
-    for d_ in PORTAS.values():
-        if not d_.get("fixo"):
-            continue
+    for pid_, d_ in PORTAS.items():
         n_ = unit(np.array(d_["normal"], float))
         t_ = np.array([-n_[1], n_[0]])
         p0 = np.array(d_["ponto"])
-        s = (lin - p0) @ t_
-        dd = (lin - p0) @ n_
-        dentro_ = (np.abs(s) < 1.9) & (dd > -2.0) & (dd < -0.3)
-        if not dentro_.any():
-            continue
-        nova, vals = [], {k: [] for k in chaves}
-        for i_ in range(len(lin)):
-            if not dentro_[i_]:
-                nova.append(lin[i_])
-                for k in chaves:
-                    vals[k].append(e[k][i_])
-                continue
-            for j_ in (i_ - 1, i_ + 1):  # vizinho de fora: corta o segmento na borda
-                if 0 <= j_ < len(lin) and not dentro_[j_]:
-                    alvo = 1.9 * np.sign(s[j_])
-                    f = (alvo - s[j_]) / (s[i_] - s[j_]) if s[i_] != s[j_] else 0.0
-                    q = lin[j_] + (lin[i_] - lin[j_]) * float(np.clip(f, 0, 1))
-                    if j_ == i_ + 1:
-                        nova.append(q)
+        novas = []
+        for pc in pecas:
+            lin = np.array(pc["linha"], float)
+            vals = {k: np.array(pc[k], float) for k in chaves}
+            S, D = (lin - p0) @ t_, (lin - p0) @ n_
+            dentro = lambda s, d: abs(s) < g and d0 < d < d1
+            atual, cortou = [], False
+
+            def fecha():
+                if len(atual) >= 2:
+                    L = np.array([q for q, _ in atual])
+                    novas.append({**pc, "linha": L.tolist(), **{k: [v[k] for _, v in atual] for k in chaves},
+                                  "id": f"{pc['id']}{chr(97 + len(novas) % 26)}",
+                                  "comprimento": float(np.linalg.norm(np.diff(L, axis=0), axis=1).sum())})
+
+            def em(i, f):
+                q = lin[i] + (lin[i + 1] - lin[i]) * f
+                return q, {k: float(vals[k][i] + (vals[k][i + 1] - vals[k][i]) * f) for k in chaves}
+
+            for i in range(len(lin)):
+                if not dentro(S[i], D[i]):
+                    atual.append((lin[i], {k: float(vals[k][i]) for k in chaves}))
+                if i == len(lin) - 1:
+                    break
+                # partes do segmento i..i+1 dentro da caixa (Liang-Barsky)
+                ps, pd = S[i + 1] - S[i], D[i + 1] - D[i]
+                t0, t1 = 0.0, 1.0
+                for pp, qq in ((-ps, S[i] + g), (ps, g - S[i]), (-pd, D[i] - d0), (pd, d1 - D[i])):
+                    if abs(pp) < 1e-12:
+                        if qq < 0:
+                            t0, t1 = 1.0, 0.0
                     else:
-                        nova.append(q)
-                    for k in chaves:
-                        vals[k].append(e[k][i_])
-        if len(nova) < 2:
-            return e
-        lin = np.array(nova)
-        e = {**e, "linha": lin.tolist(), **vals}
-    return e
+                        r = qq / pp
+                        if pp < 0:
+                            t0 = max(t0, r)
+                        else:
+                            t1 = min(t1, r)
+                if t0 < t1 - 1e-6:
+                    cortou = True
+                    if t0 > 1e-6:
+                        atual.append(em(i, t0))
+                    fecha()
+                    atual = []
+                    if t1 < 1 - 1e-6:
+                        atual.append(em(i, t1))
+            if not cortou:
+                novas.append(pc)
+                continue
+            fecha()
+            print(f"  {pc['id']} aberta na {pid_}")
+        pecas = novas
+    return pecas
 
 
 for e in ESC:
-    LINHAS_ESC.append(escarpa(cortar(e), m, mq))
+    for pc in cortar(e):
+        LINHAS_ESC.append(escarpa(pc, m, mq))
 m.objeto("Escarpas", "escarpas", ["alvenaria", "cantaria", "relva"], GRUPOS["Muralhas"], uv=4.0)
 mq.objeto("Cunhais", "escarpas", ["cantaria"], GRUPOS["Muralhas"], uv=3.0)
 alturas = np.concatenate([d["h"] for d in ESC_DADOS])
