@@ -23,12 +23,13 @@ import bmesh
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # pipeline/, para o kit comum
-from kit.geometria import unit, area, densificar, dentro, distancia, desvio, mediana_movel, arco, _retangulo, _arred, normais  # noqa: E402
+from kit.geometria import unit, area, densificar, dentro, distancia, desvio, mediana_movel, arco, _retangulo, _arred, normais, ogiva  # noqa: E402
 from kit.texturas import imagem  # noqa: E402
 from kit.cena import limpar, arvore_modelo  # noqa: E402
 from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
 from kit.materiais import material as material_kit  # noqa: E402  (com mapa de normais)
 from kit.arquitetura import piramide  # noqa: E402
+from kit import passagens  # noqa: E402
 
 AQUI = Path(__file__).resolve().parent
 RAIZ = AQUI.parents[2]
@@ -178,6 +179,38 @@ PORTA_VILA = geom(osm("1e35ebc6"))
 BRECHA = geom(osm("28537527"))
 CUBELO = P(-84.0, 31.4)
 
+# Porta da Vila (do Cruzeiro): torre-porta com a passagem em arco quebrado aberta de lado a lado (revisão do
+# perito, 13 nov. 2026; fotografias Commons de Threeohsix com GPS). Antes o vão era uma face preta no pano
+# poente, sem passagem. Referencial da porta: s ao longo do pano (para a direita de quem olha de fora) e d para
+# fora (sul-sudeste). Planta da torre e fundo da passagem medidos no MDS e na classe 6 da nuvem de pontos: corpo
+# principal com c. 8 m de frente, a face de fora a d = +1,4 e a de dentro a d = -2,8 (a passagem tem 4,2 m de
+# fundo; a face de dentro abre para uma rua estreita entre o pano e um muro de suporte); corpo da direita
+# 1,2-1,6 m mais saliente, até ao pano que desce para sul. Vão de 3,0 m e fecho a 4,8 m acima da soleira (fotos).
+_pp = SECTORES["pano_poente"]
+_i = perto_de(_pp, PORTA_VILA)
+PV_U = unit(_pp[min(_i + 1, len(_pp) - 1)] - _pp[max(_i - 1, 0)])
+PV_OUT = np.array([PV_U[1], -PV_U[0]])
+PV = {"s0": -5.6, "s1": 2.4, "d0": -2.8, "d1": 1.4, "vao": 3.0, "arranque": 2.6,
+      "direita": (1.9, 4.4, 1.0, 2.6), "suporte": (2.0, 4.6, -5.5, -2.6), "cruzeiro": (0.9, 10.5)}
+
+
+def pv_xy(s, d):
+    return PORTA_VILA + PV_U * s + PV_OUT * d
+
+
+def pv_sd(x, y):
+    dx, dy = np.asarray(x, float) - PORTA_VILA[0], np.asarray(y, float) - PORTA_VILA[1]
+    return dx * PV_U[0] + dy * PV_U[1], dx * PV_OUT[0] + dy * PV_OUT[1]
+
+
+# chão da passagem: do MDT 0,8 m fora de cada boca, em rampa entre as duas (279,0 m fora, 279,9 m dentro)
+PV_CHAO = (float(cota(*pv_xy(0.0, PV["d0"] - 0.8))), float(cota(*pv_xy(0.0, PV["d1"] + 0.8))))
+
+
+def pv_chao(d):
+    t = np.clip((np.asarray(d, float) - PV["d0"]) / (PV["d1"] - PV["d0"]), 0, 1)
+    return PV_CHAO[0] + (PV_CHAO[1] - PV_CHAO[0]) * t
+
 # Muro de suporte do terreiro da igreja (fotografia aérea 1; o degrau confere-se no MDT)
 MURO_TERREIRO = np.array([P(-47, 46), P(-47, 24), P(-43, 8), P(-34, 0), P(-20, -3), P(-10.6, -1)])
 
@@ -230,6 +263,10 @@ def construir_terreno():
     xs = np.linspace(-RAIO, RAIO, n)
     X, Y = np.meshgrid(xs, xs)
     Z = cota(X, Y)
+    # o chão da Porta da Vila fica por cima do terreno em toda a passagem (o MDT sobe para a direita)
+    S_, D_ = pv_sd(X, Y)
+    tun = (np.abs(S_) < PV["vao"] / 2 + 1.0) & (D_ > PV["d0"] - 1.2) & (D_ < PV["d1"] + 1.2)
+    Z = np.where(tun, np.minimum(Z, pv_chao(D_) - 0.05), Z)
     gy, gx = np.gradient(Z, passo)
     decl = np.degrees(np.arctan(np.hypot(gx, gy)))
 
@@ -824,6 +861,13 @@ material("sombra", (0.13, 0.11, 0.09), 1.0)
 material("cal", (0.94, 0.93, 0.89), 0.85)
 material("telha", (0.68, 0.35, 0.22), 0.8)
 material("cantaria", (0.82, 0.79, 0.72), 0.9)
+# silharia da torre-porta: fiadas regulares de silhares de 30-40 cm, mais clara e lisa do que a alvenaria dos
+# panos (foto 05 da revisão; cor #b8ab8e). A foto cobre 2,5 m, como os UV deste objeto.
+_TEX_S, _ALT_S = textura_foto("stone_brick_wall_001", n=1024, metros=2.5, cor=(0.72, 0.67, 0.56), contraste=0.8,
+                              metros_foto=2.5, saturacao=0.5, liquen=0.03, semente=72)
+MATS["silharia"] = material_kit("silharia", (1, 1, 1), 0.88, imagem("silharia", _TEX_S),
+                                normal=imagem("silharia_n", normais(_ALT_S, 2.5)), forca=0.7)
+material("calcada", (0.71, 0.69, 0.65), 0.95)
 material("terreno", (1, 1, 1), 0.97, grao, vcor=True)
 # casas da vila: um só cinzento claro, paredes e telhados, para o destaque ficar no castelo e na igreja
 material("cinza_viz", (0.74, 0.74, 0.73), 0.9)
@@ -838,20 +882,48 @@ for ob in bpy.data.objects:
     if ob.name in ("Terreno", "Base"):
         ob.parent = GRUPOS["Terreno"]
 
+def cortar_na_porta(lin, *vals, folga=0.6):
+    """Troços da linha (e dos valores por vértice) fora da planta da torre-porta reduzida de `folga`; cada troço
+    acaba no contorno dessa planta, com os valores interpolados."""
+    def dentro_torre(p):
+        s, d = pv_sd(*p)
+        return PV["s0"] + folga < s < PV["s1"] - folga and PV["d0"] + folga < d < PV["d1"] - folga
+
+    def corte(i, j):  # ponto entre o vértice i (fora) e o j (dentro), por bissecção
+        a, b = 0.0, 1.0
+        for _ in range(30):
+            t = (a + b) / 2
+            a, b = (t, b) if not dentro_torre(lin[i] + (lin[j] - lin[i]) * t) else (a, t)
+        t = (a + b) / 2
+        return [lin[i] + (lin[j] - lin[i]) * t] + [v[i] + (v[j] - v[i]) * t for v in vals]
+
+    den = [dentro_torre(p) for p in lin]
+    trocos, cur = [], []
+    for i, k in enumerate(den):
+        if not k:
+            if not cur and i > 0 and den[i - 1]:
+                cur.append(corte(i, i - 1))
+            cur.append([lin[i]] + [v[i] for v in vals])
+        elif cur:
+            cur.append(corte(i - 1, i))
+            trocos.append(cur)
+            cur = []
+    if cur:
+        trocos.append(cur)
+    return [[np.array([c[k] for c in tr]) for k in range(len(vals) + 1)] for tr in trocos if len(tr) >= 2]
+
+
 print("muralhas…")
 for s_, linha in SECTORES.items():
     m = Malha()
     lin, topo, fora, dentro_ = perfil(linha, MUR["espessura"])
-    adarve = muralha(m, lin, MUR["espessura"], topo, fora, dentro_)
-    PERFIS[s_] = np.stack([lin[:, 0], lin[:, 1], topo, fora, dentro_], 1)
     if s_ == "pano_poente":
-        i = perto_de(linha, PORTA_VILA)
-        a, b = linha[max(i - 1, 0)], linha[min(i + 1, len(linha) - 1)]
-        u = unit(b - a)
-        out = np.array([u[1], -u[0]])
-        g = PORTA_VILA + out * MUR["espessura"] / 2
-        SOLEIRA_VILA = float(cota(*(g + out * 1.0)))
-        arco(m, g, u, out, 2.6, SOLEIRA_VILA, 2.6, 0.1, 1)
+        # o pano interrompe-se dentro da torre-porta (as pontas ficam 0,6 m para dentro das faces da torre)
+        for troco in cortar_na_porta(lin, topo, fora, dentro_):
+            muralha(m, *troco[:1], MUR["espessura"], *troco[1:])
+    else:
+        muralha(m, lin, MUR["espessura"], topo, fora, dentro_)
+    PERFIS[s_] = np.stack([lin[:, 0], lin[:, 1], topo, fora, dentro_], 1)
     m.objeto(s_, s_, ["pedra", "sombra"], GRUPOS["Muralhas"])
     alt = topo - fora
     MEDIDAS[s_] = {"topo": [float(topo.min() + ZREF), float(topo.max() + ZREF)],
@@ -904,19 +976,114 @@ torre(m, circ, pe, topo)
 MEDIDAS["cubelo_noroeste"] = {"topo": topo + ZREF, "pe": pe + ZREF, "altura_exterior": topo - pe}
 m.objeto("Cubelo_Noroeste", "cubelo_noroeste", ["pedra"], GRUPOS["Torreoes"])
 
-# Porta da Vila: aro de cantaria em volta do vão (o vão faz parte do pano poente)
+# Porta da Vila: torre-porta em silharia com a passagem aberta de lado a lado (arco quebrado nas duas faces,
+# abóbada de berço quebrado e chão em rampa), aro de aduelas de cantaria e o cruzeiro do largo
+def P3(s, d, z):
+    return (*pv_xy(s, d), z)
+
+
+def pv_arco(za, folga=0.0):
+    """Contorno do arco quebrado (s, z) com o chão a za, das nascenças para cima: da direita (s > 0) para a
+    esquerda. folga > 0 dá o contorno paralelo por fora (mesmos centros, raio maior)."""
+    w = PV["vao"] + 2 * folga
+    return ogiva(0.0, w, za, PV["arranque"], k=8, raio=(0.8 * PV["vao"] + folga) / w)[2:]
+
+
+def placa(m, pts, d, sinal, esp, mat):
+    """Bloco fino de contorno pts (s, z) assente na face d, saliente esp para fora dela (sinal +1 face de fora)."""
+    a = [P3(s_, d, z) for s_, z in pts]
+    b = [P3(s_, d + sinal * esp, z) for s_, z in pts]
+    m.face(b, mat)
+    m.face(a[::-1], mat)
+    for i in range(len(pts)):
+        j = (i + 1) % len(pts)
+        m.face([a[i], a[j], b[j], b[i]], mat)
+
+
+s0, s1, d0, d1 = PV["s0"], PV["s1"], PV["d0"], PV["d1"]
+hv = PV["vao"] / 2
+planta = np.array([pv_xy(s0, d0), pv_xy(s1, d0), pv_xy(s1, d1), pv_xy(s0, d1)])
+topo_pv = medir(planta, q=95)
+pe_pv = float(np.min(cota(*densificar(desvio(planta if area(planta) > 0 else planta[::-1], -1.0, True), 1.0, True).T)))
+zb = pe_pv - 1.5
+terraco = topo_pv - PARAPEITO - MERLAO["altura"]
 m = Malha()
-i = perto_de(SECTORES["pano_poente"], PORTA_VILA)
-linha = SECTORES["pano_poente"]
-a, b = linha[max(i - 1, 0)], linha[min(i + 1, len(linha) - 1)]
-u = unit(b - a)
-out = np.array([u[1], -u[0]])
-g = PORTA_VILA + out * (MUR["espessura"] / 2 + 0.12)
-for sx in (-1.55, 1.55):
-    m.caixa(g + u * sx, u, 0.5, 0.25, SOLEIRA_VILA - 0.2, SOLEIRA_VILA + 4.3)
-m.caixa(g, u, 3.6, 0.25, SOLEIRA_VILA + 4.3, SOLEIRA_VILA + 4.8)
+faces_pv = {}
+for d, zf in ((d1, PV_CHAO[1]), (d0, PV_CHAO[0])):
+    arc = pv_arco(zf)
+    # face com o vão recortado de baixo: o rasgo abaixo do chão fica tapado pelo alicerce da passagem
+    contorno = [(s0, zb), (-hv, zb), (-hv, zf)] + arc[::-1] + [(hv, zf), (hv, zb), (s1, zb), (s1, terraco), (s0, terraco)]
+    m.face([P3(s_, d, z) for s_, z in contorno], 0)
+    faces_pv[d] = arc
+for s_ in (s0, s1):
+    m.face([P3(s_, d0, zb), P3(s_, d1, zb), P3(s_, d1, terraco), P3(s_, d0, terraco)], 0)
+m.face([P3(s0, d0, terraco), P3(s1, d0, terraco), P3(s1, d1, terraco), P3(s0, d1, terraco)], 0)
+# intradorso: ombreiras e abóbada em cantaria, de boca a boca
+anel = lambda d, zf: np.array([P3(s_, d, z) for s_, z in [(hv, zf)] + pv_arco(zf) + [(-hv, zf)]])
+fundo_pv = passagens.tubo(m, anel(d1, PV_CHAO[1]), anel(d0, PV_CHAO[0]), 1)
+# chão em calçada sobre o alicerce, com 1 m de patamar diante de cada boca
+for da, db, z0_ in ((d0 - 1.0, d0, PV_CHAO[0] - 0.6), (d0, d1, zb), (d1, d1 + 1.0, PV_CHAO[1] - 0.6)):
+    q = [pv_xy(-hv, da), pv_xy(hv, da), pv_xy(hv, db), pv_xy(-hv, db)]
+    zq = [float(pv_chao(da)), float(pv_chao(da)), float(pv_chao(db)), float(pv_chao(db))]
+    if area(np.array(q)) < 0:
+        q, zq = q[::-1], zq[::-1]
+    m.prisma(q, z0_, zq, 2)
+# parapeito e ameias no topo
+base_pv = planta if area(planta) > 0 else planta[::-1]
+interior = desvio(base_pv, 0.6, True)
+for i in range(4):
+    j = (i + 1) % 4
+    m.prisma([base_pv[i], base_pv[j], interior[j], interior[i]], terraco, terraco + PARAPEITO, 0)
+ameias_ao_longo(m, desvio(base_pv, 0.3, True), terraco + PARAPEITO, True, 0)
+# corpo da direita, mais saliente (ressalto vertical na frontaria)
+ra, rb, rc, rd = PV["direita"]
+base_d = np.array([pv_xy(ra, rc), pv_xy(rb, rc), pv_xy(rb, rd), pv_xy(ra, rd)])
+base_d = base_d if area(base_d) > 0 else base_d[::-1]
+topo_d = medir(desvio(base_d, 0.3, True), q=95)
+torre(m, base_d, float(np.min(cota(*base_d.T))), topo_d)
+m.objeto("Torre_Porta_Vila", "porta_vila", ["silharia", "cantaria", "calcada"], GRUPOS["Porta_Vila"], uv=2.5)
+
+# do lado de dentro, à esquerda de quem sai, o muro de suporte do terraço que ladeia a rua da porta (classe 6 do
+# LiDAR, 5-6 m acima do chão da rua; foto 06 da revisão, com hera no topo)
+m = Malha()
+ra, rb, rc, rd = PV["suporte"]
+base_s = np.array([pv_xy(ra, rc), pv_xy(rb, rc), pv_xy(rb, rd), pv_xy(ra, rd)])
+base_s = base_s if area(base_s) > 0 else base_s[::-1]
+topo_s = medir(desvio(base_s, 0.3, True), q=90)
+m.prisma(base_s, float(np.min(cota(*base_s.T))) - 1.5, topo_s, 0)
+m.objeto("Muro_Porta_Vila", "porta_vila", ["pedra"], GRUPOS["Porta_Vila"])
+
+# aro de cantaria nas duas faces: ombreiras em três pedras e 16 aduelas, salientes 6 cm
+m = Malha()
+for d, zf, sg in ((d1, PV_CHAO[1], 1), (d0, PV_CHAO[0], -1)):
+    dentro_a, fora_a = pv_arco(zf), pv_arco(zf, 0.45)
+    zs = zf + PV["arranque"]
+    for lado in (1, -1):
+        for k in range(3):
+            za_, zb_ = zf + (zs - zf) * k / 3, zf + (zs - zf) * (k + 1) / 3 - 0.02
+            x0, x1 = sorted((lado * hv, lado * (hv + (0.45 if k != 1 else 0.32))))
+            placa(m, [(x0, za_), (x1, za_), (x1, zb_), (x0, zb_)], d, sg, 0.06, 0)
+    for k in range(len(dentro_a) - 1):
+        quad = np.array([dentro_a[k], dentro_a[k + 1], fora_a[k + 1], fora_a[k]])
+        c = quad.mean(0)
+        quad = c + (quad - c) * np.array([0.93, 0.97])
+        placa(m, [tuple(p) for p in quad], d, sg, 0.06, 0)
+# cruzeiro (fuste cilíndrico com cruz sobre três degraus circulares), no largo diante da porta
+cz = pv_xy(*PV["cruzeiro"])
+zc = float(cota(*cz))
+circ = lambda r, n=20: np.array([cz + r * np.array([math.cos(t), math.sin(t)]) for t in np.linspace(0, 2 * math.pi, n, endpoint=False)])
+for k, r_ in enumerate((1.2, 0.9, 0.6)):
+    m.prisma(circ(r_), zc - 0.4 if k == 0 else zc + 0.22 * k, zc + 0.22 * (k + 1), 0)
+z_ = zc + 0.66
+m.prisma(circ(0.25, 12), z_, z_ + 0.3, 0)
+m.prisma(circ(0.175, 12), z_ + 0.3, z_ + 3.5, 0)
+m.caixa(cz, PV_U, 0.16, 0.16, z_ + 3.5, z_ + 4.3, 0)
+m.caixa(cz, PV_U, 0.55, 0.16, z_ + 3.9, z_ + 4.06, 0)
 m.objeto("Porta_Vila", "porta_vila", ["cantaria"], GRUPOS["Porta_Vila"])
-MEDIDAS["porta_vila"] = {"soleira": SOLEIRA_VILA + ZREF}
+SOLEIRA_VILA = PV_CHAO[1]
+MEDIDAS["porta_vila"] = {"soleira": SOLEIRA_VILA + ZREF, "chao_interior": PV_CHAO[0] + ZREF, "vao": PV["vao"],
+                         "fecho": float(max(z for _, z in pv_arco(0.0))), "fundo_passagem": float(fundo_pv),
+                         "topo_torre": topo_pv + ZREF, "topo_corpo_direito": topo_d + ZREF, "topo_muro_suporte": topo_s + ZREF, "cruzeiro": zc + ZREF}
 
 # Brecha: chão do acesso atual entre o pano sul e a torre quinária
 m = Malha()

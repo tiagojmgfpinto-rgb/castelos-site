@@ -42,11 +42,11 @@ from scipy.spatial import cKDTree
 AQUI = Path(__file__).resolve().parent
 RAIZ = AQUI.parents[2]
 sys.path.insert(0, str(AQUI))
-from comum import (ALA_OESTE, ALA_SUL, CORREDOR, LAT0, LON0, MEIA_TORRE, PASSAGEM_SUL, PORTA_CERCA_SUL,  # noqa: E402
+from comum import (ALA_OESTE, ALA_SUL, CORREDOR, EIXO_PORTA_SUL, LAT0, LON0, MEIA_TORRE, PASSAGEM_SUL, PORTA_CERCA_SUL,  # noqa: E402
                    PORTA_NORTE, POSTIGO, ROT_TORRE, TORRE_DA_PORTA, ZONA_CASTELO, _bloco)
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # pipeline/, para o kit comum
-from kit.geometria import normais, amostra, quad, arco_pts, _sd, _anc  # noqa: E402
+from kit.geometria import normais, amostra, quad, arco_pts, ogiva, _sd, _anc  # noqa: E402
 from kit.texturas import ruido, fbm, textura_cantaria, textura_cubos, textura_rocha, textura_telha, textura_terra, imagem  # noqa: E402
 from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
 from kit.cena import Obra, uv_mundo  # noqa: E402
@@ -380,6 +380,7 @@ material("sombra", (0.06, 0.055, 0.05), 1.0)
 material("madeira", (0.30, 0.22, 0.15), 0.8)
 material("madeira_verde", (0.16, 0.30, 0.22), 0.7)   # portadas da janela da torre (fotografia)
 material("madeira_porta", (0.36, 0.17, 0.12), 0.7)   # portas do museu
+material("porta_sul", (0.44, 0.45, 0.53), 0.75)   # folhas da porta sul: pintura gasta azul-acinzentada (#6f7486, fotografias)
 material("ferro", (0.16, 0.16, 0.17), 0.5)
 material("reboco", (0.90, 0.89, 0.86), 0.9)
 material("vidro", (0.20, 0.25, 0.28), 0.15)
@@ -642,29 +643,17 @@ def _eixo(p, q):
 
 
 def torre_porta():
-    """Torre da porta, a sul: um bloco de cantaria saliente da cerca (planta e topo do LiDAR) com a passagem em
-    arco de volta perfeita (fotografia de drone de sul) que segue pela cerca para o pátio."""
+    """Porta sul (porta de armas): o arco quebrado de c. 16 aduelas largas, com o brasão no fecho e portas de duas
+    folhas fechadas, abre-se recuado no reentrante entre dois cubelos; a passagem segue a direito pela cerca e sai no
+    pátio por um arco de volta perfeita com grade de ferro (Wikipédia: "arco quebrado por fora e de volta perfeita
+    por dentro"; Commons, Hugo Ferreira; L. Fontes 2013, p. 96; LiDAR). O cubelo poente é o bloco maciço do LiDAR."""
     tp = np.array(TORRE_DA_PORTA)
-    # face sul (de fora): de (6.5, -32.7) a (10.8, -32.6); a normal aponta para sul
-    a, b = tp[3], tp[2]
-    t = _eixo(a, b)
-    f = Plano((a + b) / 2, t, n=np.array([t[1], -t[0]]))
-    larg = float(np.linalg.norm(b - a))
-    prof = float(np.linalg.norm((tp[0] + tp[1]) / 2 - (a + b) / 2))
     z_topo = topo_em(shapely.Polygon(tp).buffer(-0.4), 80)
-    chao_f, chao_d = 461.2, 461.6
-    m = Malha(["muro_medieval", "muro_topo", "intradorso", "calcada", "cantaria_lisa", "madeira_porta", "ferro"])
-    # a passagem: o bloco da torre e o troço da cerca por trás (até ao pátio), com o mesmo vão
-    passagem(m, f, -larg / 2, larg / 2, prof, chao_f - 1.0, z_topo, 2.0, 3.2, chao_f, chao_f + (chao_d - chao_f) * 0.6,
-             mat="muro_medieval", mat_topo="muro_topo", degrau=(2.5, 3.55, 0.35))
-    ps = np.array(PASSAGEM_SUL)
-    f2 = Plano(f.xy(0, -prof), t, n=f.n)
-    prof2 = float(np.linalg.norm((ps[2] + ps[3]) / 2 - (ps[0] + ps[1]) / 2)) + 0.3
-    z2 = topo_em(shapely.Polygon(ps).buffer(-0.3), 80)
-    passagem(m, f2, -1.35, 1.35, prof2, chao_f - 1.0, z2, 2.0, 3.2, chao_f + (chao_d - chao_f) * 0.6, chao_d,
-             mat="muro_medieval", mat_topo="muro_topo", lados=True)
-    aduelas(m, f, 0.0, 2.5, chao_f, chao_f + 3.55, 0.32, 0.04, n=13, ombreiras=False, d0=0.0)
-    # parapeito baixo à volta do topo da torre (fotografia: o topo é plano, com um murete)
+    chao_f, chao_d = 461.3, 461.7
+    m = Malha(["muro_medieval", "muro_topo", "intradorso", "calcada", "cantaria_lisa", "porta_sul", "ferro"])
+    # cubelo poente, maciço, com o murete à volta do topo (fotografia: topo plano)
+    base_c = tp if shapely.Polygon(tp).exterior.is_ccw else tp[::-1]
+    m.prisma(base_c, chao_f - 1.0, z_topo - 0.05, 0, mat_topo=1)
     for i in range(4):
         p, q = tp[i], tp[(i + 1) % 4]
         d = unit(q - p)
@@ -675,10 +664,92 @@ def torre_porta():
         if not shapely.Polygon(base).exterior.is_ccw:
             base = base[::-1]
         m.prisma(base, z_topo - 0.05, z_topo + 0.55, 0, mat_topo=1)
+    # bloco da passagem: face de fora a sul (normal para sul), origem no eixo
+    ps = np.array(PASSAGEM_SUL)
+    t = _eixo(ps[0], ps[1])
+    o = ps[0] + t * (EIXO_PORTA_SUL - ps[0][0]) / t[0]
+    f = Plano(o, t, n=np.array([t[1], -t[0]]))
+    s0, s1 = float(np.dot(ps[0] - o, t)), float(np.dot(ps[1] - o, t))
+    prof = float(np.linalg.norm(ps[3] - ps[0]))
+    z_bl = topo_em(shapely.Polygon(ps).buffer(-0.4), 80)
+    zb = chao_f - 1.0
+    wf, hf = 2.2, 3.6   # arco de fora: quebrado, vão × altura ao fecho
+    wd, hd = 2.4, 3.4   # arco de dentro: volta perfeita
+    k = 8
+    zs_f = chao_f + hf - 0.8 * wf * math.sin(math.acos((0.8 * wf - wf / 2) / (0.8 * wf)))
+    arco_f = ogiva(0.0, wf, chao_f, zs_f - chao_f, k=k, raio=0.8)[2:]            # da nascença direita à esquerda
+    arco_d = arco_pts(0.0, chao_d + hd - wd / 2, wd / 2, 2 * k)                  # idem, 2k + 1 pontos
+    for d, arc, w_, chao in ((0.0, arco_f, wf, chao_f), (-prof, arco_d, wd, chao_d)):
+        cont = [(s0, zb), (-w_ / 2, zb), (-w_ / 2, chao)] + arc[::-1] + [(w_ / 2, chao), (w_ / 2, zb), (s1, zb), (s1, z_bl), (s0, z_bl)]
+        m.face([f.p(s_, d, z_) for s_, z_ in cont], 0)
+    for s_ in (s0, s1):
+        m.face([f.p(s_, 0.0, zb), f.p(s_, -prof, zb), f.p(s_, -prof, z_bl), f.p(s_, 0.0, z_bl)], 0)
+    m.face([f.p(s0, 0.0, z_bl), f.p(s1, 0.0, z_bl), f.p(s1, -prof, z_bl), f.p(s0, -prof, z_bl)], 1)
+    # ombreiras e abóbada: do quebrado de fora ao pleno de dentro, em troços de 1 m
+    anel_f = [(wf / 2, chao_f)] + arco_f + [(-wf / 2, chao_f)]
+    anel_d = [(wd / 2, chao_d)] + arco_d + [(-wd / 2, chao_d)]
+    nseg = int(math.ceil(prof))
+    for j in range(nseg):
+        t0, t1 = j / nseg, (j + 1) / nseg
+        for i in range(len(anel_f) - 1):
+            P_ = lambda tt, ii: f.p(anel_f[ii][0] + (anel_d[ii][0] - anel_f[ii][0]) * tt, -prof * tt,
+                                    anel_f[ii][1] + (anel_d[ii][1] - anel_f[ii][1]) * tt)
+            m.face([P_(t0, i), P_(t0, i + 1), P_(t1, i + 1), P_(t1, i)], 2 if 0 < i < len(anel_f) - 2 else 0)
+    # chão lajeado, com o alicerce que tapa o rasgo das faces
+    q = [f.xy(-wf / 2, 0.0), f.xy(wf / 2, 0.0), f.xy(wd / 2, -prof), f.xy(-wd / 2, -prof)]
+    zq = [chao_f, chao_f, chao_d, chao_d]
+    if not shapely.Polygon(q).exterior.is_ccw:
+        q, zq = q[::-1], zq[::-1]
+    m.prisma(q, zb, zq, 3)
+    # aduelas largas do arco de fora (16, salientes 4 cm) e ombreiras de silhares
+    arco_o = ogiva(0.0, wf + 0.8, chao_f, zs_f - chao_f, k=k, raio=(0.8 * wf + 0.4) / (wf + 0.8))[2:]
+    for i in range(len(arco_f) - 1):
+        quad4 = np.array([arco_f[i], arco_f[i + 1], arco_o[i + 1], arco_o[i]])
+        c_ = quad4.mean(0)
+        quad4 = c_ + (quad4 - c_) * np.array([0.95, 0.97])
+        a_ = [f.p(s_, 0.0, z_) for s_, z_ in quad4]
+        b_ = [f.p(s_, 0.04, z_) for s_, z_ in quad4]
+        m.face(b_, 0)
+        for ii in range(4):
+            jj = (ii + 1) % 4
+            m.face([a_[ii], a_[jj], b_[jj], b_[ii]], 0)
+    for lado in (-1, 1):
+        for jz in range(4):
+            z0_, z1_ = chao_f + (zs_f - chao_f) * jz / 4 + 0.01, chao_f + (zs_f - chao_f) * (jz + 1) / 4 - 0.01
+            e_ = 0.45 if jz % 2 == 0 else 0.32
+            sa_, sb_ = sorted((lado * wf / 2, lado * (wf / 2 + e_)))
+            m.caixa_face(f, sa_, sb_, 0.0, 0.04, z0_, z1_, 0)
+    # brasão em relevo na aduela de fecho (alçado de L. Fontes: escudo de c. 0,5 × 0,6 m)
+    z_fecho = chao_f + hf
+    m.caixa_face(f, -0.25, 0.25, 0.0, 0.1, z_fecho + 0.05, z_fecho + 0.65, 4)
+    # arco de dentro: aduelas e grade de ferro de barras verticais
+    fi = Plano(f.xy(0.0, -prof), -t, -f.n)
+    aduelas(m, fi, 0.0, wd, chao_d, chao_d + hd, 0.38, 0.03, n=13)
+    zc_d = chao_d + hd - wd / 2
+    for sx in np.arange(-wd / 2 + 0.15, wd / 2 - 0.1, 0.16):
+        ztop_b = zc_d + math.sqrt(max((wd / 2) ** 2 - sx ** 2, 0.0)) - 0.03
+        m.caixa_face(f, sx - 0.012, sx + 0.012, -prof + 0.12, -prof + 0.145, chao_d, ztop_b, 6)
+    for zz in (chao_d + 0.15, chao_d + 1.1, zc_d):
+        m.caixa_face(f, -wd / 2 + 0.02, wd / 2 - 0.02, -prof + 0.10, -prof + 0.165, zz, zz + 0.05, 6)
+    # portas de duas folhas fechadas, de tábuas, com ferragens, recuadas 0,35 m da face de fora
+    for lado, metade in ((1, arco_f[:k + 1]), (-1, arco_f[k:][::-1])):
+        lim = wf / 2 - 0.02
+        arco_l = [(lado * min(lado * s_, lim), z_ - 0.02) for s_, z_ in metade]
+        arco_l[-1] = (lado * 0.005, arco_l[-1][1])  # o fecho, no eixo
+        pts_ = [(lado * 0.005, chao_f + 0.02), (lado * lim, chao_f + 0.02)] + arco_l
+        A_ = [f.p(s_, -0.35, z_) for s_, z_ in pts_]
+        B_ = [f.p(s_, -0.43, z_) for s_, z_ in pts_]
+        m.face(A_, 5)
+        m.face(B_[::-1], 5)
+        for ii in range(len(A_)):
+            jj = (ii + 1) % len(A_)
+            m.face([A_[ii], A_[jj], B_[jj], B_[ii]], 5)
+        for zz in (chao_f + 0.4, chao_f + 1.3, chao_f + 2.2):
+            sa_, sb_ = sorted((lado * 0.03, lado * (wf / 2 - 0.06)))
+            m.caixa_face(f, sa_, sb_, -0.36, -0.33, zz, zz + 0.07, 6)
     m.objeto("torre_porta", "porta_sul", GRUPOS["Muralhas"], uv=3.0, vcor=patine_muro)
-    # porta de madeira aberta encostada ao vão, por dentro (de dia está aberta)
-    MEDIDAS["torre_porta"] = {"topo": round(z_topo, 2), "vao": [2.0, 3.2], "arquivolta": [2.5, 3.55], "chao_fora": chao_f,
-                              "chao_dentro": chao_d}
+    MEDIDAS["torre_porta"] = {"topo": round(z_topo, 2), "topo_cerca_na_porta": round(z_bl, 2), "vao": [wf, hf],
+                              "vao_dentro": [wd, hd], "passagem": round(prof, 2), "chao_fora": chao_f, "chao_dentro": chao_d}
     return f, z_topo
 
 

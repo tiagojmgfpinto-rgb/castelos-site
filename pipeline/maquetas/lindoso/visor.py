@@ -25,8 +25,8 @@ def el(i, nome, grupo, conf, desc, med, fontes, resumo):
 
 
 d = {
-    "monumento": "lindoso", "titulo": "Castelo de Lindoso e espigueiros", "variante": "estado-atual", "versao": "0.3 provisória",
-    "data": "2026-11-03",
+    "monumento": "lindoso", "titulo": "Castelo de Lindoso e espigueiros", "variante": "estado-atual", "versao": "0.4 provisória",
+    "data": "2026-11-14",
     "origem": {"lat": 41.867167, "lon": -8.199305,
                "nota": "Centro da torre de menagem (LiDAR). Eixos da maqueta: x para este, y para norte (PT-TM06 menos a origem), no visor -z é o norte, em metros à escala 1:1; as cotas são altitudes."},
     "fontes": {
@@ -60,11 +60,11 @@ d = {
            "Sete merlões por face, contando os dos cunhais, com remate em pirâmide, sobre o parapeito; a bandeira nacional no mastro do lado norte.",
            f"Pontas dos merlões a c. {n(T['pontas_merloes'], 2)} m (LiDAR e fotografias).", ["lidar", "fotos"], "Sete merlões piramidais por face"),
         el("cerca", "Cerca medieval", "Muralhas", "alta",
-           "Muros altos de cantaria de granito à volta do pátio, com adarve no alto. A torre de menagem fica no canto norte e a torre da porta a sul.",
+           "Muros altos de cantaria de granito à volta do pátio, com adarve no alto. A torre de menagem fica no canto norte e a porta de armas a sul, entre dois cubelos.",
            f"Topo a 467–{n(M['muros']['topo_max'])} m, c. 6 m acima do pátio (LiDAR).", ["lidar", "orto", "geoportal", "fotos"], "Cerca de D. Afonso III e D. Dinis"),
-        el("porta_sul", "Torre da porta", "Muralhas", "alta",
-           "A sul, uma torre saliente da cerca guarda a entrada, uma passagem em arco de volta perfeita que segue pela cerca até ao pátio. A Wikipédia refere uma ponte levadiça de madeira nesta porta.",
-           f"Topo a {n(M['torre_porta']['topo'], 2)} m; vão de c. 2,0 × 3,2 m (LiDAR e fotografia).", ["lidar", "fotos", "wiki"], "Entrada sul em arco"),
+        el("porta_sul", "Porta de armas (porta sul)", "Muralhas", "alta",
+           "A sul, a entrada abre-se recuada no reentrante entre dois cubelos: um arco quebrado de dezasseis aduelas largas de granito, com o brasão na aduela de fecho e portas de madeira de duas folhas. A passagem atravessa a cerca a direito e sai no pátio, ao lado da ala sul do museu, por um arco de volta perfeita com grade de ferro. A Wikipédia refere uma ponte levadiça de madeira nesta porta.",
+           f"Arco de fora de c. 2,2 × 3,6 m e de dentro de c. 2,4 × 3,4 m; passagem com {n(M['torre_porta']['passagem'], 1)} m; cubelo poente com o topo a {n(M['torre_porta']['topo'], 2)} m (LiDAR, fotografias e alçado de L. Fontes, 2013).", ["lidar", "fotos", "wiki"], "Arco quebrado entre dois cubelos"),
         el("porta_norte", "Porta Norte", "Muralhas", "média",
            "Porta em arco de volta perfeita com ponte levadiça, aberta na cortina norte da muralha abaluartada, de frente para a torre de menagem e protegida pelo revelim. O arco, com aduelas de granito e portão de grade, abre-se num rebaixo onde o tabuleiro encaixava quando subia; por cima saem os dois braços de madeira com as correntes, e o tabuleiro de pranchas está baixado sobre o fosso. O muro segue dos dois lados, a sudoeste coberto de hera.",
            f"Vão de c. 1,5 × 2,4 m; tabuleiro de c. 1,8 × 2,5 m; muro com o topo a {n(M['porta_norte']['topo'], 2)} m; chão de fora a c. 461 m (LiDAR e fotografia).", ["lidar", "fotos", "wiki"], "Porta norte junto à torre"),

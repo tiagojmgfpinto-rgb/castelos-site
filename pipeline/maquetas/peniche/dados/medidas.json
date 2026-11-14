@@ -37,6 +37,14 @@
    5.0
   ]
  },
+ "porta": {
+  "soleira": 10.8,
+  "vao": 2.3,
+  "fecho": 3.5,
+  "largura": 5.1,
+  "topo_muralha": 17.4,
+  "guarita_topo": 21.0
+ },
  "tunel": {
   "comprimento": 27.2,
   "largura": 3.8,
@@ -70,7 +78,7 @@
   ],
   "porta": [
    61.6,
-   24.4,
+   23.4,
    -50.7
   ],
   "prisao": [

@@ -2,8 +2,8 @@
   "monumento": "melgaco",
   "titulo": "Castelo e muralha de Melgaço",
   "variante": "estado-atual",
-  "versao": "0.1 provisória",
-  "data": "2026-11-03",
+  "versao": "0.2 provisória",
+  "data": "2026-11-14",
   "origem": {
     "lat": 42.114413,
     "lon": -8.25979,
@@ -222,8 +222,8 @@
       "grupo": "Muralhas",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "Cisterna retangular de granito a norte da torre, um pouco acima do chão do pátio, coberta de lajes em duas águas baixas.",
-      "medidas": "C. 7 × 6,5 m; bordos a 191,8 m e cumeeira a 192,2 m (LiDAR; planta do OSM).",
+      "descricao": "Cisterna retangular de granito a norte da torre, um pouco acima do chão do pátio, com o topo plano de lajes e algumas pedras soltas por cima, como nas fotografias.",
+      "medidas": "C. 7 × 6,5 m; topo plano a 191,8 m (LiDAR; planta do OSM).",
       "fontes": [
         "lidar",
         "orto",

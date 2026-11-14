@@ -2,12 +2,22 @@
  "postigo_ne": {
   "az": 53.5,
   "chao_dentro": 189.69,
-  "chao_fora": 188.12
+  "chao_fora": 188.12,
+  "vao": [
+   1.2,
+   2.3
+  ],
+  "aduelas": 13
  },
  "postigo_n": {
-  "az": 346.5,
-  "chao_dentro": 190.57,
-  "chao_fora": 188.93
+  "az": 3.6,
+  "chao_dentro": 190.34,
+  "chao_fora": 189.11,
+  "vao": [
+   1.2,
+   2.1
+  ],
+  "aduelas": 12
  },
  "escada_ne_39": {
   "pe": 189.7,
@@ -23,11 +33,6 @@
   "pe": 190.57,
   "topo": 196.46,
   "degraus": 21
- },
- "escada_n_358": {
-  "pe": 190.57,
-  "topo": 196.09,
-  "degraus": 20
  },
  "torre_se": {
   "topo": 196.3,

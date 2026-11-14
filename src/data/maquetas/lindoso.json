@@ -2,8 +2,8 @@
   "monumento": "lindoso",
   "titulo": "Castelo de Lindoso e espigueiros",
   "variante": "estado-atual",
-  "versao": "0.3 provisória",
-  "data": "2026-11-03",
+  "versao": "0.4 provisória",
+  "data": "2026-11-14",
   "origem": {
     "lat": 41.867167,
     "lon": -8.199305,
@@ -124,8 +124,8 @@
       "grupo": "Muralhas",
       "estado": "estado-atual",
       "confianca": "alta",
-      "descricao": "Muros altos de cantaria de granito à volta do pátio, com adarve no alto. A torre de menagem fica no canto norte e a torre da porta a sul.",
-      "medidas": "Topo a 467–471,1 m, c. 6 m acima do pátio (LiDAR).",
+      "descricao": "Muros altos de cantaria de granito à volta do pátio, com adarve no alto. A torre de menagem fica no canto norte e a porta de armas a sul, entre dois cubelos.",
+      "medidas": "Topo a 467–471,0 m, c. 6 m acima do pátio (LiDAR).",
       "fontes": [
         "lidar",
         "orto",
@@ -148,25 +148,25 @@
     },
     {
       "id": "porta_sul",
-      "nome": "Torre da porta",
+      "nome": "Porta de armas (porta sul)",
       "grupo": "Muralhas",
       "estado": "estado-atual",
       "confianca": "alta",
-      "descricao": "A sul, uma torre saliente da cerca guarda a entrada, uma passagem em arco de volta perfeita que segue pela cerca até ao pátio. A Wikipédia refere uma ponte levadiça de madeira nesta porta.",
-      "medidas": "Topo a 471,09 m; vão de c. 2,0 × 3,2 m (LiDAR e fotografia).",
+      "descricao": "A sul, a entrada abre-se recuada no reentrante entre dois cubelos: um arco quebrado de dezasseis aduelas largas de granito, com o brasão na aduela de fecho e portas de madeira de duas folhas. A passagem atravessa a cerca a direito e sai no pátio, ao lado da ala sul do museu, por um arco de volta perfeita com grade de ferro. A Wikipédia refere uma ponte levadiça de madeira nesta porta.",
+      "medidas": "Arco de fora de c. 2,2 × 3,6 m e de dentro de c. 2,4 × 3,4 m; passagem com 5,3 m; cubelo poente com o topo a 471,09 m (LiDAR, fotografias e alçado de L. Fontes, 2013).",
       "fontes": [
         "lidar",
         "fotos",
         "wiki"
       ],
-      "resumo": "Entrada sul em arco",
+      "resumo": "Arco quebrado entre dois cubelos",
       "ancora": [
-        8.7,
+        13.0,
         472.1,
-        33.6
+        30.4
       ],
       "olhar": [
-        0.02,
+        0.0,
         0.25,
         1.0
       ],
@@ -238,7 +238,7 @@
       "resumo": "Guaritas com cúpula nos cunhais",
       "ancora": [
         19.1,
-        474.6,
+        474.5,
         29.6
       ],
       "olhar": [

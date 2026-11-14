@@ -261,7 +261,9 @@ material("cantaria_porta", (1, 1, 1), 0.9, imagem("cantaria_porta", TEX), normal
 material("cantaria_lisa", (0.63, 0.61, 0.56), 0.85)
 material("intradorso", (0.34, 0.33, 0.31), 0.95)
 material("sombra", (0.06, 0.055, 0.05), 1.0)
-material("madeira", (0.22, 0.15, 0.10), 0.8)
+# folha da porta alta da torre: vermelho vivo (fotografia c38, "Melgaço Castle (12163275254)"; revisão do perito)
+material("madeira", (0.64, 0.15, 0.16), 0.75)
+material("madeira_postigo", (0.35, 0.23, 0.15), 0.8)  # folhas das portas da traição (#5a3a26, fotografias)
 material("ferro", (0.16, 0.16, 0.17), 0.5)
 TEX, ALT = textura_foto("roof_09", n=512, metros=2.0, cor=(0.70, 0.42, 0.30), metros_foto=2.0, saturacao=0.6, variacao=0.06)
 material("telha", (1, 1, 1), 0.8, imagem("telha", TEX), normal=imagem("telha_n", normais(ALT, 2.0)), forca=0.6)
@@ -553,7 +555,13 @@ def adarve_az(az):
 
 # cortes na cerca: a entrada a sul (passagem aberta, LiDAR) e as duas portas da traição ao pé das escadas em V
 ENTRADA = (184.1, 186.9)
-POSTIGOS = {"ne": (53.5, 50.8, 56.2), "n": (346.5, 344.3, 348.7)}
+# Porta da traição norte: 4-5 m a nascente da cisterna, ao nível do pátio, e não atrás dela (Commons "Castle of
+# Melgaco 09": a escada desce da esquerda para a direita até à cisterna e a porta fica à direita, separada;
+# revisão do perito, 13 nov. 2026). Antes estava a 346,5°, tapada pela cisterna.
+POSTIGOS = {"ne": (53.5, 50.8, 56.2), "n": (3.6, 1.4, 5.8)}
+# vão (largura, altura ao fecho), aduelas da face de dentro e folha de madeira: recuo a partir da face de dentro e
+# abertura em graus (a norte aberta para fora, encostada à parede da passagem; a nordeste fechada)
+POSTIGO_VAO = {"ne": (1.20, 2.30, 13, 0.4, 0), "n": (1.20, 2.10, 12, 0.3, 90)}
 
 
 def cerca():
@@ -612,7 +620,7 @@ def cerca():
 def postigos():
     """Portas da traição ao pé das escadas em V: arco de volta perfeita de c. 1,2 × 2,3 m, de lado a lado do muro
     (fotografias do recinto e de cima; a de norte é provável, não certa)."""
-    m = Malha(["muro", "muro_topo", "intradorso", "calcada", "cantaria_lisa"])
+    m = Malha(["muro", "muro_topo", "intradorso", "calcada", "cantaria_lisa", "madeira_postigo"])
     for nome, (az, a0, a1) in POSTIGOS.items():
         # plano da face de fora, centrado no azimute do postigo
         po = pt_cerca(az, rout_az(az))
@@ -629,20 +637,39 @@ def postigos():
         chao_f = cota(*pt_cerca(az, rout_az(az) + 0.8))
         zb = min(chao_d, chao_f) - 0.4
         ap = float(np.interp(az, np.append(AZ_C, 360), np.append(PARAP_C, PARAP_C[0])))
-        passagem(m, f, -max(wb, wbi), max(wb, wbi), prof, zb, z_top, 1.20, 2.30, chao_f, chao_d)
+        w_v, h_v, n_ad, recuo, abre = POSTIGO_VAO[nome]
+        passagem(m, f, -max(wb, wbi), max(wb, wbi), prof, zb, z_top, w_v, h_v, chao_f, chao_d)
         if ap > 0:
             m.caixa_face(f, -wb, wb, -0.6, 0.0, z_top, z_top + ap, "muro")
-        # aduelas da face de dentro (fotografias: arco de pedras bem aparelhadas)
+        # aduelas compridas da face de dentro, da mesma pedra do pano, com ligeira moldura (fotografias)
         fi = Plano(pi, -t, -nrm)
-        aduelas(m, fi, 0.0, 1.20, chao_d, chao_d + 2.30, 0.30, 0.03, n=9, mat="cantaria_lisa")
-        MEDIDAS[f"postigo_{nome}"] = {"az": az, "chao_dentro": round(chao_d, 2), "chao_fora": round(chao_f, 2)}
+        aduelas(m, fi, 0.0, w_v, chao_d, chao_d + h_v, 0.45, 0.04, n=n_ad, mat="muro")
+        # folha de madeira de tábuas, com o contorno do vão, recuada da face de dentro
+        d_f = -prof + recuo
+        chao_ = chao_f + (chao_d - chao_f) * (-d_f) / prof
+        cont = contorno_vao(0.0, w_v - 0.04, chao_ + 0.02, chao_ + h_v - 0.02, True, 14)
+        th = math.radians(abre)
+        dob = w_v / 2 - 0.02  # dobradiça na ombreira de s > 0
+        def pf(s_, z_, e_):
+            # roda em torno da dobradiça: a 90° a folha encosta à parede da passagem, virada para fora
+            x_ = dob - s_
+            return f.p(dob - x_ * math.cos(th) - e_ * math.sin(th), d_f + x_ * math.sin(th) + e_ * math.cos(th), z_)
+        mf = [pf(s_, z_, 0.03) for s_, z_ in cont]
+        mb = [pf(s_, z_, -0.03) for s_, z_ in cont]
+        m.face(mf, "madeira_postigo")
+        m.face(mb[::-1], "madeira_postigo")
+        for k_ in range(len(cont)):
+            j_ = (k_ + 1) % len(cont)
+            m.face([mf[k_], mf[j_], mb[j_], mb[k_]], "madeira_postigo")
+        MEDIDAS[f"postigo_{nome}"] = {"az": az, "chao_dentro": round(chao_d, 2), "chao_fora": round(chao_f, 2),
+                                      "vao": [w_v, h_v], "aduelas": n_ad}
     m.objeto("postigos", "escadas", GRUPOS["Muralhas"], uv=2.0, vcor=patine_muro)
 
 
 # escadas em V encostadas à face de dentro: pé no meio, dois lanços a subir para os lados até ao adarve (LiDAR)
 ESCADAS_V = [
     ("ne", 53.5, 39.0, 71.0),
-    ("n", 346.5, 337.0, 358.0),
+    ("n", 346.5, 337.0, None),  # um só lanço, a descer até à cisterna (Commons "Castle of Melgaco 09")
 ]
 
 
@@ -651,8 +678,11 @@ def escadas():
     larg = 1.0
     for nome, pe, a_esq, a_dir in ESCADAS_V:
         for topo_az in (a_esq, a_dir):
+            if topo_az is None:
+                continue
             sg = np.sign(topo_az - pe)
-            a_ini = pe + sg * 2.6  # o primeiro degrau começa ao lado do postigo
+            com_postigo = any(abs((az_p - pe + 180) % 360 - 180) < 3 for az_p, _, _ in POSTIGOS.values())
+            a_ini = pe + sg * (2.6 if com_postigo else 0.5)  # o primeiro degrau começa ao lado do postigo
             z0 = cota(*pt_cerca(pe, rin_az(pe) - 1.5))
             z1 = adarve_az(topo_az)
             n = max(6, int(round((z1 - z0) / 0.28)))
@@ -725,8 +755,9 @@ def torres_cerca():
 
 
 def cisterna():
-    """Cisterna retangular a norte da torre (OSM storage_tank; LiDAR: bordos a 191,8 m e cumeeira a 192,2 m ao
-    comprido, c. 0,8–1,2 m acima do recinto): caixa de granito com cobertura de lajes em duas águas baixas."""
+    """Cisterna retangular a norte da torre (OSM storage_tank; LiDAR: bordos a 191,8 m, c. 0,8–1,2 m acima do
+    recinto): caixa de silhares grandes de topo plano, com lajes e 8 blocos soltos por cima (Commons "Castle of
+    Melgaco 09", c13, c15; revisão do perito). Antes tinha uma cobertura em duas águas que não existe."""
     g = next(i for i in F["infraestrutura"] if i["classe"] == "storage_tank")
     p = shapely.geometry.shape(g["geometria"])
     b = np.array(p.exterior.coords)[:-1]
@@ -734,16 +765,23 @@ def cisterna():
         b = b[::-1]
     m = Malha(["muro", "muro_topo", "cantaria_lisa"])
     zb = float(min(cota(*q) for q in b)) - 0.3
-    m.prisma(b, zb, 191.80, "muro", topo=False)
-    # duas águas ao longo do lado maior
-    lados = [np.linalg.norm(b[(i + 1) % 4] - b[i]) for i in range(4)]
-    i0 = int(np.argmax(lados))
-    p0, p1, p2, p3 = b[i0], b[(i0 + 1) % 4], b[(i0 + 2) % 4], b[(i0 + 3) % 4]
-    c0, c1 = (p0 + p3) / 2, (p1 + p2) / 2
-    m.face([(*p0, 191.80), (*p1, 191.80), (*c1, 192.20), (*c0, 192.20)], "muro_topo")
-    m.face([(*p2, 191.80), (*p3, 191.80), (*c0, 192.20), (*c1, 192.20)], "muro_topo")
-    m.face([(*p1, 191.80), (*p2, 191.80), (*c1, 192.20)], "muro")
-    m.face([(*p3, 191.80), (*p0, 191.80), (*c0, 192.20)], "muro")
+    m.prisma(b, zb, 191.80, "muro", mat_topo="muro_topo")
+    # blocos soltos em cima (posições fixas, sorteadas uma vez dentro da planta)
+    rng_c = np.random.default_rng(1263)
+    c0 = b.mean(0)
+    i0 = int(np.argmax([np.linalg.norm(b[(i + 1) % 4] - b[i]) for i in range(4)]))
+    u_ = (b[(i0 + 1) % 4] - b[i0]) / np.linalg.norm(b[(i0 + 1) % 4] - b[i0])
+    L_ = np.linalg.norm(b[(i0 + 1) % 4] - b[i0]) / 2 - 0.6
+    W_ = np.linalg.norm(b[(i0 + 2) % 4] - b[(i0 + 1) % 4]) / 2 - 0.6
+    v_ = np.array([-u_[1], u_[0]])
+    for _ in range(8):
+        c_ = c0 + u_ * rng_c.uniform(-L_, L_) + v_ * rng_c.uniform(-W_, W_)
+        a_ = rng_c.uniform(0, math.pi)
+        e_ = np.array([math.cos(a_), math.sin(a_)])
+        lw, lp, lh = rng_c.uniform(0.4, 0.8), rng_c.uniform(0.3, 0.5), rng_c.uniform(0.25, 0.4)
+        n_ = np.array([-e_[1], e_[0]])
+        q = [c_ - e_ * lw / 2 - n_ * lp / 2, c_ + e_ * lw / 2 - n_ * lp / 2, c_ + e_ * lw / 2 + n_ * lp / 2, c_ - e_ * lw / 2 + n_ * lp / 2]
+        m.prisma(q, 191.75, 191.80 + lh, "muro", mat_topo="muro_topo")
     m.objeto("cisterna", "cisterna", GRUPOS["Muralhas"], uv=2.0, vcor=patine_muro)
 
 
