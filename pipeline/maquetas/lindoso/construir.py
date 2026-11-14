@@ -46,6 +46,7 @@ from comum import (ALA_OESTE, ALA_SUL, CORREDOR, EIXO_PORTA_SUL, LAT0, LON0, MEI
                    PORTA_NORTE, POSTIGO, ROT_TORRE, TORRE_DA_PORTA, ZONA_CASTELO, _bloco)
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # pipeline/, para o kit comum
+from degraus import topo_degraus  # noqa: E402
 from kit.geometria import normais, amostra, quad, arco_pts, ogiva, _sd, _anc  # noqa: E402
 from kit.texturas import ruido, fbm, textura_cantaria, textura_cubos, textura_rocha, textura_telha, textura_terra, imagem  # noqa: E402
 from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
@@ -588,43 +589,42 @@ def poligono_muro(reg):
     return shapely.Polygon(a[0]["contorno"], [r["contorno"] for r in a[1:]])
 
 
+DEGRAUS = {}
 POL_MUROS = shapely.union_all([poligono_muro(r).buffer(0) for r in MUR])
 
 
 def muros():
     """Os muros como o LiDAR os mede: topo triangulado (Delaunay restringida à planta) com a cota medida em cada
-    vértice, faces a prumo até abaixo do chão de fora. Dois objetos: a cerca medieval e a muralha abaluartada, que o
+    vértice, em degraus a prumo onde o nível muda (degraus.py: sem rampas nem panos inclinados), faces a prumo até
+    abaixo do chão de fora. Dois objetos: a cerca medieval e a muralha abaluartada, que o
     tracar.py traça à parte (topo acima ou abaixo de 466 m), para o topo não fazer rampas de uma para a outra."""
+    DEGRAUS.clear()
     mm = {True: Malha(["muro_medieval", "alvenaria", "muro_topo", "erva"]), False: Malha(["muro_medieval", "alvenaria", "muro_topo", "erva"])}
     for reg in MUR:
         med = bool(reg.get("medieval", np.mean(reg["aneis"][0]["topo"]) > ALTO_MEDIEVAL))
         pol = poligono_muro(reg).buffer(0)
         if pol.geom_type != "Polygon":
             continue
-        vs = np.concatenate([np.array(a["contorno"]) for a in reg["aneis"]])
-        ts = np.concatenate([np.array(a["topo"]) for a in reg["aneis"]])
-        kd = cKDTree(vs)
-        for t in shapely.constrained_delaunay_triangles(pol).geoms:
-            cs = np.array(t.exterior.coords)[:3]
-            if shapely.Polygon(cs).area < 1e-4:
-                continue
-            if not shapely.Polygon(cs).exterior.is_ccw:
-                cs = cs[::-1]
-            _, j = kd.query(cs)
-            zt = ts[j]
+        # na muralha abaluartada o topo desce de propósito do parapeito (fora) para o terrapleno (dentro): degraus só
+        # acima de 2,5 m; na cerca, 1,5 m (o cunhal SE a 471 m, o canto SO sobre os baluartes, o canto do museu)
+        r = topo_degraus(reg["aneis"], T=1.5 if med else 2.5)
+        if r is None:
+            continue
+        topos, paredes, info = r
+        for k in info:
+            DEGRAUS[k] = DEGRAUS.get(k, 0) + info[k]
+        for cs, zt in topos:
             mm[med].face([(x, y, z) for (x, y), z in zip(cs, zt)], 2)
-        for a in reg["aneis"]:
-            c = np.array(a["contorno"])
-            tp = np.array(a["topo"])
-            ch = np.minimum(np.array(a["chao"]), cota(c[:, 0], c[:, 1])) - 0.6
-            n = len(c)
-            for i in range(n):
-                j = (i + 1) % n
-                mm[med].face([(*c[i], ch[i]), (*c[j], ch[j]), (*c[j], tp[j]), (*c[i], tp[i])], 0 if med else 1)
+        for a, b, za0, zb0, za1, zb1, fora in paredes:
+            if fora:
+                za0 = min(za0, cota(*a)) - 0.6
+                zb0 = min(zb0, cota(*b)) - 0.6
+            mm[med].face([(*a, za0), (*b, zb0), (*b, zb1), (*a, za1)], 0 if med else 1)
     ob = mm[True].objeto("cerca_medieval", "cerca", GRUPOS["Muralhas"], uv=3.0, vcor=patine_muro)
     mm[False].objeto("muralha_abaluartada", "baluartes", GRUPOS["Muralhas"], uv=3.0, vcor=patine_muro)
     MEDIDAS["muros"] = {"regioes": len(MUR), "area_m2": round(POL_MUROS.area),
-                        "topo_max": round(max(max(a["topo"]) for r in MUR for a in r["aneis"]), 2)}
+                        "topo_max": round(max(max(a["topo"]) for r in MUR for a in r["aneis"]), 2),
+                        "topo_em_degraus": dict(DEGRAUS)}
     return ob
 
 

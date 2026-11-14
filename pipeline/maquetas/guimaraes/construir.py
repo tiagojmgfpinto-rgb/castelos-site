@@ -721,6 +721,58 @@ PORTA_PRINCIPAL = (P(18.6, 6.0), 20)  # vão entre as duas torres, virado a nasc
 PORTA_TRAICAO = (P(-19.3, -0.8), 33 + 90)
 ESTATUA = P(-108.6, -112.4)  # pedestal e figura no MDS (5,5 m acima do chão), onde o Overture a situa
 
+# Terreiro da estátua (revisão do perito, 13 nov. 2026; fotografia do Commons "Castelo de Guimarães e Estátua de
+# Afonso Henriques" e foto do Tiago 4d65bf5e). No MDT: o terreiro lajeado a 220,15 m, c. 1 m acima da praça
+# (219,2 m) a poente e a sul; atrás, o parque a 222 m, seguro por um muro de suporte de granito em U que passa
+# c. 2 m a nascente do centro do pedestal (o pedestal encosta-lhe) e tem dois braços: a norte até x -7,2 e a sul
+# até y -7,2 (coordenadas a partir da estátua). À frente, a sudoeste, a escadaria de 6 degraus desce à praça.
+# Antes o MDT fazia disto um montículo com taludes de terra.
+TERREIRO_Z, PRACA_Z, PARQUE_Z = 220.15 - ZREF, 219.2 - ZREF, 221.95 - ZREF  # cotas da cena
+_MURO_E = [(-7.2, 4.4), (-2.5, 2.6), (0.0, 2.05), (1.45, 1.45), (2.05, 0.0), (2.45, -1.5), (3.3, -3.5), (3.3, -7.2)]
+MURO_ESTATUA = np.array(_MURO_E) + ESTATUA
+_cant = [(-3.2 + 4.0 * math.cos(a_), -3.2 + 4.0 * math.sin(a_)) for a_ in np.linspace(-math.pi / 2, -math.pi, 9)]
+TERREIRO = np.array(_MURO_E + [(-3.2, -7.2)] + _cant[1:-1] + [(-7.2, -3.2)]) + ESTATUA  # o muro e a frente curva
+N_DEGRAUS, PISO = 6, 0.42
+ESP_MURO_E = 1.5  # muro de suporte (o parque fica c. 1,8 m acima do terreiro)
+
+
+def _degraus_estatua():
+    """Os 6 degraus: faixas à volta da frente do terreiro, cortadas onde acabam os braços do muro."""
+    import shapely
+    t_ = shapely.Polygon(TERREIRO)
+    frente = shapely.box(ESTATUA[0] - 20, ESTATUA[1] - 20, ESTATUA[0] + 3.3, ESTATUA[1] + 4.4)
+    out = []
+    for i in range(N_DEGRAUS):
+        g = (t_.buffer(PISO * (i + 1), quad_segs=6).difference(t_.buffer(PISO * i, quad_segs=6))).intersection(frente)
+        polis = [q for q in getattr(g, "geoms", [g]) if q.geom_type == "Polygon"]
+        g = max(polis, key=lambda q: q.area)
+        out.append((np.array(g.exterior.coords)[:-1], TERREIRO_Z - (i + 1) * (TERREIRO_Z - PRACA_Z) / N_DEGRAUS))
+    return out
+
+
+def aplanar_terreiro():
+    """Corrige o MDT no terreiro (plano), na escadaria (à cota da praça, os degraus vão por cima) e atrás do muro
+    (à cota do parque, sem talude). Corre antes do terreno e da estátua, que leem o MDT."""
+    import shapely
+    X, Y = np.meshgrid(LXS, LXS)
+    perto = np.hypot(X - ESTATUA[0], Y - ESTATUA[1]) < 16
+    xs, ys = X[perto], Y[perto]
+    t_ = shapely.Polygon(TERREIRO)
+    muro = shapely.LineString(MURO_ESTATUA)
+    # o lado do parque fica à esquerda do traçado. Debaixo do muro (1,5 m de espessura, mais 0,2 m) o chão fica à
+    # cota do terreiro e só depois sobe ao parque: com a grelha de 1 m do terreno, nenhum triângulo vai do parque
+    # ao terreiro por fora do muro (antes faziam dentes de terra à frente dele)
+    sob = muro.buffer(ESP_MURO_E + 0.2, single_sided=True).difference(t_)
+    tras = muro.buffer(ESP_MURO_E + 1.8, single_sided=True).difference(sob).difference(t_)
+    esc = t_.buffer(PISO * N_DEGRAUS + 0.3).difference(t_).intersection(
+        shapely.box(ESTATUA[0] - 20, ESTATUA[1] - 20, ESTATUA[0] + 3.3, ESTATUA[1] + 4.4))
+    z = MDT[perto]
+    z = np.where(shapely.contains_xy(t_.buffer(0.3), xs, ys), TERREIRO_Z, z)
+    z = np.where(shapely.contains_xy(esc, xs, ys) & ~shapely.contains_xy(t_.buffer(0.3), xs, ys), np.minimum(z, PRACA_Z), z)
+    z = np.where(shapely.contains_xy(sob, xs, ys), TERREIRO_Z - 0.05, z)
+    z = np.where(shapely.contains_xy(tras, xs, ys), np.maximum(z, PARQUE_Z), z)
+    MDT[perto] = z
+
 
 def faces_retangulo(b):
     """Arestas de um retângulo com a normal exterior de cada uma."""
@@ -1423,6 +1475,38 @@ def estatua():
     MEDIDAS["estatua"] = {"chao": chao + ZREF, "topo": topo + ZREF, "altura_total": alt, "pedestal": zp - chao}
 
 
+def terreiro_estatua():
+    """Terreiro lajeado, muro de suporte em U de silharia com capeamento e placas de bronze, e a escadaria de
+    6 degraus para a praça (ver TERREIRO; o MDT já foi aplanado em aplanar_terreiro())."""
+    import shapely
+    m = Malha()  # 0 lajeado, 1 pedra, 2 cantaria, 3 bronze
+    m.prisma(anel_ccw(TERREIRO), TERREIRO_Z - 0.3, TERREIRO_Z + 0.03, 0)
+    for anel, zt in _degraus_estatua():
+        m.prisma(anel_ccw(anel), PRACA_Z - 0.4, zt + 0.03, 0)
+    t_ = shapely.Polygon(TERREIRO)
+    linha = shapely.LineString(MURO_ESTATUA)
+    lado = 1.0 if not linha.buffer(0.7, single_sided=True).intersects(t_.buffer(-0.5)) else -1.0
+    z_topo = TERREIRO_Z + 2.2
+    muro = linha.buffer(lado * ESP_MURO_E, single_sided=True, join_style="mitre")
+    m.prisma(anel_ccw(np.array(muro.exterior.coords)[:-1]), TERREIRO_Z - 0.4, z_topo, 1)
+    capa = linha.buffer(lado * (ESP_MURO_E + 0.08), single_sided=True, join_style="mitre").union(
+        linha.buffer(-lado * 0.06, single_sided=True, join_style="mitre"))
+    capa = max(capa.geoms, key=lambda q: q.area) if capa.geom_type == "MultiPolygon" else capa
+    m.prisma(anel_ccw(np.array(capa.exterior.coords)[:-1]), z_topo, z_topo + 0.3, 2)
+    # placas de bronze na face do muro, uma de cada lado do pedestal (fotografia)
+    for k in (1, 5):
+        a_, b_ = MURO_ESTATUA[k], MURO_ESTATUA[k + 1]
+        u_ = unit(b_ - a_)
+        n_ = np.array([-u_[1], u_[0]])
+        if (ESTATUA - (a_ + b_) / 2) @ n_ < 0:
+            n_ = -n_
+        m.caixa((a_ + b_) / 2 + n_ * 0.02, u_, 0.8, 0.04, TERREIRO_Z + 1.0, TERREIRO_Z + 1.6, 3)
+    m.objeto("Estatua_Terreiro", "estatua", ["lajeado", "pedra", "cantaria", "bronze"], GRUPOS["Estatua"], uv=2.0)
+    MEDIDAS["estatua_terreiro"] = {"terreiro": TERREIRO_Z + ZREF, "praca": PRACA_Z + ZREF, "degraus": N_DEGRAUS,
+                                   "muro_altura": round(z_topo + 0.3 - TERREIRO_Z, 2),
+                                   "muro_comprimento": round(linha.length, 1)}
+
+
 # ---------------------------------------------------------------- cena
 
 
@@ -1484,6 +1568,7 @@ PERFIS = {}  # perfis das muralhas (saida/perfis.npz), para conferência
 PONTAS_ADARVE = []  # (pano, ponta, sentido para a torre, cota do adarve)
 
 print("terreno…")
+aplanar_terreiro()
 construir_terreno()
 for ob in bpy.data.objects:
     if ob.name in ("Terreno", "Base"):
@@ -1772,6 +1857,7 @@ print("paço, igreja e estátua…")
 PACO_EXT, PACO_PAT = paco()
 IGREJA = igreja()
 estatua()
+terreiro_estatua()
 
 print("vila…")
 proprios = {"f4db2746", "cb136145", "0939c270", "739e68f7"}
@@ -1946,8 +2032,8 @@ for x, y, topo, _, r in ARV:
         continue
     r = float(np.clip(r, 1.0, 6.0))
     alt = float(np.clip(h * 0.62, 1.4, 2.6 * r))
-    if np.hypot(x - ESTATUA[0], y - ESTATUA[1]) < 3.5:
-        continue  # a estátua é classificada como vegetação na nuvem de pontos: não é árvore
+    if np.hypot(x - ESTATUA[0], y - ESTATUA[1]) < 3.5 or dentro(x, y, TERREIRO):
+        continue  # a estátua é classificada como vegetação na nuvem de pontos: não é árvore; o terreiro é lajeado
     if any(dentro(x, y, z_) for z_ in evitar):
         continue  # copas sobre os telhados ou dentro do castelo: o LiDAR mede-as, mas são poucas e escondem o monumento
     # Árvores de arruamento: o LiDAR mede a copa, que pende sobre a estrada; o tronco fica no passeio, à

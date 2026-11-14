@@ -247,10 +247,17 @@
   "chao": 231.8
  },
  "estatua": {
-  "chao": 221.2,
+  "chao": 220.2,
   "topo": 226.2,
-  "altura_total": 4.9,
-  "pedestal": 2.7
+  "altura_total": 6.0,
+  "pedestal": 3.2
+ },
+ "estatua_terreiro": {
+  "terreiro": 220.2,
+  "praca": 219.2,
+  "degraus": 6,
+  "muro_altura": 2.5,
+  "muro_comprimento": 18.2
  },
  "vila": {
   "edificios": 12,

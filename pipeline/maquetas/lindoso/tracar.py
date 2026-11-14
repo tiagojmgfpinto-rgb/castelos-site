@@ -35,7 +35,7 @@ from skimage.morphology import remove_small_holes, remove_small_objects
 AQUI = Path(__file__).resolve().parent
 ALTO = 466.0  # topo acima disto: cerca medieval
 sys.path.insert(0, str(AQUI))
-from comum import CERCA_NO, CORTINA_PN_SO, EXCLUIR_MUROS, ZONA_CASTELO  # noqa: E402
+from comum import CERCA_NO, CORTINA_PN_SO, PANO_SO, EXCLUIR_MUROS, ZONA_CASTELO  # noqa: E402
 
 SUPF = np.load(AQUI / "dados" / "superficie.npz")
 SP, SX0, SY0 = float(SUPF["passo"]), float(SUPF["x0"]), float(SUPF["y0"])
@@ -147,6 +147,8 @@ def main():
     reg = {"id": "", "aneis": [medir_anel(c, False, grade=(MDS, LX0, LY0, LP), desconto=0.4)],
            "area": round(float(shapely.Polygon(c).area), 1), "medieval": False, "hera": True}
     out.append(reg)
+    c = np.array(PANO_SO)
+    out.append({"id": "", "aneis": [medir_anel(c, True)], "area": round(float(shapely.Polygon(c).area), 1), "medieval": True})
     out.sort(key=lambda e: -e["area"])
     for i, e in enumerate(out):
         e["id"] = f"m{i:02d}"

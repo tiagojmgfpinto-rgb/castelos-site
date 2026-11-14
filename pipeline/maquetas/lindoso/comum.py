@@ -61,6 +61,10 @@ def _faixa(c, az, s0, s1, d0, d1):
 #   telhado do museu (467,3 m), por isso não se destaca no top-hat; face de fora medida no LiDAR (parapeito a 468 m).
 CORTINA_PN_SO = _faixa(PORTA_NORTE["c"], PORTA_NORTE["az"], -12.0, PORTA_NORTE["s0"] - 0.15, -1.0, 1.0)
 CERCA_NO_FORA = [(-7.0, 2.6), (-9.5, 1.3), (-12.2, -0.6), (-13.6, -1.9), (-16.6, -4.1)]
+# - o troço da muralha a sul do cunhal sudoeste da cerca (x c. -14,5, y -40 a -45): o LiDAR mede-o (classe 6, topo
+#   466,1–466,5 m) e a ortofoto mostra-o contínuo, mas fica no limite entre a cerca e os baluartes e o traçado
+#   perdia-o, deixando uma brecha relvada (revisão do perito, 13 nov. 2026)
+PANO_SO = [(-14.85, -44.9), (-13.75, -44.9), (-14.35, -40.2), (-15.15, -40.2)]
 CERCA_NO = CERCA_NO_FORA + [(x + 0.91, y - 1.31) for x, y in reversed(CERCA_NO_FORA)]
 # porta da traição (Street View e fotografia): arco estreito na face de fora do troço NO, junto ao cunhal da torre,
 # com a rampa metálica que sobe da lice ao longo da face

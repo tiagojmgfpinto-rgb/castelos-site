@@ -1,4 +1,10 @@
 {
+ "rocha": {
+  "alvenaria_max": 8.0,
+  "alvenaria_max_torres": 9.0,
+  "celulas_subidas": 3418,
+  "chao_castelejo": 301.2
+ },
  "pano_norte": {
   "topo": [
    291.5,
@@ -6,11 +12,11 @@
   ],
   "altura_exterior": [
    7.0,
-   12.7
+   10.7
   ],
   "acima_do_chao_interior": [
    1.2,
-   3.4
+   3.2
   ]
  },
  "pano_noroeste": {
@@ -20,7 +26,7 @@
   ],
   "altura_exterior": [
    7.2,
-   15.3
+   10.7
   ],
   "acima_do_chao_interior": [
    1.4,
@@ -34,7 +40,7 @@
   ],
   "altura_exterior": [
    7.3,
-   14.5
+   12.2
   ],
   "acima_do_chao_interior": [
    3.8,
@@ -48,7 +54,7 @@
   ],
   "altura_exterior": [
    7.9,
-   12.8
+   10.6
   ],
   "acima_do_chao_interior": [
    5.7,
@@ -61,12 +67,12 @@
    302.6
   ],
   "altura_exterior": [
-   7.4,
-   11.4
+   7.1,
+   10.7
   ],
   "acima_do_chao_interior": [
    1.6,
-   9.2
+   9.1
   ]
  },
  "castelejo": {
@@ -74,14 +80,14 @@
    304.1,
    305.0
   ],
-  "chao_interior": 291.1,
+  "chao_interior": 301.3,
   "altura_exterior": [
-   9.9,
-   15.9
+   9.7,
+   15.4
   ],
   "acima_do_chao_interior": [
-   9.6,
-   14.4
+   1.4,
+   12.1
   ]
  },
  "torreao_poente_1": {
@@ -91,13 +97,13 @@
  },
  "torreao_poente_2": {
   "topo": 291.2,
-  "pe": 277.6,
-  "altura_exterior": 13.6
+  "pe": 279.8,
+  "altura_exterior": 11.3
  },
  "torreao_poente_3": {
   "topo": 291.0,
-  "pe": 278.5,
-  "altura_exterior": 12.5
+  "pe": 281.6,
+  "altura_exterior": 9.4
  },
  "porta_traicao": {
   "topo": 292.2,
@@ -106,13 +112,13 @@
  },
  "torre_quinaria": {
   "topo": 300.7,
-  "pe": 286.6,
-  "altura_exterior": 14.1
+  "pe": 287.8,
+  "altura_exterior": 12.9
  },
  "cubelo_noroeste": {
   "topo": 287.6,
-  "pe": 272.4,
-  "altura_exterior": 15.2
+  "pe": 277.5,
+  "altura_exterior": 10.1
  },
  "porta_vila": {
   "soleira": 279.0,
@@ -123,7 +129,7 @@
   "topo_torre": 292.6,
   "topo_corpo_direito": 291.1,
   "topo_muro_suporte": 287.1,
-  "cruzeiro": 278.0
+  "cruzeiro": 278.1
  },
  "brecha": {
   "chao": 287.2,
@@ -162,11 +168,26 @@
  },
  "ciprestes": 3,
  "vegetacao": {
-  "arvores": 604,
-  "encolhidas": 34,
-  "retiradas": 35
+  "arvores": 560,
+  "encolhidas": 40,
+  "retiradas": 76
  },
  "texturas_foto": {
+  "cliff_side": {
+   "titulo": "Cliff Side",
+   "autores": [
+    "Dario Barresi",
+    "James Ray Cock",
+    "Jenelle van Heerden"
+   ],
+   "licenca": "CC0 1.0 (domínio público)",
+   "pagina": "https://polyhaven.com/a/cliff_side",
+   "metros": [
+    1.8,
+    1.8
+   ],
+   "uso": "calcário de arriba em camadas partidas (arribas de Peniche)"
+  },
   "old_stone_wall": {
    "titulo": "Old Stone Wall",
    "autores": [

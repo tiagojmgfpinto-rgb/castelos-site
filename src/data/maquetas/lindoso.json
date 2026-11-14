@@ -2,7 +2,7 @@
   "monumento": "lindoso",
   "titulo": "Castelo de Lindoso e espigueiros",
   "variante": "estado-atual",
-  "versao": "0.4 provisória",
+  "versao": "0.5 provisória",
   "data": "2026-11-14",
   "origem": {
     "lat": 41.867167,
@@ -125,7 +125,7 @@
       "estado": "estado-atual",
       "confianca": "alta",
       "descricao": "Muros altos de cantaria de granito à volta do pátio, com adarve no alto. A torre de menagem fica no canto norte e a porta de armas a sul, entre dois cubelos.",
-      "medidas": "Topo a 467–471,0 m, c. 6 m acima do pátio (LiDAR).",
+      "medidas": "Topo a 467–471,0 m, c. 6 m acima do pátio (LiDAR). Onde o nível muda (cunhal sudeste a 471 m, canto sudoeste sobre a muralha abaluartada) o topo desce em degrau a prumo, não em rampa.",
       "fontes": [
         "lidar",
         "orto",

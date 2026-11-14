@@ -831,6 +831,12 @@ AMARELO_EDIF = shapely.box(17.0, 18.0, 36.0, 47.0)  # a ponta sudeste do pavilh�
 ALV, CHAO_, CAL_, TERR, OCRE_, CANT_ = range(6)
 MAT_PLAT = ["alvenaria", "chao", "cal", "terraco", "ocre", "cantaria"]
 ESCARPAS = []   # escarpas de alvenaria por baixo dos parapeitos: o terreno à frente é rebaixado ao pé
+PES = []        # pé da alvenaria de cada parapeito: por baixo é rocha (o terreno sobe até lá, à frente do pano)
+# Revisão do perito (13 nov. 2026, P1-1): a arriba é rocha calcária natural de 8–10 m e a alvenaria por cima tem
+# só 2–6 m. A alvenaria (parapeito e escarpa) acaba no máximo ALV_MAX m abaixo do coroamento; 7 m só na frente
+# junto à capela, onde a fotografia mostra pano contínuo.
+ALV_MAX, ALV_MAX_CAPELA = 5.0, 7.0
+CAPELA_FRENTE = shapely.Point(26.0, 30.0).buffer(28.0)
 BORDAS = []     # (linha, normal para fora, topo, queda, tipo) de cada troço das plataformas, para parapeitos
 EDIFICIOS = []  # (poligono, topo, chão, amarelo)
 PLAT_SHP = []
@@ -1064,7 +1070,10 @@ def parapeitos(mq):
         za = cota_t(*(lin + nr * 1.3).T)
         zb_ = cota_t(*(lin - nr * 1.3).T)
         zbase = np.interp(sv, ss, base)
-        zlow = np.maximum(np.minimum(np.minimum(za, zb_), zt - 0.8) - 0.5, zbase - 9.0)
+        costa = np.mean([perto_do_mar(*p) for p in lin[::3]]) < 30 and not GULLY.contains(shapely.Point(*lin.mean(0)))
+        alv = (ALV_MAX_CAPELA if CAPELA_FRENTE.contains(shapely.Point(*lin.mean(0))) else ALV_MAX) if costa else 99.0
+        zmin_alv = zt - alv  # pé mais baixo da alvenaria; por baixo é a rocha da arriba
+        zlow = np.maximum(np.maximum(np.minimum(np.minimum(za, zb_), zt - 0.8) - 0.5, zbase - 9.0), zmin_alv)
         zpin = np.minimum(np.maximum(zbase - 0.25, zlow + 0.05), zt - 0.3)  # a pintura começa no chão de dentro
         amarelo = np.mean([perto_do_mar(*p) for p in lin[::3]]) < 25 and lin[:, 0].mean() < 80
         # escarpa de alvenaria por baixo do parapeito, do lado de fora (o mais baixo): da cota do chão de
@@ -1077,20 +1086,24 @@ def parapeitos(mq):
         zf = np.maximum(np.maximum(zf, zbase - 12.0), NIVEL + 0.3)
         # pano contínuo: os intervalos curtos (até c. 4 m) entre troços altos também levam escarpa; sem isto
         # ficavam dentes de rocha entre panos e a muralha parecia desfazer-se na arriba
-        alto = ndi.binary_closing((zbase - zf) > 1.2, structure=np.ones(9, bool), border_value=0) | ((zbase - zf) > 1.2)
+        zt_e = np.minimum(zlow, zbase)
+        # junto à água o pano entra no mar (sem fresta escura entre o pé e a água), mas nunca abaixo de zmin_alv
+        zpe_ = np.where(zf < NIVEL + 1.0, NIVEL - 1.0, zf - 0.3)
+        zpe_ = np.maximum(zpe_, zmin_alv)
+        alto = (zt_e - zpe_) > 0.6
+        alto = ndi.binary_closing(alto, structure=np.ones(9, bool), border_value=0) | alto
+        bat = 0.12 * np.clip(zt_e - zpe_, 0, None)
         if alto.sum() >= 3:
-            bat = 0.12 * (zbase - zf)
             top_ = lin + nout * e
             pe_ = lin + nout * (e + bat)[:, None]
-            zt_e = np.minimum(zlow, zbase)
-            # junto à água o pano entra no mar (sem fresta escura entre o pé e a água)
-            zpe_ = np.where(zf < NIVEL + 1.0, NIVEL - 1.0, zf - 0.3)
             zpe_ = np.where(boca_perto(pe_[:, 0], pe_[:, 1]), np.maximum(zpe_, TUNEL["paramento"] - 0.2), zpe_)
             for i in range(len(lin) - 1):
                 if alto[i] and alto[i + 1]:
                     f_ = [(*top_[i], zt_e[i]), (*top_[i + 1], zt_e[i + 1]), (*pe_[i + 1], zpe_[i + 1]), (*pe_[i], zpe_[i])]
                     mq.face(f_ if so < 0 else f_[::-1], 0)
             ESCARPAS.append(dict(linha=lin, nout=nout, pe=zf - 0.3, alto=alto))
+        # pé da alvenaria: na escarpa (alto) é zpe_, no resto o fundo do parapeito (zlow)
+        PES.append(dict(linha=lin, nout=nout, pe=np.where(alto, zpe_, zlow), larg=e + np.where(alto, bat, 0.0)))
         mw, mc = (1, 3) if amarelo else (0, 2)
         e = 0.42
         perfil = [(e, zlow), (e, zpin), (e, zt), (e - 0.07, zt + 0.1), (-e + 0.07, zt + 0.1), (-e, zt), (-e, zpin), (-e, zlow)]
@@ -1142,6 +1155,8 @@ def escolher_guaritas(cands, dmin=26.0):
     vértices no mesmo canto)."""
     out = []
     for p, bis, z, ang in sorted(cands, key=lambda c: -c[3]):
+        if np.linalg.norm(p - FORTIM["c"]) < FORTIM["r"] + 22.0:
+            continue  # nenhuma fotografia mostra guarita no esporão do Fortim (revisão do perito, P2-10)
         if all(np.linalg.norm(p - o[0]) > dmin for o in out):
             out.append((p, bis, z, ang))
     return out
@@ -1938,6 +1953,29 @@ def construir_terreno():
         Z = np.where(zona, np.minimum(Z0, ndi.grey_closing(Z, size=9)), Z)
         Z = np.where(zona, np.minimum(Z, ndi.grey_opening(Z, size=5)), Z)
         MEDIDAS["escarpas"] = {"troços": len(ESCARPAS), "celulas_limpas": int(zona.sum())}
+    # rocha até ao pé da alvenaria: à frente de cada parapeito, numa faixa até 0,8 m além do pé, o terreno sobe
+    # (só sobe) até 0,15 m abaixo do pé; daí para fora desce a pique até ao chão ou ao mar (face de rocha, > 50°)
+    n_sub = 0
+    for pp in PES:
+        lin, nout, pe, larg = pp["linha"], pp["nout"], pp["pe"], pp["larg"]
+        for i in range(len(lin) - 1):
+            quad = shapely.Polygon([lin[i] - nout[i] * 0.2, lin[i + 1] - nout[i + 1] * 0.2,
+                                    lin[i + 1] + nout[i + 1] * (larg[i + 1] + 0.8), lin[i] + nout[i] * (larg[i] + 0.8)])
+            if not quad.is_valid or quad.area < 0.05:
+                continue
+            quad = quad.buffer(0.3)
+            x0, y0, x1, y1 = quad.bounds
+            c0, c1 = np.searchsorted(LXS, [x0, x1])
+            r0, r1 = np.searchsorted(LYS, [y0, y1])
+            sx, sy = X[r0:r1 + 1, c0:c1 + 1], Y[r0:r1 + 1, c0:c1 + 1]
+            if sx.size == 0:
+                continue
+            k_ = shapely.contains_xy(quad, sx, sy) & ~boca_perto(sx, sy)
+            zp = 0.5 * (pe[i] + pe[i + 1]) - 0.15
+            blk = Z[r0:r1 + 1, c0:c1 + 1]
+            n_sub += int((blk[k_] < zp).sum())
+            blk[k_] = np.maximum(blk[k_], zp)
+    MEDIDAS["arriba"] = {"alvenaria_max": ALV_MAX, "junto_capela": ALV_MAX_CAPELA, "celulas_subidas": n_sub}
     ZTER[:] = [Z]
     dentro_ = shapely.contains_xy(CONTORNO, X + LPASSO / 2, Y + LPASSO / 2)[:-1, :-1]
     usados = np.zeros(X.shape, bool)

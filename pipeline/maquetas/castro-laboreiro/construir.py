@@ -23,6 +23,7 @@ from pathlib import Path
 import bpy  # noqa: I001 (o bpy tem de vir antes do bmesh)
 import bmesh
 import numpy as np
+import shapely
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # pipeline/, para o kit comum
 from kit.geometria import unit, area, densificar, dentro, distancia, desvio, mediana_movel, arco, arco_quebrado, _arred  # noqa: E402
@@ -566,13 +567,15 @@ def parede(m, linha, esp, topo, fora, dentro_, mat=0, mat_topo=3, fechada=False,
     zi = np.minimum(dentro_, topo - 0.5) - 1.5
     a = degraus(topo) if escalonar else topo
     # sequência de (vértice, cota do topo); num degrau o vértice repete-se com as duas cotas
+    # sem escalonar, o coroamento corre em rampa de vértice a vértice (revisão do perito, P1-14: antes cada
+    # vértice fazia um degrau e o topo dos troços baixos saía em escadinha)
     seq = []
     for i in range(n):
-        if seq and a[i] != seq[-1][1]:
+        if escalonar and seq and a[i] != seq[-1][1]:
             seq.append((i, seq[-1][1]))
         seq.append((i, a[i]))
     if fechada:
-        if a[0] != seq[-1][1]:
+        if escalonar and a[0] != seq[-1][1]:
             seq.append((0, seq[-1][1]))
         seq.append((0, a[0]))
     for (i, ai), (j, aj) in zip(seq[:-1], seq[1:]):
@@ -629,6 +632,8 @@ def rebaixar(X, Y, Z):
         d, _, _ = distancia(X[sel], Y[sel], lin)
         _, k = arv.query(np.stack([X[sel], Y[sel]], 1))
         perto = d < esp / 2 + 0.3
+        if s_ in PENEDO:  # onde o muro se interrompe no penedo, a rocha fica como está
+            perto &= ~PENEDO[s_][k]
         zz = Z[sel]
         zz[perto] = np.minimum(zz[perto], baixo_[k[perto]])
         Z[sel] = zz
@@ -639,13 +644,40 @@ def rebaixar(X, Y, Z):
     return Z
 
 
+def rocha_ao_pe(X, Y, Z):
+    """À frente dos panos assentes, o terreno sobe (só sobe) ao pé da face de fora e desce dali em rocha
+    (TALUDE_ROCHA), com bordos contínuos; nos troços de penedo sobe até ao topo medido. Longe das portas."""
+    Z = Z.copy()
+    for s_, pe in PE_ROCHA.items():
+        lin, esp, topo = MEDIDOS[s_][:3]
+        pe = np.where(PENEDO[s_], topo, pe)
+        ln = shapely.LineString(lin)
+        ss = np.concatenate([[0], np.cumsum(np.linalg.norm(np.diff(lin, axis=0), axis=1))])
+        lado = ln.buffer(-10.0, single_sided=True)  # o lado de fora (à direita da linha)
+        x0, y0, x1, y1 = lado.bounds
+        sel = (X >= x0) & (X <= x1) & (Y >= y0) & (Y <= y1)
+        xs, ys = X[sel], Y[sel]
+        pts = shapely.points(xs, ys)
+        d = shapely.distance(ln, pts)
+        alvo = np.interp(shapely.line_locate_point(ln, pts), ss, pe) - TALUDE_ROCHA * np.clip(d - (esp / 2 + 0.4), 0, None)
+        ok = shapely.contains_xy(lado.buffer(0.05), xs, ys)
+        for pid, (i, p, t, n_, sole) in PONTOS_PORTA.items():
+            if PORTAS[pid]["pano"] == s_:
+                ok &= np.hypot(xs - p[0], ys - p[1]) > 3.0
+        zz = Z[sel]
+        zz[ok] = np.maximum(zz[ok], alvo[ok])
+        Z[sel] = zz
+    return Z
+
+
 def construir_terreno():
     passo = 0.5
     n = int(2 * RAIO / passo) + 1
     xs = np.linspace(-RAIO, RAIO, n)
     X, Y = np.meshgrid(xs, xs)
     Z0 = cota(X, Y)
-    Z = abrir_portas(X, Y, rebaixar(X, Y, Z0))
+    Z = abrir_portas(X, Y, rocha_ao_pe(X, Y, rebaixar(X, Y, Z0)))
+    subida = Z > Z0 + 0.3  # rocha posta à frente dos panos assentes: pinta-se como afloramento
     gy, gx = np.gradient(Z0, passo)
     decl = np.degrees(np.arctan(np.hypot(gx, gy)))
     curv = ndi.laplace(ndi.gaussian_filter(Z0, 1.0))  # > 0 nas fissuras e nos pés dos penedos
@@ -695,6 +727,7 @@ def construir_terreno():
     # pique fora do arvoredo; debaixo das árvores o declive sozinho não faz rocha (ali é souto).
     rocha = np.clip((lum - 0.52) * 5, 0, 1) * np.clip((0.17 - sat) * 9, 0, 1) * (1 - sob)
     rocha = np.maximum(rocha, np.clip((dv - 52) / 10, 0, 1) * np.clip(1 - cob * 2.5, 0, 1))
+    rocha = np.maximum(rocha, subida[usados].astype(float))
     rocha = ndi_suave(rocha, usados, X.shape)
     gran = np.array([0.70, 0.69, 0.65]) * (0.88 + 0.2 * fbm(xv + 0.7 * zv, yv - 0.5 * zv, 3.0, 5))[:, None]
     gran = gran * (1 - np.clip(cv * 1.6, -0.12, 0.30))[:, None]  # fissuras escuras, lombas claras
@@ -793,13 +826,28 @@ MEDIDAS = {}  # o que se mediu no LiDAR, para conferir e citar no castro-laborei
 PERFIS = {}
 MEDIDOS = {}
 
+# Panos assentes nos penedos e a altura máxima da face de fora acima da rocha (frente poente da cerca e pano
+# poente do castelo: troços baixos e finos entre penedos; pano norte do castelo: em cima de penedos enormes)
+ASSENTES = {"cerca_poente": 2.8, "castelo_poente": 3.0, "castelo_norte": 4.5}
+PE_ROCHA = {}   # cota do pé da face de fora (o topo da rocha) em cada vértice
+PENEDO = {}     # vértices onde o penedo chega ao topo do pano (o muro interrompe-se)
+TALUDE_ROCHA = 2.5  # declive da rocha que desce do pé do pano até encontrar o MDT (c. 68°)
+
 print("perfis das muralhas…")
 for s_, d_ in PANOS.items():
     lin = np.array([P(*p) for p in d_["pts"]])
     lin, topo, fora, dentro_ = perfil(lin, d_["esp"], d_.get("baixo", False))
+    if s_ in ASSENTES:
+        # assente nos penedos (revisão do perito, P1-4 e P1-14): a face de fora acaba na rocha, que o MDT
+        # mostra debaixo do pano ou, onde o MDT é interpolado, no máximo ASSENTES[s_] m abaixo do topo
+        mdt_l = cota(*lin.T)
+        pe = np.minimum(np.maximum(mdt_l - 0.4, topo - ASSENTES[s_]), topo - 0.6)
+        PE_ROCHA[s_] = pe
+        fora = np.maximum(fora, pe + 1.2)  # o pano desce 1,5 m abaixo de fora: fica 0,3 m metido na rocha
+        PENEDO[s_] = (topo - mdt_l) < 0.7  # o penedo chega ao topo do pano: aí não há muro
     PERFIS[s_] = np.stack([lin[:, 0], lin[:, 1], topo, fora, dentro_], 1)
     MEDIDOS[s_] = (lin, d_["esp"], topo, fora, dentro_)
-    alt_e, alt_i = topo - fora, topo - dentro_
+    alt_e, alt_i = topo - (PE_ROCHA[s_] if s_ in PE_ROCHA else fora), topo - dentro_
     comp = float(np.sum(np.linalg.norm(np.diff(lin, axis=0), axis=1)))
     MEDIDAS[s_] = {"comprimento": comp, "topo": [float(topo.min() + ZREF), float(topo.max() + ZREF)],
                    "altura_exterior": [float(np.percentile(alt_e, 10)), float(np.percentile(alt_e, 90))],
@@ -860,20 +908,23 @@ print("reduto…")
 # miolo é uma lomba de rocha que sobe de 1019,5 m a poente a 1021,4 m a nascente). Por fora as faces
 # descem ao pé medido, até 10 m; por dentro a cinta sobe 0,7 m acima do penedo e o miolo é o próprio
 # terreno, com a rocha e o mato que lá estão.
+# Revisão do perito (P1-5): no real é um penedo enorme com a muralha encostada só às faces sul e poente, até à
+# altura do topo da rocha (±0,3 m), sem parapeito; a rocha fica à vista no miolo e a nascente, e não há muro do
+# lado da cerca. Aqui fica só esse L (de noroeste a sueste, pelo canto sudoeste).
 ESP_R = 1.5
 b = REDUTO if area(REDUTO) > 0 else REDUTO[::-1]
-anel_r = densificar(desvio(b, ESP_R / 2, True), 1.0, True)
-fora_r = np.min([cota(*desvio(anel_r, -(ESP_R / 2 + d), True).T) for d in (0.8, 1.5)], axis=0)
-dentro_r = np.max([cota(*desvio(anel_r, ESP_R / 2 + d, True).T) for d in (0.5, 1.0)], axis=0)
+_lr = desvio(b, ESP_R / 2, True)
+anel_r = densificar(np.array([_lr[3], _lr[0], _lr[1]]), 1.0)
+fora_r = np.min([cota(*desvio(anel_r, -(ESP_R / 2 + d)).T) for d in (0.8, 1.5)], axis=0)
+dentro_r = np.max([cota(*desvio(anel_r, ESP_R / 2 + d).T) for d in (0.5, 1.0)], axis=0)
 topo_mds = np.array([medir(centro=q, raio=0.8, q=90, sem_veg=False) for q in anel_r])
-topo_rr = np.clip(np.nan_to_num(topo_mds, nan=-1e9), dentro_r + 0.4, dentro_r + 1.2)
-topo_rr = mediana_movel(topo_rr, 3, fechada=True)
-MEDIDOS["reduto"] = (np.vstack([anel_r, anel_r[:1]]), ESP_R, np.r_[topo_rr, topo_rr[0]],
-                     np.r_[fora_r, fora_r[0]], np.r_[dentro_r, dentro_r[0]])
+topo_rr = np.clip(np.nan_to_num(topo_mds, nan=-1e9), dentro_r - 0.3, dentro_r + 0.3)
+topo_rr = mediana_movel(topo_rr, 3)
+MEDIDOS["reduto"] = (anel_r, ESP_R, topo_rr, fora_r, dentro_r)
 m = Malha()
-parede(m, anel_r, ESP_R, topo_rr, fora_r, dentro_r, mat=0, mat_topo=1, fechada=True)
-# cunhais de silhares maiores nas quatro esquinas, a toda a altura da face exterior
-for k in range(4):
+parede(m, anel_r, ESP_R, topo_rr, fora_r, dentro_r, mat=0, mat_topo=1, escalonar=False)
+# cunhais de silhares maiores nas esquinas de fora (sudoeste, e as pontas a sueste e a noroeste)
+for k in (0, 1, 3):
     c_ = b[k]
     u_ = unit(b[(k + 1) % 4] - b[k])
     z_top = float(topo_rr[int(np.argmin(np.hypot(*(anel_r - c_).T)))])
@@ -924,14 +975,32 @@ for s_, d_ in PANOS.items():
     ss = np.concatenate([[0], np.cumsum(np.linalg.norm(np.diff(lin, axis=0), axis=1))])
     vaos = [(pid, ss[PONTOS_PORTA[pid][0]], PORTAS[pid]["largura"] / 2) for pid in PORTAS if PORTAS[pid]["pano"] == s_]
     vaos.sort(key=lambda v: v[1])
-    trocos = cortar_vaos(lin, [topo, fora, dentro_], [(c - h, c + h) for _, c, h in vaos])
+    cortes = [(c - h, c + h) for _, c, h in vaos]
+    # onde o penedo chega ao topo do pano (3 vértices seguidos ou mais, longe das portas), o muro interrompe-se
+    pen = PENEDO.get(s_, np.zeros(len(lin), bool)).copy()
+    for _, c, h in vaos:
+        pen &= np.abs(ss - c) > h + 2.5
+    lab, nlab = ndi.label(pen)
+    n_pen = 0
+    for k in range(1, nlab + 1):
+        ii = np.nonzero(lab == k)[0]
+        if len(ii) >= 3 and ii[0] > 0 and ii[-1] < len(lin) - 1:
+            cortes.append((ss[ii[0]], ss[ii[-1]]))
+            n_pen += 1
+    if s_ in ASSENTES:
+        MEDIDAS[s_]["interrupcoes_penedo"] = n_pen
+    trocos = cortar_vaos(lin, [topo, fora, dentro_], cortes)
     # os troços baixos entre os penedos acompanham o chão; os panos altos sobem em patamares
+    ln_ = shapely.LineString(lin)
     pontas = []
     for tr in trocos:
         a_ = parede(m, *tr[:1], esp, *tr[1:], mat=0, mat_topo=1, escalonar=not d_.get("baixo", False))[2]
-        pontas.append((float(a_[0]), float(a_[-1])))
-    for k, (pid, _, _) in enumerate(vaos):
-        TOPO_VAO[pid] = min(pontas[k][1], pontas[k + 1][0])
+        s_a, s_b = (ln_.project(shapely.Point(*tr[0][q])) for q in (0, -1))
+        pontas.append((s_a, s_b, float(a_[0]), float(a_[-1])))
+    for pid, c, h in vaos:
+        antes = min(pontas, key=lambda q: abs(q[1] - (c - h)))
+        depois = min(pontas, key=lambda q: abs(q[0] - (c + h)))
+        TOPO_VAO[pid] = min(antes[3], depois[2])
     grupo = GRUPOS["Castelo"] if d_["elemento"] == "castelo" else GRUPOS["Cerca"]
     m.objeto(s_.title(), d_["elemento"], ["pedra", "coroamento"], grupo)
 

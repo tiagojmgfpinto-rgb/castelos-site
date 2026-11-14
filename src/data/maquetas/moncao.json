@@ -2,7 +2,7 @@
   "monumento": "moncao",
   "titulo": "Fortaleza de Monção",
   "variante": "estado-atual",
-  "versao": "0.3 provisória",
+  "versao": "0.4 provisória",
   "data": "2026-11-14",
   "origem": {
     "lat": 42.07785,
@@ -105,7 +105,7 @@
       "estado": "estado-atual",
       "confianca": "média",
       "descricao": "Arco de granito de volta perfeita aberto num pano alto de alvenaria, com uma guarita sobre o cordão por cima; um túnel atravessa o terrapleno e do lado de dentro sai-se entre dois contrafortes, com arcos, lojas e escadas de pedra para o adarve de cada lado.",
-      "medidas": "Soleira a 30.9 m e topo do pano a 40.3 m de altitude (LiDAR); arco de c. 2,1 m de largura (fotografia).",
+      "medidas": "Soleira a 30.9 m e topo do pano a 40.3 m de altitude (LiDAR); arco de c. 2,1 m de largura (fotografia). Atrás do parapeito, um caminho de ronda a c. 40 m e o terrapleno plano a 42,8 m até à face de dentro (LiDAR).",
       "fontes": [
         "lidar",
         "osm",

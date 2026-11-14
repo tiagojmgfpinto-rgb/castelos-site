@@ -1,8 +1,12 @@
 {
  "muros": {
-  "regioes": 18,
-  "area_m2": 1019,
-  "topo_max": 471.04
+  "regioes": 19,
+  "area_m2": 1023,
+  "topo_max": 471.04,
+  "topo_em_degraus": {
+   "triangulos_planos": 16,
+   "degraus": 19
+  }
  },
  "torre": {
   "lado": 10.5,
@@ -804,7 +808,7 @@
   ]
  },
  "terreno": {
-  "plataformas_m2": 105
+  "plataformas_m2": 102
  },
  "casas": {
   "total": 57,

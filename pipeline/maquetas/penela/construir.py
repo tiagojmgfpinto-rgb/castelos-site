@@ -21,6 +21,8 @@ from pathlib import Path
 import bpy  # noqa: I001 (o bpy tem de vir antes do bmesh)
 import bmesh
 import numpy as np
+import shapely
+from scipy import ndimage as ndi
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # pipeline/, para o kit comum
 from kit.geometria import unit, area, densificar, dentro, distancia, desvio, mediana_movel, arco, _retangulo, _arred, normais, ogiva  # noqa: E402
@@ -313,6 +315,40 @@ def construir_terreno():
     tr = (np.clip((dv - 38) / 10, 0, 1) * (1 - sob))[:, None]
     cor = cor * (1 - tr) + roc * tr
 
+    # faces íngremes (mais de 50°): falésias de rocha, objeto à parte com a pedra fotografada e a cor da rocha
+    # (ocre; cinzenta à volta do castelejo, revisão do perito P1-1)
+    zf = Z[np.stack([I, I, I + 1, I + 1], 1), np.stack([J, J + 1, J + 1, J], 1)]
+    gxf = ((zf[:, 1] - zf[:, 0]) + (zf[:, 2] - zf[:, 3])) / (2 * passo)
+    gyf = ((zf[:, 3] - zf[:, 0]) + (zf[:, 2] - zf[:, 1])) / (2 * passo)
+    ingreme = np.hypot(gxf, gyf) > math.tan(math.radians(50))
+    # só as falésias por fora das muralhas (até 25 m delas) e à volta do castelejo; dentro do recinto os
+    # degraus do terreno são muros de suporte e taludes, não rocha
+    cxf, cyf = X[I, J] + passo / 2, Y[I, J] + passo / 2
+    perto = shapely.contains_xy(shapely.LineString(perimetro).buffer(25.0).difference(PERIM_POLY)
+                                .union(CAST_POLY.buffer(8.0).difference(CAST_POLY)), cxf, cyf)
+    mapa_i = np.zeros(X.shape, bool)
+    mapa_i[I, J] = ingreme & perto
+    mapa_i = ndi.binary_opening(ndi.binary_closing(mapa_i, np.ones((3, 3), bool)), np.ones((2, 2), bool))
+    ingreme = mapa_i[I, J]
+    ocre = np.array([0.80, 0.70, 0.50]) * (0.9 + 0.2 * fbm(xv, yv, 4.0, 9)[:, None])
+    cinza = np.array([0.62, 0.61, 0.56]) * (0.9 + 0.2 * fbm(xv, yv, 4.0, 9)[:, None])
+    g_ = np.clip((np.hypot(xv - castelejo[:, 0].mean(), yv - castelejo[:, 1].mean()) - 14.0) / 6.0, 0, 1)[:, None]
+    cor_roc = cinza * (1 - g_) + ocre * g_
+    fr = faces[ingreme]
+    usa = np.unique(fr)
+    mapa = -np.ones(len(V), int)
+    mapa[usa] = np.arange(len(usa))
+    mr = bpy.data.meshes.new("rocha")
+    mr.from_pydata(V[usa].tolist(), [], mapa[fr].tolist())
+    mr.update()
+    car = mr.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
+    car.data.foreach_set("color", np.hstack([np.clip(cor_roc[usa], 0, 1) ** 2.2, np.ones((len(usa), 1))]).astype(np.float32).ravel())
+    mr.color_attributes.active_color = car
+    mr.shade_smooth()
+    obr = novo_objeto("Terreno_rocha", mr, "terreno", mat="rocha", pai=GRUPOS["Terreno"])
+    uv_mundo(obr, 4.0)
+    faces = faces[~ingreme]
+
     me = bpy.data.meshes.new("terreno")
     me.from_pydata(V.tolist(), [], faces.tolist())
     me.update()
@@ -320,7 +356,7 @@ def construir_terreno():
     bm.from_mesh(me)
     bm.verts.ensure_lookup_table()
     # borda circular exata
-    borda = [v for v in bm.verts if v.is_boundary]
+    borda = [v for v in bm.verts if v.is_boundary and math.hypot(v.co.x, v.co.y) > RAIO - 3 * passo]  # (não os bordos das falésias)
     for v in borda:
         r = math.hypot(v.co.x, v.co.y)
         v.co.x, v.co.y = v.co.x * RAIO / r, v.co.y * RAIO / r
@@ -869,6 +905,10 @@ MATS["silharia"] = material_kit("silharia", (1, 1, 1), 0.88, imagem("silharia", 
                                 normal=imagem("silharia_n", normais(_ALT_S, 2.5)), forca=0.7)
 material("calcada", (0.71, 0.69, 0.65), 0.95)
 material("terreno", (1, 1, 1), 0.97, grao, vcor=True)
+# falésias de arenito e calcário: foto de arriba em estratos (CC0), clara e neutra; a cor vem dos vértices
+_TEX_R, _ALT_R = textura_foto("cliff_side", n=1024, metros=4.0, cor=(0.93, 0.92, 0.90), contraste=0.8, saturacao=0.3, semente=73)
+MATS["rocha"] = material_kit("rocha", (1, 1, 1), 0.93, imagem("rocha", _TEX_R), vcor=True,
+                             normal=imagem("rocha_n", normais(_ALT_R, 3.0)), forca=1.0)
 # casas da vila: um só cinzento claro, paredes e telhados, para o destaque ficar no castelo e na igreja
 material("cinza_viz", (0.74, 0.74, 0.73), 0.9)
 material("base", (0.33, 0.26, 0.20), 0.95)
@@ -876,6 +916,77 @@ material("caminho", (0.74, 0.72, 0.67), 0.95)
 material("arvore", (1, 1, 1), 0.9, None, vcor=True)
 material("madeira", (0.42, 0.25, 0.13), 0.8)
 
+# ---------------------------------------------------------------- rocha por baixo das muralhas
+# Revisão do perito (13 nov. 2026, P1-1 e P1-2): quase toda a cerca assenta em bancadas e falésias de arenito e
+# calcário ocre; a alvenaria só começa na crista da rocha (5–8 m de pano por cima). Os panos desciam até ao pé
+# da encosta do MDT, que debaixo das muralhas é interpolado. Aqui, antes de tudo, o MDT sobe (só sobe) numa
+# faixa de 1,6 m à frente de cada pano e à volta de cada torre até ALV_MAX abaixo do topo: a alvenaria acaba aí
+# e por baixo fica a falésia (as faces íngremes do terreno passam a rocha). E o castelejo não é um poço: o
+# LiDAR dá-o todo como edifício e o MDT interpola o chão a c. 291 m, mas o MDS mostra a plataforma de rocha a
+# c. 300,6 m; dentro dele o chão passa a ser o MDS filtrado.
+ALV_MAX = 8.0     # alvenaria abaixo do topo das ameias, nos panos (fotografias: 5–8 m sobre a rocha)
+ALV_MAX_T = 9.0   # nas torres e no cubelo
+_LX, _LY = np.meshgrid(LXS, LXS)
+
+
+TALUDE_ROCHA = 2.5  # declive da falésia que desce do pé da alvenaria até encontrar o MDT (c. 68°)
+PERIM_POLY = shapely.Polygon(perimetro)
+CAST_POLY = shapely.Polygon(castelejo)
+
+
+def subir_ao_pe(linha, pe, fora_de, alcance=12.0, patamar=0.6):
+    """MDT = max(MDT, pé − TALUDE_ROCHA × (d − 0,6)) do lado de fora da linha (fora do polígono fora_de), com d a
+    distância à linha (plana até `patamar`) e o pé interpolado ao longo dela: a rocha chega ao pé da alvenaria e desce em falésia,
+    com bordos contínuos (sem os degraus da grelha)."""
+    ln = shapely.LineString(linha)
+    s_lin = np.concatenate([[0], np.cumsum(np.linalg.norm(np.diff(linha, axis=0), axis=1))])
+    x0, y0, x1, y1 = ln.buffer(alcance).bounds
+    c0, c1 = np.searchsorted(LXS, [x0, x1])
+    r0, r1 = np.searchsorted(LXS, [y0, y1])
+    sx, sy = _LX[r0:r1 + 1, c0:c1 + 1], _LY[r0:r1 + 1, c0:c1 + 1]
+    pts = shapely.points(sx, sy)
+    d = shapely.distance(ln, pts)
+    alvo = np.interp(shapely.line_locate_point(ln, pts), s_lin, pe) - TALUDE_ROCHA * np.clip(d - patamar, 0, None)
+    S_, D_ = pv_sd(sx, sy)
+    k = (d < alcance) & ~shapely.contains_xy(fora_de, sx, sy) \
+        & ~((np.abs(S_) < PV["vao"] / 2 + 3.5) & (D_ > PV["d0"] - 4.0) & (D_ < PV["d1"] + 4.0))
+    blk = MDT[r0:r1 + 1, c0:c1 + 1]
+    n = int((k & (blk < alvo)).sum())
+    blk[k] = np.maximum(blk[k], alvo[k])
+    return n
+
+
+def assentar_na_rocha():
+    sub = 0
+    # o castelejo: plataforma de rocha (MDS filtrado, sem a faixa dos muros)
+    cast_in = CAST_POLY.buffer(-1.6)
+    plat = ndi.median_filter(np.where(VEG, np.nan, MDS), size=9, mode="nearest")
+    plat = np.where(np.isnan(plat), MDT, plat)
+    x0, y0, x1, y1 = cast_in.bounds
+    c0, c1 = np.searchsorted(LXS, [x0, x1])
+    r0, r1 = np.searchsorted(LXS, [y0, y1])
+    k = shapely.contains_xy(cast_in, _LX[r0:r1 + 1, c0:c1 + 1], _LY[r0:r1 + 1, c0:c1 + 1])
+    blk = MDT[r0:r1 + 1, c0:c1 + 1]
+    blk[k] = np.maximum(blk[k], plat[r0:r1 + 1, c0:c1 + 1][k])
+    chao_cast = float(np.median(blk[k]))
+    # à frente dos panos (o exterior é fora do perímetro; no castelejo, fora dele)
+    for linha, esp, fech, fora_de in [(l_, MUR["espessura"], False, PERIM_POLY) for l_ in SECTORES.values()] + [(castelejo, 1.8, True, CAST_POLY)]:
+        lin, topo, _, _ = perfil(linha, esp, fechada=fech)
+        if fech:
+            lin, topo = np.vstack([lin, lin[:1]]), np.append(topo, topo[0])
+        sub += subir_ao_pe(lin, topo - ALV_MAX, fora_de, patamar=esp / 2 + 0.5)
+    # à volta das torres e do cubelo
+    bases = [b if area(b) > 0 else b[::-1] for b in torres.values()]
+    bases.append(np.array([CUBELO + 2.8 * np.array([math.cos(a), math.sin(a)]) for a in np.linspace(0, 2 * math.pi, 18, endpoint=False)]))
+    for b in bases:
+        tp = medir(desvio(b, 0.3, True) if abs(area(b)) > 6 else b, q=95)
+        anel = np.vstack([b, b[:1]])
+        sub += subir_ao_pe(anel, np.full(len(anel), tp - ALV_MAX_T), shapely.Polygon(b).union(PERIM_POLY), alcance=10.0, patamar=0.5)
+    MEDIDAS["rocha"] = {"alvenaria_max": ALV_MAX, "alvenaria_max_torres": ALV_MAX_T, "celulas_subidas": sub,
+                        "chao_castelejo": round(chao_cast + ZREF, 1)}
+
+
+assentar_na_rocha()
 print("terreno…")
 construir_terreno()
 for ob in bpy.data.objects:
