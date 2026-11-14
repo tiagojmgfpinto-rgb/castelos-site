@@ -21,13 +21,14 @@
    1028.1
   ],
   "altura_exterior": [
-   2.3,
-   10.6
+   1.3,
+   2.8
   ],
   "altura_interior": [
    0.2,
    2.0
-  ]
+  ],
+  "interrupcoes_penedo": 2
  },
  "muro_recintos": {
   "comprimento": 36.4,
@@ -66,13 +67,14 @@
    1034.0
   ],
   "altura_exterior": [
-   3.8,
-   5.9
+   1.4,
+   2.6
   ],
   "altura_interior": [
    1.6,
    3.9
-  ]
+  ],
+  "interrupcoes_penedo": 0
  },
  "castelo_poente": {
   "comprimento": 44.4,
@@ -81,31 +83,32 @@
    1033.3
   ],
   "altura_exterior": [
-   2.3,
-   6.5
+   1.2,
+   3.0
   ],
   "altura_interior": [
    0.4,
    1.6
-  ]
+  ],
+  "interrupcoes_penedo": 1
  },
  "reduto": {
-  "topo": 1021.7,
+  "topo": 1021.3,
   "planta": [
    12.0,
    9.0
   ],
   "pe_exterior": 1009.5,
-  "altura_exterior_max": 12.3,
+  "altura_exterior_max": 11.9,
   "miolo": [
-   1019.2,
-   1021.4
+   1019.5,
+   1021.3
   ],
-  "acima_do_recinto": 4.7
+  "acima_do_recinto": 4.3
  },
  "terreno": {
   "vertices": 106745,
-  "faces_rocha": 25207,
+  "faces_rocha": 26627,
   "faces": 106008
  },
  "porta_sol": {
@@ -160,10 +163,10 @@
  },
  "vegetacao": {
   "arvores": 327,
-  "sobreiros": 71,
-  "castanheiros": 256,
-  "moitas": 742,
-  "encolhidas": 24,
+  "sobreiros": 70,
+  "castanheiros": 257,
+  "moitas": 744,
+  "encolhidas": 21,
   "retiradas": 0
  },
  "ancoras": {

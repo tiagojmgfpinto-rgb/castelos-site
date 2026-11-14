@@ -2,7 +2,7 @@
   "monumento": "penela",
   "titulo": "Castelo de Penela",
   "variante": "estado-atual",
-  "versao": "0.4 provisória",
+  "versao": "0.5 provisória",
   "data": "2026-11-14",
   "origem": {
     "lat": 40.031162,
@@ -89,7 +89,7 @@
       "estado": "estado-atual",
       "confianca": "alta",
       "descricao": "Núcleo defensivo primitivo, sobre o morro calcário talhado para dificultar o acesso. Foi castelo autónomo no século XI e depois torre de menagem, reedificado entre os séculos XV e XVI. Da torre de menagem de c. 1300 restam uma porta e duas bombardeiras. Recinto murado, adossado ao pano nascente, com adarve e ameias.",
-      "medidas": "Recinto c. 13 × 25 m, traçado do OSM com a face nascente encostada à crista no MDS. Topo dos muros a 304–305 m, c. 10–14 m acima do chão interior (c. 291 m) e 10–16 m acima do pé exterior (LiDAR 2024).",
+      "medidas": "Recinto c. 13 × 25 m, traçado do OSM com a face nascente encostada à crista no MDS. Topo dos muros a 304–305 m, c. 3,5–5 m acima da plataforma de rocha do interior (c. 301 m, no MDS: o LiDAR classifica todo o castelejo como edifício e o MDT punha o chão a 291 m) e assente num rochedo que se vê por baixo dos muros (LiDAR 2024; revisão de 13 nov. 2026).",
       "fontes": [
         "sipa",
         "pc",

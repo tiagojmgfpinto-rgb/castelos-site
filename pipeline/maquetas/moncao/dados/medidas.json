@@ -7,8 +7,11 @@
   "altura_max": 19.0
  },
  "guaritas": 24,
+ "terreno_terraplenos": {
+  "celulas_planas": 7603
+ },
  "terreno": {
-  "vertices": 151413,
+  "vertices": 151400,
   "triangulos": 299999,
   "area_ha": 45.9
  },

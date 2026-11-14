@@ -1036,7 +1036,12 @@ def construir_terreno():
             ok &= ~caixa_
     zr = Z.ravel()
     zz = zr[sel]
-    zz[ok] = np.minimum(zz[ok], lim[ok])
+    # Nos terraplenos (Porta do Rosal, frente norte) o chão por trás da face fica à face do maciço, plano: sem
+    # isto descia ao pé junto às duas faces e o terrapleno ficava uma lomba entre duas valas (revisão de 13 nov.)
+    plano_t = TERRAPLENO.ravel()[sel] & (d < A_[k]) & (d > A_[k] - 6.0) & (tan < 0.5) & (np.abs(zz - (TP[k] - 0.2)) < 2.5)
+    zz[ok & ~plano_t] = np.minimum(zz[ok & ~plano_t], lim[ok & ~plano_t])
+    zz[plano_t] = TP[k][plano_t] - 0.2
+    MEDIDAS["terreno_terraplenos"] = {"celulas_planas": int(plano_t.sum())}
     # calçadas das portas com corredor: lajeado plano à cota da soleira, entre os muros
     for d_ in PORTAS.values():
         if d_.get("corredor") and "soleira" in d_:

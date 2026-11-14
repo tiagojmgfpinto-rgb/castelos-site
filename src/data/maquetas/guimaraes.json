@@ -2,8 +2,8 @@
   "monumento": "guimaraes",
   "titulo": "Castelo de Guimarães",
   "variante": "estado-atual",
-  "versao": "0.3 provisória",
-  "data": "2026-10-27",
+  "versao": "0.4 provisória",
+  "data": "2026-11-14",
   "origem": {
     "lat": 41.447926,
     "lon": -8.290429,
@@ -378,7 +378,7 @@
       "estado": "estado-atual",
       "confianca": "média",
       "descricao": "Bronze de António Soares dos Reis, inaugurado por D. Luís a 20 de setembro de 1887, hoje junto ao Paço dos Duques: o rei de pé, de elmo e cota de malha, com o escudo e a espada, sobre um pedestal de granito, de lado para o Paço, com a esquerda virada para a fachada. Posição do OpenStreetMap conferida no LiDAR; figura simplificada a partir das fotografias.",
-      "medidas": "4,9 m do chão ao topo da espada, com o pedestal de c. 2,7 m (LiDAR).",
+      "medidas": "6,0 m do terreiro ao topo da espada, com o pedestal de c. 3,2 m (LiDAR). Terreiro lajeado a 220,2 m, c. 1 m acima da praça, com muro de suporte de granito em U de 2,5 m atrás e escadaria curva de 6 degraus à frente (LiDAR e fotografias; revisão de 13 nov. 2026).",
       "fontes": [
         "wiki",
         "osm",

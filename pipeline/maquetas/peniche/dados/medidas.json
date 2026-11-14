@@ -6,18 +6,23 @@
   "com_troços_a_descer": 32
  },
  "escarpas": {
-  "troços": 40,
-  "celulas_limpas": 73945
+  "troços": 29,
+  "celulas_limpas": 71430
+ },
+ "arriba": {
+  "alvenaria_max": 5.0,
+  "junto_capela": 7.0,
+  "celulas_subidas": 2124
  },
  "terreno": {
   "triangulos": 319999,
-  "rocha": 24457,
+  "rocha": 26585,
   "area_ha": 11.6
  },
  "muralhas": {
   "plataformas": 13,
   "merloes": 54,
-  "guaritas": 8
+  "guaritas": 7
  },
  "fortim": {
   "raio": 11.8,
