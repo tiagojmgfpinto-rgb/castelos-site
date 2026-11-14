@@ -8,7 +8,7 @@
  },
  "guaritas": 24,
  "terreno": {
-  "vertices": 151369,
+  "vertices": 151413,
   "triangulos": 299999,
   "area_ha": 45.9
  },
@@ -36,6 +36,7 @@
   "altura_frontaria": 6.8,
   "ponte": 0.0
  },
+ "galeria_rosal": 16.8,
  "rio": {
   "nivel": 3.0,
   "area_ha": 2.6,

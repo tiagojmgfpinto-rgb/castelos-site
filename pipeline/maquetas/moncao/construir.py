@@ -36,6 +36,7 @@ from kit.geometria import unit, area, densificar, dentro, simplificar, mediana_m
 from kit.texturas import ruido, fbm, imagem  # noqa: E402
 from kit.cena import Obra, arvore_modelo  # noqa: E402
 from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
+from kit import passagens  # noqa: E402
 from kit.arquitetura import _vao_desloc, altura_telhado, barra, cupula, faixa_inclinada, guardas_corredor, guarita, oitavado, porta_tunel, telhado_4aguas, telhado_generico  # noqa: E402
 
 AQUI = Path(__file__).resolve().parent
@@ -1048,8 +1049,10 @@ def construir_terreno():
     zr[sel] = zz
     Z = zr.reshape(Z.shape)
     ZTER[:] = [Z]
+    # por cima das passagens das portas o terreno sai onde ficaria abaixo da abóbada (revisão de 13 nov.)
+    BURACO = passagens_terreno(X, Y, Z)
 
-    dentro_ = shapely.contains_xy(CONTORNO, X + LPASSO / 2, Y + LPASSO / 2)[:-1, :-1]
+    dentro_ = shapely.contains_xy(CONTORNO, X + LPASSO / 2, Y + LPASSO / 2)[:-1, :-1] & ~BURACO
     usados = np.zeros(X.shape, bool)
     usados[:-1, :-1] |= dentro_
     usados[1:, :-1] |= dentro_
@@ -1282,19 +1285,22 @@ class Quadro:
 
 
 def tunel(Q, r, sole, omb, L, bt_=None):
-    """Túnel de abóbada de volta perfeita (raio r, nascença a omb do chão) que entra L metros na muralha a
-    partir da face: paredes e abóbada de alvenaria escurecida (a luz não entra) e lajeado no chão. A boca
-    segue o talude da face."""
-    zn = sole + omb
+    """Boca da passagem (revisão de 13 nov. 2026: o túnel era de alvenaria escura e acabava a poucos metros,
+    com o terreno a atravessá-lo): intradorso de silhares de granito, chão lajeado e abóbada de volta perfeita
+    (raio r, nascença a omb do chão), da boca (que segue o talude da face) até Q.boca metros para dentro.
+    A passagem continua na galeria até à outra face, ou sai onde o terrapleno acaba (portas())."""
     bt0, Q.bt = Q.bt, 0.0
-    d0 = -L
     d1 = -bt0 * omb  # a boca recua com o talude: o túnel começa onde a face está à altura da nascença
-    for sg in (-1, 1):
-        a_, b_ = sorted((sg * r, sg * (r + 0.4)))
-        Q.bloco(a_, b_, sole - 0.1, zn, d0, d1 + 0.02, 1)
-    # a abóbada começa por trás da face à altura do fecho (senão o extradorso escuro sai do pano em talude)
-    Q.arco_sz(0.0, r, r + 0.4, zn, d0, -bt0 * (omb + r + 0.4) - 0.1, 1, k=12)
-    Q.bloco(-r - 0.05, r + 0.05, sole - 0.3, sole + 0.01, d0, 0.3, 0)
+    d0 = d1 - getattr(Q, "boca", L)
+    # com Q.eixo (para dentro), a boca segue o eixo da passagem e não a normal da face: as duas faces do
+    # Rosal não são paralelas (23°) e a passagem real é reta, com a luz do outro lado à vista
+    e_ = getattr(Q, "eixo", -Q.n)
+    t_ = np.array([-e_[1], e_[0]])
+    t_ = t_ if t_ @ Q.t > 0 else -t_
+    c1 = Q.o + Q.n * d1
+    c0 = c1 + e_ * (d1 - d0)
+    passagens.tubo(Q.m, passagens.anel(c1, t_, r, omb, sole), passagens.anel(c0, t_, r, omb, sole), 0)
+    Q.fim = dict(c=c0, t=t_, w=r, h=omb, zs=sole)
     Q.bt = bt0
 
 
@@ -1481,13 +1487,96 @@ PORTAS = {
     "porta_rosal": dict(ponto=(-353.4, 83.0), normal=(-0.66, -0.75), estilo=porta_rosal, elemento="porta_rosal", fixo=True,
                         soleira=30.85, vao=dict(r=1.05, omb=2.4, tunel=21.0)),
     "porta_rosal_dentro": dict(ponto=(-341.2, 100.5), normal=(0.31, 0.95), estilo=porta_rosal_dentro, elemento="porta_rosal",
-                               fixo=True, largura=8.5, soleira=32.0, vao=dict(r=0.95, omb=2.25, tunel=3.0)),
+                               fixo=True, largura=8.5, soleira=32.0, vao=dict(r=0.95, omb=2.25, tunel=3.0), boca_normal=3.2),
     "porta_salvaterra": dict(ponto=(-232.6, 202.5), normal=(-0.99, -0.12), estilo=porta_salvaterra, elemento="porta_salvaterra",
                              fixo=True, largura=2.6, soleira=33.0, vao=dict(r=1.3, omb=2.65, tunel=3.0)),
 }
 
 
 PONTOS_PORTA = {}
+PARES = {"porta_rosal": "porta_rosal_dentro", "porta_rosal_dentro": "porta_rosal"}
+BOCA = 2.0  # boca de cada face, antes da galeria que a liga à outra
+TUN = {}    # por porta: quadro e comprimento da boca
+TROCOS = []  # troços retos das passagens: (id, início, fim, chão no início, chão no fim)
+BORDA = {}  # por troço: alvenaria por cima do buraco tirado ao terreno, em troços de 1 m
+
+
+def fecho(pid):
+    """Altura do extradorso da abóbada acima do chão."""
+    v = PORTAS[pid]["vao"]
+    return v["omb"] + v["r"] + 0.4
+
+
+def quadro_porta(d_):
+    """Eixo da porta na face da escarpa: (F0, normal, soleira, topo, cota do cordão) ou None."""
+    pts = np.vstack([d["xy"] for d in ESC_DADOS])
+    cat = lambda k: np.concatenate([np.broadcast_to(d[k], (len(d["xy"]),) + np.shape(d[k])[1:]) for d in ESC_DADOS])
+    NR, A_, BT, TP, PE, ZC = cat("nr"), cat("a"), cat("bt"), cat("topo"), cat("pe"), cat("zc")
+    p0, n0 = np.array(d_["ponto"], float), unit(np.array(d_["normal"], float))
+    dist = np.hypot(*(pts - p0).T)
+    ok = (dist < 7.0) & (NR @ n0 > (0.97 if d_.get("fixo") else 0.6))
+    if not ok.any() and d_.get("fixo"):  # o vão já está aberto: procura o pano ao lado, mais longe
+        ok = (dist < 12.0) & (NR @ n0 > 0.85)
+        if not ok.any():  # vão entre dois panos de outra orientação: usa o mais perto para as cotas
+            ok = dist < 12.0
+    if not ok.any():
+        return None
+    k = int(np.nonzero(ok)[0][np.argmin(dist[ok])])
+    n = n0 if d_.get("fixo") else NR[k]
+    q = pts[k] + np.array([-n[1], n[0]]) * float((p0 - pts[k]) @ np.array([-n[1], n[0]])) if d_.get("fixo") else pts[k]
+    sole = float(np.median([cota_t(*(q + n * (A_[k] + BT[k] * (ZC[k] - PE[k]) + dd))) for dd in (1.5, 2.5, 3.5)]))
+    sole = min(max(sole, PE[k]), ZC[k] - 2.5)
+    if "soleira" in d_:
+        sole = d_["soleira"] - ZREF
+    F0 = q + n * (A_[k] + BT[k] * (ZC[k] - sole) + 0.02)
+    return F0, n, sole, float(TP[k]), float(ZC[k])
+
+
+def passagens_terreno(X, Y, Z):
+    """Passagens das portas: as faces de fora e de dentro do Rosal ligam-se por uma galeria (21 m pelo
+    terrapleno); a de Salvaterra vai até onde o terrapleno acaba. Devolve as células do terreno a tirar por
+    cima das passagens (as que ficariam abaixo da abóbada) e guarda a borda para a alvenaria de enchimento."""
+    TUN.clear()
+    TROCOS.clear()
+    BORDA.clear()
+    for pid, d_ in PORTAS.items():
+        r_ = quadro_porta(d_)
+        if r_ is not None:
+            TUN[pid] = {"quadro": r_}
+    for pid, tu in TUN.items():
+        F0_, n_, sole_, _, _ = tu["quadro"]
+        par = PARES.get(pid)
+        if par in TUN:
+            # a boca segue o eixo da passagem (reta, como a real) ou, com boca_normal, a normal da face pela
+            # espessura do maciço (a face de dentro do Rosal faz 23° com a passagem)
+            tu["L"] = PORTAS[pid].get("boca_normal", BOCA)
+            F1_ = TUN[par]["quadro"][0]
+            tu["eixo"] = None if "boca_normal" in PORTAS[pid] else unit(F1_ - F0_)
+            fim_ = F0_ - n_ * tu["L"] if tu["eixo"] is None else F0_ + tu["eixo"] * tu["L"]
+            TROCOS.append((pid, F0_, fim_, sole_, sole_))
+            tu["fim_xy"] = fim_
+        else:
+            L_ = 4.0
+            for dd in np.arange(-4.0, -40.0, -0.5):
+                if cota(*(F0_ + n_ * dd)) < sole_ + 2.5:
+                    L_ = -dd + 1.0
+                    break
+            tu["L"] = L_
+            TROCOS.append((pid, F0_, F0_ - n_ * L_, sole_, sole_))
+            print(f"  passagem {pid}: {L_:.1f} m até ao fim do terrapleno")
+    for pid, tu in TUN.items():
+        par = PARES.get(pid)
+        if par in TUN and pid < par:
+            TROCOS.append((pid + "+", tu["fim_xy"], TUN[par]["fim_xy"], tu["quadro"][2], TUN[par]["quadro"][2]))
+            print(f"  passagem {pid} <-> {par}: {np.hypot(*(TUN[par]['quadro'][0] - tu['quadro'][0])):.1f} m")
+    bur = np.zeros((Z.shape[0] - 1, Z.shape[1] - 1), bool)
+    for tid, A, B, za, zb in TROCOS:
+        f_ = fecho(tid.rstrip("+"))
+        if tid.endswith("+"):
+            f_ = max(f_, fecho(PARES[tid[:-1]]))
+        b_, BORDA[tid] = passagens.buraco(X, Y, Z, A, B, za, zb, f_, u0=1.0 if not tid.endswith("+") else -0.3)
+        bur |= b_
+    return bur
 
 
 def ponte(m, F0, n, t, sole, largura=4.4):
@@ -1517,29 +1606,22 @@ def portas():
     cat = lambda k: np.concatenate([np.broadcast_to(d[k], (len(d["xy"]),) + np.shape(d[k])[1:]) for d in ESC_DADOS])
     NR, A_, BT, TP, PE, ZC = cat("nr"), cat("a"), cat("bt"), cat("topo"), cat("pe"), cat("zc")
     for pid, d_ in PORTAS.items():
-        p0, n0 = P(0, 0) * 0 + np.array(d_["ponto"]), unit(np.array(d_["normal"], float))
-        dist = np.hypot(*(pts - p0).T)
-        ok = (dist < 7.0) & (NR @ n0 > (0.97 if d_.get("fixo") else 0.6))
-        if not ok.any() and d_.get("fixo"):  # o vão já está aberto: procura o pano ao lado, mais longe
-            ok = (dist < 12.0) & (NR @ n0 > 0.85)
-            if not ok.any():  # vão entre dois panos de outra orientação: usa o mais perto para as cotas
-                ok = dist < 12.0
-        if not ok.any():
+        if pid not in TUN:
             print("  porta sem escarpa:", pid)
             continue
-        k = int(np.nonzero(ok)[0][np.argmin(dist[ok])])
-        n = n0 if d_.get("fixo") else NR[k]
-        q = pts[k] + np.array([-n[1], n[0]]) * float((p0 - pts[k]) @ np.array([-n[1], n[0]])) if d_.get("fixo") else pts[k]
-        sole = float(np.median([cota_t(*(q + n * (A_[k] + BT[k] * (ZC[k] - PE[k]) + dd))) for dd in (1.5, 2.5, 3.5)]))
-        sole = min(max(sole, PE[k]), ZC[k] - 2.5)
-        if "soleira" in d_:
-            sole = d_["soleira"] - ZREF
-        F0 = q + n * (A_[k] + BT[k] * (ZC[k] - sole) + 0.02)
+        tu = TUN[pid]
+        F0, n, sole, topo_k, zc_k = tu["quadro"]
         m = Malha()
         Q = Quadro(m, F0, n)
-        Q.topo = float(TP[k])
-        Q.zc = float(ZC[k])
+        Q.topo = topo_k
+        Q.zc = zc_k
+        Q.boca = tu["L"]
+        if tu.get("eixo") is not None:
+            Q.eixo = tu["eixo"]
         alt = d_["estilo"](Q, sole)
+        tu["fim"], tu["t"] = Q.fim, Q.t
+        Qe = Quadro(m, F0, -getattr(Q, "eixo", -n))  # alvenaria por cima da boca e alicerce (o maciço da escarpa fica por cima do arco)
+        passagens.enchimento(Qe, BORDA.get(pid, []), lambda u: sole, fecho(pid), lambda a, b: -1e9, 3)
         L = ponte(m, F0, n, Q.t, sole) if d_.get("ponte") else 0.0
         if d_.get("corredor"):
             guardas_corredor(m, F0, n, pts, NR, A_, TP)
@@ -1548,8 +1630,25 @@ def portas():
         tt = np.array([-n[1], n[0]])  # passagem livre de casas e árvores à frente da porta
         lg = d_.get("largura", 3.0)
         EVITAR.append(np.array([F0 + tt * (lg + 1) + n * 0.3, F0 + tt * (lg + 1) + n * 14, F0 - tt * (lg + 1) + n * 14, F0 - tt * (lg + 1) + n * 0.3]))
-        MEDIDAS[pid] = {"soleira": sole + ZREF, "topo_muralha": float(TP[k] + ZREF), "altura_frontaria": alt, "ponte": L}
-        print(f"  {pid}: soleira {sole:.1f}, topo da muralha {TP[k]:.1f}, ponte {L:.1f} m")
+        MEDIDAS[pid] = {"soleira": sole + ZREF, "topo_muralha": float(topo_k + ZREF), "altura_frontaria": alt, "ponte": L}
+        print(f"  {pid}: soleira {sole:.1f}, topo da muralha {topo_k:.1f}, ponte {L:.1f} m")
+    # galeria do Rosal: abóbada de silhares lançada entre o fim das duas bocas, com o chão em rampa
+    m = Malha()
+    for tid, A, B, za, zb in TROCOS:
+        if not tid.endswith("+"):
+            continue
+        ta, tb = TUN[tid[:-1]], TUN[PARES[tid[:-1]]]
+        fa, fb = ta["fim"], tb["fim"]
+        RA = passagens.anel(fa["c"], fa["t"], fa["w"], fa["h"], fa["zs"])
+        RB = passagens.anel(fb["c"], fb["t"], fb["w"], fb["h"], fb["zs"], sinal=-1.0)
+        Lg = passagens.tubo(m, RA, RB, 0)
+        u_ = (B - A) / np.hypot(*(B - A))
+        Lt = float(np.hypot(*(B - A)))
+        f_ = max(fecho(tid[:-1]), fecho(PARES[tid[:-1]]))
+        passagens.enchimento(Quadro(m, A, -u_), BORDA[tid], lambda u: za + (zb - za) * np.clip(u / Lt, 0, 1), f_, lambda a, b: -1e9, 3)
+        MEDIDAS["galeria_rosal"] = round(Lg, 1)
+        print(f"  galeria {tid[:-1]} <-> {PARES[tid[:-1]]}: {Lg:.1f} m, desnível {zb - za:+.1f} m")
+    m.objeto("Galeria_Rosal", "porta_rosal", MAT_PORTA, GRUPOS["Portas"], uv=2.5)
 
 
 # ---------------------------------------------------------------- igrejas e estátua
@@ -2209,7 +2308,7 @@ TEX_CANT, ALT_CANT = textura_foto("stone_brick_wall_001", n=1024, metros=3.0, co
 NRM_CANT = imagem("cantaria_normal", normais(ALT_CANT, 3.0))
 material("cantaria", (1, 1, 1), 0.88, imagem("cantaria", TEX_CANT), normal=NRM_CANT, forca=0.7)
 material("cantaria_lisa", (0.70, 0.68, 0.63), 0.88)
-material("relva", (0.47, 0.52, 0.30), 0.97, imagem("grao_relva", textura_grao()))
+material("relva", (0.47, 0.52, 0.30), 0.97, imagem("grao_relva", textura_grao() * np.array([0.47, 0.52, 0.30])))
 material("sombra", (0.08, 0.075, 0.07), 1.0)
 material("cal", (0.93, 0.92, 0.88), 0.85)
 material("ocre", (0.86, 0.72, 0.42), 0.85)
