@@ -26,7 +26,7 @@ def el(i, nome, grupo, conf, desc, med, fontes, resumo):
 
 d = {
     "monumento": "lanhoso", "titulo": "Castelo de Lanhoso e Santuário de Nossa Senhora do Pilar", "variante": "estado-atual",
-    "versao": "0.3 provisória", "data": "2026-11-03",
+    "versao": "0.4 provisória", "data": "2026-11-14",
     "origem": {"lat": 41.586850, "lon": -8.281361,
                "nota": "Centro da torre de menagem (LiDAR). Eixos da maqueta: x para este, y para norte (PT-TM06 menos a origem), no visor -z é o norte, em metros à escala 1:1; as cotas são altitudes."},
     "fontes": {

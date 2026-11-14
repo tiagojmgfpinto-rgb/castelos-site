@@ -111,22 +111,34 @@
  "porta_sol": {
   "soleira": 1016.9,
   "topo_muralha": 1021.8,
-  "acima_da_soleira": 4.9
+  "acima_da_soleira": 4.9,
+  "vao": 1.1,
+  "fecho": 2.8,
+  "atravessa": 2.0
  },
  "porta_fonte": {
   "soleira": 1017.9,
   "topo_muralha": 1022.0,
-  "acima_da_soleira": 4.1
+  "acima_da_soleira": 4.1,
+  "vao": 1.1,
+  "fecho": 1.9,
+  "atravessa": 2.0
  },
  "porta_recintos": {
   "soleira": 1028.9,
   "topo_muralha": 1032.6,
-  "acima_da_soleira": 3.7
+  "acima_da_soleira": 3.7,
+  "vao": 1.4,
+  "fecho": 2.3,
+  "atravessa": 1.7
  },
  "porta_traicao": {
   "soleira": 1027.7,
   "topo_muralha": 1031.3,
-  "acima_da_soleira": 3.6
+  "acima_da_soleira": 3.6,
+  "vao": 1.6,
+  "fecho": 2.6,
+  "atravessa": 1.7
  },
  "escada_norte": {
   "lanco": 3.0,

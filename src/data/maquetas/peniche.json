@@ -2,8 +2,8 @@
   "monumento": "peniche",
   "titulo": "Fortaleza de Peniche",
   "variante": "estado-atual",
-  "versao": "0.3 provisória",
-  "data": "2026-11-12",
+  "versao": "0.4 provisória",
+  "data": "2026-11-14",
   "origem": {
     "lat": 39.353123,
     "lon": -9.381143,
@@ -36,6 +36,10 @@
     "commons": {
       "titulo": "Wikimedia Commons, fotografias do Museu Nacional Resistência e Liberdade e da Fortaleza de Peniche (GualdimG, CC BY-SA 4.0, 2023): painel junto ao fosso com a boca do túnel e entrada do museu",
       "url": "https://commons.wikimedia.org/wiki/Category:Museu_Nacional_Resist%C3%AAncia_e_Liberdade"
+    },
+    "commons_porta": {
+      "titulo": "Wikimedia Commons, «Entrada no Forte de Peniche 02» (Fernando Barão, CC BY-SA 4.0, 2015): frontispício, guarita, armas e porta da ponte",
+      "url": "https://commons.wikimedia.org/wiki/File:Entrada_no_Forte_de_Peniche_02.jpg"
     },
     "polyhaven": {
       "titulo": "Poly Haven, «Cliff Side» (CC0): fotografia de calcário de arriba usada como textura das arribas",
@@ -112,17 +116,18 @@
       "nome": "Porta da ponte",
       "grupo": "Fortificação",
       "estado": "estado-atual",
-      "confianca": "média",
-      "descricao": "Porta em arco de pedra no topo da ponte, com uma guarita por cima.",
-      "medidas": "Largura e altura aproximadas, a partir da fotografia.",
+      "confianca": "alta",
+      "descricao": "Frontispício de cantaria clara no topo da ponte, contínuo do chão até à guarita: pilastras com meios frontões virados para fora, entablamento, painel com as armas reais coroadas sob um frontão curvo e, assente nele, a guarita quadrada de cantos chanfrados, com janela envidraçada, cúpula e pináculo, e uma bola de pedra de cada lado. A porta, de madeira escura ferrada, abre num arco de volta perfeita. À frente, um patamar de pedra com guardas de ferro pretas liga a porta à ponte.",
+      "medidas": "Vão de c. 2,3 × 3,5 m; frontispício com c. 5,1 m de largura; topo da muralha a c. 7,6 m acima da soleira (fotografia, com a porta como escala, e LiDAR).",
       "fontes": [
         "fotos",
-        "lidar"
+        "lidar",
+        "commons_porta"
       ],
-      "resumo": "A entrada pela ponte, com guarita",
+      "resumo": "Frontispício com guarita e armas reais",
       "ancora": [
         61.6,
-        24.4,
+        23.4,
         -50.7
       ]
     },

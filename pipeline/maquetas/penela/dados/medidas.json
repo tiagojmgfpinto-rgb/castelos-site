@@ -115,7 +115,15 @@
   "altura_exterior": 15.2
  },
  "porta_vila": {
-  "soleira": 279.0
+  "soleira": 279.0,
+  "chao_interior": 279.9,
+  "vao": 3.0,
+  "fecho": 4.8,
+  "fundo_passagem": 4.2,
+  "topo_torre": 292.6,
+  "topo_corpo_direito": 291.1,
+  "topo_muro_suporte": 287.1,
+  "cruzeiro": 278.0
  },
  "brecha": {
   "chao": 287.2,
@@ -171,6 +179,20 @@
     2.0
    ],
    "uso": "alvenaria de pedra irregular (muralhas, cercas, muros)"
+  },
+  "stone_brick_wall_001": {
+   "titulo": "Stone Brick Wall 001",
+   "autores": [
+    "Dimitrios Savva",
+    "Rico Cilliers"
+   ],
+   "licenca": "CC0 1.0 (domínio público)",
+   "pagina": "https://polyhaven.com/a/stone_brick_wall_001",
+   "metros": [
+    2.5,
+    2.5
+   ],
+   "uso": "cantaria de silhares grandes e rústicos (torres, cubelos)"
   }
  }
 }

@@ -14,12 +14,17 @@ MEIA_TORRE = 5.25  # meia largura do corpo (10,5 m entre faces)
 # zona do castelo (para o traçado dos muros) e o que não é muro: a torre de menagem, os dois edifícios do museu,
 # a torre da porta (modelados à parte)
 ZONA_CASTELO = [(-40, 12), (-20, 26), (2, 24), (19, 36), (28, 12), (44, 2), (36, -44), (-14, -54), (-22, -32), (-38, 0)]
-TORRE_DA_PORTA = [(6.6, -28.6), (10.7, -28.4), (10.8, -32.6), (6.5, -32.7)]  # a sul, com a porta em arco (LiDAR)
+# cubelo poente da porta sul (LiDAR: bloco maciço com o topo a c. 471 m); antes era a "torre da porta" com o arco
+TORRE_DA_PORTA = [(6.6, -28.6), (10.7, -28.4), (10.8, -32.6), (6.5, -32.7)]
 ALA_OESTE = [(-13.7, -3.9), (-7.9, 0.4), (-1.4, -20.0), (-8.1, -21.8)]       # museu: ala encostada à cerca poente; o topo norte fica dentro do troço NO da cerca
 CORREDOR = [(-4.5, -10.0), (0.2, -10.0), (0.2, -20.4), (-1.4, -20.0)]          # galeria envidraçada
 ALA_SUL = [(-8.1, -21.8), (7.2, -20.0), (7.8, -26.4), (-6.6, -28.2)]           # museu: ala encostada à cerca sul
-# passagem da porta sul pela cerca, por trás da torre da porta (sai a nascente da ala sul do museu)
-PASSAGEM_SUL = [(7.4, -28.6), (10.0, -28.5), (10.0, -25.6), (7.4, -25.7)]
+# Porta sul (porta de armas): o arco abre-se no reentrante entre o cubelo poente e a massa a nascente (LiDAR: chão
+# a 461,3 m de x 10,5 a 15,3 e de y -32 a -29; cerca de y -29 a -24,2), com a passagem a direito pela cerca até ao
+# pátio, c. 4 m a nascente do cunhal da ala sul do museu (revisão do perito, 13 nov. 2026; Commons, Hugo Ferreira;
+# L. Fontes 2013, p. 96; foto de drone f296a0e3). Antes passava por trás do cubelo e o museu tapava o arco de dentro.
+PASSAGEM_SUL = [(10.3, -29.4), (15.5, -29.4), (15.5, -24.1), (10.3, -24.1)]
+EIXO_PORTA_SUL = 13.0  # x do eixo da passagem
 # Porta Norte: atravessa a ponta poente da cortina norte da muralha abaluartada, de frente para a face NNO da torre
 # (fotografia da porta com a torre por trás); eixo da cortina a 60°, centro do bloco no eixo do muro
 # O vão (1,5 × 2,4 m) abre-se num rebaixo para a ponte levadiça; o muro segue dos dois lados (fotografia e

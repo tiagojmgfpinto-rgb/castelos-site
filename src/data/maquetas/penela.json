@@ -2,8 +2,8 @@
   "monumento": "penela",
   "titulo": "Castelo de Penela",
   "variante": "estado-atual",
-  "versao": "0.3 provisória",
-  "data": "2026-10-26",
+  "versao": "0.4 provisória",
+  "data": "2026-11-14",
   "origem": {
     "lat": 40.031162,
     "lon": -8.389862,
@@ -109,8 +109,8 @@
       "grupo": "Portas",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "Porta em arco pleno do século XV, a sudoeste, por onde se fazia a ligação à vila. No OpenStreetMap a porta do pano poente não tem nome. Identifica-se como Porta da Vila pela orientação dada no SIPA e pela fotografia aérea 1.",
-      "medidas": "Soleira à cota 279,0 m (MDT). Vão de c. 2,6 × 3,8 m (estimativa, fotografia aérea 1).",
+      "descricao": "Torre-porta em arco quebrado (ogival), a sudoeste, por onde se fazia a ligação à vila. A passagem atravessa a torre de lado a lado, com arco quebrado nas duas faces e abóbada de berço quebrado, e abre por dentro para uma rua estreita entre o pano e um muro de suporte. A frontaria é de silharia regular em fiadas, com um corpo mais saliente à direita, e no largo diante da porta fica o cruzeiro que lhe dá o outro nome. No OpenStreetMap a porta do pano poente não tem nome. Identifica-se como Porta da Vila pela orientação dada no SIPA, pela fotografia aérea 1 e pelas fotografias com GPS do Commons (Threeohsix).",
+      "medidas": "Soleira à cota 279,0 m e chão a 279,9 m na boca de dentro (MDT). Vão de c. 3,0 m com o fecho a 4,8 m da soleira (fotografias). Passagem com 4,2 m de fundo e torre com o topo das ameias a 292,6 m (MDS e classe 6 do LiDAR).",
       "fontes": [
         "sipa",
         "cmp",
@@ -118,7 +118,7 @@
         "lidar",
         "fotos"
       ],
-      "resumo": "Porta em arco pleno do século XV, ligação à vila",
+      "resumo": "Torre-porta em arco quebrado, ligação à vila",
       "desde": 1401,
       "desdeTexto": "século XV"
     },

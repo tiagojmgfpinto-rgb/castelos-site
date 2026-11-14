@@ -1451,11 +1451,19 @@ def ponte_arcos(m):
         sil += [(a_, zn), (a_, z0)]
     Q.placa(sil, -W / 2, W / 2, OGA)
     # guardas com capeamento
+    PAT = 2.5  # patamar de pedra junto à porta, com guardas de ferro (fotografia "Entrada no Forte de Peniche 02")
     for sg in (-1, 1):
         d0, d1 = sorted((sg * W / 2, sg * (W / 2 - 0.35)))
-        Q.placa([(0, zd), (L, zd), (L, zd + 1.0), (0, zd + 1.0)], d0, d1, OGA)
+        Q.placa([(PAT, zd), (L, zd), (L, zd + 1.0), (PAT, zd + 1.0)], d0, d1, OGA)
         d0, d1 = sorted((sg * (W / 2 + 0.05), sg * (W / 2 - 0.4)))
-        Q.placa([(0, zd + 1.0), (L, zd + 1.0), (L, zd + 1.1), (0, zd + 1.1)], d0, d1, OCR)
+        Q.placa([(PAT, zd + 1.0), (L, zd + 1.0), (L, zd + 1.1), (PAT, zd + 1.1)], d0, d1, OCR)
+        d0, d1 = sorted((sg * W / 2, sg * (W / 2 - 0.4)))
+        Q.placa([(0.4, zd), (PAT, zd), (PAT, zd + 0.3), (0.4, zd + 0.3)], d0, d1, LIS)  # lancil
+        dm = sg * (W / 2 - 0.2)
+        for sp in (0.5, 1.5, PAT - 0.06):
+            Q.placa([(sp - 0.03, zd + 0.3), (sp + 0.03, zd + 0.3), (sp + 0.03, zd + 1.0), (sp - 0.03, zd + 1.0)], dm - 0.03, dm + 0.03, FER)
+        for hz, e in ((0.62, 0.04), (0.96, 0.06)):
+            Q.placa([(0.45, zd + hz), (PAT, zd + hz), (PAT, zd + hz + e), (0.45, zd + hz + e)], dm - 0.025, dm + 0.025, FER)
         # nichos de arco nos pilares, dos dois lados (fotografias)
         for a_, b_ in arcos[:-1]:
             sp = b_ + pilar / 2
@@ -1471,17 +1479,118 @@ def ponte_arcos(m):
 
 
 def porta_ponte(m, mg):
-    """Porta na muralha onde chega a ponte (fotografias): moldura de pedra com pilastras e entablamento,
-    arco de volta perfeita com porta de madeira, cartela com as armas por cima e uma guarita de pedra com
-    cúpula assente sobre a porta, no parapeito."""
-    A, zd = PONTE["a"], PONTE["deck"]
+    """Porta na muralha onde chega a ponte (fotografia Commons "Entrada no Forte de Peniche 02"; revisão do perito,
+    13 nov. 2026): um frontispício de cantaria clara contínuo do chão à guarita. Pilastras com meios frontões
+    para fora, entablamento, painel com as armas reais coroadas sob um frontão curvo, a guarita como caixa
+    quadrada de cantos chanfrados assente no painel, com janela envidraçada de caixilho escuro, cornija, cúpula
+    e pináculo, e uma bola de pedra de cada lado; porta de madeira escura ferrada, fechada, em arco de volta
+    perfeita. Materiais: 0 cantaria clara, 1 sombra, 2 madeira escura, 3 ferro, 4 vidro."""
+    CC, SO, MD, FE, VI = range(5)
+    A, z = PONTE["a"], PONTE["deck"]
     u = unit(PONTE["b"] - A)
     F0 = A - u * 0.15
     Q = Quadro(m, F0, u)
-    porta_revelim(Q, zd)
-    ztop = float(topo_s(*(A - u * 2.5)))
-    guarita(mg, F0 + u * 0.45, u, ztop - 0.3, ztop)
-    return F0, ztop
+    # topo da muralha por cima da porta: LiDAR, mas pelo menos 6,6 m acima da soleira (na fotografia a muralha
+    # chega às bolas de pedra, c. 7 m acima da soleira, com o vão de 2,3 m como escala)
+    ZT = max(float(topo_s(*(A - u * 1.5))), z + 6.6)
+    w, zn = 1.15, z + 2.35  # vão de 2,3 m, fecho a 3,5 m
+    D, DF = 0.3, -1.6  # face do frontispício e fundo (metido na muralha, que é em talude)
+    # pano com o vão, aduelas, fecho e pedras das ombreiras
+    Q.pano_vao(-2.45, 2.45, z - 0.5, z + 4.2, DF, D, CC, w, z, zn)
+    Q.arco_sz(0.0, w, w + 0.42, zn, D, D + 0.05, CC, k=13, aduelas=True)
+    Q.bloco(-0.2, 0.2, zn + w - 0.02, z + 4.2, D, D + 0.1, CC)
+    for sg in (-1, 1):
+        for k, z0 in enumerate(np.arange(z, zn - 0.1, 0.59)):
+            a, b = sorted((sg * w, sg * (w + (0.42 if k % 2 == 0 else 0.3))))
+            Q.bloco(a, b, z0 + 0.015, min(z0 + 0.575, zn), D, D + 0.05, CC)
+    # porta de madeira fechada, recuada 0,4 m, com tábuas, juntas e ferragens
+    Q.tunel(w, z, zn, D, 0.42, CC, None)
+    arco = [(-w, z), (w, z), (w, zn)] + [(w * math.cos(math.pi * k / 16), zn + w * math.sin(math.pi * k / 16)) for k in range(1, 16)] + [(-w, zn)]
+    Q.placa(arco, D - 0.55, D - 0.4, MD)
+    dfo = D - 0.4
+    for st in np.arange(-w + 0.29, w - 0.1, 0.29):
+        hz = zn + math.sqrt(max(w * w - st * st, 0.0))
+        Q.bloco(st - 0.012, st + 0.012, z, hz - 0.02, dfo, dfo + 0.008, SO if abs(st) > 0.05 else FE)
+    for hz in (0.45, 1.25, 2.05, 2.85):
+        hw = w if z + hz < zn else math.sqrt(max(w * w - (z + hz - zn) ** 2, 0.0))
+        Q.bloco(-hw + 0.04, hw - 0.04, z + hz, z + hz + 0.07, dfo, dfo + 0.02, FE)
+    for sg in (-1, 1):
+        Q.bloco(sg * 0.12 - 0.06, sg * 0.12 + 0.06, z + 1.1, z + 1.35, dfo, dfo + 0.03, FE)  # fechaduras
+    # pilastras com base e capitel
+    for sg in (-1, 1):
+        a, b = sorted((sg * 1.6, sg * 2.3))
+        Q.bloco(a, b, z - 0.3, z + 3.95, D, D + 0.22, CC)
+        Q.bloco(a - 0.05, b + 0.05, z - 0.3, z + 0.35, D, D + 0.28, CC)
+        Q.bloco(a - 0.06, b + 0.06, z + 3.95, z + 4.2, D, D + 0.3, CC)
+    # entablamento
+    Q.bloco(-2.4, 2.4, z + 4.2, z + 4.45, D, D + 0.3, CC)
+    Q.bloco(-2.55, 2.55, z + 4.45, z + 4.65, D, D + 0.42, CC)
+    zb = z + 4.65
+    # meios frontões virados para fora, com o pedestal e a bola de pedra no canto de dentro
+    for sg in (-1, 1):
+        Q.placa([(sg * 1.5, zb), (sg * 2.45, zb), (sg * 1.5, zb + 0.95)], DF, D + 0.2, CC)
+        faixa_inclinada(Q, [(sg * 2.6, zb), (sg * 1.5, zb + 1.03)] if sg > 0 else [(sg * 1.5, zb + 1.03), (sg * 2.6, zb)], 0.16, D, D + 0.4, CC)
+        a, b = sorted((sg * 1.3, sg * 1.75))
+        zp = ZT - 0.45
+        Q.bloco(a, b, zb, zp, DF, D + 0.12, CC)
+        Q.bloco(a - 0.05, b + 0.05, zp, zp + 0.12, DF, D + 0.18, CC)
+        Q.esfera(sg * 1.52, zp + 0.36, D - 0.1, 0.24, CC)
+    # painel com as armas reais coroadas e frontão curvo por cima
+    Q.bloco(-1.25, 1.25, zb, z + 5.75, DF, D + 0.18, CC)
+    Q.escudo(0.0, zb + 0.1, 0.78, 0.74, D + 0.18, D + 0.36, CC)
+    Q.bloco(-1.08, -0.52, zb + 0.15, zb + 0.95, D + 0.18, D + 0.22, CC)  # lápide, à direita das armas (fotografia)
+    zf, f = z + 5.75, 0.3
+    R = (1.35 ** 2 + f ** 2) / (2 * f)
+    zc = zf + f - R
+    t0 = math.asin(1.35 / R)
+    fora = [(R * math.sin(t), zc + R * math.cos(t)) for t in np.linspace(-t0, t0, 13)]
+    dentro = [(s_ * (R - 0.18) / R, zc + (zz - zc) * (R - 0.18) / R) for s_, zz in fora]
+    Q.placa([(-1.4, zf - 0.05), (1.4, zf - 0.05)] + fora[::-1], DF, D + 0.1, CC)  # tímpano
+    Q.placa(fora + dentro[::-1], D + 0.1, D + 0.36, CC)
+    # guarita: base (com dois frisos), corpo de cantos chanfrados, janela, cornija, cúpula e pináculo
+    L0, L1, ch = -1.55, D + 0.15, 0.24
+    plan_sd = [(-1.0, L0 + ch), (-1.0 + ch, L0), (1.0 - ch, L0), (1.0, L0 + ch),
+               (1.0, L1 - ch), (1.0 - ch, L1), (-1.0 + ch, L1), (-1.0, L1 - ch)]
+    cs = (L0 + L1) / 2
+
+    def planta(f_=1.0):
+        return [Q.p(s_ * f_, 0, cs + (d_ - cs) * f_)[:2] for s_, d_ in plan_sd]
+
+    zg0 = z + 5.95
+    m.prisma(planta(), zf - 0.05, zg0, CC)
+    m.prisma(planta(1.06), zg0, zg0 + 0.12, CC)
+    m.prisma(planta(), zg0 + 0.12, ZT, CC)
+    m.prisma(planta(1.08), ZT, ZT + 0.14, CC)
+    zt1 = ZT + 2.0
+    m.prisma(planta(), ZT + 0.14, zt1, CC)
+    for sg in (-1, 1):  # pilastras dos cunhais da frente
+        a, b = sorted((sg * 0.62, sg * 0.98))
+        Q.bloco(a, b, ZT + 0.14, zt1, L1 - 0.05, L1 + 0.05, CC)
+    # janela envidraçada de caixilho escuro (3 × 4 vidros)
+    Q.bloco(-0.55, 0.55, ZT + 0.5, ZT + 1.55, L1, L1 + 0.07, CC)
+    Q.bloco(-0.42, 0.42, ZT + 0.62, ZT + 1.42, L1, L1 + 0.075, VI)
+    for st in (-0.42, -0.21, 0.0, 0.21, 0.42):
+        Q.bloco(st - 0.022, st + 0.022, ZT + 0.62, ZT + 1.42, L1 + 0.075, L1 + 0.09, FE)
+    for hz in (0.62, 0.89, 1.15, 1.42):
+        Q.bloco(-0.44, 0.44, ZT + hz - 0.022, ZT + hz + 0.022, L1 + 0.075, L1 + 0.09, FE)
+    m.prisma(planta(1.1), zt1, zt1 + 0.12, CC)
+    m.prisma(planta(1.16), zt1 + 0.12, zt1 + 0.26, CC)
+    prev, zprev = planta(1.0), zt1 + 0.26
+    for k in range(1, 6):
+        fi = math.pi / 2 * k / 5
+        cur, zz = planta(max(math.cos(fi), 0.08)), zt1 + 0.26 + 0.75 * math.sin(fi)
+        for i in range(len(prev)):
+            j = (i + 1) % len(prev)
+            m.face([(*prev[i], zprev), (*prev[j], zprev), (*cur[j], zz), (*cur[i], zz)], CC)
+        prev, zprev = cur, zz
+    m.face([(*q, zprev) for q in prev], CC)
+    c_ = np.array(Q.p(0, 0, cs)[:2])
+    m.cilindro(c_, 0.1, zprev - 0.02, zprev + 0.22, CC, k=8)
+    m.esfera((c_[0], c_[1], zprev + 0.36), 0.15, CC, k=10)
+    m.cilindro(c_, 0.03, zprev + 0.48, zprev + 0.62, CC, k=6)
+    MEDIDAS["porta"] = {"soleira": round(z, 2), "vao": 2 * w, "fecho": round(zn + w - z, 2), "largura": 5.1,
+                        "topo_muralha": round(ZT, 1), "guarita_topo": round(zprev + 0.62, 1)}
+    return F0, ZT
 
 
 def tunel_agua(m):
@@ -1944,6 +2053,11 @@ material("alvenaria", (1, 1, 1), 0.93, imagem("alvenaria", TEX_ALV), normal=imag
 TEX_CANT, ALT_CANT = textura_foto("stone_brick_wall_001", n=1024, metros=3.0, cor=(0.74, 0.71, 0.64), contraste=0.85,
                                   metros_foto=3.0, semente=52)
 material("cantaria", (1, 1, 1), 0.88, imagem("cantaria", TEX_CANT), normal=imagem("cantaria_normal", normais(ALT_CANT, 3.0)), forca=0.7)
+# cantaria clara do frontispício da porta da ponte (#d9d3c4 na fotografia; revisão do perito, 13 nov. 2026)
+TEX_CANT_C, _ = textura_foto("stone_brick_wall_001", n=1024, metros=3.0, cor=(0.85, 0.83, 0.77), contraste=0.6,
+                             metros_foto=3.0, semente=53)
+material("cantaria_clara", (1, 1, 1), 0.85, imagem("cantaria_clara", TEX_CANT_C), normal=imagem("cantaria_normal_c", normais(ALT_CANT, 3.0)), forca=0.5)
+material("madeira_escura", (0.23, 0.165, 0.125), 0.75)  # #3a2a20
 material("cantaria_lisa", (0.76, 0.73, 0.66), 0.88)
 material("sombra", (0.07, 0.065, 0.06), 1.0)
 material("cal", (1, 1, 1), 0.85, imagem("cal", textura_reboco((0.95, 0.94, 0.91), semente=11, gasto=0.08)))
@@ -2028,7 +2142,7 @@ L_ponte = ponte_arcos(mp)
 mp.objeto("Ponte", "ponte", MAT_P, GRUPOS["Ponte"], uv=2.5)
 mpo = Malha()
 F0_porta, ztop_porta = porta_ponte(mpo, mg)
-mpo.objeto("Porta_da_ponte", "porta", ["cantaria", "sombra", "madeira_verde"], GRUPOS["Portas"], uv=2.5)
+mpo.objeto("Porta_da_ponte", "porta", ["cantaria_clara", "sombra", "madeira_escura", "ferro", "vidro"], GRUPOS["Portas"], uv=2.5)
 mt_ = Malha()
 tunel_agua(mt_)
 mt_.objeto("Tunel_da_agua", "tunel", ["cantaria", "alvenaria", "agua_tunel"], GRUPOS["Portas"], uv=2.5, recalc=False)
@@ -2282,6 +2396,7 @@ if "--vistas" in sys.argv or "--capa" in sys.argv:
         vista("fortim_mar", 200, 18, 75, lente=35, alvo_xy=(-11, -63), alvo_z=12)
         vista("ponte", 118, 9, 26, lente=30, alvo_xy=(65, 62), alvo_z=7)           # do fosso, como a fotografia grande
         vista("fosso", 100, 16, 30, lente=30, alvo_xy=(68, 62), alvo_z=5)  # de dentro do fosso, com a água
+        vista("porta", 11, 8, 10, lente=28, alvo_xy=(61.3, 49.4), alvo_z=14.5)  # da ponte, como "Entrada no Forte de Peniche 02"
         vista("costa", 70, 22, 75, lente=35, alvo_xy=(5, -25), alvo_z=14)           # como a fotografia dos merlões amarelos
         vista("prisao", 150, 32, 130, lente=40, alvo_xy=(0, 20), alvo_z=18)
         vista("leste", 95, 30, 170, lente=40, alvo_xy=(105, 20), alvo_z=8)

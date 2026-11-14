@@ -207,7 +207,7 @@ def ogiva(sc, w, za, h_arranque, k=8, raio=0.8):
     r = raio * w
     sa, sb = sc - w / 2, sc + w / 2
     zs = za + h_arranque
-    th = math.acos((w / 2 - r) / r)
+    th = math.acos((r - w / 2) / r)  # ângulo do fecho (no eixo sc); antes passava o eixo e os arcos cruzavam-se
     out = [(sa, za), (sb, za), (sb, zs)]
     # arco direito: centro em (sb - r, zs), do ângulo 0 a th
     for a in np.linspace(0, th, k + 1)[1:]:

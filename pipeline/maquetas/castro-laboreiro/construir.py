@@ -324,12 +324,11 @@ def material(nome, cor, rug=0.9, tex=None, vcor=False, normal=None, forca=1.0):
     return mt
 
 
-def aduelas(m, centro, u, normal, largura, soleira, nascenca, mat, quebrado=False, esp=0.5, saliencia=0.06):
-    """Moldura de cantaria de um vão: aduelas do arco (pleno ou quebrado) e ombreiras em fiadas
+def aduelas(m, centro, u, normal, largura, soleira, nascenca, mat, quebrado=False, esp=0.5, saliencia=0.06, k=11):
+    """Moldura de cantaria de um vão: k aduelas do arco (pleno ou quebrado) e ombreiras em fiadas
     alternadas, um pouco salientes da face (normal para fora)."""
     w = largura / 2
     zn = soleira + nascenca
-    k = 11
 
     def ponto(r_extra, t):  # t de 0 (arranque direito) a 1 (arranque esquerdo)
         if quebrado:  # dois arcos de raio igual à largura, centrados nos arranques opostos
@@ -473,11 +472,22 @@ REDUTO = np.array([(-16.3, -70.4), (-4.3, -70.4), (-4.3, -61.4), (-16.3, -61.4)]
 CAPELA = np.array([(7.0, 9.3), (12.6, 9.3), (12.6, 14.7), (7.0, 14.7)])
 MARCO = np.array([3.0, 44.5])  # marco geodésico no ponto mais alto (pico estreito de 2 m no MDS)
 # Portas (posição no OSM ou no SIPA e nas fotografias; tipo de arco pelo SIPA)
+# Revisão do perito (13 nov. 2026): os vãos atravessam o pano de lado a lado (antes eram faces pretas), com
+# intradorso de pedra, chão de saibro e o terreno aberto num corredor diante de cada boca (corredor: largura;
+# fora/dentro: patamar à cota da soleira; rampa: inclinação depois do patamar). Aduelas grandes da pedra do pano
+# (Sol 8, Recintos 11, Traição 9), sem impostas; Porta do Sol com 1,15 m de vão, pés-direitos de 1,8 m e arco
+# redondo e baixo do lado de dentro (Commons: Castle of Castro Laboreiro 13, 14, 18; Castelo de Castro Laboreiro).
+# Folhas de madeira: Sol entreaberta (verde-água), Traição aberta (verde-escuro), Fonte fechada (madeira velha).
 PORTAS = {
-    "porta_sol": dict(pano="cerca_nascente", ponto=(6.8, -54.9), arco="quebrado", largura=1.5, nascenca=1.7),
-    "porta_fonte": dict(pano="cerca_nascente", depois_de=("porta_sol", 7.0), arco="reto", largura=1.1, nascenca=1.9),
-    "porta_recintos": dict(pano="muro_recintos", ponto=(-2.0, 22.1), arco="pleno", largura=1.4, nascenca=1.6),
-    "porta_traicao": dict(pano="castelo_norte", ponto=(-7.4, 65.5), arco="pleno", largura=1.6, nascenca=1.8, misulas=True),
+    "porta_sol": dict(pano="cerca_nascente", ponto=(6.8, -54.9), arco="quebrado", arco_dentro="pleno", largura=1.15,
+                      nascenca=1.8, aduelas=8, corredor=1.6, fora=1.5, dentro=1.5, rampa=0.18,
+                      folhas=((0.31, 0.50, 0.48), 40)),
+    "porta_fonte": dict(pano="cerca_nascente", depois_de=("porta_sol", 7.0), arco="reto", largura=1.1, nascenca=1.9,
+                        corredor=1.4, fora=1.0, dentro=1.0, rampa=0.2, folhas=((0.46, 0.43, 0.38), 0)),
+    "porta_recintos": dict(pano="muro_recintos", ponto=(-2.0, 22.1), arco="pleno", largura=1.4, nascenca=1.6, aduelas=11,
+                           corredor=1.8, fora=1.0, dentro=1.0, rampa=0.2),
+    "porta_traicao": dict(pano="castelo_norte", ponto=(-7.4, 65.5), arco="pleno", largura=1.6, nascenca=1.8, aduelas=9,
+                          misulas=True, corredor=2.2, fora=0.6, dentro=4.0, rampa=0.25, folhas=((0.18, 0.31, 0.27), 75)),
 }
 
 
@@ -576,13 +586,14 @@ def parede(m, linha, esp, topo, fora, dentro_, mat=0, mat_topo=3, fechada=False,
     if not fechada:
         for i in (0, n - 1):
             m.face([(*ext[i], ze[i]), (*inn[i], zi[i]), (*inn[i], a[i]), (*ext[i], a[i])], mat)
-    return ext, inn
+    return ext, inn, a
 
 
-def vao_reto(m, centro, u, normal, largura, soleira, altura, mat_escuro, mat_cant):
-    """Porta de verga reta: vão escuro, ombreiras de silhares alternados e verga inteiriça."""
+def vao_reto(m, centro, u, normal, largura, soleira, altura, mat_escuro, mat_cant, escuro=True):
+    """Porta de verga reta: vão escuro (se escuro), ombreiras de silhares alternados e verga inteiriça."""
     w = largura / 2
-    m.face([(*(centro - u * w + normal * 0.03), soleira), (*(centro + u * w + normal * 0.03), soleira),
+    if escuro:
+        m.face([(*(centro - u * w + normal * 0.03), soleira), (*(centro + u * w + normal * 0.03), soleira),
             (*(centro + u * w + normal * 0.03), soleira + altura), (*(centro - u * w + normal * 0.03), soleira + altura)], mat_escuro)
     zs = np.linspace(soleira, soleira + altura, 5)
     for j in range(4):
@@ -634,7 +645,7 @@ def construir_terreno():
     xs = np.linspace(-RAIO, RAIO, n)
     X, Y = np.meshgrid(xs, xs)
     Z0 = cota(X, Y)
-    Z = rebaixar(X, Y, Z0)
+    Z = abrir_portas(X, Y, rebaixar(X, Y, Z0))
     gy, gx = np.gradient(Z0, passo)
     decl = np.degrees(np.arctan(np.hypot(gx, gy)))
     curv = ndi.laplace(ndi.gaussian_filter(Z0, 1.0))  # > 0 nas fissuras e nos pés dos penedos
@@ -774,6 +785,9 @@ material("base", (0.33, 0.26, 0.20), 0.95)
 material("trilho", (0.74, 0.66, 0.52), 0.97)
 material("arvore", (1, 1, 1), 0.9, None, vcor=True)
 material("ferro", (0.24, 0.25, 0.26), 0.55)
+for pid_, d_ in PORTAS.items():  # tábuas das folhas, na cor de cada porta (fotografias)
+    if "folhas" in d_:
+        material("madeira_" + pid_, d_["folhas"][0], 0.85)
 
 MEDIDAS = {}  # o que se mediu no LiDAR, para conferir e citar no castro-laboreiro.json
 PERFIS = {}
@@ -790,6 +804,56 @@ for s_, d_ in PANOS.items():
     MEDIDAS[s_] = {"comprimento": comp, "topo": [float(topo.min() + ZREF), float(topo.max() + ZREF)],
                    "altura_exterior": [float(np.percentile(alt_e, 10)), float(np.percentile(alt_e, 90))],
                    "altura_interior": [float(np.percentile(alt_i, 10)), float(np.percentile(alt_i, 90))]}
+
+# Portas: posição no pano medido (antes do terreno, que abre o corredor de cada uma, e dos panos, que se cortam no vão)
+PONTOS_PORTA = {}
+for pid, d_ in PORTAS.items():
+    pano = d_["pano"]
+    lin, esp, topo, fora, dentro_ = MEDIDOS[pano]
+    if "ponto" in d_:
+        i, p, t, n_ = no_pano(pano, P(*d_["ponto"]))
+    else:  # a uma distância medida ao longo do pano a partir de outra porta
+        ref, dist_ = d_["depois_de"]
+        i0 = PONTOS_PORTA[ref][0]
+        ss = np.concatenate([[0], np.cumsum(np.linalg.norm(np.diff(lin, axis=0), axis=1))])
+        i = int(np.argmin(np.abs(ss - (ss[i0] + dist_))))
+        i, p, t, n_ = no_pano(pano, lin[i])
+    sole = float(min(cota(*(p + n_ * (esp / 2 + 0.7))), cota(*(p - n_ * (esp / 2 + 0.7)))))
+    PONTOS_PORTA[pid] = (i, p, t, n_, sole)
+
+
+def abrir_portas(X, Y, Z):
+    """Corredor diante de cada porta, dos dois lados do pano: patamar à cota da soleira e depois rampa até ao
+    terreno; os lados descem em talude. Só rebaixa (a rocha e o chão que tapavam os vãos saem do caminho)."""
+    Z = Z.copy()
+    for pid, (i, p, t, n_, sole) in PONTOS_PORTA.items():
+        d_ = PORTAS[pid]
+        esp = MEDIDOS[d_["pano"]][1]
+        S = (X - p[0]) * t[0] + (Y - p[1]) * t[1]
+        D = (X - p[0]) * n_[0] + (Y - p[1]) * n_[1]
+        pat = np.where(D > 0, esp / 2 + d_["fora"], esp / 2 + d_["dentro"])
+        alem = np.maximum(np.abs(D) - pat, 0.0)
+        lado = np.maximum(np.abs(S) - d_["corredor"] / 2, 0.0)
+        sel = (lado < 1.5) & (alem < 15.0)
+        lim = sole - 0.03 + d_["rampa"] * alem + 2.0 * lado
+        Z[sel] = np.minimum(Z[sel], lim[sel])
+    return Z
+
+
+def cortar_vaos(lin, vals, cortes):
+    """Troços da linha entre os vãos: cortes são intervalos (de, até) em metros ao longo da linha; cada troço
+    acaba exatamente na ombreira, com os valores interpolados."""
+    ss = np.concatenate([[0], np.cumsum(np.linalg.norm(np.diff(lin, axis=0), axis=1))])
+
+    def em(s_):
+        return [np.array([np.interp(s_, ss, lin[:, 0]), np.interp(s_, ss, lin[:, 1])])] + [np.interp(s_, ss, v) for v in vals]
+    limites = [0.0] + [x for c in sorted(cortes) for x in c] + [ss[-1]]
+    trocos = []
+    for a, b in zip(limites[0::2], limites[1::2]):
+        pts = [em(a)] + [[lin[k]] + [v[k] for v in vals] for k in range(len(lin)) if a + 0.05 < ss[k] < b - 0.05] + [em(b)]
+        trocos.append([np.array([q[j] for q in pts]) for j in range(len(vals) + 1)])
+    return trocos
+
 
 print("reduto…")
 # Reduto: na ponta sul, uma cinta de muralha de 1,5 m em volta de um penedo (fotografia aérea; no MDT o
@@ -853,59 +917,122 @@ def chao_sob(x, y, raio):
     return float(cota_t(xs_, ys_).min())
 
 print("muralhas…")
+TOPO_VAO = {}  # cota do coroamento por cima de cada vão (a mais baixa das duas pontas que lá chegam)
 for s_, d_ in PANOS.items():
     lin, esp, topo, fora, dentro_ = MEDIDOS[s_]
     m = Malha()
+    ss = np.concatenate([[0], np.cumsum(np.linalg.norm(np.diff(lin, axis=0), axis=1))])
+    vaos = [(pid, ss[PONTOS_PORTA[pid][0]], PORTAS[pid]["largura"] / 2) for pid in PORTAS if PORTAS[pid]["pano"] == s_]
+    vaos.sort(key=lambda v: v[1])
+    trocos = cortar_vaos(lin, [topo, fora, dentro_], [(c - h, c + h) for _, c, h in vaos])
     # os troços baixos entre os penedos acompanham o chão; os panos altos sobem em patamares
-    parede(m, lin, esp, topo, fora, dentro_, mat=0, mat_topo=1, escalonar=not d_.get("baixo", False))
+    pontas = []
+    for tr in trocos:
+        a_ = parede(m, *tr[:1], esp, *tr[1:], mat=0, mat_topo=1, escalonar=not d_.get("baixo", False))[2]
+        pontas.append((float(a_[0]), float(a_[-1])))
+    for k, (pid, _, _) in enumerate(vaos):
+        TOPO_VAO[pid] = min(pontas[k][1], pontas[k + 1][0])
     grupo = GRUPOS["Castelo"] if d_["elemento"] == "castelo" else GRUPOS["Cerca"]
     m.objeto(s_.title(), d_["elemento"], ["pedra", "coroamento"], grupo)
 
 print("portas…")
-PONTOS_PORTA = {}
+
+
+def contorno(tipo, w, zs, k=12, extra=0.0):
+    """Intradorso de um vão no plano da face (s, z), do arranque esquerdo (s = -w/2) ao direito, em k troços:
+    arco quebrado (dois arcos de raio igual ao vão, centrados nos arranques opostos), pleno, ou verga reta."""
+    h = w / 2
+    out = []
+    for j in range(k + 1):
+        t_ = j / k
+        if tipo == "quebrado":
+            r = w + extra
+            am = math.acos(h / r)
+            a_ = am * (t_ / 0.5) if t_ <= 0.5 else am * ((1 - t_) / 0.5)
+            out.append((h - r * math.cos(a_), zs + r * math.sin(a_)) if t_ <= 0.5 else (-h + r * math.cos(a_), zs + r * math.sin(a_)))
+        elif tipo == "pleno":
+            a_ = math.pi * (1 - t_)
+            out.append(((h + extra) * math.cos(a_), zs + (h + extra) * math.sin(a_)))
+        else:
+            out.append((-h + w * t_, zs))
+    return out
+
+
+def folhas(m, p, t, n_, esp, w, sole, zs, tipo, abertura, mat_m, mat_f):
+    """Duas folhas de tábuas (6 cm) com quatro ferragens, nas ombreiras junto à face de dentro do vão, com o
+    contorno do arco dessa face; abertura em graus (0 = fechadas), sempre para dentro."""
+    d_h = -esp / 2 + 0.12
+    topo_ = contorno(tipo, w, zs, 16)
+    for sg in (-1, 1):
+        # contorno da folha em (x a partir da dobradiça, z): do pé da dobradiça ao eixo, pelo arco
+        arco_ = [(w / 2 - sg * s_, z) for s_, z in topo_ if sg * s_ >= -1e-6]
+        cont = [(0.0, sole + 0.03), (w / 2 - 0.01, sole + 0.03)] + sorted(arco_, key=lambda q: -q[0])
+        cont = [(min(x, w / 2 - 0.01), z - 0.02) if i > 1 else (x, z) for i, (x, z) in enumerate(cont)]
+        th = math.radians(abertura)
+        dobr = p + t * sg * (w / 2) + n_ * d_h
+        dir_ = -sg * t * math.cos(th) - n_ * math.sin(th)
+        nrm = np.array([-dir_[1], dir_[0]])
+        for e0, e1 in ((-0.03, 0.03),):
+            A = [(*(dobr + dir_ * x + nrm * e0), z) for x, z in cont]
+            B = [(*(dobr + dir_ * x + nrm * e1), z) for x, z in cont]
+            m.face(A, mat_m)
+            m.face(B[::-1], mat_m)
+            for i in range(len(cont)):
+                j = (i + 1) % len(cont)
+                m.face([A[i], A[j], B[j], B[i]], mat_m)
+        for f_ in np.linspace(0.12, 0.85, 4):
+            z_ = sole + (zs - sole) * f_ * 1.15
+            m.caixa(dobr + dir_ * (w / 4), dir_, w / 2 * 0.86, 0.08, z_, z_ + 0.07, mat_f)
+
+
 for pid, d_ in PORTAS.items():
     m = Malha()
     pano = d_["pano"]
     lin, esp, topo, fora, dentro_ = MEDIDOS[pano]
-    if "ponto" in d_:
-        i, p, t, n_ = no_pano(pano, P(*d_["ponto"]))
-    else:  # a uma distância medida ao longo do pano a partir de outra porta
-        ref, dist_ = d_["depois_de"]
-        i0 = PONTOS_PORTA[ref][0]
-        ss = np.concatenate([[0], np.cumsum(np.linalg.norm(np.diff(lin, axis=0), axis=1))])
-        i = int(np.argmin(np.abs(ss - (ss[i0] + dist_))))
-        i, p, t, n_ = no_pano(pano, lin[i])
-    sole = float(min(cota(*(p + n_ * (esp / 2 + 0.7))), cota(*(p - n_ * (esp / 2 + 0.7)))))
-    PONTOS_PORTA[pid] = (i, p, t, n_, sole)
+    i, p, t, n_, sole = PONTOS_PORTA[pid]
     w, zn = d_["largura"], d_["nascenca"]
-    for sg in (1, -1):
-        c_ = p + sg * n_ * (esp / 2)
-        nn = sg * n_
-        if d_["arco"] == "quebrado":
-            arco_quebrado(m, c_, t, nn, w, sole, zn, 1)
-            aduelas(m, c_, t, nn, w, sole, zn, 2, quebrado=True, esp=0.55)
-        elif d_["arco"] == "pleno":
-            arco(m, c_, t, nn, w, sole, zn, 0.1, 1)
-            aduelas(m, c_, t, nn, w, sole, zn, 2, esp=0.55)
-            # impostas: a pedra saliente onde o arco arranca (SIPA, portal norte)
-            for lado in (-1, 1):
-                m.caixa(c_ + t * lado * (w / 2 + 0.3) + nn * 0.1, t, 0.75, 0.2, sole + zn - 0.18, sole + zn, 2)
+    zs = sole + zn
+    tipo_f, tipo_d = d_["arco"], d_.get("arco_dentro", d_["arco"])
+    z_top = TOPO_VAO[pid]
+    Q = lambda s_, d, z: (*(p + t * s_ + n_ * d), z)
+    e = esp / 2
+    # por cima do vão: a alvenaria entre as duas pontas do pano, com o intradorso do arco de face a face
+    cf, cd = contorno(tipo_f, w, zs), contorno(tipo_d, w, zs)
+    topo_arco = max(z for _, z in cf + cd)
+    z_top = max(z_top, topo_arco + 0.5)
+    m.face([Q(s_, e, z) for s_, z in cf] + [Q(w / 2, e, z_top), Q(-w / 2, e, z_top)], 0)
+    m.face([Q(s_, -e, z) for s_, z in cd] + [Q(w / 2, -e, z_top), Q(-w / 2, -e, z_top)], 0)
+    for j in range(len(cf) - 1):
+        m.face([Q(*cf[j][:1], e, cf[j][1]), Q(*cf[j + 1][:1], e, cf[j + 1][1]), Q(*cd[j + 1][:1], -e, cd[j + 1][1]), Q(*cd[j][:1], -e, cd[j][1])], 0)
+    m.face([Q(-w / 2, e, z_top), Q(w / 2, e, z_top), Q(w / 2, -e, z_top), Q(-w / 2, -e, z_top)], 1)
+    for sg in (-1, 1):
+        m.face([Q(sg * w / 2, e, zs), Q(sg * w / 2, -e, zs), Q(sg * w / 2, -e, z_top), Q(sg * w / 2, e, z_top)], 0)
+    # chão de saibro no vão, com meio metro para cada lado
+    q = [p + t * (-w / 2) + n_ * (e + 0.5), p + t * (w / 2) + n_ * (e + 0.5), p + t * (w / 2) - n_ * (e + 0.5), p + t * (-w / 2) - n_ * (e + 0.5)]
+    m.prisma(q if area(np.array(q)) > 0 else q[::-1], sole - 0.5, sole + 0.02, 3)
+    # molduras: aduelas grandes da pedra do pano, metidas nas fiadas (sem impostas); verga reta inteiriça
+    for sg, tipo in ((1, tipo_f), (-1, tipo_d)):
+        c_ = p + sg * n_ * e
+        if tipo == "reto":
+            vao_reto(m, c_, t, sg * n_, w, sole, zn, 0, 0, escuro=False)
         else:
-            vao_reto(m, c_, t, nn, w, sole, zn, 1, 2)
-    # o vão atravessa a muralha: intradorso escuro entre as duas faces
-    for lado in (-1, 1):
-        q0, q1 = p + t * lado * w / 2 - n_ * esp / 2, p + t * lado * w / 2 + n_ * esp / 2
-        m.face([(*q0, sole), (*q1, sole), (*q1, sole + zn), (*q0, sole + zn)], 1)
+            aduelas(m, c_, t, sg * n_, w, sole, zn, 0, quebrado=tipo == "quebrado", esp=0.6, saliencia=0.03,
+                    k=d_.get("aduelas", 11) if sg == 1 or tipo_d == tipo_f else 7)
     if d_.get("misulas"):
-        # duas mísulas por cima do portal, que terão sustentado um balcão (SIPA)
-        z_m = sole + zn + w / 2 + 0.9
+        # duas mísulas grossas no topo do pano, juntas e quase por cima do arco, saindo c. 0,5 m (SIPA, fotos)
+        z_m = max(zs + w / 2 + 0.6, z_top - 0.75)
         for lado in (-1, 1):
-            c_ = p + n_ * (esp / 2 + 0.25) + t * lado * 0.75
-            m.caixa(c_, t, 0.32, 0.5, z_m, z_m + 0.28, 2)
-            m.caixa(c_ - n_ * 0.08, t, 0.32, 0.34, z_m - 0.22, z_m, 2)
+            c_ = p + n_ * (e + 0.25) + t * lado * 0.65
+            m.caixa(c_, t, 0.4, 0.5, z_m, z_m + 0.32, 0)
+            m.caixa(c_ - n_ * 0.08, t, 0.4, 0.34, z_m - 0.25, z_m, 0)
+    if "folhas" in d_:
+        _, abertura = d_["folhas"]
+        folhas(m, p, t, n_, esp, w, sole, zs, tipo_d, abertura, 4, 5)
     MEDIDAS[pid] = {"soleira": sole + ZREF, "topo_muralha": float(topo[i] + ZREF),
-                    "acima_da_soleira": float(topo[i] - sole)}
-    m.objeto(pid.title(), pid, ["pedra", "sombra", "cantaria"], GRUPOS["Portas"])  # um objeto por porta (placa e clique)
+                    "acima_da_soleira": float(topo[i] - sole), "vao": w, "fecho": float(topo_arco - sole),
+                    "atravessa": float(esp)}
+    mats_ = ["pedra", "coroamento", "cantaria", "trilho", "madeira_" + pid if "folhas" in d_ else "ferro", "ferro"]
+    m.objeto(pid.title(), pid, mats_, GRUPOS["Portas"])  # um objeto por porta (placa e clique)
 
 print("escada da porta norte…")
 # Escada metálica com guarda que sobe ao portal norte (SIPA: o acesso pela porta norte "acaba numa escada
