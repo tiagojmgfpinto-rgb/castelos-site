@@ -727,13 +727,15 @@ def escarpa(e, m, mq):
         mats = [0, 1, 1, 1, 1]
         if alto:
             perfil += [(a - 0.1, zc + rc), (a - 0.1, topo - 0.12), (a - 0.02, topo - 0.12), (a - 0.02, topo), (a - 0.9, topo)]
-            mats += [0, 0, 1, 1, 1]
+            # o capeamento é do granito das escarpas, não de cantaria clara (revisão de 13 nov. 2026: a estrela
+            # ficava desenhada a giz)
+            mats += [0, 0, 1, 0, 0]
         else:
             perfil += [(a - 0.9, topo)]
-            mats += [1]
+            mats += [0]
     else:
         perfil = [(a + bt * (topo - zf), zf), (a, topo), (a - 0.7, topo)]
-        mats = [0, 1]
+        mats = [0, 0]
     # nos muros estreitos o maciço fica abaixo do chão da calçada, que é o terreno medido (lajeado contínuo)
     baixa = np.where(T < 2.9, 0.5, 0.15)
     perfil += [(a - 0.9, topo - baixa), (a - T, topo - baixa), (a - T, zf)]
@@ -1679,10 +1681,19 @@ def portas():
             else:
                 pano_com_arco(Qd, -v["r"] - 1.2, v["r"] + 1.2, zs, zs + v["omb"] + v["r"] + 1.0, v["r"], v["omb"], -0.4, 0.05, ALV_)
                 arco_cantaria(Qd, v["r"], zs, v["omb"], aduela=0.45, d0=0.03, d1=0.12)
-        else:  # passagem cega (Santo António de dentro: o túnel dobra para o pátio, sem prova do traçado): fundo escuro
+        else:  # Santo António de dentro: a passagem dobra para a vila e não há traçado confirmado. Em vez do fundo
+            # preto (revisão de 13 nov. 2026), fecha numa porta de madeira verde chapeada em arco de cantaria
+            # (foto 90600c34), como as bocas das passagens abobadadas para a vila
             v = d_["vao"]
+            r, omb = v["r"], v["omb"]
             Qf = Quadro(m, F0 - n * v["tunel"], n)
-            Qf.bloco(-v["r"] - 0.3, v["r"] + 0.3, sole - 0.2, sole + v["omb"] + v["r"] + 0.3, -0.3, 0.0, S_)
+            pano_com_arco(Qf, -r - 0.5, r + 0.5, sole, sole + omb + r + 0.6, r, omb, -0.6, 0.0, ALV_)
+            arco_cantaria(Qf, r, sole, omb, aduela=0.4, d0=0.02, d1=0.1)
+            folha = [(-r, sole), (r, sole), (r, sole + omb)] + [(r * math.cos(math.pi * k / 12), sole + omb + r * math.sin(math.pi * k / 12)) for k in range(1, 12)] + [(-r, sole + omb)]
+            Qf.placa(folha, -0.12, -0.02, MV_)
+            for k in range(1, 5):  # chapas e cravos da porta
+                Qf.bloco(-r + 0.05, r - 0.05, sole + k * omb / 5 - 0.03, sole + k * omb / 5 + 0.03, -0.02, 0.0, FER_)
+            Qf.bloco(-0.02, 0.02, sole, sole + omb + r - 0.05, -0.02, 0.0, FER_)
         m.objeto(pid.title(), d_["elemento"], MAT_PORTA, GRUPOS["Portas"], uv=2.5)
         PONTOS_PORTA[pid] = (F0, n, sole)
         tt = np.array([-n[1], n[0]])
@@ -2264,7 +2275,7 @@ TEX_CANT, ALT_CANT = textura_foto("stone_brick_wall_001", n=1024, metros=3.0, co
 NRM_CANT = imagem("cantaria_normal", normais(ALT_CANT, 3.0))
 material("cantaria", (1, 1, 1), 0.88, imagem("cantaria", TEX_CANT), normal=NRM_CANT, forca=0.7)
 material("cantaria_lisa", (0.70, 0.68, 0.63), 0.88)
-material("relva", (0.47, 0.52, 0.30), 0.97, imagem("grao_relva", textura_grao()))
+material("relva", (0.47, 0.52, 0.30), 0.97, imagem("grao_relva", textura_grao() * np.array([0.47, 0.52, 0.30])))
 material("sombra", (0.08, 0.075, 0.07), 1.0)
 material("cal", (0.93, 0.92, 0.88), 0.85)
 material("ocre", (0.90, 0.82, 0.60), 0.85)  # reboco creme-amarelado desbotado (Torre do Relógio, fotografia)
