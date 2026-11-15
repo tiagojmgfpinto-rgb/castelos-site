@@ -1328,11 +1328,13 @@ def porta_sao_francisco_fora(Q, sole):
 
 
 def porta_santo_antonio_dentro(Q, sole):
-    """Portas de Santo António, porta de dentro, na cortina (Street View de 10 nov.): frontispício de cantaria
-    com pilastras almofadadas, arco de volta perfeita com aduelas, as armas reais num painel por cima do arco
-    entre duas seteiras, entablamento com friso de tríglifos e cornija; SEM frontão nem guarita (a 0.1 tinha-os
-    por engano). O cordão da muralha corta a frontaria à altura da nascença; à direita, um postigo gradeado.
-    Ponte de alvenaria à frente (classe 26 do LiDAR)."""
+    """Portas de Santo António, porta de dentro, na cortina, vista de fora (da ponte de sete arcos): frontispício de
+    cantaria com pilastras almofadadas, arco de volta perfeita com aduelas, as armas reais num painel por cima do arco
+    entre duas seteiras, entablamento com friso de tríglifos e cornija e, por cima, o frontão triangular aberto com a
+    guarita redonda sentada no vértice. O Tiago confirmou (14 nov.) que a foto image 18 (Juliana Motta, 07/2022) é
+    tirada do lado de fora: a 0.2 tinha tirado o frontão e a guarita com base num Street View cortado em cima. À direita
+    de quem chega (sul), a janela gradeada logo acima do cordão e a chaminé quadrada da casa da guarda. Ponte de
+    alvenaria à frente (classe 26 do LiDAR)."""
     v = PORTAS["sa_dentro"]["vao"]
     r, omb = v["r"], v["omb"]
     tunel(Q, r, sole, omb, v["tunel"], v.get("sobe", 0.0))
@@ -1355,14 +1357,32 @@ def porta_santo_antonio_dentro(Q, sole):
     Q.bloco(-W - 0.1, W + 0.1, ze + 0.3, ze + 0.9, dt, 0.4, C_)
     for s_ in np.arange(-W + 0.1, W - 0.05, 0.75):
         Q.bloco(s_, s_ + 0.32, ze + 0.32, ze + 0.88, 0.4, 0.48, C_)
-    Q.bloco(-W - 0.3, W + 0.3, ze + 0.9, ze + 1.25, dt, 0.7, C_)
-    # postigo gradeado à direita (Street View)
-    Q.bloco(W + 2.6, W + 3.2, sole + omb + 0.4, sole + omb + 1.1, 0.0, 0.06, S_)
+    zc = ze + 1.25
+    Q.bloco(-W - 0.3, W + 0.3, ze + 0.9, zc, dt, 0.7, C_)
+    # frontão triangular aberto (revisão do perito e image 18): c. 6,8 m de largura e 1,6 m de altura sobre a cornija,
+    # tímpano liso recuado e as duas cornijas inclinadas em ressalto, interrompidas no vértice onde assenta a guarita
+    Wf, Hf = W + 0.3, 1.6
+    Q.placa([(-Wf + 0.35, zc), (Wf - 0.35, zc), (0.0, zc + Hf - 0.35)], dt, 0.3, C_)  # tímpano
+    abre = 0.75  # meia abertura do vértice
+    for sg in (-1, 1):
+        z_ab = zc + Hf * (1 - abre / Wf)
+        cornija = [(sg * Wf, zc), (sg * (Wf - 0.45), zc), (sg * abre, z_ab - 0.32), (sg * abre, z_ab)]
+        Q.placa(cornija, dt, 0.62, C_)
+    # pedestal e guarita redonda no vértice (r ≈ 0,65 m, corpo ≈ 1,9 m, com cornija e cúpula)
+    zv = zc + Hf - 0.45
+    Q.bloco(-abre + 0.05, abre - 0.05, zc + Hf * (1 - abre / Wf) - 0.3, zv, -0.9, 0.35, C_)
+    zg = guarita_redonda(Q.m, Q.p(0.0, zv, -0.3)[:2], zv, Q.n, r=0.65, h=1.9, misula=False)
+    # janela gradeada à direita de quem chega (sul: s negativo), logo acima do cordão, a c. 5,8 m do eixo
+    Q.bloco(-W - 3.2, -W - 2.6, sole + omb + 0.4, sole + omb + 1.1, 0.0, 0.06, S_)
     for k_ in range(4):
-        ss = W + 2.65 + k_ * 0.16
+        ss = -W - 3.15 + k_ * 0.16
         Q.bloco(ss, ss + 0.03, sole + omb + 0.4, sole + omb + 1.1, 0.06, 0.1, FER_)
+    # chaminé quadrada de cantaria da casa da guarda, a sul, recuada atrás do parapeito (c. 0,9 × 0,9 m, c. 2 m acima)
+    if getattr(Q, "topo", None) is not None:
+        Q.bloco(-W - 5.8, -W - 4.9, Q.topo - 1.0, Q.topo + 2.0, -3.4, -2.5, C_)
+        Q.bloco(-W - 5.9, -W - 4.8, Q.topo + 1.85, Q.topo + 2.05, -3.5, -2.4, C_)
     Q.bt = bt0
-    return ze + 1.25 - sole
+    return zg - sole
 
 
 def porta_santo_antonio_fora(Q, sole):

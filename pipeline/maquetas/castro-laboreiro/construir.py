@@ -29,6 +29,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # pipeline/, para 
 from kit.geometria import unit, area, densificar, dentro, distancia, desvio, mediana_movel, arco, arco_quebrado, _arred  # noqa: E402
 from kit.texturas import imagem  # noqa: E402
 from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
+from kit.silhares import textura_silhares  # noqa: E402
 from kit.cena import arvore_modelo  # noqa: E402
 from kit.arquitetura import piramide  # noqa: E402
 
@@ -796,13 +797,17 @@ for g in ["Terreno", "Afloramentos", "Castelo", "Cerca", "Portas", "Reduto", "Ve
     e.parent = RAIZ_OB
     GRUPOS[g] = e
 
-# Pedra fotografada (kit.fotos, fotos CC0 da Poly Haven; créditos em medidas.json "texturas_foto"), com o tom das
-# fotografias de Castro Laboreiro: silhares de granito cinzento-escuro em fiadas de c. 0,37 m, salpicados de
-# líquen (3 m por imagem); afloramentos de granito com líquen (4 m por imagem, UV em caixa), quase sem cor: o tom
-# vem da cor por vértice, como antes.
-TEX_PEDRA, _ALT_PEDRA = textura_foto("stone_brick_wall_001", n=1024, metros=3.0, cor=(0.57, 0.57, 0.55), contraste=1.3,
-                                     saturacao=0.6, variacao=0.12, metros_foto=3.0, liquen=0.12, semente=111)
-NRM_PEDRA = imagem("pedra_normal", normais(_ALT_PEDRA, 3.0))
+# Pedra: silhares desenhados um a um (kit.silhares, com o grão da foto de granito rock_01 da Poly Haven, CC0;
+# créditos em medidas.json "texturas_foto"). Revisão do perito (13 nov.): a foto dava blocos miúdos com manchas
+# azul-esbranquiçadas e repetia-se a cada 2,5 m. O real são silhares almofadados de arestas boleadas, em fiadas
+# regulares de 0,40–0,45 m e 0,7–1,2 m de comprimento, juntas fundas e escuras, cinzento médio a claro (#8f9291 ao sol),
+# crostas finas de líquen branco-acinzentado (3 m por imagem); afloramentos de granito com líquen (4 m por imagem, UV
+# em caixa), quase sem cor: o tom vem da cor por vértice, como antes.
+TEX_PEDRA, _ALT_PEDRA = textura_silhares(n=1024, metros=3.0, fiada=(0.40, 0.45), comp=(0.7, 1.2), cor=(0.57, 0.58, 0.575),
+                                         desvio=0.10, paleta=[((1.0, 1.0, 1.0), 0.8), ((1.02, 1.0, 0.97), 0.2)], junta_m=0.014,
+                                         junta_cor=(0.20, 0.20, 0.20), almofada=1.0, gasto_m=0.07, liquen=0.12,
+                                         liquen_cor=(0.80, 0.81, 0.79), semente=111)
+NRM_PEDRA = imagem("pedra_normal", normais(_ALT_PEDRA, 5.0))
 material("pedra", (1, 1, 1), 0.92, imagem("pedra", TEX_PEDRA), normal=NRM_PEDRA)
 material("sombra", (0.10, 0.09, 0.08), 1.0)
 material("cantaria", (0.72, 0.71, 0.67), 0.9, normal=NRM_PEDRA, forca=0.5)

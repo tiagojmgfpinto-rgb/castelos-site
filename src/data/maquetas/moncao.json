@@ -2,8 +2,8 @@
   "monumento": "moncao",
   "titulo": "Fortaleza de Monção",
   "variante": "estado-atual",
-  "versao": "0.4 provisória",
-  "data": "2026-11-14",
+  "versao": "0.5 provisória",
+  "data": "2026-11-15",
   "origem": {
     "lat": 42.07785,
     "lon": -8.4802,
@@ -36,7 +36,7 @@
   },
   "limitacoes": [
     "Não foi usada planta cotada. Em Monção os panos vêm em parte como edifício (classe 6) e os parapeitos como não classificados (classe 1) na nuvem de pontos, e o MDT da DGT apaga-os. O traçado corre sobre uma superfície feita com os pontos das classes 1, 2 e 6, dentro de uma faixa de 40 m à volta das linhas de muralha do OSM e fora das casas; ficam os degraus com terrapleno ou adarve do lado de dentro, ou junto às linhas do OSM (erro esperado de 0,5 a 1 m em planta). Os socalcos da margem do rio, os cortes das estradas e a encosta norte entre a vila e o rio (socalcos e o passadiço de madeira em ziguezague, vistos no ortofotomapa da DGT) foram tirados à mão.",
-    "Os panos são 143 peças com c. 6.2 km, de alvenaria em talude com cordão e parapeito; a altura acima do pé é medida metro a metro (mediana 6.4 m, máximo 19 m). Os terraplenos por trás dos panos vêm dos mesmos pontos. A alvenaria é uma textura de 8 m feita a partir das fotografias da Porta do Rosal: fiadas de 0,3 a 0,5 m e pedras de 0,45 a 1,1 m de comprido, medidas no Street View, granito bege, cinzento e cor de salmão com manchas de ferrugem, juntas fundas, líquenes e musgo. É igual em todos os panos. Canhoneiras e banquetas não se modelam.",
+    "Os panos são 143 peças com c. 6.2 km, de alvenaria em talude com cordão e parapeito; a altura acima do pé é medida metro a metro (mediana 6.4 m, máximo 19 m). Os terraplenos por trás dos panos vêm dos mesmos pontos. A alvenaria é desenhada pedra a pedra numa textura de 8 m, a partir das fotografias da Porta do Rosal: fiadas irregulares de 0,3 a 0,6 m e pedras de 0,4 a 1,2 m de comprido, medidas no Street View, granito bege, cinzento e cor de salmão com manchas de ferrugem, juntas fundas, líquenes e musgo. É igual em todos os panos. Canhoneiras e banquetas não se modelam.",
     "As guaritas ficam nos ângulos salientes com mais de 38° em panos altos (saem 24, mais a da Porta do Rosal). A forma segue as fotografias; não se mediu cada uma.",
     "As portas são vãos abertos nos panos, que continuam inteiros à volta. A Porta do Rosal, por fora (arco de granito de volta perfeita, túnel de c. 21 m e guarita sobre o cordão) e por dentro (contrafortes, lojas, arcos, escadas para o adarve e gradeamento), e a Porta de Salvaterra (frontispício com pilastras almofadadas, arco com impostas e fecho, entablamento e frontão curvo interrompido com tarja) seguem as fotografias, com a soleira e o topo dos panos medidos no LiDAR; as medidas dos arcos são aproximadas. As outras portas da obra de 1656 não estão no OSM e não foram modeladas.",
     "A Igreja Matriz e a Igreja da Misericórdia têm pegada, cumeeira e torre medidas no MDS; as fachadas seguem as fotografias, com medidas aproximadas. A fachada da Misericórdia está virada a norte, para o largo, como no ortofotomapa e no Street View. As outras igrejas e capelas da vila entram como casas.",

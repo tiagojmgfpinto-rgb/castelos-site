@@ -2,8 +2,8 @@
   "monumento": "lanhoso",
   "titulo": "Castelo de Lanhoso e Santuário de Nossa Senhora do Pilar",
   "variante": "estado-atual",
-  "versao": "0.4 provisória",
-  "data": "2026-11-14",
+  "versao": "0.5 provisória",
+  "data": "2026-11-15",
   "origem": {
     "lat": 41.58685,
     "lon": -8.281361,
@@ -32,11 +32,11 @@
   },
   "limitacoes": [
     "Não foi usada planta cotada. A planta da torre, da cerca, dos torreões e dos terraços foi traçada no LiDAR de 2025 (pontos de solo e de edifício em células de 25 cm) e conferida no ortofotomapa e nas fotografias; o erro esperado em planta é de 0,3 a 0,5 m. Os adarves têm a cota medida (moda dos pontos entre os merlões) e as faces descem a prumo.",
-    "Torre: 10,44 × 10,30 m, faces a 73,25° e 343,25°; adarve a 393,80 m, peitoril das ameias a 394,73 m, pontas dos merlões a 396,29 m e vértice do telhado a 395,56 m (LiDAR). Oito merlões por face e as seteiras em alguns merlões seguem as fotografias de drone. A porta alta na face NNO tem a soleira à cota do patamar da escada no LiDAR (387,73 m); a Wikipédia diz que o arco é quebrado e as fotografias, pequenas, não chegam para o confirmar: ficou de volta perfeita. As seteiras das faces são estimativas de posição.",
+    "Torre: 10,44 × 10,30 m, faces a 73,25° e 343,25°; adarve a 393,80 m, peitoril das ameias a 394,73 m, pontas dos merlões a 396,29 m e vértice do telhado a 395,56 m (LiDAR). Os oito merlões por face, esguios e de bico agudo (0,70 m de largura, pirâmide de c. 0,5 m), seguem as fotografias de drone. A porta alta na face NNO tem a soleira à cota do patamar da escada no LiDAR (387,73 m); a Wikipédia diz que o arco é quebrado e as fotografias, pequenas, não chegam para o confirmar: ficou de volta perfeita. As seteiras das faces são estimativas de posição.",
     "A porta do castelo está a poente da torre, entre os dois torreões (a Wikipédia diz 'a sul, junto à torre de menagem'); o arco quebrado, as portas verdes, o merlão sobre o arco, a escadaria e o penedo seguem as fotografias. O vão (1,55 m) e o arranque do arco são medidos à escala da escadaria; o penedo é um volume aproximado.",
     "As escadas de pedra dos adarves e do terraço norte e o muro baixo no bordo nascente do terreiro (traçado na crista estreita do LiDAR) são das fotografias, com a altura estimada. A barbacã a norte e o portão norte que a Wikipédia descreve não foram modelados (ficam abaixo, na encosta coberta de árvores, e não há fotografias).",
     "Santuário: nave de 19,2 × 10,8 m e capela-mor de 9,7 × 7,0 m, cumes a 390,5 e 386,6 m e adro a 377,95 m (LiDAR). A fachada (frontão, cruz, pináculos, nicho com a imagem, janelas e porta) segue a fotografia de frente, simplificada. A torre sineira e as capelas de remate em pirâmide ficam a sul do limite da folha do LiDAR e não foram feitas.",
-    "Pedra: granito cinzento liquenado em fiadas na torre, na cerca e no santuário (fotografias). O pátio é relvado, o terreiro é de saibro e lajes cinzentas e as grandes lajes de granito do monte estão onde o ortofotomapa as mostra claras e inclinadas; o resto da encosta ficou em erva verde.",
+    "Pedra: cantaria de granito cinzento liquenado em fiadas regulares na torre, nos torreões, na cerca e no santuário, desenhada silhar a silhar (fotografias). O pátio é relvado, o terreiro é de saibro e lajes cinzentas e as grandes lajes de granito do monte estão onde o ortofotomapa as mostra claras e inclinadas; o resto da encosta ficou em erva verde.",
     "As árvores estão nas posições e com as alturas do LiDAR (julho de 2025), com copas esquemáticas e afastadas dos muros e da torre; a nascente o LiDAR tem menos árvores do que o ortofotomapa de 2021. Os poucos edifícios à volta são volumes simples de um só cinzento.",
     "O geoportal do Município da Póvoa de Lanhoso não deixou consultar os ortofotomapas a partir daqui (acesso recusado); a conferência foi feita com o ortofotomapa de 2021 da DGT e com as fotografias enviadas. O Google Street View não chega ao interior do castelo."
   ],
@@ -95,7 +95,7 @@
       "grupo": "Torre",
       "estado": "estado-atual",
       "confianca": "alta",
-      "descricao": "Oito merlões por face, contando os dos cunhais, com remate piramidal; alguns têm uma seteira em arco. A bandeira nacional fica no mastro do lado sul.",
+      "descricao": "Oito merlões por face, contando os dos cunhais, esguios e de bico agudo. A bandeira nacional fica no mastro do lado sul.",
       "medidas": "Peitoril a 394,73 m, pontas a 396,29 m (LiDAR e fotografias de drone).",
       "fontes": [
         "lidar",

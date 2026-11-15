@@ -6,7 +6,7 @@ import numpy as np
 import shapely
 from .geometria import _retangulo, _sd, arco_pts, area, ccw, orientar, quad, simplificar, unit
 
-__all__ = ["Quadro", "_vao_desloc", "aduelas", "altura_telhado", "barra", "contorno_vao", "corrimao", "cupula", "faixa_inclinada", "guardas_corredor", "guarita", "merlao", "oitavado", "painel", "parede", "passagem", "piramide", "porta_revelim", "porta_tunel", "telhado_4aguas", "telhado_generico", "tunel", "vao"]
+__all__ = ["Quadro", "_vao_desloc", "aduelas", "altura_telhado", "barra", "contorno_vao", "corrimao", "cupula", "faixa_inclinada", "guardas_corredor", "guarita", "merlao", "merlao_boleado", "oitavado", "painel", "parede", "passagem", "piramide", "porta_revelim", "porta_tunel", "telhado_4aguas", "telhado_generico", "tunel", "vao"]
 
 
 class Quadro:
@@ -304,6 +304,28 @@ def merlao(m, base, z0, z1, zp, mat, seteira=None):
     base = ccw(base)
     m.prisma(base, z0, z1, mat, topo=False)
     m.piramide(base, z1, zp, mat)
+
+
+def merlao_boleado(m, base, z0, z1, zp, mat, k=10, bico=0.3):
+    """Merlão de remate boleado: prisma de z0 a z1 e, por cima, um arco extrudido até zp, com o arco na face de fora.
+    bico = 0 dá meia-volta; bico > 0 dá a ogiva boleada (arco de dois centros, com ponta). base = [a, b, c, d]: a–b a
+    face de fora, d–c a de dentro (Montalegre, torre de sueste)."""
+    a, b, c, d = [np.asarray(p, float) for p in base]
+    m.prisma(ccw(base), z0, z1, mat, topo=False)
+    t = np.linspace(-1, 1, k + 1)
+    y0 = math.sqrt(1 - (bico / (1 + bico)) ** 2)
+    alt = [math.sqrt(max(0.0, 1 - ((abs(x) + bico) / (1 + bico)) ** 2)) / y0 for x in t]
+    fr = [(*(a + (b - a) * (0.5 + 0.5 * x)), z1 + (zp - z1) * h) for x, h in zip(t, alt)]
+    tr = [(*(d + (c - d) * (0.5 + 0.5 * x)), z1 + (zp - z1) * h) for x, h in zip(t, alt)]
+    ref = np.array([*(np.cross([*(b - a), 0], [0, 0, 1])[:2]), 0.0])  # para fora da face a–b
+    m.face(orientar(fr, ref), mat)
+    m.face(orientar(tr, -ref), mat)
+    e = (b - a) / max(np.linalg.norm(b - a), 1e-9)
+    for i in range(k):
+        dz = fr[i + 1][2] - fr[i][2]
+        ds = float(np.linalg.norm(np.array(fr[i + 1][:2]) - np.array(fr[i][:2])))
+        nrm = np.array([-e[0] * dz, -e[1] * dz, ds])  # perpendicular à aresta do arco, para cima/fora
+        m.face(orientar([fr[i], fr[i + 1], tr[i + 1], tr[i]], nrm), mat)
 
 
 def oitavado(m, c, r0, r1, z0, z1, mat, rot=math.pi / 8):

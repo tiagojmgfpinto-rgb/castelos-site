@@ -14,7 +14,7 @@
   },
   "adarve": 393.8,
   "peitoril": 394.73,
-  "merlao": 395.79,
+  "merlao": 395.77,
   "pontas": 396.29,
   "cume": 395.56,
   "porta": 387.73,
@@ -30,7 +30,7 @@
  },
  "cerca": {
   "area_m2": 173.6,
-  "merloes": 26,
+  "merloes": 29,
   "adarves": {
    "torreoes": 387.58,
    "poente": 386.95,
@@ -180,18 +180,18 @@
   ]
  },
  "texturas_foto": {
-  "old_stone_wall": {
-   "titulo": "Old Stone Wall",
+  "rock_01": {
+   "titulo": "Rock 01",
    "autores": [
-    "Charlotte Baglioni"
+    "Rob Tuytel"
    ],
    "licenca": "CC0 1.0 (domínio público)",
-   "pagina": "https://polyhaven.com/a/old_stone_wall",
+   "pagina": "https://polyhaven.com/a/rock_01",
    "metros": [
-    2.0,
-    2.0
+    1.5,
+    1.5
    ],
-   "uso": "alvenaria de pedra irregular (muralhas, cercas, muros)"
+   "uso": "granito em afloramento (penedos e rocha à vista)"
   },
   "roof_09": {
    "titulo": "Roof 09",
@@ -205,20 +205,6 @@
     4.0
    ],
    "uso": "telha de canudo velha (telhados dos monumentos)"
-  },
-  "stone_brick_wall_001": {
-   "titulo": "Stone Brick Wall 001",
-   "autores": [
-    "Dimitrios Savva",
-    "Rico Cilliers"
-   ],
-   "licenca": "CC0 1.0 (domínio público)",
-   "pagina": "https://polyhaven.com/a/stone_brick_wall_001",
-   "metros": [
-    2.5,
-    2.5
-   ],
-   "uso": "cantaria de silhares grandes e rústicos (torres, cubelos)"
   }
  }
 }
