@@ -928,19 +928,18 @@
    ],
    "uso": "alvenaria de pedra irregular (muralhas, cercas, muros)"
   },
-  "stone_brick_wall_001": {
-   "titulo": "Stone Brick Wall 001",
+  "rock_01": {
+   "titulo": "Rock 01",
    "autores": [
-    "Dimitrios Savva",
-    "Rico Cilliers"
+    "Rob Tuytel"
    ],
    "licenca": "CC0 1.0 (domínio público)",
-   "pagina": "https://polyhaven.com/a/stone_brick_wall_001",
+   "pagina": "https://polyhaven.com/a/rock_01",
    "metros": [
-    2.5,
-    2.5
+    1.5,
+    1.5
    ],
-   "uso": "cantaria de silhares grandes e rústicos (torres, cubelos)"
+   "uso": "granito em afloramento (penedos e rocha à vista)"
   }
  }
 }

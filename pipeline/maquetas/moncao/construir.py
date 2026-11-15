@@ -36,6 +36,7 @@ from kit.geometria import unit, area, densificar, dentro, simplificar, mediana_m
 from kit.texturas import ruido, fbm, imagem  # noqa: E402
 from kit.cena import Obra, arvore_modelo  # noqa: E402
 from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
+from kit.silhares import textura_silhares  # noqa: E402
 from kit import passagens  # noqa: E402
 from kit.arquitetura import _vao_desloc, altura_telhado, barra, cupula, faixa_inclinada, guardas_corredor, guarita, oitavado, porta_tunel, telhado_4aguas, telhado_generico  # noqa: E402
 
@@ -2301,15 +2302,21 @@ for g in ["Terreno", "Muralhas", "Guaritas", "Portas", "Igrejas", "Vila", "Veget
     e.parent = RAIZ_OB
     GRUPOS[g] = e
 
-# Pedra fotografada (kit.fotos, fotos CC0 da Poly Haven; créditos em medidas.json "texturas_foto"), com o tom
-# medido nas fotografias de Monção (granito bege rosado). A alvenaria cobre 8 m (UV de 4 m com escala 0,5):
-# duas fotos de 4 m, fiadas de c. 0,3–0,5 m como no Street View da Porta do Rosal.
-TEX_ALV, ALT_ALV = textura_foto("old_stone_wall", n=1024, metros=8.0, cor=(0.66, 0.57, 0.49), contraste=0.9, metros_foto=4.0,
-                                saturacao=1.0, liquen=0.06, semente=41)
-NRM_ALV = imagem("alvenaria_normal", normais(ALT_ALV, 2.5))
+# Pedra: alvenaria desenhada pedra a pedra (kit.silhares, com o grão da foto de granito rock_01 da Poly Haven, CC0;
+# créditos em medidas.json "texturas_foto"). Revisão do perito (13 nov.): a foto recolorida tinha o tom médio certo mas
+# desvio RGB 9–10 contra 35–59 nas fotos, e parecia calhau rolado de 0,3–0,4 m. No Street View da Porta do Rosal: blocos
+# de 0,4–1,2 m em fiadas irregulares, pedras salmão vivo (#c88a6a) ao lado de cinzento-claro (#b9b4aa), juntas fundas e
+# escuras, líquen e musgo. A alvenaria cobre 8 m (UV de 4 m com escala 0,5).
+PAL_MONCAO = [((1.0, 1.0, 1.0), 0.42), ((1.12, 0.96, 0.88), 0.13), ((0.97, 1.01, 1.06), 0.27), ((0.84, 0.84, 0.84), 0.18)]
+TEX_ALV, ALT_ALV = textura_silhares(n=2048, metros=8.0, fiada=(0.35, 0.70), comp=(0.4, 1.2), cor=(0.60, 0.545, 0.49), desvio=0.18,
+                                    paleta=PAL_MONCAO, junta_m=0.025, junta_cor=(0.25, 0.22, 0.20), gasto_m=0.05, liquen=0.06,
+                                    escorrencias=0.3, irregular=0.20, semente=41)
+NRM_ALV = imagem("alvenaria_normal", normais(ALT_ALV, 5.0))
 material("alvenaria", (1, 1, 1), 0.93, imagem("alvenaria", TEX_ALV), normal=NRM_ALV, escala=0.5)  # textura de 8 m nos UV de 4 m
-TEX_CANT, ALT_CANT = textura_foto("stone_brick_wall_001", n=1024, metros=3.0, cor=(0.68, 0.63, 0.56), contraste=0.9,
-                                  metros_foto=3.0, liquen=0.05, semente=42)
+# cantaria das portas, guaritas e igrejas: silhares em fiadas de c. 0,45 m com juntas finas da cor da pedra (#6e675e;
+# o perito viu juntas pretas largas "como numa ilustração")
+TEX_CANT, ALT_CANT = textura_silhares(n=1024, metros=3.0, fiada=(0.40, 0.50), comp=(0.6, 1.2), cor=(0.68, 0.63, 0.56), desvio=0.08,
+                                      paleta=PAL_MONCAO[:3], junta_m=0.012, junta_cor=(0.43, 0.40, 0.37), liquen=0.05, semente=42)
 NRM_CANT = imagem("cantaria_normal", normais(ALT_CANT, 3.0))
 material("cantaria", (1, 1, 1), 0.88, imagem("cantaria", TEX_CANT), normal=NRM_CANT, forca=0.7)
 material("cantaria_lisa", (0.70, 0.68, 0.63), 0.88)

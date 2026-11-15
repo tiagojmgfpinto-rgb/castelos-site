@@ -49,6 +49,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # pipeline/, para 
 from kit.geometria import ccw, orientar, normais, amostra, quad, arco_pts, ogiva, redondo, reto, _sd, _anc  # noqa: E402
 from kit.texturas import ruido, fbm, textura_cantaria, textura_cubos, textura_relva, textura_rocha, textura_telha, textura_terra, imagem  # noqa: E402
 from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
+from kit.silhares import textura_silhares  # noqa: E402
 from kit.cena import uv_mundo  # noqa: E402
 from kit.materiais import MATS, malha_rapida, material  # noqa: E402
 from kit.arquitetura import aduelas, contorno_vao, corrimao, merlao, painel, parede, passagem, tunel, vao  # noqa: E402
@@ -341,9 +342,9 @@ def parapeito(m, linha, pol, z0, z_sill, esp, mat, mat_topo, ameias=None, fechad
             n_m += 1
             st = ameias.get("seteiras")
             if st and (j % st == 1) and 0.2 < s < L - 0.2:
-                # seteira em arco no pé do merlão, para fora (fotografias: buraco escuro de c. 0,2 × 0,35 m)
+                # abertura em arco na base do merlão, para fora (foto 13: c. 0,45 × 0,55 m)
                 f = Plano(c, t, n=-nn)
-                cont = redondo(0.0, 0.2, z_sill + 0.05, 0.22, k=6)
+                cont = redondo(0.0, 0.45, z_sill, 0.32, k=8)
                 m.face(orientar([f.p(s_, 0.01, z_) for s_, z_ in cont], np.array([-nn[0], -nn[1], 0])), "sombra")
     return n_m
 
@@ -370,24 +371,28 @@ for g in ["Terreno", "Torre", "Muralhas", "Santuario", "Envolvente", "Vegetacao"
 # silhares grandes em fiadas de 0,30 a 0,45 m na torre; a cerca e os torreões em silhares mais irregulares.
 PAL_T = np.array([(0.600, 0.595, 0.570), (0.660, 0.655, 0.630), (0.530, 0.525, 0.505), (0.615, 0.590, 0.545),
                   (0.570, 0.570, 0.560)])
-# Pedra fotografada (kit.fotos, fotos CC0 da Poly Haven; créditos em medidas.json "texturas_foto"), com o tom das
-# fotografias de Lanhoso. Com uv=3,0 e escala=0,5 cada imagem cobre 6 m: torre em silhares (2 fotos de 3 m, fiadas
-# de c. 0,37 m); cerca em alvenaria de pedras maiores e irregulares (1 foto de 6 m, fiadas de c. 0,4 m).
-TEX, ALT = textura_foto("stone_brick_wall_001", metros=6.0, cor=(0.59, 0.58, 0.555), contraste=1.35, saturacao=0.8, variacao=0.15, metros_foto=3.0,
-                        liquen=0.10, semente=81)
-material("cantaria_torre", (1, 1, 1), 0.9, imagem("cantaria_torre", TEX), normal=imagem("cantaria_torre_n", normais(ALT, 3.0)),
+# Pedra: silhares desenhados um a um (kit.silhares, com o grão da foto de granito rock_01 da Poly Haven, CC0;
+# créditos em medidas.json "texturas_foto"). Revisão do perito (13 nov.): os torreões, o muro da porta, a cerca e os
+# socalcos não são alvenaria de pedras redondas mas cantaria em fiadas regulares (DGEMN), silhares de 0,35–0,50 m
+# de altura por 0,5–1,1 m, juntas finas, granito #9a958a com musgo em baixo; a torre tem manchas alaranjadas de
+# líquen (#c07a3a) nas faces SE/ENE. Com uv=3,0 e escala=0,5 cada imagem cobre 6 m.
+PAL_LANHOSO = [((1.0, 1.0, 1.0), 0.62), ((1.04, 1.0, 0.93), 0.18), ((0.95, 0.96, 0.98), 0.12), ((1.03, 0.97, 0.94), 0.08)]
+TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.30, 0.45), comp=(0.6, 1.2), cor=(0.59, 0.575, 0.545), desvio=0.15,
+                            paleta=PAL_LANHOSO, liquen=0.05, liquen_cor=(0.75, 0.48, 0.23), oxido=0.03, escorrencias=0.35, semente=81)
+material("cantaria_torre", (1, 1, 1), 0.9, imagem("cantaria_torre", TEX), normal=imagem("cantaria_torre_n", normais(ALT, 4.0)),
          forca=0.8, escala=0.5, vcor=True)
-TEX, ALT = textura_foto("old_stone_wall", metros=6.0, cor=(0.60, 0.595, 0.57), contraste=0.95, metros_foto=6.0,
-                        liquen=0.10, semente=82)
-material("muro", (1, 1, 1), 0.92, imagem("muro", TEX), normal=imagem("muro_n", normais(ALT, 3.2)), forca=0.9, escala=0.5, vcor=True)
-TEX, ALT = textura_foto("old_stone_wall", metros=6.0, cor=(0.59, 0.59, 0.56), contraste=0.95, metros_foto=6.0,
-                        liquen=0.12, semente=83, rodar=True)
-material("muro_topo", (1, 1, 1), 0.95, imagem("muro_topo", TEX), normal=imagem("muro_topo_n", normais(ALT, 3.5)), forca=1.0, escala=0.5, vcor=True)
+TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.35, 0.50), comp=(0.5, 1.1), cor=(0.60, 0.585, 0.54), desvio=0.17,
+                            paleta=PAL_LANHOSO, liquen=0.07, oxido=0.03, escorrencias=0.3, irregular=0.02, semente=82)
+material("muro", (1, 1, 1), 0.92, imagem("muro", TEX), normal=imagem("muro_n", normais(ALT, 4.0)), forca=0.9, escala=0.5, vcor=True)
+# topo dos muros e adarve: lajeado de pedras grandes (0,6–1,0 m; foto 14 do adarve poente)
+TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.55, 0.95), comp=(0.6, 1.0), cor=(0.59, 0.585, 0.55), desvio=0.15,
+                            paleta=PAL_LANHOSO, liquen=0.10, irregular=0.08, semente=83)
+material("muro_topo", (1, 1, 1), 0.95, imagem("muro_topo", TEX), normal=imagem("muro_topo_n", normais(ALT, 4.0)), forca=1.0, escala=0.5, vcor=True)
 # santuário: cantaria de granito mais regular e mais clara (fachada de 1680, fotografia de frente)
 PAL_I = np.array([(0.640, 0.635, 0.610), (0.690, 0.685, 0.660), (0.585, 0.580, 0.560), (0.650, 0.630, 0.590)])
-TEX, ALT = textura_foto("stone_brick_wall_001", metros=6.0, cor=(0.655, 0.65, 0.625), contraste=0.8, metros_foto=3.0,
-                        liquen=0.05, semente=84)
-material("cantaria_igreja", (1, 1, 1), 0.88, imagem("cantaria_igreja", TEX), normal=imagem("cantaria_igreja_n", normais(ALT, 2.0)),
+TEX, ALT = textura_silhares(n=1536, metros=6.0, fiadas_fixas=[0.45], comp=(0.7, 1.3), cor=(0.655, 0.65, 0.625), desvio=0.08,
+                            junta_m=0.008, junta_cor=(0.45, 0.44, 0.42), liquen=0.03, semente=84)
+material("cantaria_igreja", (1, 1, 1), 0.88, imagem("cantaria_igreja", TEX), normal=imagem("cantaria_igreja_n", normais(ALT, 2.5)),
          forca=0.5, escala=0.5, vcor=True)
 material("cantaria_lisa", (0.47, 0.465, 0.445), 0.85)
 material("intradorso", (0.36, 0.355, 0.34), 0.95)
@@ -483,7 +488,10 @@ for _nm, (_a, _b) in {"ENE": (1, 0), "NNO": (0, 1), "OSO": (-1, 0), "SSE": (0, -
     CHAO_T[_nm] = round(float(np.percentile(PT[_s, 2], 30)), 2)
 ESP_PAR = 0.70           # espessura do parapeito (fotografia de drone)
 N_MERL = 8               # merlões por face, contando os dos cunhais (fotografia de drone)
-LM = 0.72                # largura dos merlões
+# merlões esguios de bico agudo (revisão do perito, fotos 07 e 04): 0,70 m de largura, pirâmide de c. 0,52 m (3/4 da
+# largura) até às pontas do LiDAR; o corpo vai do peitoril ao arranque da pirâmide (c. 1,0 m)
+LM = 0.70                # largura dos merlões
+Z_MERLAO = round(Z_PONTA - 0.52, 2)
 Z_SOL_PORTA = 383.1      # soleira da porta do castelo (LiDAR)
 Z_PORTA = 387.73         # soleira da porta da face NNO = patamar da escada (LiDAR)
 print("torre: adarve", Z_ADARVE, "peitoril", Z_SILL, "merlões", Z_MERLAO, Z_PONTA, "cume", Z_CUME, "chão", CHAO_T)
@@ -570,11 +578,7 @@ def torre():
             if k == 0:  # cunhal: merlão quadrado
                 base = [f.xy(s0, 0.0), f.xy(s0 + ESP_PAR, 0.0), f.xy(s0 + ESP_PAR, -ESP_PAR), f.xy(s0, -ESP_PAR)]
             merlao(m, base, Z_SILL, Z_MERLAO, Z_PONTA, 0)
-            nm += 1
-            if k in (2, 5):  # seteira em arco no pé de alguns merlões (fotografia de drone)
-                sc = s0 + LM / 2
-                cont = redondo(sc, 0.2, Z_SILL + 0.08, 0.22, k=6)
-                m.face(orientar([f.p(s_, 0.012, z_) for s_, z_ in cont], np.array([f.n[0], f.n[1], 0])), 2)
+            nm += 1  # sem seteiras: as fotos da torre não as mostram (revisão do perito)
     # telhado de quatro águas de telha por dentro do adarve, com o rufo de cumeeira
     beiral = [W(-rb_u, -rb_v), W(rb_u, -rb_v), W(rb_u, rb_v), W(-rb_u, rb_v)]
     zb = Z_ADARVE + 0.08
@@ -649,8 +653,11 @@ def cerca():
     - muralha norte e baluarte NE: adarve a 386,35 m e parapeito liso de 0,9 m pelo lado de fora (LiDAR: 387,3);
     - muralha nascente: adarve a 386,0 m e rebordo baixo (LiDAR: 386,4)."""
     m = Malha(["muro", "muro_topo", "cantaria_lisa", "sombra"])
-    amei_torreoes = {"larg": 0.70, "passo": 1.30, "z1": 389.25, "zp": 389.95, "seteiras": 3}
-    amei_poente = {"larg": 0.70, "passo": 1.30, "z1": 388.65, "zp": 389.30, "seteiras": 3}
+    # merlões da cerca e dos torreões (revisão do perito, fotos 13, 14 e 20): 0,65 m de largura, corpo de c. 1,1 m
+    # (2–3 silhares) e pirâmide aguda de 0,6 m; ameias de 0,45 m (passo de c. 1,1 m); nos torreões sem seteiras, no
+    # pano poente uma abertura em arco na base em 1 de cada 4 merlões (c. 0,45 × 0,55 m)
+    amei_torreoes = {"larg": 0.65, "passo": 1.10, "z1": 389.60, "zp": 390.20}
+    amei_poente = {"larg": 0.65, "passo": 1.10, "z1": 389.15, "zp": 389.75, "seteiras": 4}
     zb = {}
     for k in POL:
         zb[k] = chao_min(POL[k]) - 0.8
@@ -666,11 +673,14 @@ def cerca():
     ts = C.TORREAO_SUL
     n_m += parapeito(m, WL([(-5.22, 2.55), (-11.75, 2.55), (-11.75, 6.1), (-7.3, 6.1)]), POL["torreao_sul"], C.Z_TORREOES, 388.55, 0.62, 0, 1, amei_torreoes)
     n_m += parapeito(m, WL([(-7.3, 8.3), (-11.35, 8.45), (-11.35, 11.2), (-10.6, 12.05), (-6.85, 12.0)]), POL["torreao_norte"], C.Z_TORREOES, 388.55, 0.62, 0, 1, amei_torreoes)
-    # muro da porta: um merlão a meio, por cima do arco (fotografias de frente), e o parapeito
+    # muro da porta: um merlão a meio, por cima do arco, e o parapeito. Revisão do perito (fotos 09, 10 e 12): prisma
+    # de 0,7 m com remate piramidal de 4 faces (c. 1,5 m ao todo) e uma seteira pequena em cruzeta
     n_m += parapeito(m, WL([(-7.3, 6.1), (-7.3, 8.3)]), POL["muro_porta"], C.Z_TORREOES, 388.55, 0.62, 0, 1, None)
     fpm = Plano(W(-7.3, 7.2), EV, n=-EU)
-    merlao(m, [fpm.xy(-0.4, 0), fpm.xy(0.4, 0), fpm.xy(0.4, -0.62), fpm.xy(-0.4, -0.62)], 388.55, 389.3, 389.95, 0)
-    m.face(orientar([fpm.p(s_, 0.012, z_) for s_, z_ in redondo(0.0, 0.18, 388.65, 0.25, k=6)], np.array([-EU[0], -EU[1], 0])), 3)
+    merlao(m, [fpm.xy(-0.35, 0), fpm.xy(0.35, 0), fpm.xy(0.35, -0.62), fpm.xy(-0.35, -0.62)], 388.55, 389.55, 390.05, 0)
+    nf = np.array([-EU[0], -EU[1], 0])
+    for s0_, s1_, z0_, z1_ in ((-0.06, 0.06, 388.75, 389.10), (-0.125, 0.125, 388.92, 388.98)):
+        m.face(orientar([fpm.p(s0_, 0.012, z0_), fpm.p(s1_, 0.012, z0_), fpm.p(s1_, 0.012, z1_), fpm.p(s0_, 0.012, z1_)], nf), 3)
     n_m += 1
     # ---- cerca (muralhas poente, norte, nascente e baluarte), em troços com o adarve de cada um
     cer = POL["cerca"]

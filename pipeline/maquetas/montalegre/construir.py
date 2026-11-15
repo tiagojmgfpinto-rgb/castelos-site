@@ -28,10 +28,11 @@ import comum as C  # noqa: E402
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # pipeline/, para o kit comum
 from kit.geometria import ccw, orientar, normais, amostra, quad, arco_pts, ogiva, redondo, reto, _sd, _anc  # noqa: E402
 from kit.texturas import ruido, fbm, textura_cantaria, textura_cubos, textura_relva, textura_rocha, textura_telha, textura_terra, imagem  # noqa: E402
-from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
-from kit.cena import uv_mundo  # noqa: E402
+from kit.fotos import fontes_fotos  # noqa: E402
+from kit.silhares import textura_silhares  # noqa: E402
+from kit.cena import cor_vertices, uv_mundo  # noqa: E402
 from kit.materiais import MATS, malha_rapida, material  # noqa: E402
-from kit.arquitetura import aduelas, contorno_vao, corrimao, merlao, painel, parede, passagem, tunel, vao  # noqa: E402
+from kit.arquitetura import aduelas, contorno_vao, corrimao, merlao, merlao_boleado, painel, parede, passagem, tunel, vao  # noqa: E402
 
 _cfg = RAIZ / "src" / "data" / "maquetas" / "montalegre.json"
 CFG = json.loads(_cfg.read_text()) if _cfg.exists() else {"origem": {"lat": C.LAT0, "lon": C.LON0}, "variante": "estado-atual", "versao": "0.1"}
@@ -185,12 +186,8 @@ class Malha:
         ob.parent = pai
         if uv:
             uv_mundo(ob, uv)
-        if vcor is not None:  # cor por vértice (patine da pedra), multiplicada pela textura
-            co = np.empty(len(me.vertices) * 3)
-            me.vertices.foreach_get("co", co)
-            cv = vcor(co.reshape(-1, 3))
-            at = me.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
-            at.data.foreach_set("color", np.concatenate([cv, np.ones((len(cv), 1))], 1).astype(np.float32).ravel())
+        if vcor is not None:  # patine da pedra, multiplicada pela textura
+            cor_vertices(me, vcor)
         return ob
 
 
@@ -350,19 +347,25 @@ for g in ["Terreno", "Torre", "Torres", "Muralhas", "Envolvente", "Vegetacao"]:
 # irregular na cerca (fotografias de 2005, 2018 e 2023).
 PAL_T = np.array([(0.560, 0.555, 0.530), (0.600, 0.592, 0.565), (0.515, 0.512, 0.495), (0.575, 0.556, 0.520),
                   (0.535, 0.540, 0.522)])
-# Pedra fotografada (kit.fotos, fotos CC0 da Poly Haven; créditos em medidas.json "texturas_foto"), com o tom das
-# fotografias de Montalegre. Com uv=3,0 e escala=0,5 cada imagem cobre 6 m: torres em silhares (2 fotos de 3 m,
-# fiadas de c. 0,37 m), cerca em alvenaria irregular.
-TEX, ALT = textura_foto("stone_brick_wall_001", metros=6.0, cor=(0.56, 0.553, 0.525), contraste=1.35, saturacao=0.8, variacao=0.15,
-                        metros_foto=3.0, liquen=0.10, semente=101)
-material("cantaria_torre", (1, 1, 1), 0.9, imagem("cantaria_torre", TEX), normal=imagem("cantaria_torre_n", normais(ALT, 3.0)),
+# Pedra: silhares desenhados um a um (kit.silhares, com o grão da foto de granito rock_01 da Poly Haven, CC0;
+# créditos em medidas.json "texturas_foto"). Revisão do perito (13 nov.): a cerca não é alvenaria de "seixos" mas
+# silhares de granito em fiadas horizontais regulares (c. 0,40 m, blocos de 0,6–1,2 m), juntas avermelhadas de óxido,
+# musgo e líquen amarelo-alaranjado; o granito das torres é cinzento quente com ocre (#958a7e), sem manchas brancas.
+# Com uv=3,0 e escala=0,5 cada imagem cobre 6 m.
+PAL_MONTALEGRE = [((1.0, 1.0, 1.0), 0.6), ((1.025, 1.0, 0.95), 0.2), ((0.97, 0.98, 0.99), 0.12), ((1.03, 0.98, 0.94), 0.08)]
+LIQUEN_LARANJA = (0.78, 0.60, 0.36)
+TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.30, 0.45), comp=(0.6, 1.2), cor=(0.60, 0.555, 0.51), desvio=0.09,
+                            paleta=PAL_MONTALEGRE, liquen=0.05, liquen_cor=LIQUEN_LARANJA, oxido=0.05, escorrencias=0.35, semente=101)
+material("cantaria_torre", (1, 1, 1), 0.9, imagem("cantaria_torre", TEX), normal=imagem("cantaria_torre_n", normais(ALT, 4.0)),
          forca=0.8, escala=0.5, vcor=True)
-TEX, ALT = textura_foto("old_stone_wall", metros=6.0, cor=(0.56, 0.553, 0.525), contraste=1.0, metros_foto=3.0,
-                        liquen=0.10, semente=102)
-material("muro", (1, 1, 1), 0.93, imagem("muro", TEX), normal=imagem("muro_n", normais(ALT, 3.4)), forca=0.95, escala=0.5, vcor=True)
-TEX, ALT = textura_foto("old_stone_wall", metros=6.0, cor=(0.55, 0.55, 0.52), contraste=0.95, metros_foto=3.0,
-                        liquen=0.12, semente=103, rodar=True)
-material("muro_topo", (1, 1, 1), 0.95, imagem("muro_topo", TEX), normal=imagem("muro_topo_n", normais(ALT, 3.5)), forca=1.0, escala=0.5, vcor=True)
+TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.34, 0.46), comp=(0.6, 1.2), cor=(0.58, 0.55, 0.51), desvio=0.11,
+                            paleta=PAL_MONTALEGRE, junta_cor=(0.36, 0.27, 0.22), liquen=0.07, liquen_cor=LIQUEN_LARANJA,
+                            oxido=0.06, escorrencias=0.3, irregular=0.04, semente=102)
+material("muro", (1, 1, 1), 0.93, imagem("muro", TEX), normal=imagem("muro_n", normais(ALT, 4.0)), forca=0.95, escala=0.5, vcor=True)
+TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.40, 0.65), comp=(0.5, 1.0), cor=(0.56, 0.54, 0.50), desvio=0.10,
+                            paleta=PAL_MONTALEGRE, junta_cor=(0.36, 0.27, 0.22), liquen=0.10, liquen_cor=LIQUEN_LARANJA,
+                            irregular=0.06, semente=103)
+material("muro_topo", (1, 1, 1), 0.95, imagem("muro_topo", TEX), normal=imagem("muro_topo_n", normais(ALT, 4.0)), forca=1.0, escala=0.5, vcor=True)
 material("cantaria_lisa", (0.50, 0.495, 0.47), 0.85)
 material("intradorso", (0.34, 0.335, 0.32), 0.95)
 material("sombra", (0.04, 0.04, 0.04), 1.0)
@@ -395,14 +398,16 @@ material("agua", (0.10, 0.12, 0.11), 0.3)
 MEDIDAS = {}
 
 
-def patine_torre(co):
-    """A cantaria escurece para o alto e nos cunhais (líquenes e escorrências) e junto ao chão (musgo)."""
+def patine_torre(co, nrm):
+    """A cantaria escurece para o alto e nos cunhais (líquenes e escorrências) e junto ao chão (musgo). Revisão do
+    perito (foto 05d9): as faces norte e poente são cinzento-negras, 25–35 % mais escuras e mais frias que as do sul."""
     x, y, z = co[:, 0], co[:, 1], co[:, 2]
     g = fbm(x * 0.7 + 300, y * 0.7 + z * 0.6, 4.0, 77)
     g2 = fbm(x * 2.0 + z * 0.15, y * 2.0 - z * 0.15, 3.0, 91)       # escorrências verticais
-    v = 0.90 + 0.18 * g - 0.10 * np.clip((g2 - 0.55) * 3, 0, 1)
+    v = 0.92 + 0.12 * g - 0.10 * np.clip((g2 - 0.55) * 3, 0, 1)
     pe = np.clip(1 - (z - cota(x, y)) / 1.6, 0, 1) * 0.18
-    c = np.stack([v, v * 1.005, v * 0.985], 1)
+    norte = np.clip(np.maximum(nrm[:, 1], -nrm[:, 0]), 0, 1)  # face a norte (y+) ou a poente (x-)
+    c = np.stack([v, v * 1.005, v * 0.985], 1) * (1 - norte[:, None] * np.array([0.32, 0.30, 0.27]))
     return np.clip(c * (1 - pe)[:, None], 0, 1)
 
 
@@ -489,7 +494,7 @@ def corpo(m, T, z0, z1, vaos=None, mat=0, mat_vao="cantaria_lisa"):
 
 def coroamento(m, T, esp, z_adarve, z_sill, merl=None, mat=0, mat_topo="cantaria_lisa", mat_chao="muro_topo"):
     """Parapeito de espessura esp por cima das faces (de z_adarve a z_sill), o adarve por dentro e os merlões:
-    merl = dict(n=por face contando os dos cunhais, larg, z1, zp)."""
+    merl = dict(n=por face contando os dos cunhais, larg, z1, zp[, boleado]); boleado=True dá o remate em meia-volta."""
     fs = T.faces()
     qo = T.rect(T.mu, T.mv)
     qi = T.rect(T.mu - esp, T.mv - esp)
@@ -511,7 +516,10 @@ def coroamento(m, T, esp, z_adarve, z_sill, merl=None, mat=0, mat_topo="cantaria
                 else:
                     sc = -meia + esp / 2 + j * passo
                     base = [f.xy(sc - w / 2, 0.0), f.xy(sc + w / 2, 0.0), f.xy(sc + w / 2, -esp), f.xy(sc - w / 2, -esp)]
-                merlao(m, base, z_sill, merl["z1"], merl["zp"], mat)
+                if merl.get("boleado"):
+                    merlao_boleado(m, base, z_sill, merl["z1"], merl["zp"], mat)
+                else:
+                    merlao(m, base, z_sill, merl["z1"], merl["zp"], mat)
                 n += 1
     return n
 
@@ -680,7 +688,9 @@ def setor(a0, a1, r0=8.0, r1=30.0, passo=1.0):
 # ---------------------------------------------------------------- torre de menagem
 
 TM = Torre("menagem")
-Z_ADARVE_TM, Z_SILL_TM, Z_M1_TM, Z_MP_TM = 1037.53, 1038.35, 1039.05, 1039.72
+# merlões da torre de menagem (revisão do perito, fotos 2020_14 e 2020_08): corpo baixo (0,45 m) e pirâmide alta e aguda
+# (0,95 m, mais alta do que a largura); a cota das pontas no LiDAR mantém-se
+Z_ADARVE_TM, Z_SILL_TM, Z_M1_TM, Z_MP_TM = 1037.53, 1038.35, 1038.80, 1039.75
 Z_PLAT = 1017.60     # patamar de pedra da porta (face sul), estimado nas fotografias
 D_PLAT = 1.25        # fundura do patamar sem a cornija (a guarda de aço da escada vira na frente, fotografia 0e257)
 S_GUARDA_W = -1.6    # ponta poente da guarda do patamar, c. 0,8 m para lá da porta, com retorno até à parede (fotografias)
@@ -823,12 +833,14 @@ def torre_simples(nome, elemento, z_sill, esp, z_adarve, telh, merl=None, vaos=N
 
 
 def torres_sul():
-    # torre sueste: a maior das três, com onze merlões por face (LiDAR: pontas a 1029,8 m); na face do pátio, uma
+    # torre sueste: a maior das três, com sete merlões por face contando os dos cunhais (24 ao todo), de c. 0,85 m,
+    # corpo de duas fiadas e remate em ogiva boleada, ameias de c. 0,6 m (revisão do perito: fotos 62d1 do Tiago,
+    # Commons Aerial (8) e 2020; LiDAR: pontas a 1029,8 m); na face do pátio, uma
     # porta alta para o adarve e uma porta em arco ao nível do pátio (fotografia do alto da torre de menagem, 2022)
     f_se, _ = Torre("se").faces()["-u"]
     z_se = float(cota(*f_se.xy(0.3, 1.5)))
     torre_simples("se", "torre_se", 1028.45, 0.75, 1027.55, (1.5, 1027.62, 1029.2),
-                  merl=dict(n=11, larg=0.56, z1=1029.2, zp=1029.8),
+                  merl=dict(n=7, larg=0.85, z1=1029.37, zp=1029.8, boleado=True),
                   vaos={"+u": [("seteira", 0.8, 0.14, 1019.5, 0.95)], "+v": [("seteira", -1.0, 0.14, 1021.0, 0.95), ("seteira", 2.0, 0.14, 1015.0, 0.95)],
                         "-v": [("seteira", 1.6, 0.14, 1023.4, 0.9)],
                         "-u": [("porta", 1.3, 0.9, 1020.1, 1.95), ("porta", 0.2, 0.95, z_se, 2.0), ("seteira", -2.2, 0.14, 1023.6, 0.9)]})

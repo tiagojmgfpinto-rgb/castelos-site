@@ -36,6 +36,7 @@ from kit.texturas import ruido, fbm, imagem  # noqa: E402
 from kit.cena import uv_mundo  # noqa: E402
 from kit.materiais import MATS, malha_rapida, material  # noqa: E402
 from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
+from kit.silhares import textura_silhares  # noqa: E402
 
 AQUI = Path(__file__).resolve().parent
 RAIZ = AQUI.parents[2]
@@ -311,16 +312,21 @@ for g in ["Terreno", "Torre", "Envolvente", "Vegetacao"]:
     e.parent = RAIZ_OB
     GRUPOS[g] = e
 
-# granito fotografado (stone_brick_wall_001, Poly Haven CC0) com a cor medida nas fotografias da torre; a imagem
-# cobre 4 m (UV 2,0 x escala 0,5). A cantaria procedimental (textura_cantaria_torre) fica como alternativa.
-TEX_T, ALT_T = textura_foto("stone_brick_wall_001", metros=4.0, cor=(0.62, 0.60, 0.56), contraste=1.3, saturacao=0.4,
-                            variacao=0.14, metros_foto=2.0, liquen=0.08, semente=31)
-material("cantaria", (1, 1, 1), 0.9, imagem("cantaria", TEX_T), normal=imagem("cantaria_normal", normais(ALT_T, 3.0)),
+# Granito: silhares desenhados um a um (kit.silhares, com o grão da foto de granito rock_01 da Poly Haven, CC0); a
+# imagem cobre 4 m (UV 2,0 x escala 0,5). Revisão do perito (13 nov.): a foto recolorida dava um cinzento frio e igual
+# (desvio 9 contra 40–57 nas fotos) com faixas a cada 2 m. Agora a cor varia por silhar, entre #6f665a e #a89c88, com
+# alguns ocre; sem o mosaico rosado, que o Tiago já tinha pedido para tirar (2 nov.); fiadas de 0,35–0,45 m, 0,6–1,2 m de comprido,
+# arestas vivas e juntas retas; manchas ocre de líquen (#b08a4a) e escorrências negras. O escuro da base vem da patine.
+PAL_BRAGA = [((1.0, 1.0, 1.0), 0.62), ((1.04, 1.01, 0.94), 0.08), ((0.92, 0.92, 0.92), 0.15), ((1.07, 1.07, 1.06), 0.15)]
+TEX_T, ALT_T = textura_silhares(n=1024, metros=4.0, fiada=(0.35, 0.45), comp=(0.6, 1.2), cor=(0.575, 0.55, 0.505), desvio=0.09,
+                                paleta=PAL_BRAGA, junta_m=0.008, junta_cor=(0.30, 0.28, 0.25), gasto_m=0.02, liquen=0.07,
+                                liquen_cor=(0.69, 0.54, 0.29), oxido=0.06, escorrencias=0.5, semente=31)
+material("cantaria", (1, 1, 1), 0.9, imagem("cantaria", TEX_T), normal=imagem("cantaria_normal", normais(ALT_T, 4.0)),
          forca=0.8, escala=0.5, vcor=True)
 # a escada: silhares maiores (fiadas de c. 0,5 m), granito mais claro e cinzento, com mais líquenes (fotografias)
-TEX_E, ALT_E = textura_foto("stone_brick_wall_001", metros=4.0, cor=(0.66, 0.65, 0.62), contraste=1.2, saturacao=0.35,
-                            variacao=0.12, metros_foto=4.0, liquen=0.12, semente=32)
-material("cantaria_escada", (1, 1, 1), 0.9, imagem("cantaria_escada", TEX_E), normal=imagem("cantaria_escada_normal", normais(ALT_E, 3.0)),
+TEX_E, ALT_E = textura_silhares(n=1024, metros=4.0, fiada=(0.45, 0.55), comp=(0.8, 1.5), cor=(0.64, 0.62, 0.58), desvio=0.10,
+                                paleta=PAL_BRAGA, junta_m=0.008, liquen=0.12, semente=32)
+material("cantaria_escada", (1, 1, 1), 0.9, imagem("cantaria_escada", TEX_E), normal=imagem("cantaria_escada_normal", normais(ALT_E, 4.0)),
          forca=0.8, escala=0.5, vcor=True)
 material("cantaria_lisa", (0.60, 0.59, 0.57), 0.85)
 material("sombra", (0.07, 0.065, 0.06), 1.0)
@@ -345,12 +351,14 @@ MEDIDAS = {}
 
 
 def patine(co):
-    """Cor por vértice da cantaria: a pedra escurece e esverdeia para o alto da torre (líquenes e musgo,
-    fotografias), e é um pouco mais escura junto ao chão (salpicos e humidade)."""
+    """Cor por vértice da cantaria. Revisão do perito (foto do Tiago 99b6d8a6, Commons 53330206082): a parte baixa da
+    torre (0–6 m acima da praça) é muito mais escura (#5a5348 contra #888277 no alto), com transição até aos 8 m; no
+    terço de cima só escorrências negras sob os merlões, que estão na textura."""
     z = co[:, 2]
-    t = np.clip((z - 203.0) / 12.0, 0, 1) ** 1.3
-    base = np.stack([1.0 - 0.20 * t, 1.0 - 0.15 * t, 1.0 - 0.17 * t], 1)
-    pe = np.clip(1 - (z - CHAO) / 1.5, 0, 1)[:, None] * 0.12
+    h = z - CHAO
+    baixo = np.clip((8.0 - h) / 2.0, 0, 1)[:, None]  # 1 até aos 6 m, 0 a partir dos 8 m
+    base = 1 - baixo * np.array([0.50, 0.50, 0.48])
+    pe = np.clip(1 - h / 1.5, 0, 1)[:, None] * 0.10
     return np.clip(base * (1 - pe), 0, 1)
 
 
@@ -481,17 +489,18 @@ def torre():
         # degrau entre a soleira das ameias e o chão dos balcões, por dentro, nas pontas do troço do meio
         for s_d in (s0, s1):
             m.face([f.p(s_d, -ESP_PAR, Z_BALC_BASE), f.p(s_d, 0, Z_BALC_BASE), f.p(s_d, 0, Z_AMEIA), f.p(s_d, -ESP_PAR, Z_AMEIA)], mi("cantaria"))
-        # merlões do pano: três, de 0,68 m, com remate piramidal (fotografias: merlões chanfrados em ponta)
+        # merlões do pano: três, com remate piramidal (fotografias: merlões chanfrados em ponta); 0,80 m de largura
+        # (revisão do perito, foto de frente c6bd1618), com os eixos de antes (merlões de 0,68 m a espaço igual)
         n_m = 3
-        wm = 0.68
-        ameia = ((s1 - s0) - n_m * wm) / (n_m + 1)
+        wm0, wm = 0.68, 0.80
+        ameia = ((s1 - s0) - n_m * wm0) / (n_m + 1)
         for i in range(n_m):
-            a = s0 + ameia * (i + 1) + wm * i
+            a = s0 + ameia * (i + 1) + wm0 * i - (wm - wm0) / 2
             merlao(m, f, a, a + wm, 0.0, -ESP_PAR, Z_AMEIA, Z_MERLAO - 0.42, Z_MERLAO)
         # seteiras nos merlões de fora da face norte (luz passa por elas na fotografia de 2006)
         if nome == "NNO":
             for i in (0, 2):
-                a = s0 + ameia * (i + 1) + wm * i + wm / 2
+                a = s0 + ameia * (i + 1) + wm0 * i + wm0 / 2
                 m.face([f.p(a - 0.04, 0.005, Z_AMEIA + 0.25), f.p(a + 0.04, 0.005, Z_AMEIA + 0.25),
                         f.p(a + 0.04, 0.005, Z_AMEIA + 0.62), f.p(a - 0.04, 0.005, Z_AMEIA + 0.62)], mi("sombra"))
         # gárgula a meio da face, por baixo da soleira, um pouco à direita do eixo (fotografias da face sul)

@@ -1,36 +1,36 @@
 {
  "maquetas": {
   "braga": {
-   "glb": "d163b667aed01e46bdc14e229a4a91df903b568b",
-   "medidas": "bf604f9a3df8efe6020f5f82fe110d847d5fa3d5"
+   "glb": "e13543d51d697fff3c63c87309cc2b01fbe8bc33",
+   "medidas": "f27a3ca83c9018291082f7f35599daacb51e9fe4"
   },
   "castro-laboreiro": {
-   "glb": "af8961de4ec1c0690a570c0964284f7b40eca687",
-   "medidas": "7bcb27954e0b09f1e0474f8324989a27acd839f4"
+   "glb": "f1a42d68d541926de3c1aa50b1d89ad0caa25af3",
+   "medidas": "c6609d3486f9de24383eadb79b9c5bc1cdcf213e"
   },
   "guimaraes": {
-   "glb": "bff2e0a0e2a8b0c0ec38999c46ae93a37b252f01",
-   "medidas": "c65dcec6f1895228ee132b8af688a2f622975569"
+   "glb": "0094addfdb047519e9c9df450f75cb9fdca4eceb",
+   "medidas": "1df8ba6847cfd8fc06cbe345cdae2701710a46b7"
   },
   "lanhoso": {
-   "glb": "b6e095515da80ffffd1aa552c4ee8dad5cbd6456",
-   "medidas": "3ee83893365c82dc302f34f4d406608c4abcabcb"
+   "glb": "2f63dcfeaba0ecdc9a2a9def7efafa05ecb99b82",
+   "medidas": "a01de30df4934630895d5cddac5629103e05f56e"
   },
   "lindoso": {
-   "glb": "d79e9b4613b748fd0917b72c8cab08697aac1c3b",
-   "medidas": "00045f81aaffa79fd5d3bcdae2e8e5b49b7034d5"
+   "glb": "d890926729c68daf3a8933d433ebbbf8e0c256a1",
+   "medidas": "91ab0d978737e1faf58f2aa9928384798f5e3011"
   },
   "melgaco": {
-   "glb": "50611b21126effbb073713fb1def3f9c019c3974",
-   "medidas": "32a3bd4f7c2f9cf3e9e3a74fabf34f75b5fdf864"
+   "glb": "5549a853fe8de3abcfe2df805138c1b2b9825883",
+   "medidas": "c626b1a2e54d66d8481e9c272d003329ca5218b0"
   },
   "moncao": {
-   "glb": "92964dc2051105d545d186187d1692c570f053f6",
-   "medidas": "7e234e0d7a690893c165abf88bddfbcc72fc976a"
+   "glb": "b380ffa98052088fb27907a04c6a95b00c3ec575",
+   "medidas": "e30399b95c4e53efe62ea8d8168e3eeb62a91398"
   },
   "montalegre": {
-   "glb": "5cedca21de7ff59a71f2d3fc08e87e5809829268",
-   "medidas": "10f1c361d1e0adc39766ad014bfd1b8d3baa8eac"
+   "glb": "96a4fa29135bf1a2dd6d493e9ed609b6c86fd384",
+   "medidas": "3c0567e181c741d3b880c4571a7e0aeb446e0826"
   },
   "penela": {
    "glb": "e7f8928cc3cc690aac5d6e3c68856eca989b0fe9",
@@ -45,8 +45,8 @@
    "medidas": "f0718c2db9ae8201a55f3f5bc62e295362603f9f"
   },
   "almeida": {
-   "glb": "b05ce6e58f8427ae461cb334673caea5cd330b0b",
-   "medidas": "99aa4bea3429ac06630fe57ad05d7bb5edd4f6d8"
+   "glb": "d311c193726f143108788bab47bc25d976ee6e1b",
+   "medidas": "9e3bf15f145c335245c3216b29609d629faebdfd"
   }
  },
  "ambiente": {

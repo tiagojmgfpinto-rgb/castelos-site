@@ -9,7 +9,7 @@
   "chao": 1012.45,
   "adarve": 1037.53,
   "peitoril": 1038.35,
-  "pontas": 1039.72,
+  "pontas": 1039.75,
   "cume": 1039.6,
   "merloes": 32,
   "merloes_por_face": 9,
@@ -41,7 +41,7 @@
   "peitoril": 1028.45,
   "pontas": 1029.8,
   "cume": 1029.2,
-  "merloes": 40,
+  "merloes": 24,
   "altura": 19.7
  },
  "torre_s": {
@@ -139,7 +139,7 @@
   ],
   "coroamento": [
    5.7,
-   1039.4,
+   1039.5,
    7.4
   ],
   "balcoes": [
@@ -271,32 +271,18 @@
   ]
  },
  "texturas_foto": {
-  "old_stone_wall": {
-   "titulo": "Old Stone Wall",
+  "rock_01": {
+   "titulo": "Rock 01",
    "autores": [
-    "Charlotte Baglioni"
+    "Rob Tuytel"
    ],
    "licenca": "CC0 1.0 (domínio público)",
-   "pagina": "https://polyhaven.com/a/old_stone_wall",
+   "pagina": "https://polyhaven.com/a/rock_01",
    "metros": [
-    2.0,
-    2.0
+    1.5,
+    1.5
    ],
-   "uso": "alvenaria de pedra irregular (muralhas, cercas, muros)"
-  },
-  "stone_brick_wall_001": {
-   "titulo": "Stone Brick Wall 001",
-   "autores": [
-    "Dimitrios Savva",
-    "Rico Cilliers"
-   ],
-   "licenca": "CC0 1.0 (domínio público)",
-   "pagina": "https://polyhaven.com/a/stone_brick_wall_001",
-   "metros": [
-    2.5,
-    2.5
-   ],
-   "uso": "cantaria de silhares grandes e rústicos (torres, cubelos)"
+   "uso": "granito em afloramento (penedos e rocha à vista)"
   }
  }
 }

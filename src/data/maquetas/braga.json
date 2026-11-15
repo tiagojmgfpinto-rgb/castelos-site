@@ -2,8 +2,8 @@
   "monumento": "braga",
   "titulo": "Torre de Menagem de Braga",
   "variante": "estado-atual",
-  "versao": "0.3 provisória",
-  "data": "2026-11-02",
+  "versao": "0.4 provisória",
+  "data": "2026-11-15",
   "origem": {
     "lat": 41.551322,
     "lon": -8.423892,
@@ -40,7 +40,7 @@
     "Orientação das faces: a janela geminada e as seteiras estão na face sul (SSE), com a escada a subir para a direita; a janela em arco simples na face norte (NNO), pela fotografia de 2006; a porta alta com o escudo na face nascente (ENE), no topo da escada (Wikipédia). Confirmadas pela escada e pela árvore no LiDAR e no ortofotomapa. O Google Street View não estava acessível a partir desta sessão.",
     "As janelas das faces nascente e poente (em arco, ao nível do telhado) e o segundo escudo da face poente vêm da descrição da Wikipédia, sem fotografia: a forma e a altura são estimativas. As gárgulas das faces norte, nascente e poente repetem a da face sul.",
     "A escada foi medida no LiDAR: 1.º lanço encostado à face sul (18 degraus, de 191,35 a 194,55 m), patamar no cunhal sudeste, 2.º lanço encostado à face nascente (10 degraus) até ao patamar da porta, a 196,6 m. O guarda-corpo de pedra sobe c. 0,9 m acima dos degraus (topo medido a 195,4 e 197,55 m). O número de degraus é estimado.",
-    "A cantaria é uma textura de 6 m feita pelas fotografias: fiadas de 0,30 a 0,48 m (média de 0,38 m, medida na periodicidade das juntas), silhares de 0,55 a 1,6 m, em granito cinzento de grão médio (pintas escuras de biotite e claras de feldspato), com pouca diferença de tom entre silhares, manchas ocre de óxido de ferro, escorrências escuras e líquenes; a pedra escurece e esverdeia para o alto da torre. O escudo de D. Dinis é esquemático.",
+    "A cantaria é desenhada silhar a silhar, cada um com o seu tom (cinzento, bege-ocre, castanho e alguns rosados), em fiadas de 0,35 a 0,45 m e silhares de 0,6 a 1,2 m, com o grão de uma fotografia de granito, manchas ocre de líquen e escorrências negras; a parte baixa da torre, até c. 6 m, é muito mais escura (fotografias). O escudo de D. Dinis é esquemático.",
     "As casas vizinhas são volumes simples, num só cinzento, para dar a escala sem tirar destaque à torre (planta do OSM recortada num quadrado de 44 m, cornija e cume medidos no MDS). A árvore a noroeste está na posição do LiDAR, com copa esquemática (o LiDAR é de julho, com folha).",
     "O padrão em coluna junto ao cunhal noroeste está na posição do LiDAR (o topo do bloco a 193,4 m, c. 2,1 m acima do chão); as proporções do pedestal, do fuste, do bloco e da cruz de ferro vêm da fotografia de 2006 da face norte, à escala dessa altura. O que diz a pedra e a data não se conhecem."
   ],

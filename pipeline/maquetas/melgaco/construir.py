@@ -12,7 +12,7 @@ fontes.json (recolher.py: plantas, ruas e elementos do OSM via Overture).
 
 O que se modela, e de onde vem:
 - a torre de menagem, rodada 26,7° (as faces olham a ENE, NNO, OSO e SSE), com a planta e as cotas do LiDAR e o
-  coroamento das fotografias: parapeito saliente sobre uma cachorrada corrida com matacães, seis merlões de
+  coroamento das fotografias: parapeito saliente sobre uma cachorrada corrida com matacães, sete merlões de
   remate piramidal por face, telhado de quatro águas por dentro, porta alta em arco na face NNO com a escada
   metálica encostada, e as seteiras;
 - a cerca oval do castelo, estação a estação (a cada grau): faces de dentro e de fora, adarve com os degraus,
@@ -42,8 +42,9 @@ from scipy.spatial import cKDTree
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # pipeline/, para o kit comum
 from kit.geometria import normais, amostra, quad, arco_pts, _sd, _anc  # noqa: E402
 from kit.texturas import ruido, fbm, textura_cubos, textura_relva, imagem  # noqa: E402
-from kit.cena import uv_mundo  # noqa: E402
+from kit.cena import cor_vertices, uv_mundo  # noqa: E402
 from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
+from kit.silhares import textura_silhares  # noqa: E402
 from kit.materiais import MATS, malha_rapida, material  # noqa: E402
 from kit.arquitetura import aduelas, contorno_vao, parede, passagem, vao  # noqa: E402
 
@@ -96,8 +97,6 @@ Z_SOCO = 191.40          # topo do soco saliente (fotografia de baixo da face SS
 Z_MISULA = 205.85        # pé da cachorrada (três fiadas de mísulas; fotografia)
 Z_PAR = 207.00           # fundo do parapeito saliente, por cima das mísulas
 Z_AMEIA = 208.55         # soleira das ameias (LiDAR)
-Z_MERLAO = 209.35        # topo do corpo dos merlões (LiDAR: c. 209,5)
-Z_PONTA = 210.25         # ponta do remate piramidal dos merlões (LiDAR: até 210,3)
 Z_ADARVE_T = 207.55      # chão do adarve da torre, por dentro do parapeito
 Z_BEIRAL = 207.70        # beiral do telhado de quatro águas (LiDAR)
 Z_CUME = 208.90          # cume do telhado (LiDAR)
@@ -211,12 +210,8 @@ class Malha:
         ob.parent = pai
         if uv:
             uv_mundo(ob, uv)
-        if vcor is not None:  # cor por vértice (patine da pedra), multiplicada pela textura
-            co = np.empty(len(me.vertices) * 3)
-            me.vertices.foreach_get("co", co)
-            cv = vcor(co.reshape(-1, 3))
-            at = me.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
-            at.data.foreach_set("color", np.concatenate([cv, np.ones((len(cv), 1))], 1).astype(np.float32).ravel())
+        if vcor is not None:
+            cor_vertices(me, vcor)
         return ob
 
 
@@ -240,23 +235,30 @@ for g in ["Terreno", "Torre", "Muralhas", "Muralha_vila", "Envolvente", "Vegetac
     e.parent = RAIZ_OB
     GRUPOS[g] = e
 
-# Pedra fotografada (kit.fotos; com uv=2.0 e escala=0.5 cada imagem cobre 4 m de parede: fotos CC0 da Poly Haven, créditos em pipeline/kit/fotos/fontes.json), com a cor
-# média medida nas fotografias de Melgaço: o desenho das pedras, juntas e grão é real; o tom é o do granito local.
-# torre: cantaria regular, silhares bem esquadriados em fiadas de c. 0,4 m, granito cinzento-dourado com líquenes
-# (fotografias: a torre é de um tom muito igual, cinzento-dourado; as juntas notam-se como linhas finas e os
-# líquenes brancos salpicam a pedra)
-TEX, ALT = textura_foto("stone_brick_wall_001", metros=4.0, cor=(0.66, 0.63, 0.57), contraste=0.9, metros_foto=4.0, liquen=0.05, semente=21)
-material("cantaria_torre", (1, 1, 1), 0.9, imagem("cantaria_torre", TEX), normal=imagem("cantaria_torre_n", normais(ALT, 3.0)),
+# Pedra: silhares desenhados um a um (kit.silhares, com o grão da foto de granito rock_01 da Poly Haven, CC0), em
+# vez das fotos stone_brick_wall_001/old_stone_wall (revisão do perito, 13 nov.: a cerca saía em "seixos" e a torre
+# fria e igual). Com uv=2.0 e escala=0.5 cada imagem cobre 4 m de parede.
+# Paleta por pedra: a maioria cinzenta, umas douradas/ocre e algumas rosadas (fotos c29, m09, c42).
+PAL_MELGACO = [((1.0, 1.0, 1.0), 0.62), ((1.025, 1.0, 0.95), 0.20), ((1.02, 0.99, 0.97), 0.10), ((0.98, 0.99, 1.01), 0.08)]
+# torre: cantaria pseudo-isódoma, fiadas de 0,40–0,55 m e silhares de 0,7–1,2 m, juntas finas; o tom de cada face
+# vem da patine (patine_torre: SSE e OSO douradas, NNO e ENE cinzentas)
+TEX, ALT = textura_silhares(n=1024, metros=4.0, fiada=(0.36, 0.46), comp=(0.6, 1.1), cor=(0.69, 0.65, 0.58), desvio=0.07,
+                            paleta=PAL_MELGACO, junta_m=0.009, junta_cor=(0.40, 0.37, 0.33), liquen=0.12, oxido=0.06,
+                            escorrencias=0.5, semente=21)
+material("cantaria_torre", (1, 1, 1), 0.9, imagem("cantaria_torre", TEX), normal=imagem("cantaria_torre_n", normais(ALT, 4.0)),
          forca=0.8, escala=0.5, vcor=True)
-# cerca e muralha: alvenaria de granito em fiadas irregulares, pedras mais pequenas e menos esquadriadas,
-# mais cinzenta e com mais líquenes (fotografias do recinto e da barbacã)
-TEX, ALT = textura_foto("old_stone_wall", metros=4.0, cor=(0.64, 0.63, 0.60), contraste=1.1, metros_foto=4.0, liquen=0.07, semente=22)
-material("muro", (1, 1, 1), 0.92, imagem("muro", TEX), normal=imagem("muro_n", normais(ALT, 3.5)), forca=1.0, escala=0.5, vcor=True)
-TEX, ALT = textura_foto("old_stone_wall", metros=4.0, cor=(0.62, 0.62, 0.58), contraste=1.1, metros_foto=4.0, liquen=0.10, semente=23, rodar=True)
-material("muro_topo", (1, 1, 1), 0.95, imagem("muro_topo", TEX), normal=imagem("muro_topo_n", normais(ALT, 3.5)), forca=1.0, escala=0.5, vcor=True)
-# Porta de Baixo: cantaria regular de fiadas de c. 0,4 m (fotografias), granito cinzento com líquenes e musgo
-TEX, ALT = textura_foto("stone_brick_wall_001", metros=4.0, cor=(0.54, 0.53, 0.50), metros_foto=4.0, liquen=0.06, semente=24)
-material("cantaria_porta", (1, 1, 1), 0.9, imagem("cantaria_porta", TEX), normal=imagem("cantaria_porta_n", normais(ALT, 3.0)),
+# cerca e muralha: a mesma cantaria em fiadas regulares, por dentro e por fora (fotos c05, c10, "Muralhas de
+# Melgaço (2)"): cinzento-claro ao sol (#b0b1aa), mais líquen branco e negro, juntas escuras
+TEX, ALT = textura_silhares(n=1024, metros=4.0, fiada=(0.40, 0.55), comp=(0.7, 1.2), cor=(0.64, 0.64, 0.61), desvio=0.11,
+                            paleta=PAL_MELGACO, junta_cor=(0.34, 0.33, 0.31), liquen=0.15, escorrencias=0.5, irregular=0.03, semente=22)
+material("muro", (1, 1, 1), 0.92, imagem("muro", TEX), normal=imagem("muro_n", normais(ALT, 4.0)), forca=1.0, escala=0.5, vcor=True)
+TEX, ALT = textura_silhares(n=1024, metros=4.0, fiada=(0.45, 0.70), comp=(0.6, 1.1), cor=(0.64, 0.64, 0.60), desvio=0.10,
+                            paleta=PAL_MELGACO, liquen=0.16, irregular=0.05, semente=23)
+material("muro_topo", (1, 1, 1), 0.95, imagem("muro_topo", TEX), normal=imagem("muro_topo_n", normais(ALT, 4.0)), forca=1.0, escala=0.5, vcor=True)
+# Porta de Baixo: cantaria de fiadas de c. 0,4 m, granito escuro com líquenes e musgo (#6e6861; fotos 409367ef, b1644ebe)
+TEX, ALT = textura_silhares(n=1024, metros=4.0, fiada=(0.38, 0.48), comp=(0.6, 1.1), cor=(0.52, 0.505, 0.48), desvio=0.10,
+                            paleta=PAL_MELGACO, liquen=0.08, escorrencias=0.4, semente=24)
+material("cantaria_porta", (1, 1, 1), 0.9, imagem("cantaria_porta", TEX), normal=imagem("cantaria_porta_n", normais(ALT, 4.0)),
          forca=0.8, escala=0.5, vcor=True)
 material("cantaria_lisa", (0.63, 0.61, 0.56), 0.85)
 material("intradorso", (0.34, 0.33, 0.31), 0.95)
@@ -284,13 +286,18 @@ material("arvore", (1, 1, 1), 0.9, None, vcor=True)
 MEDIDAS = {}
 
 
-def patine_torre(co):
-    """A cantaria da torre escurece para o alto (líquenes e musgo) e junto ao chão (salpicos)."""
+def patine_torre(co, nrm):
+    """Tom de cada face (revisão do perito, fotos c29 e m09): SSE e OSO douradas-ocre (#bea27c, #c59e6d), NNO e ENE
+    cinzentas com mais líquen (#aaa294). A cantaria escurece um pouco para o alto (líquenes) e junto ao chão."""
     z = co[:, 2]
     t = np.clip((z - 198.0) / 12.0, 0, 1) ** 1.3
     base = np.stack([1.0 - 0.10 * t, 1.0 - 0.07 * t, 1.0 - 0.09 * t], 1)
     pe = np.clip(1 - (z - 190.3) / 1.6, 0, 1)[:, None] * 0.15
-    return np.clip(base * (1 - pe), 0, 1)
+    # quanto a face olha a sul/poente (SSE: -v; OSO: -u) contra norte/nascente
+    du, dv = nrm[:, :2] @ EU, nrm[:, :2] @ EV
+    sol = np.clip(np.maximum(-dv, -du), 0, 1)[:, None]
+    tom = sol * np.array([1.0, 0.94, 0.82]) + (1 - sol) * np.array([0.90, 0.895, 0.88])
+    return np.clip(base * tom * (1 - pe), 0, 1)
 
 
 def patine_muro(co):
@@ -350,9 +357,14 @@ VAOS = {
     "OSO": [(-0.05, 0.05, 204.0, 205.0, False)],
     "ENE": [(-0.05, 0.05, 201.0, 202.0, False)],
 }
-# merlões: seis por face, contando os dos cunhais (0,9 m), os do meio com 0,75 m e ameias de 0,96 m (LiDAR)
-MERLOES = [(-2.94, -2.19), (-1.23, -0.48), (0.48, 1.23), (2.19, 2.94)]
-MISULAS = np.linspace(-3.70, 3.70, 8)  # oito mísulas por face, mais a do cunhal (fotografia de baixo da SSE)
+# merlões: sete por face, contando os dos cunhais (revisão do perito, contados nas fotos c29, m09, m02, m03 e c42):
+# os dos cunhais com 0,95 m por face, em L, e c. 0,3 m mais altos; cinco intermédios de 0,75 m com seis ameias
+# de c. 0,66 m (9,6 m de parapeito).
+MERLOES = [(c - 0.375, c + 0.375) for c in np.arange(-2, 3) * 1.408]
+Z_MERLAO, Z_PONTA = 209.30, 210.05          # intermédios (remate de c. 0,75 m: a foto 'Castle of Melgaco 06' mostra-o tão alto como largo)
+Z_MERLAO_C, Z_PONTA_C = 209.45, 210.30      # cunhais (LiDAR: pontas até 210,3)
+# mísulas: dez por face entre os cunhais, a c. 0,8 m de entre-eixo, mais a do cunhal (mesmas fotos)
+MISULAS = np.linspace(-3.60, 3.60, 10)
 
 
 def torre():
@@ -395,7 +407,7 @@ def torre():
         # merlões do meio, com remate piramidal
         for a_, b_ in MERLOES:
             merlao(mc, f, a_, b_, SAL, SAL - ESP_PAR)
-    # cunhais: mísula de canto (em diagonal), fundo do parapeito e merlão do cunhal (0,9 × 0,9 m)
+    # cunhais: mísula de canto (em diagonal), fundo do parapeito e merlão do cunhal (0,95 × 0,95 m)
     for su in (-1, 1):
         for sv in (-1, 1):
             for k in range(3):
@@ -403,9 +415,9 @@ def torre():
                 s = 0.12 + (SAL - 0.12) * k / 2
                 mc.caixa_uv(*sorted((su * (A - 0.25), su * (A + s))), *sorted((sv * (A - 0.25), sv * (A + s))), z0, z1, "cantaria_torre", fundo=True)
             mc.caixa_uv(*sorted((su * A, su * R)), *sorted((sv * A, sv * R)), Z_PAR - 0.01, Z_PAR + 0.01, "cantaria_torre", fundo=True)
-            q = [W(su * R, sv * R), W(su * (R - 0.9), sv * R), W(su * (R - 0.9), sv * (R - 0.9)), W(su * R, sv * (R - 0.9))]
-            mc.prisma(q, Z_AMEIA, Z_MERLAO, "cantaria_torre", topo=False)
-            mc.piramide(q, Z_MERLAO, Z_PONTA, "cantaria_torre")
+            q = [W(su * R, sv * R), W(su * (R - 0.95), sv * R), W(su * (R - 0.95), sv * (R - 0.95)), W(su * R, sv * (R - 0.95))]
+            mc.prisma(q, Z_AMEIA, Z_MERLAO_C, "cantaria_torre", topo=False)
+            mc.piramide(q, Z_MERLAO_C, Z_PONTA_C, "cantaria_torre")
     # adarve e telhado de quatro águas por dentro do parapeito (LiDAR: beiral 207,7, cume 208,9)
     ri = R - ESP_PAR
     m.caixa_uv(-ri, ri, -ri, ri, Z_ADARVE_T - 0.2, Z_ADARVE_T, "cantaria_lisa", topo=True)

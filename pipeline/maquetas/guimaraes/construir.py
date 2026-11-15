@@ -28,7 +28,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # pipeline/, para 
 from kit.geometria import unit, area, densificar, dentro, distancia, desvio, mediana_movel, arco, arco_quebrado, _retangulo, _arred, normais  # noqa: E402
 from kit.texturas import imagem  # noqa: E402
 from kit.cena import Obra, limpar, arvore_modelo  # noqa: E402
-from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
+from kit.fotos import fontes_fotos  # noqa: E402
+from kit.silhares import textura_silhares  # noqa: E402
 from kit.materiais import material as material_kit  # noqa: E402  (com mapa de normais)
 from kit.arquitetura import piramide  # noqa: E402
 
@@ -481,8 +482,28 @@ def ameias_ao_longo(m, linha, z, fechada=False, mat=0, prof=0.6, dims=None, sete
                 m.face([(*q[k], zt), (*q[(k + 1) % 4], zt), (*c, zt + MERLAO["ponta"])], mat)
 
 
-def torre(m, base, pe, topo, mat=0):
-    """Torre maciça com parapeito e ameias no topo."""
+def ameias_por_face(m, base, z, n, mat=0, prof=0.6, dims=None):
+    """n merlões por face de uma planta retangular, contando os dos cunhais (o do cunhal serve as duas faces)."""
+    MERLAO = dims or globals()["MERLAO"]
+    for i in range(len(base)):
+        a, b = base[i], base[(i + 1) % len(base)]
+        u = unit(b - a)
+        L = float(np.linalg.norm(b - a))
+        for j in range(n - 1):
+            c = a + u * (L * j / (n - 1))
+            larg = prof if j == 0 else MERLAO["largura"]
+            m.caixa(c, u, larg, prof, z, z + MERLAO["altura"], mat)
+            if MERLAO.get("ponta"):
+                w = np.array([-u[1], u[0]])
+                hl, hp = larg / 2, prof / 2
+                q = [c - u * hl - w * hp, c + u * hl - w * hp, c + u * hl + w * hp, c - u * hl + w * hp]
+                zt = z + MERLAO["altura"]
+                for k in range(4):
+                    m.face([(*q[k], zt), (*q[(k + 1) % 4], zt), (*c, zt + MERLAO["ponta"])], mat)
+
+
+def torre(m, base, pe, topo, mat=0, por_face=None):
+    """Torre maciça com parapeito e ameias no topo (por_face: número de merlões por face, contando os dos cunhais)."""
     if area(base) < 0:
         base = base[::-1]
     terraco = topo - PARAPEITO - ALT_MERLAO
@@ -491,7 +512,10 @@ def torre(m, base, pe, topo, mat=0):
     for i in range(len(base)):
         j = (i + 1) % len(base)
         m.prisma([base[i], base[j], interior[j], interior[i]], terraco, terraco + PARAPEITO, mat)
-    ameias_ao_longo(m, desvio(base, 0.3, True), terraco + PARAPEITO, True, mat, seteira=1)
+    if por_face:
+        ameias_por_face(m, desvio(base, 0.3, True), terraco + PARAPEITO, por_face, mat)
+    else:
+        ameias_ao_longo(m, desvio(base, 0.3, True), terraco + PARAPEITO, True, mat, seteira=1)
 
 
 # ---------------------------------------------------------------- edifícios
@@ -1153,7 +1177,7 @@ def paco():
         mc.prisma(circ, zg - 3.5, zg + 1.6, 2)
         for i in range(12):
             mc.face([(*circ[i], zg + 1.6), (*circ[(i + 1) % 12], zg + 1.6), (*cc, zg + 4.0)], 3)
-    mc.objeto("Paco_Chamines", "paco", ["tijolo_chamine", "cantaria", "pedra", "telha_paco"], GRUPOS["Paco"], uv=None)
+    mc.objeto("Paco_Chamines", "paco", ["tijolo_chamine", "cantaria", "pedra_paco", "telha_paco"], GRUPOS["Paco"], uv=None)
     med["chamines"] = len(chamines)
     med["guaritas"] = 4
     med["cumeeiras"] = float(max(corpos.values()))
@@ -1192,7 +1216,7 @@ def paco():
     arco(m, pm + n_ * 0.03, PACO_V, n_, 3.0, sole, 2.6, 0.1, 3)
     arco(m, pm + n_ * 0.06, PACO_V, n_, 2.3, sole, 2.3, 0.1, 2)
     med["porta_principal_soleira"] = sole + ZREF
-    m.objeto("Paco_Corpo", "paco", ["pedra", "telha_paco", "sombra", "cantaria", "madeira_escura", "telha_galeria"], GRUPOS["Paco"], uv=3.0)
+    m.objeto("Paco_Corpo", "paco", ["pedra_paco", "telha_paco", "sombra", "cantaria", "madeira_escura", "telha_galeria"], GRUPOS["Paco"], uv=3.0)
     MEDIDAS["paco"] = med
     return ext, pat
 
@@ -1319,7 +1343,7 @@ def igreja():
     m.caixa(a0 + u * 0.15 + v * (W / 2), v, 0.18, 0.05, chao + 2.6, chao + 3.8, 2)  # fresta da cabeceira
     ls = a0 + u * (cm + (L - cm) * 0.55) + v * 0.6
     arco(m, ls, u, -v, 1.1, chao, 1.7, 0.1, 2)  # porta lateral a sul
-    m.objeto("Igreja_Sao_Miguel", "igreja", ["pedra", "telha_velha", "sombra", "cantaria", "madeira_verde"], GRUPOS["Igreja"], uv=3.0)
+    m.objeto("Igreja_Sao_Miguel", "igreja", ["pedra_paco", "telha_velha", "sombra", "cantaria", "madeira_verde"], GRUPOS["Igreja"], uv=3.0)
     res["chao"] = chao + ZREF
     MEDIDAS["igreja"] = res
     return np.array([a0, a0 + u * L, a0 + u * L + v * W, a0 + v * W])
@@ -1526,14 +1550,26 @@ for g in ["Terreno", "Muralhas", "Torres", "Torre_Menagem", "Portas", "Paco", "I
     e.parent = RAIZ_OB
     GRUPOS[g] = e
 
-MERLAO_PACO = {"altura": 0.55, "largura": 0.55, "intervalo": 0.45}  # ameias miúdas do Paço (fotografias)
+# merlões do Paço: retangulares, c. 1,0 m de alto e 0,8 m de largura, a espaço regular (revisão do perito, fotos 3c8175e3, db8f62ca)
+MERLAO_PACO = {"altura": 1.0, "largura": 0.8, "intervalo": 0.7}
 
-# Pedra fotografada (kit.fotos, foto CC0 da Poly Haven; créditos em medidas.json "texturas_foto"): silhares de
-# granito em fiadas de c. 0,4 m, recoloridos para o bege-dourado com manchas cinzentas das fotografias do castelo (3 m por imagem,
-# o que os UV de 3 m cobrem), agora com relevo nas juntas.
-_TEX_P, _ALT_P = textura_foto("stone_brick_wall_001", n=1024, metros=3.0, cor=(0.70, 0.65, 0.57), contraste=1.2, saturacao=0.8,
-                              metros_foto=3.0, liquen=0.06, semente=61)
+# Pedra: silhares desenhados um a um (kit.silhares, com o grão da foto de granito rock_01 da Poly Haven, CC0;
+# créditos em medidas.json "texturas_foto"). Revisão do perito (13 nov.): a foto repetida dava faixas a cada 2,5 m e
+# o castelo saía castanho e escuro, igual ao Paço. O granito do castelo é cinzento-claro e frio (#a79f8c ao sol,
+# #8c8c85 à sombra, foto d461010f), com manchas ocre (#b58a4a), líquenes negros e escorrências escuras; silharia em
+# fiadas de 0,45–0,5 m, blocos de 0,6–1,2 m, juntas finas. O granito do Paço e da igreja é mais dourado (#aa9c7d,
+# foto eca77b0f). 3 m por imagem (os UV de 3 m).
+PAL_GUIMARAES = [((1.0, 1.0, 1.0), 0.64), ((1.03, 0.99, 0.92), 0.16), ((0.97, 0.98, 1.0), 0.14), ((0.92, 0.91, 0.90), 0.06)]
+_TEX_P, _ALT_P = textura_silhares(n=1024, metros=3.0, fiada=(0.42, 0.52), comp=(0.6, 1.2), cor=(0.64, 0.62, 0.575), desvio=0.11,
+                                  paleta=PAL_GUIMARAES, junta_m=0.009, junta_cor=(0.36, 0.35, 0.33), liquen=0.08,
+                                  liquen_cor=(0.30, 0.30, 0.28), oxido=0.06, escorrencias=0.55, semente=61)
 pedra = imagem("pedra", _TEX_P)
+MATS["pedra"] = material_kit("pedra", (1, 1, 1), 0.92, pedra, normal=imagem("pedra_n", normais(_ALT_P, 4.0)), forca=0.8)
+_TEX_PP, _ALT_PP = textura_silhares(n=1024, metros=3.0, fiada=(0.38, 0.50), comp=(0.6, 1.3), cor=(0.68, 0.625, 0.53), desvio=0.09,
+                                    paleta=PAL_GUIMARAES, junta_m=0.008, junta_cor=(0.42, 0.39, 0.35), liquen=0.05, oxido=0.04,
+                                    escorrencias=0.35, semente=62)
+MATS["pedra_paco"] = material_kit("pedra_paco", (1, 1, 1), 0.9, imagem("pedra_paco", _TEX_PP),
+                                  normal=imagem("pedra_paco_n", normais(_ALT_PP, 3.5)), forca=0.7)
 grao = imagem("grao", textura_grao())
 MATS["pedra"] = material_kit("pedra", (1, 1, 1), 0.92, pedra, normal=imagem("pedra_n", normais(_ALT_P, 3.0)), forca=0.8)
 material("sombra", (0.12, 0.11, 0.10), 1.0)
@@ -1580,7 +1616,9 @@ for s_, (pts, esp) in PANOS.items():
     lin = np.array([P(*p) for p in pts])
     lin = np.vstack([lin[0] + unit(lin[0] - lin[1]) * 1.8, lin[1:-1], lin[-1] + unit(lin[-1] - lin[-2]) * 1.8]) if len(lin) > 2 else lin
     lin, topo, fora, dentro_ = perfil(lin, esp)  # as pontas entram 1,8 m nas torres
-    adarve = muralha(m, lin, esp, topo, fora, dentro_)
+    # a alcáçova é a parede arruinada da residência: topo irregular sem merlões (revisão do perito, foto "Castelo de
+    # Guimaraes (17)"); os merlões só existem na torre do canto
+    adarve = muralha(m, lin, esp, topo, fora, dentro_, ameias=(s_ != "alcacova"))
     PERFIS[s_] = np.stack([lin[:, 0], lin[:, 1], topo, fora, dentro_], 1)
     for k_, (q0, q1) in enumerate(((pts[1], pts[0]), (pts[-2], pts[-1]))):  # pontas do adarve, a entrar nas torres
         PONTAS_ADARVE.append((s_, P(*q1), unit(P(*q1) - P(*q0)), float(np.median(adarve[:4] if k_ == 0 else adarve[-4:]))))
@@ -1596,6 +1634,18 @@ for s_, (pts, esp) in PANOS.items():
             for zz, h in ((dentro_[i] + 1.2, 2.0), (dentro_[i] + 4.6, 2.2)):
                 if zz + h < adarve[i] - 0.4:
                     m.caixa(inn[i] + n_ * 0.03, t, 1.3, 0.05, zz, zz + h, 1)
+        # para fora: janelas retangulares grandes em dois registos (c. 1,2 × 1,6 m em cima, 0,6 × 0,8 m em baixo; revisão
+        # do perito, foto "Castelo de Guimaraes (17)")
+        ext = desvio(lin, -esp / 2, False)
+        for s, sb in ((0.30, 0.25), (0.55, 0.50), (0.78, 0.72)):
+            for s0, w, h, zrel in ((s, 1.2, 1.6, -2.6), (sb, 0.6, 0.8, -6.0)):
+                i = int(s0 * (len(lin) - 1))
+                a, c = ext[max(i - 1, 0)], ext[min(i + 1, len(ext) - 1)]
+                t = unit(c - a)
+                n_ = np.array([t[1], -t[0]])
+                zz = adarve[i] + zrel
+                if zz > fora[i] + 0.5:
+                    m.caixa(ext[i] + n_ * 0.03, t, w, 0.05, zz, zz + h, 1)
     m.objeto(s_, s_, ["pedra", "sombra"], GRUPOS["Muralhas"])
     alt = topo - fora
     MEDIDAS[s_] = {"topo": [float(topo.min() + ZREF), float(topo.max() + ZREF)],
@@ -1664,16 +1714,16 @@ b = MENAGEM
 topo = medir(desvio(b, 0.3, True), q=95)
 pe = float(np.min(cota(*densificar(desvio(b, -1.0, True), 1.0, True).T)))
 chao_med = float(np.median(cota(*densificar(desvio(b, -2.0, True), 1.0, True).T)))
-torre(m, b, pe, topo)
+torre(m, b, pe, topo, por_face=7)  # 7 merlões por face, passo de c. 2,1 m (revisão do perito, foto "Castelo de Guimarães 2024")
 terraco = topo - PARAPEITO - ALT_MERLAO
 cume = float(np.percentile(celulas(desvio(b, 2.0, True), sem_veg=False), 99))  # sem o mastro da bandeira
 telhado_ate(m, desvio(b, 0.6, True), terraco, cume, mat=2)
-# três registos de frestas (SIPA) e a porta no segundo registo, na face virada ao adarve poente
+# três registos de frestas (SIPA), uma por registo perto do eixo (revisão do perito: 2–3 por face), e a porta no
+# segundo registo, na face virada ao adarve poente
 fs = faces_retangulo(b)
 for a, c, t, n_ in fs:
     for k, zz in enumerate((chao_med + 6.0, chao_med + 12.5, chao_med + 18.5)):
-        for s in ((0.5,) if k != 1 else (0.32, 0.68)):
-            fresta(m, a, c, n_, s, zz, alt=1.5)
+        fresta(m, a, c, n_, (0.5, 0.42, 0.56)[k], zz, alt=1.5)
 fp = max(fs, key=lambda f: f[3] @ unit(np.array([-1.0, 0.8])))  # face noroeste
 porta_z = chao_med + 7.4
 m.caixa((fp[0] + fp[1]) / 2 + fp[3] * 0.03, fp[2], 1.1, 0.05, porta_z, porta_z + 2.1, 1)

@@ -47,9 +47,10 @@ from comum import (ALA_OESTE, ALA_SUL, CORREDOR, EIXO_PORTA_SUL, LAT0, LON0, MEI
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # pipeline/, para o kit comum
 from degraus import topo_degraus  # noqa: E402
-from kit.geometria import normais, amostra, quad, arco_pts, ogiva, _sd, _anc  # noqa: E402
+from kit.geometria import normais, amostra, quad, arco_pts, ogiva, orientar, _sd, _anc  # noqa: E402
 from kit.texturas import ruido, fbm, textura_cantaria, textura_cubos, textura_rocha, textura_telha, textura_terra, imagem  # noqa: E402
 from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
+from kit.silhares import textura_silhares  # noqa: E402
 from kit.cena import Obra, uv_mundo  # noqa: E402
 from kit.materiais import MATS, malha_rapida, material  # noqa: E402
 from kit.arquitetura import aduelas, contorno_vao, parede, passagem, vao  # noqa: E402
@@ -347,24 +348,29 @@ for g in ["Terreno", "Torre", "Muralhas", "Museu", "Espigueiros", "Envolvente", 
 # 0,55 m); a muralha abaluartada é de alvenaria miúda, mais cinzenta e com mais líquenes.
 PAL_T = np.array([(0.615, 0.600, 0.565), (0.670, 0.655, 0.620), (0.545, 0.530, 0.500), (0.640, 0.605, 0.535),
                   (0.590, 0.585, 0.570)])
-# Pedra fotografada (kit.fotos, fotos CC0 da Poly Haven; créditos em medidas.json "texturas_foto"), com o tom das
-# fotografias de Lindoso. Com uv=3,0 e escala=0,5 cada imagem cobre 6 m: torre e cerca medieval em silhares (2 fotos
-# de 3 m, fiadas de c. 0,37 m); muralha abaluartada (escala 0,8: 3,75 m) em alvenaria miúda.
-TEX, ALT = textura_foto("stone_brick_wall_001", metros=6.0, cor=(0.60, 0.585, 0.55), contraste=1.35, saturacao=0.8, variacao=0.15, metros_foto=3.0,
-                        liquen=0.10, semente=91)
-material("cantaria_torre", (1, 1, 1), 0.9, imagem("cantaria_torre", TEX), normal=imagem("cantaria_torre_n", normais(ALT, 3.0)),
+# Pedra: silhares desenhados um a um (kit.silhares, com o grão da foto de granito rock_01 da Poly Haven, CC0;
+# créditos em medidas.json "texturas_foto"). Revisão do perito (13 nov.): a foto rodada punha as fiadas da cerca a
+# prumo; o granito real é cinzento-claro neutro (#bebdb7–#cac5b9 nas fotos de sudoeste) com líquenes brancos e negros,
+# aparelho pseudo-isódomo de juntas muito estreitas, sem argamassa (L. Fontes, p. 95), fiadas de 0,40–0,70 m e
+# silhares de 0,6–1,4 m. Com uv=3,0 e escala=0,5 cada imagem cobre 6 m.
+PAL_LINDOSO = [((1.0, 1.0, 1.0), 0.66), ((1.025, 1.0, 0.96), 0.16), ((0.97, 0.98, 1.0), 0.18)]
+TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.38, 0.60), comp=(0.6, 1.3), cor=(0.67, 0.66, 0.63), desvio=0.10,
+                            paleta=PAL_LINDOSO, junta_m=0.008, junta_cor=(0.36, 0.35, 0.33), liquen=0.14,
+                            escorrencias=0.35, semente=91)
+material("cantaria_torre", (1, 1, 1), 0.9, imagem("cantaria_torre", TEX), normal=imagem("cantaria_torre_n", normais(ALT, 4.0)),
          forca=0.8, escala=0.5, vcor=True)
-TEX, ALT = textura_foto("stone_brick_wall_001", metros=6.0, cor=(0.59, 0.575, 0.54), contraste=1.35, saturacao=0.8, variacao=0.15, metros_foto=3.0,
-                        liquen=0.10, semente=92, rodar=True)
-material("muro_medieval", (1, 1, 1), 0.92, imagem("muro_medieval", TEX), normal=imagem("muro_medieval_n", normais(ALT, 3.2)),
+TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.40, 0.70), comp=(0.6, 1.4), cor=(0.66, 0.655, 0.625), desvio=0.12,
+                            paleta=PAL_LINDOSO, junta_m=0.008, junta_cor=(0.36, 0.35, 0.33), liquen=0.15,
+                            escorrencias=0.35, irregular=0.02, semente=92)
+material("muro_medieval", (1, 1, 1), 0.92, imagem("muro_medieval", TEX), normal=imagem("muro_medieval_n", normais(ALT, 4.0)),
          forca=0.9, escala=0.5, vcor=True)
 PAL_M = np.array([(0.575, 0.565, 0.540), (0.650, 0.640, 0.610), (0.460, 0.450, 0.430), (0.600, 0.570, 0.510),
                   (0.530, 0.525, 0.510)])
-TEX, ALT = textura_foto("old_stone_wall", metros=3.75, cor=(0.58, 0.565, 0.53), contraste=1.0, metros_foto=3.75,
+TEX, ALT = textura_foto("old_stone_wall", metros=3.75, cor=(0.63, 0.62, 0.59), contraste=1.0, metros_foto=3.75,
                         liquen=0.12, semente=93)
 material("alvenaria", (1, 1, 1), 0.95, imagem("alvenaria", TEX), normal=imagem("alvenaria_n", normais(ALT, 4.0)), forca=1.0, escala=0.8, vcor=True)
-TEX, ALT = textura_foto("old_stone_wall", metros=6.0, cor=(0.58, 0.575, 0.54), contraste=0.95, metros_foto=3.0,
-                        liquen=0.12, semente=94, rodar=True)
+TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.5, 0.9), comp=(0.6, 1.1), cor=(0.64, 0.635, 0.60), desvio=0.12,
+                            paleta=PAL_LINDOSO, liquen=0.15, irregular=0.06, semente=94)
 material("muro_topo", (1, 1, 1), 0.95, imagem("muro_topo", TEX), normal=imagem("muro_topo_n", normais(ALT, 3.5)), forca=1.0, escala=0.5, vcor=True)
 # espigueiros: granito mais claro e liso (cantaria fina dos esteios, das mesas e das empenas), muito liquenado
 PAL_E = np.array([(0.660, 0.650, 0.615), (0.700, 0.690, 0.660), (0.590, 0.580, 0.555), (0.640, 0.615, 0.560)])
@@ -459,12 +465,15 @@ CHAO_T = _chao                                   # chão junto a cada face (LiDA
 Z_PONTA = round(float(np.percentile(PT[_anel & (PT[:, 2] < 476.5), 2], 98.5)), 2)   # pontas dos merlões (sem o mastro)
 Z_CUME = round(float(np.percentile(PT[_cent, 2], 90)), 2)      # vértice do telhado de quatro águas
 Z_AMEIA = 473.45         # soleira das ameias (LiDAR: o anel tem o modo a 473,1–473,5 entre os merlões)
-Z_MERLAO = Z_PONTA - 0.55  # corpo dos merlões; o remate piramidal tem 0,55 m (fotografias)
+Z_MERLAO = Z_PONTA - 0.50  # corpo dos merlões; remate tronco-piramidal de 0,5 m (revisão do perito, fotos 8a3e e 0632)
 Z_BEIRAL = 473.05        # beiral do telhado, por dentro do parapeito (LiDAR: 473,1 a 4 m do centro)
 Z_ADARVE_T = 472.55      # chão do adarve da torre, por dentro do parapeito
 ESP_PAR = 0.75           # espessura do parapeito
 N_MERL = 7               # merlões por face, contando os dos cunhais (fotografias)
-LM, LC = 0.78, 0.95      # largura dos merlões (os dos cunhais são um pouco mais largos)
+# merlões intermédios de 0,70 m com ameias de c. 0,87 m; os dos cunhais mais largos (0,9 m) e mais altos (+0,25 m), com
+# o remate de uma só água para dentro (revisão do perito, fotos 8a3e e 0632)
+LM, LC = 0.70, 0.90      # largura dos merlões
+Z_CUNHAL = Z_PONTA + 0.25  # topo dos merlões dos cunhais, do lado de fora
 print("torre: chão", CHAO_T, "pontas", Z_PONTA, "cume", Z_CUME)
 
 # vãos por face (s ao longo da face: o eixo t de face_torre aponta para a ESQUERDA de quem olha a face de fora)
@@ -536,8 +545,7 @@ def torre():
         base = np.array(base)
         if shapely.Polygon(base).exterior.is_ccw is False:
             base = base[::-1]
-        m.prisma(list(base), Z_AMEIA, Z_MERLAO, 0, topo=False)
-        _remate(m, list(base), Z_MERLAO, Z_PONTA)
+        merlao_cunhal(m, base, c, nuv)
     # telhado de quatro águas por dentro do parapeito
     rt = r - 0.05
     beiral = [W(-rt, -rt), W(rt, -rt), W(rt, rt), W(-rt, rt)]
@@ -550,9 +558,41 @@ def torre():
     return ob
 
 
-def _remate(m, base, z0, z1):
-    """Remate piramidal de um merlão (fotografias: pirâmide baixa de quatro faces sobre o corpo)."""
-    m.piramide(base, z0, z1, 0)
+def _remate(m, base, z0, z1, topo=0.12):
+    """Remate tronco-piramidal de um merlão (fotografias: quatro águas que acabam numa pequena face plana)."""
+    base = [np.asarray(p, float) for p in base]
+    c = np.mean(base, axis=0)
+    cima = [c + (p - c) * topo / max(np.linalg.norm(p - c), 1e-6) for p in base]
+    for i in range(len(base)):
+        j = (i + 1) % len(base)
+        m.face(orientar([(*base[i], z0), (*base[j], z0), (*cima[j], z1), (*cima[i], z1)],
+                        np.array([*(((base[i] + base[j]) / 2 - c)), 0.3])), 0)
+    m.face(orientar([(*p, z1) for p in cima], np.array([0, 0, 1.0])), 0)
+
+
+def merlao_cunhal(m, base, c, nuv):
+    """Merlão do cunhal, em L, com o topo de uma só água a descer para dentro: Z_CUNHAL no lado de fora e 0,3 m abaixo
+    no de dentro (o parapeito tem ESP_PAR de espessura)."""
+    base = [np.asarray(p, float) for p in base]
+    cc = np.asarray(c, float)
+
+    def h(p):
+        d = min(abs(float(np.dot(p - cc, EU))), abs(float(np.dot(p - cc, EV))))  # distância às faces de fora
+        return Z_CUNHAL - 0.30 * min(d / ESP_PAR, 1.0)
+    n = len(base)
+    for i in range(n):
+        j = (i + 1) % n
+        e = base[j] - base[i]
+        nn = np.array([e[1], -e[0], 0.0])
+        m.face(orientar([(*base[i], Z_AMEIA), (*base[j], Z_AMEIA), (*base[j], h(base[j])), (*base[i], h(base[i]))], nn), 0)
+    # topo: leque a partir do canto de dentro (o único reentrante do L; a base é anti-horária)
+    def reentrante(i):
+        a, b = base[i] - base[i - 1], base[(i + 1) % n] - base[i]
+        return a[0] * b[1] - a[1] * b[0] < 0
+    k = next(i for i in range(n) if reentrante(i))
+    for t in range(1, n - 1):
+        a, b = base[(k + t) % n], base[(k + t + 1) % n]
+        m.face(orientar([(*base[k], h(base[k])), (*a, h(a)), (*b, h(b))], np.array([0, 0, 1.0])), 0)
 
 
 def merlao(m, f, sa, sb):

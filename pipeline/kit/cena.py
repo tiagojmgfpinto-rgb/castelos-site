@@ -5,7 +5,7 @@ import bpy  # noqa: I001 (o bpy tem de vir antes do bmesh)
 import bmesh
 import numpy as np
 
-__all__ = ["uv_mundo", "limpar", "arvore_modelo"]
+__all__ = ["uv_mundo", "limpar", "arvore_modelo", "cor_vertices"]
 
 
 def uv_mundo(ob, escala):
@@ -94,3 +94,25 @@ class Obra:
             return None
         self.encolhidas += 1
         return raio, alt, tronco
+
+
+def cor_vertices(me, vcor):
+    """Cor por vértice (patine), multiplicada pela textura. vcor(co) dá uma cor por vértice; vcor(co, normal) dá uma
+    cor por canto de face, com a normal da face (para tingir cada face da torre pela orientação: as faces ao sol são
+    mais douradas, as do norte mais escuras e com líquen), sem a cor de um cunhal se espalhar pelas duas faces."""
+    co = np.empty(len(me.vertices) * 3)
+    me.vertices.foreach_get("co", co)
+    co = co.reshape(-1, 3)
+    if vcor.__code__.co_argcount >= 2:
+        vi = np.empty(len(me.loops), int)
+        me.loops.foreach_get("vertex_index", vi)
+        pn = np.empty(len(me.polygons) * 3)
+        me.polygons.foreach_get("normal", pn)
+        lt = np.empty(len(me.polygons), int)
+        me.polygons.foreach_get("loop_total", lt)
+        cv = vcor(co[vi], np.repeat(pn.reshape(-1, 3), lt, axis=0))
+        at = me.color_attributes.new("Col", "FLOAT_COLOR", "CORNER")
+    else:
+        cv = vcor(co)
+        at = me.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
+    at.data.foreach_set("color", np.concatenate([cv, np.ones((len(cv), 1))], 1).astype(np.float32).ravel())
