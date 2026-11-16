@@ -13,10 +13,10 @@
    8.3
   ],
   "adarve": [
-   246.4,
-   247.6
+   248.0,
+   249.2
   ],
-  "adarve_mediano": 247.0
+  "adarve_mediano": 248.3
  },
  "muralha_nascente_norte": {
   "topo": [
@@ -32,10 +32,10 @@
    10.7
   ],
   "adarve": [
-   247.4,
-   247.5
+   248.5,
+   249.0
   ],
-  "adarve_mediano": 247.5
+  "adarve_mediano": 248.7
  },
  "alcacova": {
   "topo": [
@@ -51,10 +51,10 @@
    16.2
   ],
   "adarve": [
-   254.2,
-   256.9
+   254.5,
+   257.1
   ],
-  "adarve_mediano": 254.6
+  "adarve_mediano": 254.9
  },
  "muralha_noroeste": {
   "topo": [
@@ -70,10 +70,10 @@
    12.4
   ],
   "adarve": [
-   247.6,
-   247.6
+   249.1,
+   249.1
   ],
-  "adarve_mediano": 247.6
+  "adarve_mediano": 249.1
  },
  "muralha_sudoeste": {
   "topo": [
@@ -89,10 +89,10 @@
    9.5
   ],
   "adarve": [
-   248.0,
-   248.5
+   249.2,
+   250.1
   ],
-  "adarve_mediano": 248.1
+  "adarve_mediano": 249.4
  },
  "muralha_sul": {
   "topo": [
@@ -108,10 +108,10 @@
    11.3
   ],
   "adarve": [
-   247.2,
-   249.3
+   248.5,
+   250.9
   ],
-  "adarve_mediano": 247.9
+  "adarve_mediano": 248.8
  },
  "torre_nordeste": {
   "topo": 256.2,
@@ -180,13 +180,13 @@
  },
  "escadas_adarve": {
   "muralha_nascente": {
-   "degraus": 15,
-   "comprimento": 4.1,
+   "degraus": 19,
+   "comprimento": 5.1,
    "chega_ao_adarve": true
   },
   "muralha_nascente_norte": {
-   "degraus": 21,
-   "comprimento": 5.7,
+   "degraus": 25,
+   "comprimento": 6.8,
    "chega_ao_adarve": true
   }
  },
@@ -282,9 +282,9 @@
   "medidos": 12
  },
  "vegetacao": {
-  "arvores": 580,
-  "encolhidas": 16,
-  "retiradas": 12,
+  "arvores": 581,
+  "encolhidas": 8,
+  "retiradas": 11,
   "tiradas_da_estrada": 16
  },
  "texturas_foto": {
