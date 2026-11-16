@@ -1720,11 +1720,17 @@ def portas():
             Qf = Quadro(m, F0 - n * v["tunel"], n)
             pano_com_arco(Qf, -r - 0.5, r + 0.5, sole, sole + omb + r + 0.6, r, omb, -0.6, 0.0, ALV_)
             arco_cantaria(Qf, r, sole, omb, aduela=0.4, d0=0.02, d1=0.1)
-            folha = [(-r, sole), (r, sole), (r, sole + omb)] + [(r * math.cos(math.pi * k / 12), sole + omb + r * math.sin(math.pi * k / 12)) for k in range(1, 12)] + [(-r, sole + omb)]
-            Qf.placa(folha, -0.12, -0.02, MV_)
-            for k in range(1, 5):  # chapas e cravos da porta
-                Qf.bloco(-r + 0.05, r - 0.05, sole + k * omb / 5 - 0.03, sole + k * omb / 5 + 0.03, -0.02, 0.0, FER_)
-            Qf.bloco(-0.02, 0.02, sole, sole + omb + r - 0.05, -0.02, 0.0, FER_)
+            # as duas folhas verdes chapeadas estão abertas, encostadas às paredes do túnel, e a passagem segue livre
+            # (revisão do perito, 16 nov.; foto 90600c34): ao fundo, escuro em vez da porta fechada
+            fundo = [(-r, sole), (r, sole), (r, sole + omb)] + [(r * math.cos(math.pi * k / 12), sole + omb + r * math.sin(math.pi * k / 12)) for k in range(1, 12)] + [(-r, sole + omb)]
+            Qf.placa(fundo, -0.6, -0.55, S_)
+            zf_ = sole + omb + 0.25
+            for sg in (-1, 1):
+                a_, b_ = sorted((sg * (r - 0.02), sg * (r - 0.09)))
+                Qf.bloco(a_, b_, sole + 0.02, zf_, 0.06, 0.06 + r - 0.05, MV_)
+                c_, d_s = sorted((sg * (r - 0.09), sg * (r - 0.1)))
+                for k in range(1, 5):  # chapas e cravos da porta
+                    Qf.bloco(c_, d_s, sole + k * (zf_ - sole) / 5 - 0.03, sole + k * (zf_ - sole) / 5 + 0.03, 0.08, r - 0.03, FER_)
         m.objeto(pid.title(), d_["elemento"], MAT_PORTA, GRUPOS["Portas"], uv=2.5)
         PONTOS_PORTA[pid] = (F0, n, sole)
         tt = np.array([-n[1], n[0]])
@@ -2139,7 +2145,17 @@ def igreja_misericordia(m):
     # janelas de sacada (portas de vidro até ao varandim de ferro)
     for sg in (-1, 1):
         sj = sg * 3.15
-        janela(Q, sj, z0 + 3.0, 0.95, 2.0, arco=False, d=0.12, mat_vidro=SOM)
+        janela(Q, sj, z0 + 3.0, 0.95, 2.0, arco=False, d=0.12, mat_vidro=VID)
+        # caixilho branco de 2 folhas com 6 vidros cada e moldura de orelhas (revisão do perito, 16 nov.; Street View)
+        zj0, zj1, wj = z0 + 3.0, z0 + 5.0, 0.95
+        for sa_, sb_ in ((sj - wj / 2, sj - wj / 2 + 0.06), (sj + wj / 2 - 0.06, sj + wj / 2), (sj - 0.03, sj + 0.03),
+                         (sj - wj / 4 - 0.015, sj - wj / 4 + 0.015), (sj + wj / 4 - 0.015, sj + wj / 4 + 0.015)):
+            Q.bloco(sa_, sb_, zj0, zj1, 0.13, 0.16, CAL)
+        for zz in (zj0, zj0 + 2.0 / 3 - 0.015, zj0 + 4.0 / 3 - 0.015, zj1 - 0.06):
+            Q.bloco(sj - wj / 2, sj + wj / 2, zz, zz + (0.06 if zz in (zj0, zj1 - 0.06) else 0.03), 0.13, 0.16, CAL)
+        for sg2 in (-1, 1):  # orelhas da moldura
+            ss2 = sorted((sj + sg2 * (wj / 2 + 0.18), sj + sg2 * (wj / 2 + 0.32)))
+            Q.bloco(ss2[0], ss2[1], zj1 - 0.28, zj1 + 0.22, 0.12, 0.19, CAN)
         Q.bloco(sj - 0.75, sj + 0.75, z0 + 2.85, z0 + 3.0, 0.12, 0.62, CAN)
         for zz in (z0 + 3.05, z0 + 3.95):
             barra(m, (*Q.p(sj - 0.7, zz, 0.58)[:2], zz), (*Q.p(sj + 0.7, zz, 0.58)[:2], zz), 0.025, FER)

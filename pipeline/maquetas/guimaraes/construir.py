@@ -31,7 +31,7 @@ from kit.cena import Obra, limpar, arvore_modelo  # noqa: E402
 from kit.fotos import fontes_fotos  # noqa: E402
 from kit.silhares import textura_silhares  # noqa: E402
 from kit.materiais import material as material_kit  # noqa: E402  (com mapa de normais)
-from kit.arquitetura import piramide, guarda  # noqa: E402
+from kit.arquitetura import barra, piramide, guarda  # noqa: E402
 
 AQUI = Path(__file__).resolve().parent
 RAIZ = AQUI.parents[2]
@@ -1188,7 +1188,82 @@ def paco():
     med["galeria"] = {"beirado": beirado_g + ZREF, "encontro": alto_g + ZREF, "chao_patio": zc + ZREF}
 
     # Janelas das fachadas exteriores (fotografias): janelas de cruz com moldura de cantaria em dois
-    # andares e frestas pequenas em baixo.
+    # andares e frestas pequenas em baixo. A fachada SSO tem a sua própria composição (abaixo).
+    def tira(q, t, n_, s0, s1, z0, z1, d, mat):
+        m.face([(*(q + t * s0 + n_ * d), z0), (*(q + t * s1 + n_ * d), z0), (*(q + t * s1 + n_ * d), z1), (*(q + t * s0 + n_ * d), z1)], mat)
+
+    def janela_cruz(q, t, n_, zz, lj, hj, fundo=2, cruz=True):
+        tira(q, t, n_, -lj / 2 - 0.18, lj / 2 + 0.18, zz - 0.18, zz + hj + 0.18, 0.03, 3)  # moldura
+        tira(q, t, n_, -lj / 2, lj / 2, zz, zz + hj, 0.05, fundo)
+        if cruz:  # mainel e travessa de cantaria (janela de cruz)
+            m.caixa(q + n_ * 0.08, t, 0.14, 0.06, zz, zz + hj, 3)
+            m.caixa(q + n_ * 0.08, t, lj, 0.06, zz + hj * 0.62, zz + hj * 0.62 + 0.14, 3)
+        m.caixa(q + n_ * 0.12, t, lj + 0.5, 0.14, zz - 0.3, zz - 0.18, 3)  # peitoril saliente
+
+    def fachada_sso(a, c, t, n_, L, janela_cruz, tira):
+        """Fachada SSO (revisão do perito, 16 nov.; foto do Tiago eca77b0f): três corpos, os dos cantos mais
+        altos; janelas de cruz 3 + 5 + 3 no andar nobre e em cima (as 5 do meio mais pequenas, por cima), frestas
+        no piso térreo, duas janelas grandes gradeadas nos corpos dos cantos e a porta de volta perfeita ao
+        centro, sobre um patamar de pedra."""
+        ss = np.linspace(0, 1, 61)
+        ki = [int(np.argmin(np.hypot(*(lin - (a + (c - a) * f)).T))) for f in ss]
+        tp, ch = topo[ki], chao[ki]
+        zcc = float(np.median(ch))
+        zc_meio = float(np.median(tp[25:36]))
+        alto = tp > zc_meio + 1.0
+        # limites dos corpos dos cantos: onde acaba a parte mais alta a contar de cada ponta (senão 27 % e 73 %)
+        e_ = next((ss[j] for j in range(30) if not alto[j]), 0.27) if alto[0] else 0.27
+        d_ = next((ss[60 - j] for j in range(30) if not alto[60 - j]), 0.73) if alto[60] else 0.73
+        e_, d_ = float(np.clip(e_, 0.18, 0.34)), float(np.clip(d_, 0.66, 0.82))
+        h = zc_meio - zcc
+        P_ = lambda f: a + (c - a) * f
+        zt_em = lambda f: float(topo[int(np.argmin(np.hypot(*(lin - P_(f)).T)))])
+        corpo_e = [e_ * (k + 0.5) / 3 for k in range(3)]
+        corpo_d = [d_ + (1 - d_) * (k + 0.5) / 3 for k in range(3)]
+        meio = [e_ + (d_ - e_) * (k + 0.5) / 5 for k in range(5)]
+        n_jan = 0
+        for f in corpo_e + meio + corpo_d:  # andar nobre
+            janela_cruz(P_(f), t, n_, zcc + 0.44 * h, 1.2, 1.8, fundo=6)
+            n_jan += 1
+        for f in corpo_e + corpo_d:  # andar de cima dos corpos dos cantos
+            zz = zcc + 0.75 * h
+            if zz + 1.8 < zt_em(f) - 1.4:
+                janela_cruz(P_(f), t, n_, zz, 1.2, 1.8, fundo=6)
+                n_jan += 1
+        for f in meio:  # janelas pequenas do corpo do meio, por cima do andar nobre
+            janela_cruz(P_(f), t, n_, zcc + 0.64 * h, 1.0, 0.8, fundo=6, cruz=False)
+            n_jan += 1
+        # frestas do piso térreo, no corpo do meio, deixando a porta
+        fr = [f for f in np.linspace(e_ + 0.03, d_ - 0.03, 12) if abs(f - 0.5) > 0.04]
+        for f in fr:
+            tira(P_(f), t, n_, -0.18, 0.18, zcc + 0.22 * h, zcc + 0.22 * h + 0.65, 0.04, 2)
+        # janelas grandes gradeadas (6 barras verticais e 3 horizontais), uma em cada corpo dos cantos
+        for f in (e_ * 0.5, d_ + (1 - d_) * 0.5):
+            q = P_(f)
+            z0 = max(zcc + 0.10 * h, float(cota(*(q + n_ * 1.0))) + 1.2)
+            tira(q, t, n_, -1.0, 1.0, z0 - 0.2, z0 + 2.2, 0.03, 3)
+            tira(q, t, n_, -0.8, 0.8, z0, z0 + 2.0, 0.05, 6)
+            for k in range(6):
+                s_ = -0.8 + 1.6 * (k + 0.5) / 6
+                barra(m, (*(q + t * s_ + n_ * 0.1), z0), (*(q + t * s_ + n_ * 0.1), z0 + 2.0), 0.015, 7)
+            for k in range(3):
+                z_ = z0 + 2.0 * (k + 1) / 4
+                barra(m, (*(q - t * 0.8 + n_ * 0.12), z_), (*(q + t * 0.8 + n_ * 0.12), z_), 0.015, 7)
+        # porta de volta perfeita ao centro, sobre um patamar de pedra com três degraus à frente
+        q = P_(0.5)
+        zg = float(cota(*(q + n_ * 2.5)))
+        sole = zg + 1.0
+        m.caixa(q + n_ * 1.0, t, 3.0, 2.0, zg - 0.5, sole, 3)
+        for k in range(3):
+            m.caixa(q + n_ * (2.17 + 0.34 * k), t, 2.4, 0.34, zg - 0.5, sole - 0.25 * (k + 1), 3)
+        arco(m, q, t, n_, 1.9, sole, 1.65, 0.1, 3)  # moldura de cantaria
+        arco(m, q + n_ * 0.03, t, n_, 1.4, sole, 1.9, 0.1, 8)  # folha de madeira dourada
+        med["fachada_sso"] = {"comprimento": round(float(L), 1), "corpos": [round(e_, 2), round(d_, 2)], "janelas": n_jan,
+                              "frestas": len(fr), "gradeadas": 2, "porta_soleira": round(sole + ZREF, 2)}
+
+    sso_dir = np.array([-0.383, -0.924])
+    cand = [i for i in range(len(ext)) if np.linalg.norm(ext[(i + 1) % len(ext)] - ext[i]) > 30]
+    i_sso = max(cand, key=lambda i: np.array([unit(ext[(i + 1) % len(ext)] - ext[i])[1], -unit(ext[(i + 1) % len(ext)] - ext[i])[0]]) @ sso_dir)
     for i in range(len(ext)):
         a, c = ext[i], ext[(i + 1) % len(ext)]
         L = np.linalg.norm(c - a)
@@ -1196,6 +1271,9 @@ def paco():
             continue
         t = unit(c - a)
         n_ = np.array([t[1], -t[0]])
+        if i == i_sso:
+            fachada_sso(a, c, t, n_, L, janela_cruz, tira)
+            continue
         k = int((L - 3) // 4.6)
         zcc = float(np.median(chao[[int(np.argmin(np.hypot(*(lin - q).T))) for q in (a, c)]]))
         zt = float(np.median(topo[[int(np.argmin(np.hypot(*(lin - q).T))) for q in (a, (a + c) / 2, c)]]))
@@ -1220,7 +1298,7 @@ def paco():
     arco(m, pm + n_ * 0.03, PACO_V, n_, 3.0, sole, 2.6, 0.1, 3)
     arco(m, pm + n_ * 0.06, PACO_V, n_, 2.3, sole, 2.3, 0.1, 2)
     med["porta_principal_soleira"] = sole + ZREF
-    m.objeto("Paco_Corpo", "paco", ["pedra_paco", "telha_paco", "sombra", "cantaria", "madeira_escura", "telha_galeria"], GRUPOS["Paco"], uv=3.0)
+    m.objeto("Paco_Corpo", "paco", ["pedra_paco", "telha_paco", "sombra", "cantaria", "madeira_escura", "telha_galeria", "vidro_paco", "ferro_grade", "madeira_dourada"], GRUPOS["Paco"], uv=3.0)
     MEDIDAS["paco"] = med
     return ext, pat
 
@@ -1292,12 +1370,14 @@ def igreja():
     nf = u
     fc = a0 + u * (L - 0.2) + v * (W / 2)
 
-    def anel_arco(centro, r0, r1, z_nasc, d0, d1, mat):
+    def anel_arco(centro, r0, r1, z_nasc, d0, d1, mat, t=None, n=None):
         """Arquivolta: meia coroa circular saliente da fachada, entre d0 e d1 à frente dela."""
+        t = v if t is None else t
+        n = nf if n is None else n
         ks = 12
         for k in range(ks):
             a1_, a2_ = math.pi * k / ks, math.pi * (k + 1) / ks
-            q = lambda r, a, d: (*(centro + v * r * math.cos(a) + nf * d), z_nasc + r * math.sin(a))
+            q = lambda r, a, d: (*(centro + t * r * math.cos(a) + n * d), z_nasc + r * math.sin(a))
             m.face([q(r0, a1_, d1), q(r0, a2_, d1), q(r1, a2_, d1), q(r1, a1_, d1)], mat)  # face da frente
             m.face([q(r0, a2_, d0), q(r0, a1_, d0), q(r0, a1_, d1), q(r0, a2_, d1)], mat)  # intradorso
             m.face([q(r1, a1_, d0), q(r1, a2_, d0), q(r1, a2_, d1), q(r1, a1_, d1)], mat)
@@ -1346,8 +1426,19 @@ def igreja():
                 m.caixa(a0 + u * (u0 + (u1 - u0) * s_) + v * (vv + sg * 0.03), u, 0.2, 0.05, bz - 2.6, bz - 1.4, 2)
     m.caixa(a0 + u * 0.15 + v * (W / 2), v, 0.18, 0.05, chao + 2.6, chao + 3.8, 2)  # fresta da cabeceira
     ls = a0 + u * (cm + (L - cm) * 0.55) + v * 0.6
-    arco(m, ls, u, -v, 1.1, chao, 1.7, 0.1, 2)  # porta lateral a sul
-    m.objeto("Igreja_Sao_Miguel", "igreja", ["pedra_paco", "telha_velha", "sombra", "cantaria", "madeira_verde"], GRUPOS["Igreja"], uv=3.0)
+    # porta lateral a sul (revisão do perito, 16 nov.; foto do Tiago 716c0436): verga reta, folha de tábuas
+    # verde-escura, ombreiras e lintel de cantaria, tímpano liso e arco de descarga por cima
+    ns = -v
+    q2 = lambda s_, d_, z_: (*(ls + u * s_ + ns * d_), z_)
+    m.face([q2(-0.55, 0.02, chao), q2(0.55, 0.02, chao), q2(0.55, 0.02, chao + 2.1), q2(-0.55, 0.02, chao + 2.1)], 5)
+    for s_ in (-0.2, 0.0, 0.2):  # juntas das tábuas
+        m.caixa(ls + u * s_ + ns * 0.025, u, 0.025, 0.01, chao + 0.03, chao + 2.07, 2)
+    for sg in (-1, 1):  # ombreiras
+        m.caixa(ls + u * sg * 0.63 + ns * 0.04, u, 0.16, 0.08, chao, chao + 2.1, 0)
+    m.caixa(ls + ns * 0.04, u, 1.42, 0.08, chao + 2.1, chao + 2.28, 0)  # lintel
+    arco(m, ls, u, ns, 1.5, chao + 2.28, 0.01, 0.1, 0)  # tímpano liso
+    anel_arco(ls, 0.75, 0.95, chao + 2.28, 0.0, 0.06, 0, t=u, n=ns)  # arco de descarga (da pedra da parede)
+    m.objeto("Igreja_Sao_Miguel", "igreja", ["pedra_paco", "telha_velha", "sombra", "cantaria", "madeira_verde", "madeira_porta"], GRUPOS["Igreja"], uv=3.0)
     res["chao"] = chao + ZREF
     MEDIDAS["igreja"] = res
     return np.array([a0, a0 + u * L, a0 + u * L + v * W, a0 + v * W])
@@ -1596,6 +1687,12 @@ material("lancil", (0.78, 0.77, 0.74), 0.9)
 material("arvore", (1, 1, 1), 0.9, None, vcor=True)
 material("madeira", (0.42, 0.27, 0.15), 0.8)
 material("madeira_verde", (0.20, 0.45, 0.35), 0.7)
+material("madeira_porta", (0.19, 0.23, 0.20), 0.75)  # porta lateral de São Miguel (#2f3a33)
+material("vidro_paco", (0.36, 0.44, 0.35), 0.25)  # vidro em losango das janelas do Paço (#5d6f5a)
+material("ferro_grade", (0.18, 0.18, 0.18), 0.6)  # grades de ferro das janelas do Paço (#2e2e2e)
+material("madeira_dourada", (0.54, 0.42, 0.18), 0.7)  # porta da fachada SSO do Paço (#8a6a2e)
+material("ceu_vao", (0.80, 0.85, 0.89), 1.0)  # o céu visto pelas janelas da alcáçova arruinada
+material("fundo_quente", (0.66, 0.53, 0.38), 0.9)  # parede ao sol vista pelas janelas de baixo da alcáçova
 material("ferro_guarda", (0.64, 0.65, 0.66), 0.45)  # aço galvanizado das guardas (#a3a6a8)
 material("tijolo", (0.62, 0.34, 0.24), 0.85)
 material("tijolo_chamine", (0.66, 0.43, 0.35), 0.85)
@@ -1651,17 +1748,24 @@ for s_, (pts, esp) in PANOS.items():
                     m.caixa(inn[i] + n_ * 0.03, t, 1.3, 0.05, zz, zz + h, 1)
         # para fora: janelas retangulares grandes em dois registos (c. 1,2 × 1,6 m em cima, 0,6 × 0,8 m em baixo; revisão
         # do perito, foto "Castelo de Guimaraes (17)")
+        # A alcáçova é uma ruína sem telhado: pelas janelas de cima vê-se o céu e pelas de baixo a parede do
+        # outro lado, ao sol (revisão do perito, 16 nov.): fundo claro em vez de negro, ombreiras e verga de
+        # cantaria, e a terceira de cima geminada, com mainel de 0,2 m.
         ext = desvio(lin, -esp / 2, False)
-        for s, sb in ((0.30, 0.25), (0.55, 0.50), (0.78, 0.72)):
-            for s0, w, h, zrel in ((s, 1.2, 1.6, -2.6), (sb, 0.6, 0.8, -6.0)):
-                i = int(s0 * (len(lin) - 1))
-                a, c = ext[max(i - 1, 0)], ext[min(i + 1, len(ext) - 1)]
-                t = unit(c - a)
-                n_ = np.array([t[1], -t[0]])
-                zz = adarve[i] + zrel
-                if zz > fora[i] + 0.5:
-                    m.caixa(ext[i] + n_ * 0.03, t, w, 0.05, zz, zz + h, 1)
-    m.objeto(s_, s_, ["pedra", "sombra"], GRUPOS["Muralhas"])
+        for s0, w, h, zrel, fundo, gem in ((0.22, 1.2, 1.6, -2.6, 3, False), (0.40, 1.2, 1.6, -2.6, 3, False), (0.58, 1.6, 1.6, -2.6, 3, True),
+                                           (0.78, 1.2, 1.6, -2.6, 3, False), (0.30, 0.6, 0.8, -6.0, 4, False), (0.50, 0.6, 0.8, -6.0, 4, False),
+                                           (0.70, 0.6, 0.8, -6.0, 4, False)):
+            i = int(s0 * (len(lin) - 1))
+            a, c = ext[max(i - 1, 0)], ext[min(i + 1, len(ext) - 1)]
+            t = unit(c - a)
+            n_ = np.array([t[1], -t[0]])
+            zz = adarve[i] + zrel
+            if zz > fora[i] + 0.5:
+                m.caixa(ext[i] + n_ * 0.04, t, w + 0.36, 0.06, zz - 0.18, zz + h + 0.18, 2)  # cantaria à volta
+                m.caixa(ext[i] + n_ * 0.06, t, w, 0.06, zz, zz + h, fundo)
+                if gem:
+                    m.caixa(ext[i] + n_ * 0.09, t, 0.2, 0.06, zz, zz + h, 2)
+    m.objeto(s_, s_, ["pedra", "sombra", "cantaria", "ceu_vao", "fundo_quente"], GRUPOS["Muralhas"])
     alt = topo - fora
     MEDIDAS[s_] = {"topo": [float(topo.min() + ZREF), float(topo.max() + ZREF)],
                    "altura_exterior": [float(np.percentile(alt, 10)), float(np.percentile(alt, 90))],

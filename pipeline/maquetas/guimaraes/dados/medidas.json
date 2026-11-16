@@ -234,6 +234,17 @@
    "encontro": 236.2,
    "chao_patio": 222.7
   },
+  "fachada_sso": {
+   "comprimento": 60.5,
+   "corpos": [
+    0.3,
+    0.7
+   ],
+   "janelas": 22,
+   "frestas": 9,
+   "gradeadas": 2,
+   "porta_soleira": 222.3
+  },
   "porta_principal_soleira": 222.8
  },
  "igreja": {
@@ -271,9 +282,9 @@
   "medidos": 12
  },
  "vegetacao": {
-  "arvores": 581,
-  "encolhidas": 8,
-  "retiradas": 11,
+  "arvores": 580,
+  "encolhidas": 16,
+  "retiradas": 12,
   "tiradas_da_estrada": 16
  },
  "texturas_foto": {

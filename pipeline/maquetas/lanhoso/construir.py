@@ -52,7 +52,7 @@ from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
 from kit.silhares import textura_silhares  # noqa: E402
 from kit.cena import uv_mundo  # noqa: E402
 from kit.materiais import MATS, malha_rapida, material  # noqa: E402
-from kit.arquitetura import aduelas, contorno_vao, corrimao, guarda, merlao, painel, parede, passagem, tunel, vao  # noqa: E402
+from kit.arquitetura import aduelas, barra, contorno_vao, corrimao, guarda, merlao, painel, parede, passagem, tunel, vao  # noqa: E402
 
 _cfg = RAIZ / "src" / "data" / "maquetas" / "lanhoso.json"
 CFG = json.loads(_cfg.read_text()) if _cfg.exists() else {"origem": {"lat": C.LAT0, "lon": C.LON0}, "variante": "estado-atual", "versao": "0.1"}
@@ -401,7 +401,8 @@ material("sombra", (0.05, 0.05, 0.05), 1.0)
 material("madeira", (0.30, 0.22, 0.15), 0.8)
 material("madeira_verde", (0.14, 0.36, 0.32), 0.7)   # portas da porta do castelo (fotografias: verde-azulado)
 material("madeira_igreja", (0.34, 0.20, 0.13), 0.7)  # porta do santuário (fotografia: castanha)
-material("inox", (0.56, 0.57, 0.57), 0.35)          # guardas de cabos do adarve (prumo #8e9192, cabo #b8bbbc)
+material("inox", (0.56, 0.57, 0.57), 0.35)
+material("inox_claro", (0.78, 0.78, 0.77), 0.35)    # guarda da escada da torre (#c8c8c4, image 12)          # guardas de cabos do adarve (prumo #8e9192, cabo #b8bbbc)
 material("tabuado", (0.52, 0.48, 0.42), 0.85)       # adarve da torre (fotografia de drone: tábuas cinzentas)
 material("ferro", (0.14, 0.14, 0.15), 0.5)
 material("vidro", (0.16, 0.19, 0.21), 0.2)
@@ -516,7 +517,7 @@ def faces_torre():
 VAOS_T = {
     "NNO": [("porta", 0.0, 1.05, Z_PORTA, 1.65), ("seteira", 0.0, 0.14, 391.2, 1.05)],
     "ENE": [("seteira", 1.2, 0.14, 388.6, 1.1), ("seteira", -1.6, 0.16, 391.0, 1.2)],
-    "SSE": [("seteira", 1.4, 0.14, 389.2, 1.1), ("janela", -2.0, 0.55, 391.3, 0.8)],
+    "SSE": [("seteira", -0.3, 0.14, 391.0, 1.1)],  # só uma fresta alta (revisão do perito, 16 nov.: a janela não existe)
     "OSO": [("seteira", 0.6, 0.14, 389.6, 1.2)],
 }
 
@@ -553,6 +554,12 @@ def torre():
                         m.caixa_face(f, s0_, s1_, 0.0, 0.04, za_, zb_, 1)
                 # soleira saliente
                 m.caixa_face(f, s - w / 2 - 0.2, s + w / 2 + 0.2, 0.0, 0.12, za - 0.12, za, 1)
+        if nome == "SSE":  # escudo esculpido à direita da fresta, 0,8 × 0,9 m (revisão do perito, 16 nov.; Commons)
+            sc_, z1_ = -0.3 + 1.3, 392.25
+            esc = [(sc_ - 0.4, z1_), (sc_ - 0.4, z1_ - 0.5)] + [(sc_ - 0.4 * math.cos(a_), z1_ - 0.5 - 0.4 * math.sin(a_)) for a_ in np.linspace(0.2, math.pi - 0.2, 7)] + [(sc_ + 0.4, z1_ - 0.5), (sc_ + 0.4, z1_)]
+            painel(m, f, esc, (), 1, d=0.07)
+            tunel(m, f, esc[::-1], 0.0, 0.07, 1)
+            m.caixa_face(f, sc_ - 0.46, sc_ + 0.46, 0.0, 0.09, z1_, z1_ + 0.12, 1)  # moldura de cima
     # parapeito: face de dentro, peitoril, adarve de tábuas
     ri_u, ri_v = AU - ESP_PAR, AV - ESP_PAR
     q_in = [W(-ri_u, -ri_v), W(ri_u, -ri_v), W(ri_u, ri_v), W(-ri_u, ri_v)]
@@ -623,9 +630,12 @@ def escada_torre():
     # patamar
     m.prisma(ccw([W(-1.0, v0), W(1.0, v0), W(1.0, v1), W(-1.0, v1)]), z_pe - 0.8, Z_PORTA, 1, mat_topo=0)
     # corrimão pelo lado de fora (fotografia do pátio)
-    pts = [(*W(6.0, v1 - 0.06), z_pe + 0.3), (*W(1.0, v1 - 0.06), Z_PORTA), (*W(-1.0, v1 - 0.06), Z_PORTA)]
-    corrimao(m, pts, alt=0.95, mat=2)
+    # guarda de inox claro com 4 cabos, prumos a cada 1,2 m, a virar no patamar (revisão do perito, 16 nov.; image 12)
+    pts = [(*W(6.0, v1 - 0.06), z_pe + 0.3), (*W(1.0, v1 - 0.06), Z_PORTA), (*W(-1.0, v1 - 0.06), Z_PORTA), (*W(-1.0, v0 + 0.06), Z_PORTA)]
     m.objeto("escada_torre", "escada_torre", GRUPOS["Torre"], uv=1.5, vcor=patine_muro)
+    g = Malha(["inox_claro"])
+    guarda(g, pts, 0, alt=1.0, passo=1.2, r=0.02, travessas=(), cabos=4)
+    g.objeto("guarda_escada_torre", "escada_torre", GRUPOS["Torre"], uv=None)
     MEDIDAS["escada_torre"] = {"degraus": n, "pe": round(z_pe, 2), "patamar": Z_PORTA, "largura": round(v1 - v0, 2)}
 
 
@@ -825,6 +835,13 @@ def porta():
         for sv in (0.2, 0.4, 0.6):
             if sv < lw - 0.05:
                 m.caixa_face(fl, sv - 0.01, sv + 0.01, 0.0, 0.01, z_sol + 0.05, float(np.interp(sv, sp, topo)) - 0.06, 5)
+        # travejamento: três cruzes de Santo André por folha, em travessas de 12 cm salientes nas duas faces
+        # (revisão do perito, 16 nov.; image 12)
+        za_, zt_ = z_sol + 0.1, float(np.min(topo)) - 0.08
+        for k in range(3):
+            z0_, z1_ = za_ + (zt_ - za_) * k / 3, za_ + (zt_ - za_) * (k + 1) / 3
+            for (s0_, q0_), (s1_, q1_) in (((0.06, z0_), (lw - 0.06, z1_)), ((0.06, z1_), (lw - 0.06, z0_))):
+                barra(m, (*fl.xy(s0_, -esp / 2), q0_), (*fl.xy(s1_, -esp / 2), q1_), 0.05, 3)
         if lado > 0:
             m.caixa_face(fl, lw - 0.2, lw - 0.04, 0.0, 0.035, z_sol + 1.0, z_sol + 1.3, 4)
         # gonzos na parede

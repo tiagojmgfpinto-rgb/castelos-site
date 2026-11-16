@@ -824,6 +824,7 @@ material("trilho", (0.74, 0.66, 0.52), 0.97)
 material("arvore", (1, 1, 1), 0.9, None, vcor=True)
 material("ferro", (0.24, 0.25, 0.26), 0.55)
 material("ferro_ferrugem", (0.48, 0.29, 0.20), 0.7)  # corrimãos da subida norte (#7a4a32, fotos Flickr)
+material("chapa_xadrez", (0.60, 0.63, 0.64), 0.4)  # patamar de chapa xadrez galvanizada (#9aa0a3)
 for pid_, d_ in PORTAS.items():  # tábuas das folhas, na cor de cada porta (fotografias)
     if "folhas" in d_:
         material("madeira_" + pid_, d_["folhas"][0], 0.85)
@@ -1131,6 +1132,9 @@ def viga(m, a, b, larg, alt, t, mat):
 i, p, t, n_, sole = PONTOS_PORTA["porta_traicao"]
 esp_n = MEDIDOS["castelo_norte"][1]
 ini = p + n_ * (esp_n / 2)
+# patamar de chapa xadrez galvanizada diante da soleira, 1,2 × 1,0 m, e a escada a partir dele (revisão do perito,
+# 16 nov.; Flickr/Commons 50550627277)
+pat0, ini = ini, ini + n_ * 1.0
 L = 6.0
 for d in np.arange(0.5, 7.0, 0.25):
     if cota(*(ini + n_ * d)) <= sole - 2.5:
@@ -1155,7 +1159,14 @@ for sg in (-1, 1):
         c_ = ini + n_ * L * f_ + lado
         z_ = sole + (fundo_e - sole) * f_
         m.caixa(c_, t, 0.05, 0.05, z_ - 0.2, z_ + 1.0, 0)  # prumos
-m.objeto("Escada_Norte", "escada_norte", ["ferro_ferrugem"], GRUPOS["Portas"], uv=None)
+m.caixa(pat0 + n_ * 0.5, t, 1.2, 1.0, sole - 0.05, sole, 1)
+for sg in (-1, 1):
+    lado = t * sg * (LARG_E / 2 + 0.04)
+    for z_ in (0.5, 1.0):
+        viga(m, np.array([*(pat0 + n_ * 0.1 + lado), sole + z_]), np.array([*(ini + lado), sole + z_]), 0.04, 0.04, t, 0)
+    m.caixa(pat0 + n_ * 0.1 + lado, t, 0.05, 0.05, sole - 0.2, sole + 1.0, 0)
+    m.caixa(pat0 + n_ * 1.0 + lado, t, 0.06, 0.06, min(float(cota(*(pat0 + n_ * 1.0))) - 0.2, sole - 0.3), sole, 0)  # pés do patamar
+m.objeto("Escada_Norte", "escada_norte", ["ferro_ferrugem", "chapa_xadrez"], GRUPOS["Portas"], uv=None)
 MEDIDAS["escada_norte"] = {"lanco": L, "desnivel": sole - fundo_e, "degraus": ndeg}
 
 print("vestígios da capela e marco geodésico…")

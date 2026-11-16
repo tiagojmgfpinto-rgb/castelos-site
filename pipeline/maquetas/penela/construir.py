@@ -895,6 +895,12 @@ grao = imagem("grao", textura_grao())
 MATS["pedra"] = material_kit("pedra", (1, 1, 1), 0.92, pedra, normal=imagem("pedra_n", normais(_ALT_P, 3.0)), forca=0.8)
 material("sombra", (0.13, 0.11, 0.09), 1.0)
 material("cal", (0.94, 0.93, 0.89), 0.85)
+material("moldura_ocre", (0.79, 0.66, 0.42), 0.8)  # molduras das janelas da casa paroquial (#c9a86a)
+material("vidro_casa", (0.16, 0.19, 0.22), 0.2)
+material("caixilho_casa", (0.90, 0.90, 0.88), 0.6)
+material("pala_metal", (0.24, 0.25, 0.26), 0.5)  # pala da casa paroquial (#3c3f42)
+material("tabuado_traicao", (0.54, 0.48, 0.40), 0.85)  # passadiço da Porta da Traição (#8a7a66)
+material("portao_casa", (0.55, 0.55, 0.53), 0.6)  # portão de chapa da casa paroquial
 material("telha", (0.68, 0.35, 0.22), 0.8)
 material("cantaria", (0.82, 0.79, 0.72), 0.9)
 # silharia da torre-porta: fiadas regulares de silhares de 30-40 cm, mais clara e lisa do que a alvenaria dos
@@ -1109,13 +1115,32 @@ for tid, base in torres.items():
             u = unit(c - a)
             out = np.array([u[1], -u[0]])
             sole = float(cota(*((a + c) / 2 + out * 0.8)))
-            arco(m, (a + c) / 2, u, out, 1.8, sole, 2.0, 0.1, 1)
+            # arco aduelado de 13 aduelas de 0,45 m sobre um vão de 1,4 × 2,6 m (revisão do perito, 16 nov.;
+            # Commons «Porta da Traição do Castelo de Penela 06»)
+            pc = (a + c) / 2
+            arco(m, pc, u, out, 1.4, sole, 1.9, 0.1, 1)
+            zn_ = sole + 1.9
+            for k_ in range(13):
+                t0, t1 = math.pi * k_ / 13 + 0.008, math.pi * (k_ + 1) / 13 - 0.008
+                qa = lambda r_, t_, d_: (*(pc + u * r_ * math.cos(t_) + out * d_), zn_ + r_ * math.sin(t_))
+                m.face([qa(0.7, t0, 0.05), qa(0.7, t1, 0.05), qa(1.15, t1, 0.05), qa(1.15, t0, 0.05)], 0)
+                m.face([qa(1.15, t0, 0.0), qa(1.15, t0, 0.05), qa(1.15, t1, 0.05), qa(1.15, t1, 0.0)], 0)
+            for sg in (-1, 1):  # ombreiras de silhares
+                m.caixa(pc + u * sg * 0.92 + out * 0.025, u, 0.44, 0.05, sole, zn_, 0)
+            if dirc[1] > 0:  # passadiço de tábuas de 1,5 m até à porta de fora
+                zp = sole - 0.05
+                for k_ in range(10):  # tábuas um pouco acima do chão, que sobe à frente da porta
+                    q_ = pc + out * (0.2 + 0.3 * k_ + 0.15)
+                    zk = max(zp, float(cota(*q_)) + 0.08)
+                    m.caixa(q_, u, 1.5, 0.28, zk - 0.3, zk, 2)
+                for sg in (-1, 1):
+                    m.caixa(pc + out * 1.7 + u * sg * 0.6, u, 0.12, 3.0, min(zp - 0.3, float(cota(*(pc + out * 2.5))) - 0.3), zp - 0.06, 2)
         nome, grupo = "Porta_Traicao", GRUPOS["Porta_Traicao"]
     elif tid == "torre_quinaria":
         nome, grupo = "Torre_Quinaria", GRUPOS["Torreoes"]
     else:
         nome, grupo = tid.replace("torreao_poente_", "Torreao_Poente_"), GRUPOS["Torreoes"]
-    m.objeto(nome, tid, ["pedra", "sombra"], grupo)
+    m.objeto(nome, tid, ["pedra", "sombra", "tabuado_traicao"], grupo)
 
 m = Malha()
 circ = np.array([CUBELO + 2.8 * np.array([math.cos(a), math.sin(a)]) for a in np.linspace(0, 2 * math.pi, 18, endpoint=False)])
@@ -1253,7 +1278,45 @@ igreja()
 m = Malha()
 pc_ = geom(osm("69a1ea12", "edificios"))
 z1, med = casa(m, pc_, 7.0)
-m.objeto("Casa_Paroquial", "casa_paroquial", ["cal", "telha"], GRUPOS["Recinto"], uv=None)
+# vãos da casa paroquial (revisão do perito, 16 nov.; Commons «Casa Paroquial de Penela 01»): dois pisos de janelas
+# de 0,9 × 1,2 m com moldura ocre; na fachada principal (a comprida virada a sul), 5 janelas em cima e, no
+# rés-do-chão, o portão e a montra debaixo de uma pala metálica escura
+pq = pc_ if area(pc_) > 0 else pc_[::-1]
+arestas = [(pq[i], pq[(i + 1) % len(pq)]) for i in range(len(pq))]
+fora_ = lambda a, b: np.array([(b - a)[1], -(b - a)[0]]) / max(np.linalg.norm(b - a), 1e-9)
+sul = [e for e in arestas if fora_(*e) @ np.array([0, -1.0]) > 0.3]
+principal = max(sul or arestas, key=lambda e: np.linalg.norm(e[1] - e[0]))
+n_jan = 0
+for a, b in arestas:
+    L = float(np.linalg.norm(b - a))
+    if L < 3.0:
+        continue
+    u, n_ = unit(b - a), fora_(a, b)
+    zg = float(np.median(cota(*np.array([a + (b - a) * f + n_ * 1.0 for f in (0.2, 0.5, 0.8)]).T)))
+    e_princ = a is principal[0]
+    k = 5 if e_princ else max(1, int((L - 1.0) // 3.2))
+    zpala = min(zg + 2.5, z1 - 2.95)  # onde o terreno sobe à frente, a pala desce para caber o andar de cima
+    zsup = z1 - 2.6 if e_princ else max(z1 - 2.6, zg + 2.95)  # janelas de cima: abaixo do beiral
+    linhas = [zsup] if e_princ else [zsup, zg + 1.0]
+    for zz in linhas:
+        if (zz < zg + 0.8 and not e_princ) or zz + 1.2 > z1 - 0.3:
+            continue
+        for f in np.linspace(0, 1, k + 2)[1:-1]:
+            q = a + (b - a) * f
+            m.caixa(q + n_ * 0.02, u, 1.2, 0.04, zz - 0.15, zz + 1.35, 2)
+            m.caixa(q + n_ * 0.03, u, 0.9, 0.04, zz, zz + 1.2, 3)
+            m.caixa(q + n_ * 0.055, u, 0.05, 0.02, zz, zz + 1.2, 4)  # junta das folhas
+            n_jan += 1
+    if e_princ:
+        for f, w, h, mat in ((0.24, 3.0, 2.3, 6), (0.58, 5.0, 2.4, 3)):  # portão e montra
+            q = a + (b - a) * f
+            h = min(h, zpala - zg - 0.05)
+            m.caixa(q + n_ * 0.03, u, w, 0.04, zg - 0.3, zg + h, mat)
+            m.caixa(q + n_ * 0.05, u, 0.06, 0.02, zg - 0.3, zg + h, 4)
+        q = a + (b - a) * 0.42
+        m.caixa(q + n_ * 0.3, u, 0.72 * L, 0.6, zpala, zpala + 0.12, 5)  # pala
+m.objeto("Casa_Paroquial", "casa_paroquial", ["cal", "telha", "moldura_ocre", "vidro_casa", "caixilho_casa", "pala_metal", "portao_casa"], GRUPOS["Recinto"], uv=None)
+MEDIDAS.setdefault("casa_paroquial_vaos", {})["janelas"] = n_jan
 MEDIDAS["casa_paroquial"] = {"cornija": z1 + ZREF, "cume": medir(desvio(pc_ if area(pc_) > 0 else pc_[::-1], 0.4, True)) + ZREF,
                              "chao": float(np.median(cota(*pc_.T))) + ZREF, "medido": med}
 # Dois polígonos que o OSM marca como edifícios no recinto. O LiDAR de 2024 não tem lá nada acima de 0,6 m

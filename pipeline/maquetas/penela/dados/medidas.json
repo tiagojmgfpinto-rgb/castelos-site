@@ -155,6 +155,9 @@
   "cumeeira_acima_adro": 10.3,
   "torre_acima_adro": 20.0
  },
+ "casa_paroquial_vaos": {
+  "janelas": 22
+ },
  "casa_paroquial": {
   "cornija": 291.8,
   "cume": 294.4,
@@ -166,15 +169,15 @@
   "comprimento": 38.0
  },
  "vila": {
-  "edificios": 60,
+  "edificios": 62,
   "do_osm": 28,
-  "do_lidar": 32,
-  "medidos": 58
+  "do_lidar": 34,
+  "medidos": 60
  },
  "ciprestes": 3,
  "vegetacao": {
   "arvores": 560,
-  "encolhidas": 41,
+  "encolhidas": 42,
   "retiradas": 76
  },
  "texturas_foto": {

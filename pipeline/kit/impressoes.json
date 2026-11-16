@@ -1,23 +1,23 @@
 {
  "maquetas": {
   "braga": {
-   "glb": "4e4631579c3ae8c12a226d3f456e4fc65eb35da0",
+   "glb": "42ce4deae1f71da1dc9a6f74cea33cd04fdd33e6",
    "medidas": "f27a3ca83c9018291082f7f35599daacb51e9fe4"
   },
   "castro-laboreiro": {
-   "glb": "2b91a021568b7649a9bbef5fd99050d2eb7adcda",
-   "medidas": "ed688f1f0f2e301ea475784f186250185b80e284"
+   "glb": "dd179bd1b6a64c97be7b0041f077cc9e8984983c",
+   "medidas": "42a88933357205286d21f79748276622196eaa45"
   },
   "guimaraes": {
-   "glb": "6a65ca322336a5c25a0e23eb1a081782894a2540",
-   "medidas": "833418756147627fb896064e65de2dc26fe01d66"
+   "glb": "5ee8d7c541994ec96f00633283da1aa161d9bae3",
+   "medidas": "3f0c6b8fcfe0b3cba711853ebdac7405dbbf1a6a"
   },
   "lanhoso": {
-   "glb": "ccdbd22ca4f602c9ef59f618ee2c2c22bf850934",
+   "glb": "0d04c6a2a5e8536b2d521aaf34e2eea3e8de0a40",
    "medidas": "e0e59aa6239900b63a82b523b900072a384427c7"
   },
   "lindoso": {
-   "glb": "fd9edc59dc6c3a49cf53aeace0bcf76c9dbb7928",
+   "glb": "10cf00fb85890e50780361db206f3eb80a273b26",
    "medidas": "abdd067f8f76e33fa5a1dddf6071d1e62888dc35"
   },
   "melgaco": {
@@ -25,28 +25,28 @@
    "medidas": "c626b1a2e54d66d8481e9c272d003329ca5218b0"
   },
   "moncao": {
-   "glb": "a871766d3419bd94f9cb2b819cca5fce37436aeb",
-   "medidas": "e30399b95c4e53efe62ea8d8168e3eeb62a91398"
+   "glb": "8e532200c10f2878b008e738b7a2d55ee228c645",
+   "medidas": "f9e7b6ac47348d4b1b6ba65b983201058750019c"
   },
   "montalegre": {
-   "glb": "8e455e56084c8b3f1bf807e105495b64c237d0bb",
-   "medidas": "3c0567e181c741d3b880c4571a7e0aeb446e0826"
+   "glb": "e6b921e893f98513036ad8e3e9593a9e30c3e3a7",
+   "medidas": "57b0041a54029417d5b07b890a07ef2c75cbd0b0"
   },
   "penela": {
-   "glb": "b13ce33017a13777f64c5b26b1e828cdee0930bb",
-   "medidas": "2e8ee4a94d28540274f5d4ab6781252e7c271ae1"
+   "glb": "f664abd88944b44e1a96a9a72b96a7f3e7ae04d7",
+   "medidas": "cec87f485e4a9c802ce9e8121045d55afe013260"
   },
   "peniche": {
-   "glb": "d18068e1742c2738f9158d070f8c4160836cb235",
+   "glb": "4faacbd6ddafe6512e4e5ca46a6f6e77b255bdeb",
    "medidas": "2bacd92afd9ee88d10387eb0f557c8bd67afd8a3"
   },
   "valenca": {
-   "glb": "1246cf1f91e55dfaff3b6826e432f634fde92655",
+   "glb": "5269b03daed8bef4f9e24dcbf9ffbbacc1ffc9f9",
    "medidas": "69214dab482b19648dbf385619b01214cfb11e87"
   },
   "almeida": {
-   "glb": "dbb20fbe06264f8e0727478f2262e1e04dfd4160",
-   "medidas": "49d7938eee47b7e207f241def57ac0df28f90125"
+   "glb": "c5e3145b3c0b6be2f58de949f9ac436fe3df2ad7",
+   "medidas": "76e2af3b31159cb8b15e5f28c46770c2854eba4f"
   }
  },
  "ambiente": {
