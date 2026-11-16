@@ -22,13 +22,24 @@ export interface OpcoesDisposicao {
   topo: number;
   /** Zonas do visor onde nenhum cartão pode ficar (o selo da versão provisória, a bússola), em px. */
   bloqueadas?: Caixa[];
+  /**
+   * Altura e largura do visor, em px. Com a altura, uma placa que não cabe por cima pode ficar por
+   * baixo do ponto (último recurso); com a largura, os cartões desviados não saem pela borda.
+   */
+  altura?: number;
+  largura?: number;
+  /** Margem de baixo reservada à legenda do visor, em px. */
+  base?: number;
 }
 
-/** Lugar de uma placa: nível da linha e desvio do cartão para o lado (fração da largura). */
-export interface Lugar { nivel: number; lado: number }
+/**
+ * Lugar de uma placa: nível da linha, desvio do cartão para o lado (fração da largura) e se o cartão
+ * fica por baixo do ponto (só quando não cabe por cima).
+ */
+export interface Lugar { nivel: number; lado: number; baixo?: boolean }
 
-/** Desvios tentados em cada nível: centrado, depois para a esquerda e para a direita. */
-const LADOS = [0, -0.38, 0.38];
+/** Desvios tentados em cada nível: centrado, depois para a esquerda e para a direita, e mais longe. */
+const LADOS = [0, -0.38, 0.38, -0.76, 0.76];
 
 export interface Caixa { x0: number; y0: number; x1: number; y1: number }
 
@@ -46,17 +57,33 @@ export function alturaLinha(nivel: number, h: number, o: OpcoesDisposicao): numb
  */
 export function disporPlacas(placas: PlacaNoEcra[], o: OpcoesDisposicao): Lugar[] {
   const ocupadas: Caixa[] = [...(o.bloqueadas ?? [])];
+  const encaixar = (p: PlacaNoEcra, y0: number, y1: number, nivel: number, baixo: boolean): Lugar | null => {
+    for (const lado of LADOS) {
+      let x = p.x + lado * p.w;
+      // o visor encosta o cartão à borda; a caixa ocupada tem de ser a do sítio onde ele fica de facto
+      if (o.largura) x = Math.min(Math.max(x, p.w / 2 + 4), o.largura - p.w / 2 - 4);
+      const c = { x0: x - p.w / 2 - o.folga / 2, x1: x + p.w / 2 + o.folga / 2, y0: y0 - o.folga / 2, y1: y1 + o.folga / 2 };
+      if (ocupadas.some((q) => cruza(c, q))) continue;
+      ocupadas.push(c);
+      return baixo ? { nivel, lado, baixo } : { nivel, lado };
+    }
+    return null;
+  };
   return placas.map((p) => {
     if (!p.candidata) return { nivel: -1, lado: 0 };
     for (let n = 0; n <= o.niveis; n++) {
       const fundo = p.y - alturaLinha(n, p.h, o);
       if (n > 0 && fundo - p.h < o.topo) break; // não subir para cima dos botões nem para fora do visor
-      for (const lado of LADOS) {
-        const x = p.x + lado * p.w;
-        const c = { x0: x - p.w / 2 - o.folga / 2, x1: x + p.w / 2 + o.folga / 2, y0: fundo - p.h - o.folga / 2, y1: fundo + o.folga / 2 };
-        if (ocupadas.some((q) => cruza(c, q))) continue;
-        ocupadas.push(c);
-        return { nivel: n, lado };
+      const l = encaixar(p, fundo - p.h, fundo, n, false);
+      if (l) return l;
+    }
+    // Sem lugar por cima: o cartão desce para baixo do ponto, com a linha a apontar para cima
+    if (o.altura) {
+      for (let n = 0; n <= o.niveis; n++) {
+        const cimo = p.y + alturaLinha(n, p.h, o);
+        if (cimo + p.h > o.altura - (o.base ?? 0)) break;
+        const l = encaixar(p, cimo, cimo + p.h, n, true);
+        if (l) return l;
       }
     }
     return { nivel: -1, lado: 0 };

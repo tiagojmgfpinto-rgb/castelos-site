@@ -93,7 +93,7 @@ A pegada vem do OSM e as cotas do MDS. A orientação das fachadas foi conferida
 |---|---|---|
 | Igreja Matriz | fachada a poente; câmara de D. Perez a poente | nave 24 × 9,5 m, cumeeira 749,9; torre de 5 m a SW, remate 758,7 |
 | Misericórdia | fachada a nordeste, a meio do lado da Praça da República; câmara de D. Perez 7 m à frente | empena perpendicular à rua, cumeeira c. 752,4 |
-| Torre do Relógio | três andares entre pilastras de granito, cornijas salientes, janela gradeada, mostrador, sineira, urnas e cata-vento (fotografias de Hovallef e D. Perez); porta a poente por hipótese | 5,5 m de lado; 762,7 → c. 781 m |
+| Torre do Relógio | três andares entre pilastras de granito, cornijas salientes, janela gradeada, mostrador, um sino por face; remate com balaustrada, pinhas, cúpula bolbosa, pináculo e cata-vento (fotografias de 2013, 2019 e 2026; LiDAR); porta a poente por hipótese | 5,5 m de lado; 762,7 → 786,2 m (pináculo, LiDAR) |
 | Quartel das Esquadras | arcaria nos DOIS lados compridos (Street View do Terreiro do Poço do Rancho e da Rua da Muralha); telha velha escura (ortofotomapa); chaminés na água noroeste; escadaria em V no topo nordeste (fotografia de D. Perez) | 105,5 × 14,6 m; cumeeira 755,8 |
 | Castelo | — | bases de três torres redondas (N, E, W) lidas no relevo e na ortoimagem; alturas estimadas |
 
@@ -147,3 +147,5 @@ A pegada vem do OSM e as cotas do MDS. A orientação das fachadas foi conferida
 ## Realismo (12 nov. 2026)
 
 - Pedra e telha fotográficas (`kit/fotos.py`, fotos CC0 da Poly Haven): silharia das escarpas e cantaria das portas em `stone_brick_wall_001` (fiadas de c. 0,5 m nas escarpas), recolorida para o granito claro bege-acinzentado do Street View; telhas `roof_09` com os três tons (viva, velha e do Quartel). Créditos em `dados/medidas.json` (`texturas_foto`). As casas já eram cinzentas.
+- **Torre do Relógio, remate (16 nov.):** a fotografia de frente de 2019 (Hovallef), tirada ao pé da torre, escondia a cúpula atrás da cornija, e o remate tinha ficado só com urnas. As fotografias de longe (D. Perez 2013, Hovallef 2019, Alvesgaspar março de 2026) e o LiDAR de 2024 mostram um terraço com balaustrada de granito e pinhas nos cantos, e ao meio uma cúpula bolbosa sobre embasamento quadrado com pinhas pequenas, pináculo de anéis, cruz e cata-vento vermelho. Cotas pelo LiDAR (perfil radial dos pontos à volta do eixo): cornija 779,85, corrimão c. 780,8, pinhas c. 782,4, bojo com 1,75 m de raio, ombro 783,7 e pináculo 786,2 m. Juntou-se o friso de granito por baixo da cornija de remate e um sino à vista em cada vão.
+- **Placas (16 nov.):** no visor da ficha (c. 710 × 440 px) três das oito placas escondiam-se por falta de lugar por cima do ponto. O visor passou a tentar desvios maiores para o lado e, em último caso, a pôr o cartão por baixo do ponto; ao abrir aparecem as oito.

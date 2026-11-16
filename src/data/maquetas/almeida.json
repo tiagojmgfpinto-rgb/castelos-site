@@ -2,7 +2,7 @@
   "monumento": "almeida",
   "titulo": "Praça-forte de Almeida",
   "variante": "estado-atual",
-  "versao": "0.6 provisória",
+  "versao": "0.7 provisória",
   "data": "2026-11-16",
   "origem": {
     "lat": 40.725642,
@@ -226,17 +226,17 @@
       "grupo": "Igrejas",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "Torre quadrada de três andares: panos rebocados a ocre entre pilastras largas de granito acinzentado-rosado, cornijas muito salientes, janela gradeada no rés-do-chão, mostrador do relógio no andar do meio e um vão de arco pleno com sino em cada face no de cima; por cima, urnas nos cantos e pedestal com cata-vento. À volta, os ciprestes do adro e do antigo cemitério (fotografias de Hovallef e D. Perez, Commons). A porta, que as fotografias não mostram, fica na face poente (hipótese).",
-      "medidas": "5,5 m de lado; chão a 762,7 m, cornija de remate a c. 779,7 m e urnas a c. 781 m (MDS); andares de 7,4, 3,9 e 5,0 m pela proporção das fotografias.",
+      "descricao": "Torre quadrada de três andares: panos rebocados a ocre entre pilastras largas de granito, cornijas muito salientes, janela gradeada no rés-do-chão, mostrador do relógio no andar do meio e um vão de arco pleno com sino em cada face no de cima. No remate, um terraço com balaustrada de granito e pinhas nos cantos e, ao meio, uma cúpula bolbosa sobre embasamento quadrado, com pináculo de anéis, cruz e cata-vento (fotografias de 2013, 2019 e 2026 no Commons e LiDAR de 2024). À volta, os ciprestes do adro e do antigo cemitério. A porta, que as fotografias não mostram, fica na face poente (hipótese).",
+      "medidas": "5,5 m de lado; chão a 762,7 m, cornija de remate a c. 779,8 m, corrimão da balaustrada a c. 780,8 m, pinhas dos cantos a c. 782,4 m, ombro da cúpula a c. 783,7 m e pináculo a 786,2 m (LiDAR); andares de 7,4, 3,9 e 5,0 m pela proporção das fotografias.",
       "fontes": [
         "commons",
         "lidar",
         "osm"
       ],
-      "resumo": "Torre ocre de três andares, junto ao castelo",
+      "resumo": "Torre ocre de três andares com cúpula, junto ao castelo",
       "ancora": [
         -56.2,
-        785.9,
+        788.9,
         -37.6
       ]
     },

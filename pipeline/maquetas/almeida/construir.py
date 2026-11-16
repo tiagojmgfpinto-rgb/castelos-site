@@ -2172,8 +2172,9 @@ def torre_relogio(m):
     os panos rebocados a ocre metidos entre pilastras largas de granito acinzentado-rosado, separados por
     cornijas muito salientes. Rés-do-chão alto com uma janela gradeada de moldura de granito; no andar do meio
     o mostrador do relógio, branco com aro de granito; no de cima um vão de arco pleno com sino em cada face.
-    Por cima da cornija de remate, um plinto baixo com urnas (pinhas) nos cantos e, ao meio, um pedestal com
-    remate e cata-vento. Planta do OSM e do MDS (5,5 m de lado, alinhada com os eixos); chão a 762,7 m e
+    Por cima da cornija de remate, um terraço com balaustrada e pinhas nos cantos e, ao meio, uma cúpula
+    bolbosa com pináculo, cruz e cata-vento (fotografias de 2013, 2019 e 2026 e LiDAR de 2024; a fotografia
+    de frente, tirada ao pé da torre, esconde a cúpula atrás da cornija). Planta do OSM e do MDS (5,5 m de lado, alinhada com os eixos); chão a 762,7 m e
     remate a c. 781 m (MDS). Alturas dos andares pela proporção das fotografias (7,4, 3,9 e 5,0 m). A janela e
     o mostrador estão na face nascente (posição GPS das fotografias); a porta, que as fotografias não mostram,
     fica na face poente (hipótese)."""
@@ -2230,25 +2231,79 @@ def torre_relogio(m):
         Qf.arco_sz(0.0, wv / 2, wv / 2 + 0.22, za + hn, 0.0, 0.1, GRO, k=12, aduelas=True)
         Qf.bloco(-wv / 2 - 0.3, wv / 2 + 0.3, za - 0.18, za, 0.0, 0.18, GRO)
         Qf.bloco(-0.15, 0.15, za + hn + wv / 2 + 0.1, za + hn + wv / 2 + 0.38, 0.0, 0.14, GRO)  # fecho
-    sino(m, c + u * (h - 0.55), za + 0.75, r=0.36)
-    # remate: plinto baixo, urnas nos cantos, pedestal ao meio com remate e cata-vento
+    # um sino em cada vão (fotografias de 2019 e 2026), à face do vão para se ver, com o cepo de madeira
+    for n_ in faces:
+        t_ = np.array([-n_[1], n_[0]])
+        sino(m, c + n_ * (h - 0.12), za + 0.55, r=0.3)
+        m.caixa(c + n_ * (h - 0.12), t_, 0.75, 0.16, za + 0.55 + 0.42, za + 0.55 + 0.6, MAD)
+    # friso de granito por cima da sineira, entre as pilastras, logo abaixo da cornija de remate (fotografias)
+    for Qf in QS:
+        Qf.bloco(-h + pil, h - pil, z3 - 0.55, z3, 0.0, 0.06, GRO)
+    # remate (fotografias de 2013, 2019 e 2026 e LiDAR de 2024): terraço com balaustrada de granito e
+    # pinhas nos cantos, e ao meio uma cúpula bolbosa sobre um embasamento quadrado com pinhas pequenas,
+    # acabada num pináculo de anéis com cruz e cata-vento. Cotas do LiDAR: cornija 779,85, corrimão
+    # c. 780,8, pinhas c. 782,4, arranque da cúpula 781,3, bojo até r = 1,75 m, ombro 783,7, pináculo 786,2.
     zt = z3 + 0.75
-    m.caixa(c, u, L - 0.1, L - 0.1, zt, zt + 0.45, GRO)
-    m.caixa(c, u, L + 0.05, L + 0.05, zt + 0.45, zt + 0.55, GRO)
+    m.caixa(c, u, L + 0.2, L + 0.2, zt, zt + 0.08, GRO)  # lajeado do terraço
+    hb = h + 0.05  # face de fora da balaustrada, quase à face das pilastras
+    zp, zc0, zc1 = zt + 0.08 + 0.2, zt + 0.9, zt + 1.05  # plinto, arranque e topo do corrimão
+    for n_ in faces:
+        t_ = np.array([-n_[1], n_[0]])
+        mid = c + n_ * (hb - 0.2)
+        # plinto e corrimão param nos pilaretes dos cantos (sem faces sobrepostas nos cantos)
+        m.caixa(mid, t_, 2 * hb - 1.1, 0.4, zt + 0.08, zp, GRO)  # plinto
+        m.caixa(mid, t_, 2 * hb - 1.1, 0.46, zc0, zc1, GRO)  # corrimão
+        nb = 9
+        passo_b = (2 * hb - 1.1) / nb
+        for k_ in range(nb):  # balaústres torneados: pé, bojo e colarinho
+            q = mid + t_ * (-hb + 0.55 + passo_b * (k_ + 0.5))
+            m.cilindro(q, 0.07, zp, zp + 0.06, GRO, k=8)
+            m.cilindro(q, 0.07, zp + 0.06, zp + 0.24, GRO, k=8, r1=0.11, topo=False)
+            m.cilindro(q, 0.11, zp + 0.24, zp + 0.36, GRO, k=8, r1=0.06, topo=False)
+            m.cilindro(q, 0.06, zp + 0.36, zc0 - 0.06, GRO, k=8, r1=0.05, topo=False)
+            m.cilindro(q, 0.09, zc0 - 0.06, zc0, GRO, k=8)
     for a, b in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
-        cc = c + (u * a + w * b) * (h - 0.35)
-        m.caixa(cc, u, 0.45, 0.45, zt + 0.55, zt + 0.8, GRO)
-        m.cilindro(cc, 0.14, zt + 0.8, zt + 0.95, GRO, k=10, r1=0.24)  # urna
-        m.esfera((cc[0], cc[1], zt + 1.12), 0.24, GRO)
-        m.cilindro(cc, 0.12, zt + 1.3, zt + 1.6, GRO, k=8, r1=0.0)  # chama
-    m.caixa(c, u, 1.3, 1.3, zt + 0.55, zt + 0.95, GRO)
-    m.caixa(c, u, 0.9, 0.9, zt + 0.95, zt + 1.6, GRO)
-    m.caixa(c, u, 1.1, 1.1, zt + 1.6, zt + 1.75, GRO)
-    m.esfera((c[0], c[1], zt + 1.98), 0.25, GRO)
+        cc = c + (u * a + w * b) * (hb - 0.3)
+        m.caixa(cc, u, 0.6, 0.6, zt + 0.08, zc1 + 0.08, GRO)  # pilarete do canto
+        m.caixa(cc, u, 0.7, 0.7, zc1 + 0.08, zc1 + 0.18, GRO)
+        # pinha: pé, anel, bojo de vaso, gargalo e botão (c. 1,6 m acima do corrimão)
+        m.cilindro(cc, 0.14, zc1 + 0.18, zc1 + 0.42, GRO, k=10, r1=0.1)
+        m.cilindro(cc, 0.2, zc1 + 0.42, zc1 + 0.5, GRO, k=10)
+        m.esfera((cc[0], cc[1], zc1 + 0.78), 0.27, GRO, k=12, achata=1.15)
+        m.cilindro(cc, 0.12, zc1 + 1.04, zc1 + 1.16, GRO, k=10)
+        m.cilindro(cc, 0.16, zc1 + 1.16, zc1 + 1.22, GRO, k=10)
+        m.esfera((cc[0], cc[1], zc1 + 1.36), 0.13, GRO, k=10)
+        m.cilindro(cc, 0.03, zc1 + 1.46, zc1 + 1.6, GRO, k=6, r1=0.005)
+    # embasamento quadrado da cúpula, com cornija e uma pinha pequena em cada canto
+    zb0, zb1 = zt + 0.08, 781.3 - ZREF
+    m.caixa(c, u, 3.4, 3.4, zb0, zb1 - 0.22, GRO)
+    m.caixa(c, u, 3.7, 3.7, zb1 - 0.22, zb1 - 0.08, GRO)
+    m.caixa(c, u, 3.55, 3.55, zb1 - 0.08, zb1, GRO)
+    for a, b in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+        cc = c + (u * a + w * b) * 1.55
+        m.cilindro(cc, 0.12, zb1, zb1 + 0.12, GRO, k=8)
+        m.esfera((cc[0], cc[1], zb1 + 0.32), 0.17, GRO, k=10, achata=1.2)
+        m.cilindro(cc, 0.025, zb1 + 0.5, zb1 + 0.65, GRO, k=6, r1=0.005)
+    # cúpula bolbosa (perfil de revolução): bojo largo em baixo, contracurva até ao gargalo
+    perfil = [(0.0, 1.45), (0.12, 1.62), (0.4, 1.75), (0.75, 1.68), (1.05, 1.45), (1.35, 1.1), (1.65, 0.76),
+              (1.95, 0.5), (2.2, 0.37), (2.4, 0.34)]
+    for (za_, ra_), (zb_, rb_) in zip(perfil[:-1], perfil[1:]):
+        m.cilindro(c, ra_, zb1 + za_, zb1 + zb_, GRO, k=16, r1=rb_, topo=False)
+    zs = zb1 + 2.4  # c. 783,7
+    # pináculo de anéis, bolbo, bola e espigão (até 786,2 m)
+    for r0_, za_, zb_, r1_ in ((0.42, 0.0, 0.14, 0.42), (0.3, 0.14, 0.45, 0.24), (0.36, 0.45, 0.55, 0.36)):
+        m.cilindro(c, r0_, zs + za_, zs + zb_, GRO, k=12, r1=r1_)
+    m.esfera((c[0], c[1], zs + 0.85), 0.33, GRO, k=12, achata=1.0)
+    m.cilindro(c, 0.28, zs + 1.15, zs + 1.25, GRO, k=12)
+    m.cilindro(c, 0.15, zs + 1.25, zs + 1.55, GRO, k=10, r1=0.12)
+    m.esfera((c[0], c[1], zs + 1.75), 0.24, GRO, k=10)
+    m.cilindro(c, 0.08, zs + 1.95, zs + 2.5, GRO, k=8, r1=0.02)
+    # cruz de ferro e cata-vento vermelho (fotografias)
     Qs = Quadro(m, c, u)
-    barra(m, (c[0], c[1], zt + 2.2), (c[0], c[1], zt + 3.6), 0.03, FER)
-    cruz(Qs, 0, zt + 2.6, 0, alt=0.9, mat=FER, esp=0.05)
-    Qs.bloco(0.05, 0.6, zt + 3.25, zt + 3.45, -0.01, 0.01, FER)  # bandeira do cata-vento
+    zx = zs + 2.45
+    barra(m, (c[0], c[1], zx), (c[0], c[1], zx + 1.5), 0.03, FER)
+    cruz(Qs, 0, zx + 0.55, 0, alt=0.95, mat=FER, esp=0.05)
+    Qs.bloco(0.05, 0.62, zx + 0.2, zx + 0.5, -0.012, 0.012, VER)  # bandeira do cata-vento
     return np.array([c + (-3.3, -3.3), c + (3.3, -3.3), c + (3.3, 3.3), c + (-3.3, 3.3)])
 
 
@@ -2342,7 +2397,9 @@ VISTAS_PERTO = [("m_matriz", 300, 14, 42, (150.0, -45.0), 747.0), ("m_misericord
                 # das posições das fotografias de comparação (ver LEIAME)
                 ("c_sf_dentro", 145, 4, 30, (123.8, -175.8), 746.0), ("c_sa_fora", 319, 6, 20, (-326.6, -19.7), 748.5),
                 ("c_matriz", 292, 9, 24, (146.0, -44.5), 747.5), ("c_relogio", 63, 14, 34, (-56.2, 37.6), 773.0),
-                ("c_quartel", 72, 2.5, 78, (66.0, -162.0), 747.5)]
+                ("c_quartel", 72, 2.5, 78, (66.0, -162.0), 747.5),
+                ("c_relogio_topo", 40, 22, 26, (-56.2, 37.6), 780.0),
+                ("c_relogio_alto", 63, 12, 40, (-56.2, 37.6), 775.5)]
 if "--zoom" in sys.argv:  # vistas de trabalho
     VISTAS_PERTO += [("z_safora_topo", 180, 88, 70, (-322.0, -26.0), 750.0), ("z_canto_ne", 238, 20, 45, (-25.0, 233.0), 748.0)]
 if "--grelha" in sys.argv:  # vistas de trabalho: grelha de 5 x 5 sobre toda a fortificação
@@ -2662,7 +2719,7 @@ if GUARITAS:
     g_ = min(GUARITAS, key=lambda g: np.hypot(g[0][0] - _e[0], g[0][1] - _e[1]))[0]
     MEDIDAS["ancoras"]["guaritas"] = [round(float(g_[0]), 1), round(float(cota_t(*g_)) + 6, 1), round(-float(g_[1]), 1)]
 for el_, (x_, y_, h_) in {"igreja_matriz": (146.0, -50.4, 22.0), "igreja_misericordia": (73.0, -137.0, 13.0),
-                          "torre_relogio": (-56.2, 37.6, 23.0), "quartel_esquadras": (52.7, -170.6, 16.0),
+                          "torre_relogio": (-56.2, 37.6, 26.0), "quartel_esquadras": (52.7, -170.6, 16.0),
                           "castelo": (-95.0, -3.0, 8.0)}.items():
     MEDIDAS["ancoras"][el_] = ancora(x_, y_, h_)
 MEDIDAS["ancoras"]["vila"] = ancora(10, -60, 14.0)
