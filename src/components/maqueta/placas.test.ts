@@ -23,6 +23,19 @@ describe("disposição das placas", () => {
     expect(disporPlacas([placa(200, 120), placa(200, 120)], { ...o, topo: 40 }).map((l) => l.nivel)).toEqual([0, -1]);
   });
 
+  it("sem lugar por cima, desce para baixo do ponto quando se sabe a altura do visor", () => {
+    const ps = Array.from({ length: 4 }, () => placa(200, 300));
+    expect(disporPlacas(ps, { ...o, altura: 600 })[3]).toEqual({ nivel: 0, lado: 0, baixo: true });
+    // sem espaço por baixo (visor baixo), continua escondida
+    expect(disporPlacas(ps, { ...o, altura: 340 })[3].nivel).toBe(-1);
+  });
+
+  it("os desvios para o lado contam com o cartão encostado à borda do visor", () => {
+    // o ponto da primeira está fora do visor, à esquerda: o cartão encosta à borda e tapa o da segunda
+    expect(disporPlacas([placa(-40, 300), placa(130, 300)], o)[1]).toEqual({ nivel: 0, lado: 0 });
+    expect(disporPlacas([placa(-40, 300), placa(130, 300)], { ...o, largura: 800 })[1]).not.toEqual({ nivel: 0, lado: 0 });
+  });
+
   it("as que não são candidatas não ocupam lugar", () => {
     expect(niveis([placa(200, 300, false), placa(200, 300)])).toEqual([-1, 0]);
   });

@@ -46,6 +46,8 @@ interface Placa {
   dx: number;
   inicio: number;
   tapada: boolean;
+  /** O cartão está por baixo do ponto (não coube por cima). */
+  baixo: boolean;
 }
 
 /**
@@ -535,7 +537,7 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia: d
       const el = camada.querySelector<HTMLElement>(`[data-placa="${e.id}"]`);
       const ancora = ancoras.get(e.id);
       if (!el || !ancora) return [];
-      return [{ id: e.id, ancora, el, cartao: el.querySelector<HTMLElement>(".maqueta-placa-cartao")!, linha: el.querySelector<HTMLElement>(".maqueta-placa-linha")!, w: 0, h: 0, op: 0, dy: 0, dx: 0, inicio: Infinity, tapada: false }];
+      return [{ id: e.id, ancora, el, cartao: el.querySelector<HTMLElement>(".maqueta-placa-cartao")!, linha: el.querySelector<HTMLElement>(".maqueta-placa-linha")!, w: 0, h: 0, op: 0, dy: 0, dx: 0, inicio: Infinity, tapada: false, baixo: false }];
     });
     entrada.current = { atraso: 0.6, passo: 0.35 };
   }, [placas, ancoras, camadaPlacas]);
@@ -776,13 +778,13 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia: d
       const camada = camadaPlacas.current;
       const r0 = camada?.getBoundingClientRect();
       bloqueadas.current = r0
-        ? [...(camada!.parentElement?.querySelectorAll<HTMLElement>(".maqueta-selo, .maqueta-norte") ?? [])].map((el) => {
+        ? [...(camada!.parentElement?.querySelectorAll<HTMLElement>(".maqueta-selo, .maqueta-norte, .maqueta-escala") ?? [])].map((el) => {
             const r = el.getBoundingClientRect();
             return { x0: r.left - r0.left - 4, y0: r.top - r0.top - 4, x1: r.right - r0.left + 4, y1: r.bottom - r0.top + 4 };
           })
         : [];
     }
-    const o: OpcoesDisposicao = { linha: size.width < 560 ? 26 : 42, folga: 6, niveis: 2, topo: 44, bloqueadas: bloqueadas.current };
+    const o: OpcoesDisposicao = { linha: size.width < 560 ? 26 : 42, folga: 6, niveis: 2, topo: 44, bloqueadas: bloqueadas.current, altura: size.height, largura: size.width, base: 8 };
     const { v, dir, raio } = aux;
     const noEcra = ps.map((p) => {
       if (!p.w) { p.w = p.cartao.offsetWidth; p.h = p.cartao.offsetHeight; }
@@ -805,8 +807,14 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia: d
     const kOp = 1 - Math.exp(-dt * 5);
     const kDy = 1 - Math.exp(-dt * 7);
     ps.forEach((p, i) => {
-      const { nivel, lado } = lugares[i];
+      const { nivel, lado, baixo = false } = lugares[i];
       const { x, y } = noEcra[i];
+      if (nivel >= 0 && baixo !== p.baixo) {
+        // muda de lado do ponto: a linha recomeça curta do lado novo, em vez de atravessar o ponto
+        p.baixo = baixo;
+        p.dy = o.linha * 0.4;
+        p.el.dataset.baixo = baixo ? "1" : "0";
+      }
       p.op += ((nivel >= 0 ? 1 : 0) - p.op) * kOp;
       if (nivel >= 0) {
         p.dy += (alturaLinha(nivel, p.h, o) - p.dy) * kDy;
@@ -820,7 +828,8 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia: d
       p.el.style.opacity = p.op.toFixed(3);
       p.el.style.visibility = p.op < 0.02 ? "hidden" : "visible";
       p.linha.style.height = `${p.dy.toFixed(1)}px`;
-      p.cartao.style.bottom = `${p.dy.toFixed(1)}px`;
+      // por cima, o fundo do cartão fica a dy do ponto; por baixo, o topo (a posição vem do CSS por data-baixo)
+      p.cartao.style.setProperty("--dy", `${p.dy.toFixed(1)}px`);
       p.cartao.style.setProperty("--dx", `${p.dx.toFixed(1)}px`);
     });
   }

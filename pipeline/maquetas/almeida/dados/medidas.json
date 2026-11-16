@@ -135,7 +135,7 @@
   "faces": 797
  },
  "torre_relogio": {
-  "faces": 1398
+  "faces": 4197
  },
  "quartel_esquadras": {
   "faces": 6912
@@ -205,7 +205,7 @@
   ],
   "torre_relogio": [
    -56.2,
-   785.9,
+   788.9,
    -37.6
   ],
   "quartel_esquadras": [
