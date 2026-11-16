@@ -2,7 +2,7 @@
   "monumento": "almeida",
   "titulo": "Praça-forte de Almeida",
   "variante": "estado-atual",
-  "versao": "0.4 provisória",
+  "versao": "0.5 provisória",
   "data": "2026-11-15",
   "origem": {
     "lat": 40.725642,
@@ -121,7 +121,7 @@
       "grupo": "Portas",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "A outra porta dupla, a poente: porta no revelim, com casa da guarda de cobertura baixa em duas águas, chaminé e guarita (fotografia), ponte curta, e porta na cortina com ponte de sete arcos. A porta de fora tem frontispício retangular com cornija, lápide, brasão e guarita por cima; a de dentro tem pilastras almofadadas, painel com o brasão entre duas seteiras, friso de tríglifos e, por cima, o frontão triangular aberto com a guarita redonda no vértice; à direita de quem chega, a janela gradeada e a chaminé da casa da guarda (fotografia tirada da ponte, image 18). A Wikipédia diz que estão «rasgadas a Norte»; o LiDAR e o OSM põem-nas a poente. O túnel da porta de dentro acaba num fundo escuro (hipótese).",
+      "descricao": "A outra porta dupla, a poente: porta no revelim, com casa da guarda de cobertura baixa em duas águas, chaminé e guarita (fotografia), ponte curta, e porta na cortina com ponte de sete arcos. A porta de fora tem frontispício retangular com cornija, lápide, brasão e guarita por cima; a de dentro tem pilastras almofadadas, painel com o brasão entre duas seteiras, friso de tríglifos e, por cima, o frontão triangular aberto com a guarita redonda no vértice; à direita de quem chega, a janela gradeada e a chaminé da casa da guarda; nessa cortina o cordão corre à altura das impostas do arco (fotografia tirada da ponte, image 18). A Wikipédia diz que estão «rasgadas a Norte»; o LiDAR e o OSM põem-nas a poente. O túnel da porta de dentro acaba num fundo escuro (hipótese).",
       "medidas": "Fora: soleira 745.4 m, passagem com 22 m; dentro: soleira 749.4 m, passagem com 20 m. Pontes de 18.6 e 44.7 m.",
       "fontes": [
         "fotos",

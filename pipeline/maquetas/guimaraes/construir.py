@@ -1560,12 +1560,12 @@ MERLAO_PACO = {"altura": 1.0, "largura": 0.8, "intervalo": 0.7}
 # fiadas de 0,45–0,5 m, blocos de 0,6–1,2 m, juntas finas. O granito do Paço e da igreja é mais dourado (#aa9c7d,
 # foto eca77b0f). 3 m por imagem (os UV de 3 m).
 PAL_GUIMARAES = [((1.0, 1.0, 1.0), 0.64), ((1.03, 0.99, 0.92), 0.16), ((0.97, 0.98, 1.0), 0.14), ((0.92, 0.91, 0.90), 0.06)]
-_TEX_P, _ALT_P = textura_silhares(n=1024, metros=3.0, fiada=(0.42, 0.52), comp=(0.6, 1.2), cor=(0.64, 0.62, 0.575), desvio=0.11,
+_TEX_P, _ALT_P = textura_silhares(n=1024, metros=3.0, fiada=(0.42, 0.52), comp=(0.6, 1.2), cor=(0.66, 0.64, 0.585), desvio=0.11,
                                   paleta=PAL_GUIMARAES, junta_m=0.009, junta_cor=(0.36, 0.35, 0.33), liquen=0.08,
                                   liquen_cor=(0.30, 0.30, 0.28), oxido=0.06, escorrencias=0.55, semente=61)
 pedra = imagem("pedra", _TEX_P)
 MATS["pedra"] = material_kit("pedra", (1, 1, 1), 0.92, pedra, normal=imagem("pedra_n", normais(_ALT_P, 4.0)), forca=0.8)
-_TEX_PP, _ALT_PP = textura_silhares(n=1024, metros=3.0, fiada=(0.38, 0.50), comp=(0.6, 1.3), cor=(0.68, 0.625, 0.53), desvio=0.09,
+_TEX_PP, _ALT_PP = textura_silhares(n=1024, metros=3.0, fiada=(0.38, 0.50), comp=(0.6, 1.3), cor=(0.665, 0.60, 0.48), desvio=0.09,
                                     paleta=PAL_GUIMARAES, junta_m=0.008, junta_cor=(0.42, 0.39, 0.35), liquen=0.05, oxido=0.04,
                                     escorrencias=0.35, semente=62)
 MATS["pedra_paco"] = material_kit("pedra_paco", (1, 1, 1), 0.9, imagem("pedra_paco", _TEX_PP),

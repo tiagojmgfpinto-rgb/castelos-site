@@ -2307,15 +2307,17 @@ for g in ["Terreno", "Muralhas", "Guaritas", "Portas", "Igrejas", "Vila", "Veget
 # desvio RGB 9–10 contra 35–59 nas fotos, e parecia calhau rolado de 0,3–0,4 m. No Street View da Porta do Rosal: blocos
 # de 0,4–1,2 m em fiadas irregulares, pedras salmão vivo (#c88a6a) ao lado de cinzento-claro (#b9b4aa), juntas fundas e
 # escuras, líquen e musgo. A alvenaria cobre 8 m (UV de 4 m com escala 0,5).
-PAL_MONCAO = [((1.0, 1.0, 1.0), 0.42), ((1.12, 0.96, 0.88), 0.13), ((0.97, 1.01, 1.06), 0.27), ((0.84, 0.84, 0.84), 0.18)]
-TEX_ALV, ALT_ALV = textura_silhares(n=2048, metros=8.0, fiada=(0.35, 0.70), comp=(0.4, 1.2), cor=(0.60, 0.545, 0.49), desvio=0.18,
+# cor revista pelo perito contra as fotos (15 nov. 2026, revisao-perito/cor-pedra): pano quente (#bca187 ao sol), sem pedras azuladas,
+# salmão mais suave a 10 % e cinzentos escuros a dar o contraste
+PAL_MONCAO = [((1.0, 1.0, 1.0), 0.62), ((1.08, 0.97, 0.91), 0.10), ((0.86, 0.86, 0.86), 0.18), ((1.06, 1.05, 1.04), 0.10)]
+TEX_ALV, ALT_ALV = textura_silhares(n=2048, metros=8.0, fiada=(0.35, 0.70), comp=(0.4, 1.2), cor=(0.66, 0.57, 0.475), desvio=0.12,
                                     paleta=PAL_MONCAO, junta_m=0.025, junta_cor=(0.25, 0.22, 0.20), gasto_m=0.05, liquen=0.06,
                                     escorrencias=0.3, irregular=0.20, semente=41)
 NRM_ALV = imagem("alvenaria_normal", normais(ALT_ALV, 5.0))
 material("alvenaria", (1, 1, 1), 0.93, imagem("alvenaria", TEX_ALV), normal=NRM_ALV, escala=0.5)  # textura de 8 m nos UV de 4 m
 # cantaria das portas, guaritas e igrejas: silhares em fiadas de c. 0,45 m com juntas finas da cor da pedra (#6e675e;
 # o perito viu juntas pretas largas "como numa ilustração")
-TEX_CANT, ALT_CANT = textura_silhares(n=1024, metros=3.0, fiada=(0.40, 0.50), comp=(0.6, 1.2), cor=(0.68, 0.63, 0.56), desvio=0.08,
+TEX_CANT, ALT_CANT = textura_silhares(n=1024, metros=3.0, fiada=(0.40, 0.50), comp=(0.6, 1.2), cor=(0.68, 0.62, 0.525), desvio=0.08,
                                       paleta=PAL_MONCAO[:3], junta_m=0.012, junta_cor=(0.43, 0.40, 0.37), liquen=0.05, semente=42)
 NRM_CANT = imagem("cantaria_normal", normais(ALT_CANT, 3.0))
 material("cantaria", (1, 1, 1), 0.88, imagem("cantaria", TEX_CANT), normal=NRM_CANT, forca=0.7)
@@ -2418,7 +2420,7 @@ MEDIDAS["escarpas"] = {"panos": len(ESC), "comprimento": float(sum(e["compriment
 print("guaritas…", len(GUARITAS))
 m = Malha()
 for c, bis, zc, topo in GUARITAS:
-    guarita(m, c, bis, zc, topo)
+    guarita(m, c, bis, zc, topo, janelas=True, gomos=True, remate="escalonado")
 m.objeto("Guaritas", "guaritas", ["cantaria_lisa", "cantaria", "sombra"], GRUPOS["Guaritas"], uv=2.0)
 MEDIDAS["guaritas"] = len(GUARITAS)
 
@@ -2473,7 +2475,7 @@ if "portas" in globals():
 if GUAR_EXTRA:
     m = Malha()
     for c, bis, zc, topo in GUAR_EXTRA:
-        guarita(m, c, bis, zc, topo)
+        guarita(m, c, bis, zc, topo, janelas=True, gomos=True, remate="escalonado")
     m.objeto("Guarita_Rosal", "porta_rosal", ["cantaria_lisa", "cantaria", "sombra"], GRUPOS["Guaritas"], uv=2.0)
 print("rio…")
 construir_rio()

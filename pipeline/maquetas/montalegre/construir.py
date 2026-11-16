@@ -352,18 +352,19 @@ PAL_T = np.array([(0.560, 0.555, 0.530), (0.600, 0.592, 0.565), (0.515, 0.512, 0
 # silhares de granito em fiadas horizontais regulares (c. 0,40 m, blocos de 0,6–1,2 m), juntas avermelhadas de óxido,
 # musgo e líquen amarelo-alaranjado; o granito das torres é cinzento quente com ocre (#958a7e), sem manchas brancas.
 # Com uv=3,0 e escala=0,5 cada imagem cobre 6 m.
-PAL_MONTALEGRE = [((1.0, 1.0, 1.0), 0.6), ((1.025, 1.0, 0.95), 0.2), ((0.97, 0.98, 0.99), 0.12), ((1.03, 0.98, 0.94), 0.08)]
+# cor revista pelo perito contra as fotos (15 nov. 2026, revisao-perito/cor-pedra): granito cinzento, sem os tons quentes por pedra (liam-se bege)
+PAL_MONTALEGRE = [((1.0, 1.0, 1.0), 0.7), ((1.02, 1.0, 0.98), 0.15), ((0.98, 0.985, 0.99), 0.15)]
 LIQUEN_LARANJA = (0.78, 0.60, 0.36)
-TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.30, 0.45), comp=(0.6, 1.2), cor=(0.60, 0.555, 0.51), desvio=0.09,
+TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.30, 0.45), comp=(0.6, 1.2), cor=(0.64, 0.595, 0.555), desvio=0.09,
                             paleta=PAL_MONTALEGRE, liquen=0.05, liquen_cor=LIQUEN_LARANJA, oxido=0.05, escorrencias=0.35, semente=101)
 material("cantaria_torre", (1, 1, 1), 0.9, imagem("cantaria_torre", TEX), normal=imagem("cantaria_torre_n", normais(ALT, 4.0)),
          forca=0.8, escala=0.5, vcor=True)
-TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.34, 0.46), comp=(0.6, 1.2), cor=(0.58, 0.55, 0.51), desvio=0.11,
-                            paleta=PAL_MONTALEGRE, junta_cor=(0.36, 0.27, 0.22), liquen=0.07, liquen_cor=LIQUEN_LARANJA,
+TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.34, 0.46), comp=(0.6, 1.2), cor=(0.55, 0.545, 0.53), desvio=0.09,
+                            paleta=PAL_MONTALEGRE, junta_cor=(0.30, 0.29, 0.28), liquen=0.07, liquen_cor=LIQUEN_LARANJA,
                             oxido=0.06, escorrencias=0.3, irregular=0.04, semente=102)
 material("muro", (1, 1, 1), 0.93, imagem("muro", TEX), normal=imagem("muro_n", normais(ALT, 4.0)), forca=0.95, escala=0.5, vcor=True)
-TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.40, 0.65), comp=(0.5, 1.0), cor=(0.56, 0.54, 0.50), desvio=0.10,
-                            paleta=PAL_MONTALEGRE, junta_cor=(0.36, 0.27, 0.22), liquen=0.10, liquen_cor=LIQUEN_LARANJA,
+TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.40, 0.65), comp=(0.5, 1.0), cor=(0.55, 0.545, 0.53), desvio=0.09,
+                            paleta=PAL_MONTALEGRE, junta_cor=(0.30, 0.29, 0.28), liquen=0.10, liquen_cor=LIQUEN_LARANJA,
                             irregular=0.06, semente=103)
 material("muro_topo", (1, 1, 1), 0.95, imagem("muro_topo", TEX), normal=imagem("muro_topo_n", normais(ALT, 4.0)), forca=1.0, escala=0.5, vcor=True)
 material("cantaria_lisa", (0.50, 0.495, 0.47), 0.85)

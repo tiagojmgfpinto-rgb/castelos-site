@@ -257,9 +257,13 @@ def guardas_corredor(m, F0, n, pts, NR, A_, TP):
             m.caixa((a_ + b_) / 2, unit(b_ - a_), comp + 0.02, 0.55, z0 + 1.0, z0 + 1.12, 0)
 
 
-def guarita(m, c, bis, zc, topo):
+def guarita(m, c, bis, zc, topo, janelas=False, gomos=False, remate="bola"):
     """Guarita de cantaria (fotografias): mísula em cone invertido aos degraus a sair do ângulo, corpo
-    quadrado de cunhais chanfrados com frestas, cornija, cúpula e pináculo em bola."""
+    quadrado de cunhais chanfrados com frestas, cornija, cúpula e pináculo em bola.
+
+    janelas=True troca as frestas por uma janela quadrada pequena (0,20 x 0,25 m) no alto de cada face de fora, a 0,3 m
+    da cornija; gomos=True marca os oito gomos da cúpula com nervuras; remate="escalonado" põe dois blocos de pedra
+    (0,35 + 0,25 m) em vez da bola (Monção, revisão do perito de 13 nov. 2026)."""
     u = unit(bis)
     w = np.array([-u[1], u[0]])
     L = 0.78  # meia largura do corpo
@@ -279,8 +283,9 @@ def guarita(m, c, bis, zc, topo):
     zt = piso + 1.95
     m.prisma(planta, piso, zt, 1)
     # frestas nas três faces de fora e porta na de dentro
-    for d_, larg, z0, z1 in ((u, 0.12, piso + 0.7, piso + 1.45), (w, 0.12, piso + 0.7, piso + 1.45),
-                             (-w, 0.12, piso + 0.7, piso + 1.45), (-u, 0.5, piso + 0.05, piso + 1.6)):
+    zj = (zt - 0.55, zt - 0.30) if janelas else (piso + 0.7, piso + 1.45)
+    lj = 0.20 if janelas else 0.12
+    for d_, larg, z0, z1 in ((u, lj, *zj), (w, lj, *zj), (-w, lj, *zj), (-u, 0.5, piso + 0.05, piso + 1.6)):
         m.caixa(c + d_ * (L + 0.005), np.array([-d_[1], d_[0]]), larg, 0.02, z0, z1, 2)
     m.prisma([c + (p - c) * 1.1 for p in planta], zt, zt + 0.16, 1)  # cornija
     # cúpula em meia laranja (anéis) e pináculo
@@ -295,8 +300,19 @@ def guarita(m, c, bis, zc, topo):
             j = (i + 1) % len(planta)
             m.face([(*prev[i], zprev), (*prev[j], zprev), (*cur[j], zz), (*cur[i], zz)], 1)
         prev, zprev = cur, zz
-    m.cilindro(c, 0.12, zprev - 0.02, zprev + 0.2, 1, k=8)
-    m.esfera((c[0], c[1], zprev + 0.42), 0.24, 1, k=10)
+    if gomos:  # nervuras dos oito gomos, nos vértices da planta
+        z0c = zt + 0.16
+        for p in planta:
+            arco = [(*(c + (p - c) * math.cos(math.pi / 2 * k / 4) * 1.02), z0c + 0.75 * math.sin(math.pi / 2 * k / 4) + 0.01)
+                    for k in range(5)]
+            for a_, b_ in zip(arco[:-1], arco[1:]):
+                barra(m, a_, b_, 0.04, 1)
+    if remate == "escalonado":
+        m.caixa(c, u, 0.44, 0.44, zprev - 0.02, zprev + 0.33, 1)
+        m.caixa(c, u, 0.30, 0.30, zprev + 0.33, zprev + 0.58, 1)
+    else:
+        m.cilindro(c, 0.12, zprev - 0.02, zprev + 0.2, 1, k=8)
+        m.esfera((c[0], c[1], zprev + 0.42), 0.24, 1, k=10)
 
 
 def merlao(m, base, z0, z1, zp, mat, seteira=None):

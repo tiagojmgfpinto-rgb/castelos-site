@@ -1804,11 +1804,11 @@ for g in ["Terreno", "Muralhas", "Guaritas", "Portas", "Igrejas", "Estatua", "Vi
 # Pedra fotografada (kit.fotos, fotos CC0 da Poly Haven; créditos em medidas.json "texturas_foto"), com o tom
 # medido nas fotografias de Valença: alvenaria cinzento-acastanhada salpicada de líquen branco nas escarpas
 # (uv=4.0: cada imagem cobre 4 m), cantaria clara nos cunhais, cordões e portas (3 m).
-TEX_ALV, ALT_ALV = textura_foto("old_stone_wall", n=1024, metros=4.0, cor=(0.52, 0.50, 0.46), contraste=0.8, metros_foto=4.0,
+TEX_ALV, ALT_ALV = textura_foto("old_stone_wall", n=1024, metros=4.0, cor=(0.48, 0.47, 0.45), contraste=0.8, metros_foto=4.0,
                                 liquen=0.12, liquen_cor=(0.92, 0.92, 0.88), semente=31)
 NRM_ALV = imagem("alvenaria_normal", normais(ALT_ALV, 2.5))
 material("alvenaria", (1, 1, 1), 0.93, imagem("alvenaria", TEX_ALV), normal=NRM_ALV)
-TEX_CANT, ALT_CANT = textura_foto("stone_brick_wall_001", n=1024, metros=3.0, cor=(0.64, 0.62, 0.57), contraste=0.9,
+TEX_CANT, ALT_CANT = textura_foto("stone_brick_wall_001", n=1024, metros=3.0, cor=(0.60, 0.575, 0.54), contraste=0.9,
                                   metros_foto=3.0, liquen=0.06, semente=32)
 NRM_CANT = imagem("cantaria_normal", normais(ALT_CANT, 3.0))
 material("cantaria", (1, 1, 1), 0.88, imagem("cantaria", TEX_CANT), normal=NRM_CANT, forca=0.7)

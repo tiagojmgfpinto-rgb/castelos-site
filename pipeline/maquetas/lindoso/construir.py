@@ -354,22 +354,22 @@ PAL_T = np.array([(0.615, 0.600, 0.565), (0.670, 0.655, 0.620), (0.545, 0.530, 0
 # aparelho pseudo-isódomo de juntas muito estreitas, sem argamassa (L. Fontes, p. 95), fiadas de 0,40–0,70 m e
 # silhares de 0,6–1,4 m. Com uv=3,0 e escala=0,5 cada imagem cobre 6 m.
 PAL_LINDOSO = [((1.0, 1.0, 1.0), 0.66), ((1.025, 1.0, 0.96), 0.16), ((0.97, 0.98, 1.0), 0.18)]
-TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.38, 0.60), comp=(0.6, 1.3), cor=(0.67, 0.66, 0.63), desvio=0.10,
+TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.38, 0.60), comp=(0.6, 1.3), cor=(0.72, 0.705, 0.665), desvio=0.10,
                             paleta=PAL_LINDOSO, junta_m=0.008, junta_cor=(0.36, 0.35, 0.33), liquen=0.14,
                             escorrencias=0.35, semente=91)
 material("cantaria_torre", (1, 1, 1), 0.9, imagem("cantaria_torre", TEX), normal=imagem("cantaria_torre_n", normais(ALT, 4.0)),
          forca=0.8, escala=0.5, vcor=True)
-TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.40, 0.70), comp=(0.6, 1.4), cor=(0.66, 0.655, 0.625), desvio=0.12,
+TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.40, 0.70), comp=(0.6, 1.4), cor=(0.71, 0.695, 0.65), desvio=0.12,
                             paleta=PAL_LINDOSO, junta_m=0.008, junta_cor=(0.36, 0.35, 0.33), liquen=0.15,
                             escorrencias=0.35, irregular=0.02, semente=92)
 material("muro_medieval", (1, 1, 1), 0.92, imagem("muro_medieval", TEX), normal=imagem("muro_medieval_n", normais(ALT, 4.0)),
          forca=0.9, escala=0.5, vcor=True)
 PAL_M = np.array([(0.575, 0.565, 0.540), (0.650, 0.640, 0.610), (0.460, 0.450, 0.430), (0.600, 0.570, 0.510),
                   (0.530, 0.525, 0.510)])
-TEX, ALT = textura_foto("old_stone_wall", metros=3.75, cor=(0.63, 0.62, 0.59), contraste=1.0, metros_foto=3.75,
+TEX, ALT = textura_foto("old_stone_wall", metros=3.75, cor=(0.68, 0.66, 0.61), contraste=1.0, metros_foto=3.75,
                         liquen=0.12, semente=93)
 material("alvenaria", (1, 1, 1), 0.95, imagem("alvenaria", TEX), normal=imagem("alvenaria_n", normais(ALT, 4.0)), forca=1.0, escala=0.8, vcor=True)
-TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.5, 0.9), comp=(0.6, 1.1), cor=(0.64, 0.635, 0.60), desvio=0.12,
+TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.5, 0.9), comp=(0.6, 1.1), cor=(0.70, 0.69, 0.65), desvio=0.12,
                             paleta=PAL_LINDOSO, liquen=0.15, irregular=0.06, semente=94)
 material("muro_topo", (1, 1, 1), 0.95, imagem("muro_topo", TEX), normal=imagem("muro_topo_n", normais(ALT, 3.5)), forca=1.0, escala=0.5, vcor=True)
 # espigueiros: granito mais claro e liso (cantaria fina dos esteios, das mesas e das empenas), muito liquenado
