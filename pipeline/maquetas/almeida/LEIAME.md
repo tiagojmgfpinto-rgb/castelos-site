@@ -93,7 +93,7 @@ A pegada vem do OSM e as cotas do MDS. A orientação das fachadas foi conferida
 |---|---|---|
 | Igreja Matriz | fachada a poente; câmara de D. Perez a poente | nave 24 × 9,5 m, cumeeira 749,9; torre de 5 m a SW, remate 758,7 |
 | Misericórdia | fachada a nordeste, a meio do lado da Praça da República; câmara de D. Perez 7 m à frente | empena perpendicular à rua, cumeeira c. 752,4 |
-| Torre do Relógio | remate de balaustrada, pináculos e lanterna pequena com cata-vento (Street View) | 5,5 m de lado; 762,7 → c. 786 m |
+| Torre do Relógio | três andares entre pilastras de granito, cornijas salientes, janela gradeada, mostrador, sineira, urnas e cata-vento (fotografias de Hovallef e D. Perez); porta a poente por hipótese | 5,5 m de lado; 762,7 → c. 781 m |
 | Quartel das Esquadras | arcaria nos DOIS lados compridos (Street View do Terreiro do Poço do Rancho e da Rua da Muralha); telha velha escura (ortofotomapa); chaminés na água noroeste; escadaria em V no topo nordeste (fotografia de D. Perez) | 105,5 × 14,6 m; cumeeira 755,8 |
 | Castelo | — | bases de três torres redondas (N, E, W) lidas no relevo e na ortoimagem; alturas estimadas |
 
@@ -103,7 +103,8 @@ A pegada vem do OSM e as cotas do MDS. A orientação das fachadas foi conferida
 
 - **Base:** redonda em vez de recortada pelo traçado da praça.
 - **Quartel das Esquadras:** a 0.1 tinha a arcaria só no lado sudeste e a telha laranja. O Street View mostra arcaria dos dois lados, com uma porta verde ao fundo de cada arco e uma faixa de duas fiadas de granito por cima, e o ortofotomapa mostra a telha escura. Faltavam as chaminés e a escadaria em V do topo nordeste.
-- **Torre do Relógio:** o remate é uma lanterna pequena com cata-vento sobre a balaustrada, não uma cúpula grande.
+- **Torre do Relógio (11 nov.):** refeita pelas fotografias: três andares com pilastras largas de granito acinzentado-rosado e cornijas muito salientes, mostrador grande, um só vão de sino por face e, no remate, urnas nos cantos e pedestal com cata-vento (sem balaustrada nem lanterna). As árvores altas e estreitas do adro passam a ciprestes, como nas fotografias.
+- **Placas:** além de São Francisco, Matriz e Relógio, passam a ter placa o castelo, Santo António, a Porta Nova, a Misericórdia e o Quartel.
 - **Portas de Santo António:** a de dentro não tem frontão nem guarita: pilastras almofadadas, painel do brasão entre duas seteiras, friso de tríglifos e cornija, e uma janela gradeada à direita. A de fora não tem empena: frontispício retangular com cornija, lápide, brasão e guarita por cima. Saiu um cordão da casa da guarda que ficava solto sobre o fosso.
 - **Muralhas:** a alvenaria escura de pedra miúda passou a cantaria de granito claro, com silhares maiores e manchas de líquen, como nas fotografias.
 - **Igreja da Misericórdia:** a porta é de arco pleno com colunelos e frontão curvo inteiro; as janelas são de sacada, com varandim; o brasão real está na empena e não há óculo.
