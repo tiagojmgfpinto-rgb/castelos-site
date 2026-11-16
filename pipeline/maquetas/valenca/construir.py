@@ -1247,8 +1247,8 @@ def portas():
 # Cada igreja tem um referencial Quadro na fachada principal: s ao longo da fachada, d para fora; o
 # corpo da igreja fica em d < 0.
 
-CAL, CAN, TEL, SOM, MAD, FER, BRO, VID, LOU, LIS = range(10)
-MAT_IGR = ["cal", "cantaria", "telha", "sombra", "madeira_verde", "ferro", "bronze", "vidro", "lousa", "cantaria_lisa"]
+CAL, CAN, TEL, SOM, MAD, FER, BRO, VID, LOU, LIS, FEV = range(11)
+MAT_IGR = ["cal", "cantaria", "telha", "sombra", "madeira_verde", "ferro", "bronze", "vidro", "lousa", "cantaria_lisa", "ferro_verde"]
 
 
 def cruz(Q, s, z, d, alt=1.2, mat=FER, esp=0.08):
@@ -1572,8 +1572,19 @@ def igreja_misericordia(m):
     Qa = Quadro(m, (17.0, 272.0), (-1.0, 0.0))
     corpo(Qa, 6.5, 6.0, g, 70.0 - ZREF, inc=30, cornija_frente=False)
     porta_igreja(Q, 0.0, g + 0.5, 1.6, 2.5, arco=True)
-    Q.bloco(-1.5, 1.5, g, g + 0.5, 0.0, 1.2, CAN)  # degraus
-    Q.bloco(-1.2, 1.2, g + 0.25, g + 0.5, 1.2, 1.6, CAN)
+    # Adro levantado a toda a largura da fachada e da torre (revisão do perito, 16 nov.; foto do Tiago ef877601 e Street
+    # View 03/2021): muro de granito de c. 1 m sobre a rua, ao nível da soleira, com gradeamento de ferro verde de 1,0 m
+    # (barras verticais a cada 0,12 m, corrimão e rodapé) à beira. Antes eram dois degraus soltos sobre uma rampa.
+    za = g + 0.5
+    Q.bloco(-3.6, 7.1, g - 1.6, za, 0.0, 1.9, CAN)
+    Q.bloco(-3.7, 7.2, za - 0.04, za + 0.06, 1.75, 1.98, CAN)  # capeamento
+    s_gr = np.arange(-3.55, 7.06, 0.12)
+    for s_ in s_gr:
+        barra(m, Q.p(s_, za + 0.06, 1.86), Q.p(s_, za + 1.0, 1.86), 0.009, FEV)
+    for s_ in np.arange(-3.55, 7.06, 2.12):
+        barra(m, Q.p(s_, za + 0.06, 1.86), Q.p(s_, za + 1.05, 1.86), 0.03, FEV)
+    for h_ in (0.12, 0.95):
+        barra(m, Q.p(-3.55, za + h_, 1.86), Q.p(7.05, za + h_, 1.86), 0.025 if h_ > 0.5 else 0.018, FEV)
     rosacea(Q, 0.0, g + 6.7, 0.85)
     cruz(Q, 0, ze + 3.4 * math.tan(_ang(30)) + 0.35, 0.0, alt=1.2, mat=CAN, esp=0.14)
     # portal lateral (sul): retábulo de granito com relevo num nicho, pináculos e cruz
@@ -1827,6 +1838,7 @@ material("lousa", (0.42, 0.42, 0.43), 0.8)
 material("madeira_verde", (0.16, 0.33, 0.26), 0.7)
 material("madeira", (0.40, 0.26, 0.16), 0.8)
 material("ferro", (0.16, 0.17, 0.18), 0.5)
+material("ferro_verde", (0.18, 0.31, 0.27), 0.5)  # gradeamento do adro da Misericórdia (#2f4f45)
 material("bronze", (0.24, 0.30, 0.25), 0.5)
 material("vidro", (0.20, 0.24, 0.32), 0.25)
 # casas da vila: um só cinzento claro, paredes e telhados, para o destaque ficar nas muralhas, portas e igrejas

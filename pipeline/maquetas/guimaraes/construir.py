@@ -31,7 +31,7 @@ from kit.cena import Obra, limpar, arvore_modelo  # noqa: E402
 from kit.fotos import fontes_fotos  # noqa: E402
 from kit.silhares import textura_silhares  # noqa: E402
 from kit.materiais import material as material_kit  # noqa: E402  (com mapa de normais)
-from kit.arquitetura import piramide  # noqa: E402
+from kit.arquitetura import piramide, guarda  # noqa: E402
 
 AQUI = Path(__file__).resolve().parent
 RAIZ = AQUI.parents[2]
@@ -1132,43 +1132,47 @@ def paco():
     for k, (lg, mt) in enumerate(((3.4, 3), (2.7, 0), (2.1, 3), (1.5, 2))):
         arco(m, pp + dn * (0.02 + 0.02 * k), PACO_V, dn, lg, zc + 5.4, 2.4 - 0.1 * k, 0.1, mt)
 
-    # Chaminés: picos do MDS que sobem mais de 1,2 m acima de tudo num anel de 2 a 3,5 m à volta
+    # Chaminés: picos do MDS que sobressaem mais de 4 m de uma abertura morfológica com um disco de
+    # 1 m (o disco não cabe numa chaminé, mas cabe nas águas do telhado, pelo que os vértices das
+    # pirâmides e as cumeeiras não contam). Fora do edifício, a grelha é preenchida com o valor do
+    # telhado mais próximo, para que o parapeito e as ameias não pareçam altos ao lado do chão.
+    # Revisto a 16 nov. contra a foto aérea de sul: 38 chaminés, nenhuma nos vértices das pirâmides.
     X, Y = np.meshgrid(LXS, LXS)
-    yy, xx = np.mgrid[-7:8, -7:8]
-    dd = np.hypot(xx, yy) * LPASSO
-    viz = ndi.maximum_filter(MDS, footprint=(dd >= 2.0) & (dd <= 3.5))
-    pico = (MDS == ndi.maximum_filter(MDS, size=3)) & (MDS > viz + 1.2)
     corpo = Caminho(ext).contains_points(np.stack([X.ravel(), Y.ravel()], 1)).reshape(X.shape)
     corpo &= ~Caminho(pat).contains_points(np.stack([X.ravel(), Y.ravel()], 1)).reshape(X.shape)
-    pico &= corpo
+    edif = ((MDS - MDT) > 8) & ndi.binary_dilation(corpo, iterations=3)
+    _, (ir, ic) = ndi.distance_transform_edt(~ndi.binary_erosion(edif, iterations=2), return_indices=True)
+    cheio = MDS[ir, ic]
+    yy, xx = np.mgrid[-2:3, -2:3]
+    saliencia = MDS - ndi.grey_opening(cheio, footprint=np.hypot(xx, yy) <= 2.01)
+    pico = (saliencia == ndi.maximum_filter(saliencia, size=3)) & (saliencia > 4.0) & edif
     chamines = [(np.array([LXS[c_], LXS[r_]]), float(MDS[r_, c_])) for r_, c_ in zip(*np.nonzero(pico))]
     mc = Malha()
     roda_c = lambda p, r: [p + r * np.array([math.cos(a), math.sin(a)]) for a in np.linspace(0, 2 * math.pi, 16, endpoint=False)]
     for p, topo_c in chamines:
-        # fotografias aéreas: fustes cilíndricos de tijolo claro, com c. 0,8 m de diâmetro, que nascem
-        # atrás do parapeito; sob o remate, um anel fino de granito e, no topo, uma cúpula de granito
-        # um pouco mais larga do que o fuste. O topo medido no MDS fica no alto da cúpula.
-        z0c = float(amostra(sup, *p)) - 1.0
-        rc = 0.44  # raio da cúpula
-        zc_ = topo_c - rc - 0.12  # nascença da cúpula
-        mc.prisma(roda_c(p, 0.42), z0c, zc_ - 0.32, 0, topo=False)
-        mc.prisma(roda_c(p, 0.46), zc_ - 0.32, zc_ - 0.2, 1, fundo=True)  # anel
-        mc.prisma(roda_c(p, 0.4), zc_ - 0.2, zc_, 0, topo=False)
-        mc.prisma(roda_c(p, rc), zc_, zc_ + 0.06, 1, topo=False, fundo=True)
+        # fotografias aéreas: fustes cilíndricos de tijolo, com c. 0,9 m de diâmetro, que nascem do
+        # telhado logo atrás do parapeito; no topo, um capelo curto de granito, pouco mais largo do
+        # que o fuste, de remate boleado. O topo medido no MDS fica no alto do capelo.
+        z0c = float(amostra(sup, *p)) - 2.0
+        rc = 0.5  # raio do capelo
+        zc_ = topo_c - 0.42  # base do capelo
+        mc.prisma(roda_c(p, 0.45), z0c, zc_, 0, topo=False)
+        mc.prisma(roda_c(p, rc), zc_, zc_ + 0.26, 1, topo=False, fundo=True)
         prev = roda_c(p, rc)
-        zp_ = zc_ + 0.06
-        for k in range(1, 6):
-            a_ = math.pi / 2 * k / 6
+        zp_ = zc_ + 0.26
+        for k in range(1, 5):
+            a_ = math.pi / 2 * k / 5
             cur = roda_c(p, rc * math.cos(a_))
-            zk = zc_ + 0.06 + rc * math.sin(a_)
+            zk = zc_ + 0.26 + 0.16 * math.sin(a_)
             for i in range(16):
                 j = (i + 1) % 16
                 mc.face([(*prev[i], zp_), (*prev[j], zp_), (*cur[j], zk), (*cur[i], zk)], 1)
             prev, zp_ = cur, zk
         for i in range(16):
             mc.face([(*prev[i], zp_), (*prev[(i + 1) % 16], zp_), (*p, topo_c)], 1)
-    # Guaritas cónicas nos quatro cunhais (fotografias aéreas)
-    for uu, vv in ((0.9, 0.4), (61.4, 0.4), (60.9, 61.4), (-1.7, 61.4)):
+    # Guaritas cónicas (foto aérea de sul e MDS, 16 nov.): não estão nos cantos de fora da fachada,
+    # mas nos cunhais dos quatro corpos de canto que saem para fora das alas (a poente e a nascente).
+    for uu, vv in ((0.9, 14.2), (-1.7, 48.9), (61.4, 14.2), (60.9, 49.8)):
         q0 = puv(uu, vv)
         k_ = int(np.argmin(np.hypot(*(lin - q0).T)))
         zg = float(zm[k_])
@@ -1177,7 +1181,7 @@ def paco():
         mc.prisma(circ, zg - 3.5, zg + 1.6, 2)
         for i in range(12):
             mc.face([(*circ[i], zg + 1.6), (*circ[(i + 1) % 12], zg + 1.6), (*cc, zg + 4.0)], 3)
-    mc.objeto("Paco_Chamines", "paco", ["tijolo_chamine", "cantaria", "pedra_paco", "telha_paco"], GRUPOS["Paco"], uv=None)
+    mc.objeto("Paco_Chamines", "paco", ["tijolo_chamine", "cantaria", "pedra_paco", "telha"], GRUPOS["Paco"], uv=None)  # cones de telha nova, alaranjada (foto aérea)
     med["chamines"] = len(chamines)
     med["guaritas"] = 4
     med["cumeeiras"] = float(max(corpos.values()))
@@ -1592,6 +1596,7 @@ material("lancil", (0.78, 0.77, 0.74), 0.9)
 material("arvore", (1, 1, 1), 0.9, None, vcor=True)
 material("madeira", (0.42, 0.27, 0.15), 0.8)
 material("madeira_verde", (0.20, 0.45, 0.35), 0.7)
+material("ferro_guarda", (0.64, 0.65, 0.66), 0.45)  # aço galvanizado das guardas (#a3a6a8)
 material("tijolo", (0.62, 0.34, 0.24), 0.85)
 material("tijolo_chamine", (0.66, 0.43, 0.35), 0.85)
 material("bronze", (0.22, 0.30, 0.25), 0.5)  # bronze com pátina esverdeada (fotografia)
@@ -1611,6 +1616,7 @@ for ob in bpy.data.objects:
         ob.parent = GRUPOS["Terreno"]
 
 print("muralhas…")
+MG = Malha()  # guardas metálicas do adarve e das escadas
 for s_, (pts, esp) in PANOS.items():
     m = Malha()
     lin = np.array([P(*p) for p in pts])
@@ -1619,6 +1625,15 @@ for s_, (pts, esp) in PANOS.items():
     # a alcáçova é a parede arruinada da residência: topo irregular sem merlões (revisão do perito, foto "Castelo de
     # Guimaraes (17)"); os merlões só existem na torre do canto
     adarve = muralha(m, lin, esp, topo, fora, dentro_, ameias=(s_ != "alcacova"))
+    if s_ != "alcacova":
+        # Guarda metálica do lado do pátio (revisão do perito, 16 nov.; foto "Castelo de Guimarães 2024"): tubo
+        # galvanizado de 1,0 m, prumos a cada 1,5 m e uma travessa a meio, onde o adarve fica acima do chão.
+        borda = desvio(lin, esp / 2 - 0.06, False)
+        acum_ = np.concatenate([[0], np.cumsum(np.linalg.norm(np.diff(borda, axis=0), axis=1))])
+        ok_ = (acum_ > 2.4) & (acum_ < acum_[-1] - 2.4) & (adarve - dentro_ > 1.2)
+        for ini, fim in zip(*[np.flatnonzero(np.diff(np.r_[0, ok_.astype(int), 0]) == v) for v in (1, -1)]):
+            if fim - ini >= 2:
+                guarda(MG, [(*borda[i], adarve[i]) for i in range(ini, fim)], 0)
     PERFIS[s_] = np.stack([lin[:, 0], lin[:, 1], topo, fora, dentro_], 1)
     for k_, (q0, q1) in enumerate(((pts[1], pts[0]), (pts[-2], pts[-1]))):  # pontas do adarve, a entrar nas torres
         PONTAS_ADARVE.append((s_, P(*q1), unit(P(*q1) - P(*q0)), float(np.median(adarve[:4] if k_ == 0 else adarve[-4:]))))
@@ -1724,32 +1739,55 @@ fs = faces_retangulo(b)
 for a, c, t, n_ in fs:
     for k, zz in enumerate((chao_med + 6.0, chao_med + 12.5, chao_med + 18.5)):
         fresta(m, a, c, n_, (0.5, 0.42, 0.56)[k], zz, alt=1.5)
-fp = max(fs, key=lambda f: f[3] @ unit(np.array([-1.0, 0.8])))  # face noroeste
-porta_z = chao_med + 7.4
-m.caixa((fp[0] + fp[1]) / 2 + fp[3] * 0.03, fp[2], 1.1, 0.05, porta_z, porta_z + 2.1, 1)
+# Passadiço (revisto a 16 nov. no MDS de 50 cm e na foto de drone DJI_0148): a faixa de c. 1,5 m a 48–49 m
+# que liga a torre ao adarve não sai da face noroeste, mas da face sudoeste, perto do cunhal poente, e vai
+# quase a direito para oés-sudoeste até ao terraço largo do lado de dentro da Porta da Traição.
+PASS_D = unit(np.array([4.0, 2.0]))  # da muralha para a torre
+PASS_C = P(-6.5, -6.0)  # um ponto da faixa no MDS
+fp = max(fs, key=lambda f: f[3] @ -PASS_D)  # face sudoeste
+_t = np.linalg.solve(np.column_stack([PASS_D, -fp[2]]), fp[0] - PASS_C)[0]
+pm = PASS_C + PASS_D * _t  # onde a faixa encontra a face da torre
+_ad = (np.abs(np.hypot(*(np.stack(np.meshgrid(LXS, LXS)) - P(-12.5, -4.5)[:, None, None]))) < 3.5) & (CLS == 6)
+z_terraco = float(np.median(MDS[_ad & (MDS > 47.5) & (MDS < 50.5)]))  # chão do terraço, a 249,3 m
+porta_z = z_terraco - 0.1
+m.caixa(pm + fp[3] * 0.03, fp[2], 1.1, 0.05, porta_z, porta_z + 2.1, 1)
 m.objeto("Torre_Menagem", "torre_menagem", ["pedra", "sombra", "telha"], GRUPOS["Torre_Menagem"])
 MEDIDAS["torre_menagem"] = {"topo_ameias": topo + ZREF, "cume": cume + ZREF, "pe": pe + ZREF, "chao": chao_med + ZREF,
                             "altura": cume - chao_med, "altura_ameias": topo - chao_med,
                             "planta": [float(np.linalg.norm(b[1] - b[0])), float(np.linalg.norm(b[2] - b[1]))]}
-# passadiço de madeira do adarve poente à porta da torre (SIPA); traçado e cota estimados
+# Passadiço de madeira, plano, da porta da torre ao terraço (foto de drone DJI_0148): estrado de 1,5 m sobre
+# duas vigas, guardas de ripado vertical com corrimão de 1,05 m dos dois lados e dois pares de esteios até à rocha.
 m = Malha()
-pm = (fp[0] + fp[1]) / 2 + fp[3] * 0.1
-alvo = P(-14.5, 8.5)
-d = unit(alvo - pm)
+d = -PASS_D
 w = np.array([-d[1], d[0]])
-L = np.linalg.norm(alvo - pm)
-z_adarve = MEDIDAS["muralha_noroeste"]["adarve_mediano"] - ZREF
-for i, s in enumerate(np.linspace(0, 1, 8)[:-1]):
-    a_ = pm + d * L * s
-    b_ = pm + d * L * (s + 1 / 7)
-    za = porta_z + (z_adarve - porta_z) * s
-    zb_ = porta_z + (z_adarve - porta_z) * (s + 1 / 7)
-    m.prisma([a_ - w * 0.7, b_ - w * 0.7, b_ + w * 0.7, a_ + w * 0.7], [za - 0.25, zb_ - 0.25, zb_ - 0.25, za - 0.25], [za, zb_, zb_, za], 0)
-for s in np.linspace(0.15, 0.85, 3):  # esteios até ao chão
-    q = pm + d * L * s
-    zq = porta_z + (z_adarve - porta_z) * s
-    m.caixa(q, d, 0.25, 0.25, float(cota(*q)) - 0.3, zq - 0.25, 0)
+alvo = PASS_C + d * 3.6  # borda do terraço no MDS (49 m a partir de x -9,6)
+L = float(np.linalg.norm(alvo - pm)) + 0.6  # entra 0,6 m no terraço
+zd = porta_z
+q0, q1 = pm - d * 0.05, pm + d * L
+m.prisma([q0 - w * 0.75, q1 - w * 0.75, q1 + w * 0.75, q0 + w * 0.75], zd - 0.12, zd, 0, fundo=True)  # estrado
+for sg in (-1, 1):
+    m.prisma([q0 + w * (sg * 0.6 - 0.1), q1 + w * (sg * 0.6 - 0.1), q1 + w * (sg * 0.6 + 0.1), q0 + w * (sg * 0.6 + 0.1)], zd - 0.45, zd - 0.12, 0, fundo=True)  # vigas
+    lado = w * sg * 0.7
+    m.caixa((q0 + q1) / 2 + lado, d, L, 0.08, zd + 0.97, zd + 1.05, 0)  # corrimão
+    m.caixa((q0 + q1) / 2 + lado, d, L, 0.06, zd + 0.08, zd + 0.14, 0)  # travessa de baixo
+    for s_ in np.arange(0.15, L - 0.6, 0.22):  # ripas
+        m.caixa(q0 + d * s_ + lado, d, 0.07, 0.03, zd, zd + 0.97, 0)
+    for s_ in (0.0, L - 0.6):  # prumos das pontas
+        m.caixa(q0 + d * (s_ + 0.06) + lado, d, 0.12, 0.12, zd, zd + 1.12, 0)
+for s_ in (L * 0.33, L * 0.66):
+    for sg in (-1, 1):
+        q = q0 + d * s_ + w * sg * 0.6
+        m.caixa(q, d, 0.2, 0.2, float(cota(*q)) - 0.3, zd - 0.45, 0)
 m.objeto("Passadico", "passadico", ["madeira"], GRUPOS["Torre_Menagem"], uv=None)
+# Terraço largo do lado de dentro da Porta da Traição, onde o passadiço chega (MDS: plataforma a 249,3 m entre a
+# torre sul da porta e a muralha sudoeste, com a borda de x -13,5 / y -1 a x -9,5 / y -7). Antes faltava, e o
+# passadiço acabava no ar.
+m = Malha()
+ter = [P(-16.4, -6.9), P(-12.6, -9.6), P(-9.3, -7.4), P(-13.4, -0.8), P(-16.6, -0.6)]  # anti-horário
+m.prisma(ter, min(float(cota(*q)) for q in ter) - 0.5, z_terraco, 0)
+m.objeto("Terraco_Traicao", "muralha_sudoeste", ["pedra"], GRUPOS["Muralhas"])
+MEDIDAS["passadico"] = {"comprimento": L, "cota": zd + ZREF, "terraco": z_terraco + ZREF}
+
 
 print("portas…")
 # Porta principal (SIPA): por fora, arco quebrado; por dentro, o vão é de volta perfeita. Escadaria
@@ -1766,6 +1804,10 @@ adarve = MEDIDAS["muralha_nascente"]["adarve_mediano"] - ZREF
 vao = min(distancia(np.array([c[0]]), np.array([c[1]]), torres[t_], True)[0][0] for t_ in ("porta_principal_n", "porta_principal_s"))
 m.caixa(c - out * 0.2, u, 2 * vao + 0.6, 2.4, sole - 1.0, adarve, 0)
 arco_quebrado(m, c + out * 1.0, u, out, 2.2, sole, 2.0, 1)
+# folha de madeira forrada a chapa verde, com travessas escuras (revisão do perito, foto do Tiago a6f343ba)
+m.caixa(c + out * 1.0, u, 1.6, 0.1, sole, sole + 2.6, 3)
+for zt_ in (0.35, 1.0, 1.65, 2.3):
+    m.caixa(c + out * 1.06, u, 1.56, 0.04, sole + zt_, sole + zt_ + 0.09, 1)
 aduelas(m, c + out * 1.0, u, out, 2.2, sole, 2.0, 2, quebrado=True)
 arco(m, c - out * 1.42, u, -out, 2.6, sole, 2.2, 0.1, 1)
 aduelas(m, c - out * 1.42, u, -out, 2.6, sole, 2.2, 2)
@@ -1775,7 +1817,7 @@ for k in range(n_deg):  # degraus em meia-lua, de granito como os panos
     z1 = sole - k * (sole - fora_) / n_deg
     arc = [c + out * 1.1 + (u * math.cos(a) + out * math.sin(a)) * r_ for a in np.linspace(0, math.pi, 25)]
     m.prisma(arc, fora_ - 0.5, z1, 0)
-m.objeto("Porta_Principal", "porta_principal", ["pedra", "sombra", "cantaria"], GRUPOS["Portas"])
+m.objeto("Porta_Principal", "porta_principal", ["pedra", "sombra", "cantaria", "madeira_verde"], GRUPOS["Portas"])
 MEDIDAS["porta_principal"] = {"soleira": sole + ZREF, "chao_fora": fora_ + ZREF, "degraus": n_deg}
 # Duas escadas estreitas e divergentes, junto à porta principal, sobem ao caminho de ronda (SIPA):
 # encostadas à face de dentro dos panos nascente, uma para sul e outra para noroeste. Largura e
@@ -1796,6 +1838,7 @@ for pano, do_fim in (("muralha_nascente", True), ("muralha_nascente_norte", Fals
         t = (sv - acum[j]) / max(seg[j], 1e-9)
         return eixo[j] + (eixo[j + 1] - eixo[j]) * t, unit(eixo[j + 1] - eixo[j]), topo_[j] + (topo_[j + 1] - topo_[j]) * t
     sv = 5.2  # arranca para lá da torre da porta
+    degs = []
     p0, t0, _ = em(sv)
     z = float(cota(*p0))
     n = 0
@@ -1804,12 +1847,16 @@ for pano, do_fim in (("muralha_nascente", True), ("muralha_nascente_norte", Fals
         alvo = tp - PARAPEITO - ALT_MERLAO
         z = min(z + 0.3, alvo)
         m.caixa(p + t * 0.17, t, 0.36, 1.1, float(cota(*p)) - 0.6, z, 0)
+        q_ = lin[int(np.argmin(np.hypot(*(lin - p).T)))]
+        degs.append((*(p + t * 0.17 + unit(p - q_) * 0.5), z))
         n += 1
         sv += 0.27  # escada íngreme, como as do castelo
         if z >= alvo - 0.01 or sv > acum[-1] - 2.0:
             break
+    guarda(MG, degs[::2] + [degs[-1]], 0, passo=1.2)  # do lado de fora da escada
     esc[pano] = {"degraus": n, "comprimento": round(n * 0.27, 1), "chega_ao_adarve": bool(z >= alvo - 0.01)}
 m.objeto("Escadas_Adarve", "porta_principal", ["pedra"], GRUPOS["Portas"])
+MG.objeto("Guardas_Adarve", "muralha_nascente", ["ferro_guarda"], GRUPOS["Muralhas"], uv=None)
 MEDIDAS["escadas_adarve"] = esc
 # Porta da Traição: arco quebrado entre as duas torres do pano poente (SIPA)
 m = Malha()

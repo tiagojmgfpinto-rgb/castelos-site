@@ -1,4 +1,8 @@
 {
+ "guardas_adarve": {
+  "comprimento_m": 106.7,
+  "troços": 20
+ },
  "muros": {
   "regioes": 19,
   "area_m2": 1023,

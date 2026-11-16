@@ -168,6 +168,11 @@
    15.0
   ]
  },
+ "passadico": {
+  "comprimento": 6.8,
+  "cota": 249.1,
+  "terraco": 249.2
+ },
  "porta_principal": {
   "soleira": 241.5,
   "chao_fora": 239.5,
@@ -221,7 +226,7 @@
    "capela": 248.8,
    "nascente_norte": 245.1
   },
-  "chamines": 36,
+  "chamines": 38,
   "guaritas": 4,
   "cumeeiras": 248.8,
   "galeria": {
@@ -266,9 +271,9 @@
   "medidos": 12
  },
  "vegetacao": {
-  "arvores": 580,
-  "encolhidas": 17,
-  "retiradas": 12,
+  "arvores": 581,
+  "encolhidas": 8,
+  "retiradas": 11,
   "tiradas_da_estrada": 16
  },
  "texturas_foto": {

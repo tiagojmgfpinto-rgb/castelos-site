@@ -31,7 +31,7 @@ from kit.texturas import imagem  # noqa: E402
 from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
 from kit.silhares import textura_silhares  # noqa: E402
 from kit.cena import arvore_modelo  # noqa: E402
-from kit.arquitetura import piramide  # noqa: E402
+from kit.arquitetura import piramide, guarda  # noqa: E402
 
 AQUI = Path(__file__).resolve().parent
 RAIZ = AQUI.parents[2]
@@ -823,6 +823,7 @@ material("base", (0.33, 0.26, 0.20), 0.95)
 material("trilho", (0.74, 0.66, 0.52), 0.97)
 material("arvore", (1, 1, 1), 0.9, None, vcor=True)
 material("ferro", (0.24, 0.25, 0.26), 0.55)
+material("ferro_ferrugem", (0.48, 0.29, 0.20), 0.7)  # corrimãos da subida norte (#7a4a32, fotos Flickr)
 for pid_, d_ in PORTAS.items():  # tábuas das folhas, na cor de cada porta (fotografias)
     if "folhas" in d_:
         material("madeira_" + pid_, d_["folhas"][0], 0.85)
@@ -1154,7 +1155,7 @@ for sg in (-1, 1):
         c_ = ini + n_ * L * f_ + lado
         z_ = sole + (fundo_e - sole) * f_
         m.caixa(c_, t, 0.05, 0.05, z_ - 0.2, z_ + 1.0, 0)  # prumos
-m.objeto("Escada_Norte", "escada_norte", ["ferro"], GRUPOS["Portas"], uv=None)
+m.objeto("Escada_Norte", "escada_norte", ["ferro_ferrugem"], GRUPOS["Portas"], uv=None)
 MEDIDAS["escada_norte"] = {"lanco": L, "desnivel": sole - fundo_e, "degraus": ndeg}
 
 print("vestígios da capela e marco geodésico…")
@@ -1225,6 +1226,36 @@ for f in F["caminhos"]:
         if not k:
             troco = []
 m.objeto("Caminhos", "caminhos", ["trilho"], GRUPOS["Caminhos"], uv=None, liso=True)
+# Corrimão de ferro da subida norte (revisão do perito, 16 nov.; Flickr 50550332536 "On the way to the castle III"):
+# prumos de ferro cor de ferrugem a cada 2 m, chumbados na laje, e um só corrimão a 0,95 m, ao longo do carreiro
+# do OSM que chega ao pé da escada metálica, à esquerda de quem sobe, por c. 28 m.
+pe_e = ini + n_ * L
+cand = []
+for f in F["caminhos"]:
+    if f["geometria"]["type"] != "LineString" or f["classe"] not in ("path", "footway", "steps", "track"):
+        continue
+    pts = densificar(geom(f), 0.5)
+    dd = np.hypot(*(pts - pe_e).T)
+    cand.append((float(dd.min()), pts, int(np.argmin(dd))))
+if cand and min(cand, key=lambda c_: c_[0])[0] < 6.0:
+    _, pts, j0 = min(cand, key=lambda c_: c_[0])
+    ramo = [pts[j0:], pts[:j0 + 1][::-1]]
+    ramo = max(ramo, key=lambda r_: np.hypot(*(r_[min(len(r_) - 1, 20)] - pe_e)) if len(r_) > 1 else -1)
+    sub = [pe_e]
+    for q in ramo:
+        if np.linalg.norm(q - sub[-1]) > 0.3:
+            sub.append(q)
+        if sum(np.linalg.norm(np.diff(np.array(sub), axis=0), axis=1)) > 28:
+            break
+    sub = np.array(sub)[::-1]  # a subir, para o castelo
+    lado = desvio(sub, 0.8)  # à esquerda de quem sobe
+    m = Malha()
+    guarda(m, [(*q, float(cota(*q))) for q in lado], 0, alt=0.95, passo=2.0, r=0.02, travessas=())
+    m.objeto("Corrimao_Norte", "escada_norte", ["ferro_ferrugem"], GRUPOS["Portas"], uv=None)
+    MEDIDAS["corrimao_norte"] = {"comprimento": float(np.sum(np.linalg.norm(np.diff(sub, axis=0), axis=1))),
+                                 "desvio_do_pe_da_escada": float(min(cand, key=lambda c_: c_[0])[0])}
+else:
+    print("  sem carreiro junto ao pé da escada norte: corrimão por fazer")
 
 print("vegetação…")
 

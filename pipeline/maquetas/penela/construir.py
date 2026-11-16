@@ -30,7 +30,7 @@ from kit.texturas import imagem  # noqa: E402
 from kit.cena import limpar, arvore_modelo  # noqa: E402
 from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
 from kit.materiais import material as material_kit  # noqa: E402  (com mapa de normais)
-from kit.arquitetura import piramide  # noqa: E402
+from kit.arquitetura import piramide, barra  # noqa: E402
 from kit import passagens  # noqa: E402
 
 AQUI = Path(__file__).resolve().parent
@@ -915,6 +915,8 @@ material("base", (0.33, 0.26, 0.20), 0.95)
 material("caminho", (0.74, 0.72, 0.67), 0.95)
 material("arvore", (1, 1, 1), 0.9, None, vcor=True)
 material("madeira", (0.42, 0.25, 0.13), 0.8)
+material("madeira_escada", (0.29, 0.23, 0.18), 0.85)  # escada de madeira do castelejo (#4a3a2e)
+material("corda", (0.79, 0.71, 0.54), 0.95)  # corrimãos de corda (#c9b48a)
 
 # ---------------------------------------------------------------- rocha por baixo das muralhas
 # Revisão do perito (13 nov. 2026, P1-1 e P1-2): quase toda a cerca assenta em bancadas e falésias de arenito e
@@ -1051,6 +1053,42 @@ MEDIDAS["castelejo"] = {"topo": [float(topo.min() + ZREF), float(topo.max() + ZR
                         "chao_interior": float(np.median(cota(*densificar(desvio(castelejo, 3.0, True), 2, True).T)) + ZREF),
                         "altura_exterior": [float(np.percentile(topo - fora, 10)), float(np.percentile(topo - fora, 90))],
                         "acima_do_chao_interior": [float(np.percentile(topo - dentro_, 10)), float(np.percentile(topo - dentro_, 90))]}
+
+# Subida ao castelejo (revisão do perito, 16 nov.; Commons "Castelejo ou Torre de Menagem do Castelo de Penela 01"):
+# do terreiro sobe uma escada de madeira de 1,2 m, com prumos de 8 × 8 cm a cada 1,5 m e corrimão de corda em duas
+# fiadas dos dois lados; no alto, o carreiro ao pé do castelejo tem uma vedação igual do lado da encosta. Traçado pelo
+# talude do MDT (de 40,6 m no terreiro a 43,2 m em 5 m).
+m = Malha()
+e0, e1 = np.array([13.0, -2.3]), np.array([17.6, 0.4])
+te = unit(e1 - e0)
+we = np.array([-te[1], te[0]])
+z0e, z1e = float(cota(*e0)), float(cota(*e1))
+n_e = max(4, int(round((z1e - z0e) / 0.17)))
+Le = float(np.linalg.norm(e1 - e0))
+for k in range(n_e):
+    q = e0 + te * Le * (k + 0.5) / n_e
+    zt = z0e + (z1e - z0e) * (k + 1) / n_e
+    m.caixa(q, te, Le / n_e + 0.02, 1.2, min(float(cota(*q)), zt) - 0.25, zt, 0)
+for sg in (-1, 1):
+    barra(m, np.array([*(e0 + we * sg * 0.63), z0e - 0.1]), np.array([*(e1 + we * sg * 0.63), z1e - 0.1]), 0.08, 0)  # banzo
+    lado = [(*(e0 + we * sg * 0.66 + te * Le * f), z0e + (z1e - z0e) * f) for f in np.linspace(0, 1, 5)]
+    for i_, f in enumerate(np.linspace(0, 1, 5)):
+        q = e0 + we * sg * 0.66 + te * Le * f
+        zq = z0e + (z1e - z0e) * f
+        m.caixa(q, te, 0.08, 0.08, zq - 0.2, zq + 1.0, 0)
+    for h_ in (0.5, 0.95):
+        for a_, b_ in zip(lado[:-1], lado[1:]):
+            barra(m, np.array(a_) + [0, 0, h_], np.array(b_) + [0, 0, h_ - 0.06], 0.015, 1)
+# vedação de prumos e corda ao longo do carreiro, do alto da escada ao pé da face oeste
+cam = [e1 + we * 0.9, np.array([20.0, 1.9]) + we * 0.9, np.array([23.0, 3.6]) + we * 0.9]
+cam = np.array([q for a_, b_ in zip(cam[:-1], cam[1:]) for q in [a_ + (b_ - a_) * f for f in np.linspace(0, 1, 4)[:-1]]] + [cam[-1]])
+for q in cam:
+    m.caixa(q, te, 0.08, 0.08, float(cota(*q)) - 0.2, float(cota(*q)) + 1.0, 0)
+for h_ in (0.5, 0.95):
+    for a_, b_ in zip(cam[:-1], cam[1:]):
+        barra(m, np.array([*a_, float(cota(*a_)) + h_]), np.array([*b_, float(cota(*b_)) + h_ - 0.06]), 0.015, 1)
+m.objeto("Escada_Castelejo", "castelejo", ["madeira_escada", "corda"], GRUPOS["Castelejo"], uv=None)
+MEDIDAS["escada_castelejo"] = {"degraus": n_e, "desnivel": round(z1e - z0e, 2), "comprimento": round(Le, 1)}
 
 print("torres…")
 for tid, base in torres.items():

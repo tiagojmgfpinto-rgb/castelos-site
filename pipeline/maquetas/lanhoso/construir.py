@@ -52,7 +52,7 @@ from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
 from kit.silhares import textura_silhares  # noqa: E402
 from kit.cena import uv_mundo  # noqa: E402
 from kit.materiais import MATS, malha_rapida, material  # noqa: E402
-from kit.arquitetura import aduelas, contorno_vao, corrimao, merlao, painel, parede, passagem, tunel, vao  # noqa: E402
+from kit.arquitetura import aduelas, contorno_vao, corrimao, guarda, merlao, painel, parede, passagem, tunel, vao  # noqa: E402
 
 _cfg = RAIZ / "src" / "data" / "maquetas" / "lanhoso.json"
 CFG = json.loads(_cfg.read_text()) if _cfg.exists() else {"origem": {"lat": C.LAT0, "lon": C.LON0}, "variante": "estado-atual", "versao": "0.1"}
@@ -401,6 +401,7 @@ material("sombra", (0.05, 0.05, 0.05), 1.0)
 material("madeira", (0.30, 0.22, 0.15), 0.8)
 material("madeira_verde", (0.14, 0.36, 0.32), 0.7)   # portas da porta do castelo (fotografias: verde-azulado)
 material("madeira_igreja", (0.34, 0.20, 0.13), 0.7)  # porta do santuário (fotografia: castanha)
+material("inox", (0.56, 0.57, 0.57), 0.35)          # guardas de cabos do adarve (prumo #8e9192, cabo #b8bbbc)
 material("tabuado", (0.52, 0.48, 0.42), 0.85)       # adarve da torre (fotografia de drone: tábuas cinzentas)
 material("ferro", (0.14, 0.14, 0.15), 0.5)
 material("vidro", (0.16, 0.19, 0.21), 0.2)
@@ -744,6 +745,21 @@ def terraco():
     degraus(m, W(-3.8, 12.6), W(-3.8, 17.4), 0.9, 382.95, C.Z_TERRACO, 7, 3)
     corrimao(m, [(*W(3.6, 16.9), 382.4), (*W(3.6, 19.45), C.Z_TERRACO)], alt=0.9, mat=4)
     m.objeto("terracos", "cerca", GRUPOS["Muralhas"], uv=2.0, vcor=patine_muro)
+    # Guarda de cabos do adarve poente, do lado do pátio, e das duas escadas de pedra que lhe dão acesso (revisão do
+    # perito, 16 nov.; foto do Tiago 6c4dba03): prumos finos de inox a cada 2 m, corrimão a 1,0 m e 3 cabos.
+    g = Malha(["inox"])
+    cer = POL["cerca"]
+    borda = []
+    for v in np.arange(12.9, 20.31, 0.4):  # bordo de dentro do adarve poente: o último u dentro da cerca
+        us = [u for u in np.arange(-8.0, -2.99, 0.05) if cer.contains(shapely.Point(*W(u, v)))]
+        if us:
+            borda.append((*W(max(us) - 0.06, v), C.Z_POENTE))
+    if len(borda) > 2:
+        guarda(g, borda, 0, alt=1.0, passo=2.0, r=0.02, travessas=(), cabos=3)
+    guarda(g, [(*W(-3.3, 12.6), 382.95), (*W(-3.3, 17.4), C.Z_TERRACO)], 0, alt=1.0, passo=1.6, r=0.02, travessas=(), cabos=3)
+    guarda(g, [(*W(0.6, 18.68), C.Z_TERRACO), (*W(-3.0, 18.68), C.Z_NORTE)], 0, alt=1.0, passo=1.6, r=0.02, travessas=(), cabos=3)
+    g.objeto("guardas_adarve", "cerca", GRUPOS["Muralhas"], uv=None)
+    MEDIDAS["guardas_adarve"] = {"poente_m": round(float(np.sum(np.linalg.norm(np.diff(np.array(borda)[:, :2], axis=0), axis=1))), 1) if len(borda) > 1 else 0}
 
 
 # ---------------------------------------------------------------- porta do castelo
