@@ -334,6 +334,7 @@ material("sombra", (0.07, 0.065, 0.06), 1.0)
 material("vitral", (1, 1, 1), 0.3, imagem("vitral", textura_vitral()))
 material("madeira", (0.24, 0.16, 0.10), 0.8)
 material("madeira_azul", (0.16, 0.24, 0.42), 0.6)
+material("ferro_verde", (0.25, 0.37, 0.33), 0.5)  # grade e caixilho da janela norte (#3f5f55)
 material("ferro", (0.13, 0.13, 0.14), 0.45)
 TEX_TELHA, ALT_TELHA = textura_foto("roof_09", n=512, metros=2.0, cor=(0.70, 0.42, 0.30), metros_foto=2.0, saturacao=0.6, variacao=0.06)
 material("telha", (1, 1, 1), 0.8, imagem("telha", TEX_TELHA),
@@ -447,7 +448,7 @@ def vao(m, f, sc, w, za, zb, prof, arco=True, mat_fundo="sombra", mats=None, k=1
 
 # ---------------------------------------------------------------- torre
 
-MAT_T = ["cantaria", "cantaria_lisa", "sombra", "vitral", "madeira", "madeira_azul", "ferro", "telha"]
+MAT_T = ["cantaria", "cantaria_lisa", "sombra", "vitral", "madeira", "madeira_azul", "ferro", "telha", "ferro_verde"]
 mi = MAT_T.index
 
 # vãos por face (medidos nas fotografias, à escala da largura da face e da altura da torre)
@@ -520,8 +521,14 @@ def torre():
                 m.caixa_uv(*_box_face(f, sc - 0.28, sc + 0.28, 0.0, 0.04), zb_, zb_ + 0.22, mi("cantaria_lisa"))
                 m.caixa_uv(*_box_face(f, sc - 0.22, sc + 0.22, 0.0, 0.04), za - 0.18, za, mi("cantaria_lisa"))
             else:
-                fundo = "madeira_azul" if nome == "NNO" else "vitral"
-                vao(m, f, sc, w, za, zb_, 0.35, arco, fundo, MAT_T)
+                vao(m, f, sc, w, za, zb_, 0.35, arco, "vitral", MAT_T)
+                if nome == "NNO":  # vidraça em losangos com grade verde-escura, 3 + 2 barras (revisão do perito, 16 nov.;
+                    for k in range(1, 4):  # Commons «Torre de Menagem Braga», 2012); a portada azul era de 2006
+                        s_ = sa + w * k / 4
+                        m.face([f.p(s_ - 0.012, -0.30, za), f.p(s_ + 0.012, -0.30, za), f.p(s_ + 0.012, -0.30, zb_), f.p(s_ - 0.012, -0.30, zb_)], mi("ferro_verde"))
+                    for k in range(1, 3):
+                        z_ = za + (zb_ - za) * k / 3
+                        m.face([f.p(sa, -0.29, z_ - 0.012), f.p(sb, -0.29, z_ - 0.012), f.p(sb, -0.29, z_ + 0.012), f.p(sa, -0.29, z_ + 0.012)], mi("ferro_verde"))
                 aduelas(m, f, sc, w, za, zb_, 0.28, 0.035)
                 m.caixa_uv(*_box_face(f, sa - 0.15, sb + 0.15, -0.02, 0.10), za - 0.14, za, mi("cantaria_lisa"))
         if nome == "SSE":
@@ -791,13 +798,23 @@ def escada():
     # capeamento do guarda-corpo (lajes um pouco salientes)
     m.caixa_uv(ES_U_FIM - 0.02, E_U2 + 0.03, E_V2 - 0.03, E_V1, Z_PAT1 + 0.9, Z_PAT1 + 0.98, mi("cantaria_lisa"))
     # portão de ferro ao pé da escada, entre a torre e o pilar (fotografia)
+    # (revisão do perito, 16 nov.; foto do Tiago 99b6d8a6): aro de 30 × 15 mm, barras de Ø 16 mm a cada 0,11 m,
+    # friso de barras curtas debaixo da travessa de cima, e o pilar de pedra mais alto do que o guarda-corpo
     u_p = ES_U_INI - 0.05
-    for k in range(9):
-        v_ = E_V0 - 0.06 - (E_V0 - E_V1 - 0.12) * k / 8
-        p_ = W(u_p, v_)
-        m.cilindro(p_, 0.012, CHAO + 0.05, CHAO + 1.30, mi("ferro"), k=5)
-    for z_ in (CHAO + 0.12, CHAO + 0.65, CHAO + 1.22):
-        m.caixa_uv(u_p - 0.015, u_p + 0.015, E_V1 + 0.04, E_V0 - 0.04, z_ - 0.025, z_ + 0.025, mi("ferro"))
+    va, vb = E_V1 + 0.04, E_V0 - 0.04
+    z0g, z1g = CHAO + 0.06, CHAO + 1.30
+    for v_ in (va, vb):  # montantes do aro
+        m.caixa_uv(u_p - 0.0075, u_p + 0.0075, v_ - 0.015, v_ + 0.015, z0g, z1g, mi("ferro"))
+    for z_ in (z0g + 0.04, z1g - 0.17, z1g - 0.015):  # travessas: em baixo, a do friso e a de cima
+        m.caixa_uv(u_p - 0.0075, u_p + 0.0075, va, vb, z_ - 0.015, z_ + 0.015, mi("ferro"))
+    nb = max(2, int(round((vb - va) / 0.11)))
+    for k in range(1, nb):
+        v_ = va + (vb - va) * k / nb
+        m.cilindro(W(u_p, v_), 0.008, z0g, z1g, mi("ferro"), k=5)
+        m.cilindro(W(u_p, v_ - (vb - va) / nb / 2), 0.006, z1g - 0.17, z1g, mi("ferro"), k=5)  # friso
+    # pilar de pedra no arranque do guarda-corpo, 0,35 × 0,35 m, c. 0,4 m acima dele
+    m.caixa_uv(ES_U_INI - 0.02, ES_U_INI + 0.33, E_V2 - 0.025, E_V1 + 0.025, z_pe, g0 + 0.40, c)
+    m.caixa_uv(ES_U_INI - 0.05, ES_U_INI + 0.36, E_V2 - 0.055, E_V1 + 0.055, g0 + 0.40, g0 + 0.48, mi("cantaria_lisa"))
     # soleira de pedra do portão
     m.caixa_uv(ES_U_INI - 0.25, ES_U_INI + 0.02, E_V1, E_V0, CHAO - 0.2, CHAO + 0.06, mi("cantaria_lisa"))
     return m.objeto("escada", "escada", MAT_E, GRUPOS["Torre"], uv=2.0, vcor=patine)

@@ -262,8 +262,10 @@ def guarda(m, pts3, mat, alt=1.0, passo=1.5, r=0.022, travessas=(0.5,), ripas=0.
             barra(m, q, q + up * alt, r * 0.55, mat)
 
 
-def guardas_corredor(m, F0, n, pts, NR, A_, TP):
-    """Guardas baixas de granito sobre os muros da calçada que sai da porta (fotografia da Porta da Coroada)."""
+def guardas_corredor(m, F0, n, pts, NR, A_, TP, balaustres=False):
+    """Guardas baixas de granito sobre os muros da calçada que sai da porta (fotografia da Porta da Coroada).
+    Com balaustres=True: plinto, balaústres de 0,12 m a cada 0,22 m, capeamento e pilares de 0,4 m nas pontas e a
+    cada c. 3 m, 0,9 m de altura (revisão do perito, 16 nov.; Commons «Fortificações da Praça.010»)."""
     t = np.array([-n[1], n[0]])
     rel = pts - F0
     dd, ss = rel @ n, rel @ t
@@ -279,8 +281,19 @@ def guardas_corredor(m, F0, n, pts, NR, A_, TP):
             if comp < 1e-3:
                 continue
             z0 = float(min(TP[i], TP[j])) - 0.1
-            m.caixa((a_ + b_) / 2, unit(b_ - a_), comp + 0.02, 0.45, z0, z0 + 1.0, 0)
-            m.caixa((a_ + b_) / 2, unit(b_ - a_), comp + 0.02, 0.55, z0 + 1.0, z0 + 1.12, 0)
+            if not balaustres:
+                m.caixa((a_ + b_) / 2, unit(b_ - a_), comp + 0.02, 0.45, z0, z0 + 1.0, 0)
+                m.caixa((a_ + b_) / 2, unit(b_ - a_), comp + 0.02, 0.55, z0 + 1.0, z0 + 1.12, 0)
+                continue
+            ub = unit(b_ - a_)
+            zp = z0 + 0.12  # a guarda assenta 0,1 m acima do topo do muro, como a de muretes
+            m.caixa((a_ + b_) / 2, ub, comp + 0.02, 0.42, z0, zp + 0.18, 0)          # plinto
+            for f in np.arange(0.11, comp - 0.05, 0.22):
+                m.caixa(a_ + ub * f, ub, 0.12, 0.12, zp + 0.18, zp + 0.75, 0)      # balaústres
+            m.caixa((a_ + b_) / 2, ub, comp + 0.02, 0.45, zp + 0.75, zp + 0.9, 0)   # capeamento
+            if i == k[0] or int(dd[i] // 3.0) != int(dd[j] // 3.0) or j == k[-1]:
+                pp = a_ if i == k[0] else b_
+                m.caixa(pp, ub, 0.4, 0.4, z0, zp + 1.0, 0)                          # pilares
 
 
 def guarita(m, c, bis, zc, topo, janelas=False, gomos=False, remate="bola"):

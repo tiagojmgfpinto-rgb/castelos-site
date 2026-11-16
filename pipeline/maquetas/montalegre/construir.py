@@ -376,6 +376,7 @@ material("tabuado", (0.50, 0.47, 0.42), 0.85)      # passadiço: tábuas de made
 material("ferro", (0.13, 0.13, 0.14), 0.5)
 material("galvanizado", (0.58, 0.59, 0.58), 0.45)  # guardas da escada do adarve (fotografias de norte e de nascente)
 material("corten", (0.50, 0.25, 0.13), 0.75)       # aço corten da escada, dos guarda-corpos e do caminho do adarve (fotografias)
+material("ferro_ferrugem", (0.42, 0.29, 0.21), 0.7)  # grade e corrimão da cisterna (#6b4a35)
 material("corten_escuro", (0.36, 0.18, 0.10), 0.8)
 material("bandeira_verde", (0.0, 0.40, 0.18), 0.8)
 material("bandeira_vermelha", (0.80, 0.08, 0.10), 0.8)
@@ -873,10 +874,13 @@ PORTAS_FORA_AZ = (("poterna", 137.5), ("porta_sul", 230.0))
 PORTAS_FORA = {}
 
 
-def porta_fora(m, f, prof, za, w=1.05, alt=2.05, s0=-1.1, s1=1.1, rec=0.75):
+def porta_fora(m, f, prof, za, w=1.05, alt=2.05, s0=-1.1, s1=1.1, rec=0.75, aberta=False, aduela=0.30):
     """Troço de muro de face plana com uma porta em arco de volta perfeita: aduelas e ombreiras de cantaria, vão
     recuado rec e a porta de madeira com ferragens ao fundo. Encaixa no recorte que se tira à cerca (s0..s1, até
-    prof para dentro)."""
+    prof para dentro). Com aberta=True (a poterna; revisão do perito, 16 nov., Commons «CASTELO_DE_MONTALEGRE_7»),
+    o vão atravessa o recorte todo, com fundo escuro de passagem, e a folha fica recuada e aberta para dentro."""
+    if aberta:
+        return porta_aberta(m, f, prof, za, w, alt, s0, s1, aduela)
     c = np.asarray(f.o)
     zt = float(PF.ztopo(*c))
     zb = zbase(*c)
@@ -897,6 +901,39 @@ def porta_fora(m, f, prof, za, w=1.05, alt=2.05, s0=-1.1, s1=1.1, rec=0.75):
         quad(m, f, sk - 0.008, sk + 0.008, za + 0.02, top, d=-rec + 0.008, mat="sombra")
     # aduelas do arco e ombreiras, um pouco salientes
     anel_aduelas(m, f, [p for p in cont if p[1] >= za + alt - w / 2 - 1e-6], 0.30, 0.035, "cantaria_lisa")
+    for sg in (-1, 1):
+        for i in range(4):
+            z0 = za + i * (alt - w / 2) / 4
+            z1 = za + (i + 1) * (alt - w / 2) / 4 - 0.012
+            larg = 0.30 if i % 2 == 0 else 0.22
+            sa, sb = sorted((sg * w / 2, sg * (w / 2 + larg)))
+            m.caixa_face(f, sa, sb, 0.0, 0.035, z0, z1, mat="cantaria_lisa")
+    return [round(float(c[0]), 2), round(float(c[1]), 2), round(za, 2)]
+
+
+def porta_aberta(m, f, prof, za, w, alt, s0, s1, aduela):
+    c = np.asarray(f.o)
+    zt = float(PF.ztopo(*c))
+    zb = zbase(*c)
+    cont = contorno_vao(0.0, w, za, za + alt, True, k=16)
+    painel(m, f, [(s0, zb), (s1, zb), (s1, zt), (s0, zt)], [cont], "muro")
+    for s_ in (s0, s1):
+        m.face([f.p(s_, 0, zb), f.p(s_, -prof, zb), f.p(s_, -prof, zt), f.p(s_, 0, zt)], "muro")
+    m.face([f.p(s0, 0, zt), f.p(s1, 0, zt), f.p(s1, -prof, zt), f.p(s0, -prof, zt)], "muro_topo")
+    rec = prof - 0.02
+    tunel(m, f, cont, 0.0, -rec, "intradorso")
+    m.face([f.p(-w / 2, 0.0, za), f.p(w / 2, 0.0, za), f.p(w / 2, -rec, za), f.p(-w / 2, -rec, za)], "cantaria_lisa")
+    painel(m, f, cont, (), "sombra", d=-rec)
+    # folha de madeira de 1,4 × 2,6 m, com a dobradiça 0,25 m para dentro, aberta a c. 80° para o pátio
+    a_ = math.radians(80)
+    h0 = np.asarray(f.xy(w / 2 - 0.04, -0.25))
+    dl = -np.asarray(f.t) * math.cos(a_) - np.asarray(f.n) * math.sin(a_)
+    fl = Plano(h0, dl, n=np.array([dl[1], -dl[0]]) if np.array([dl[1], -dl[0]]) @ np.asarray(f.t) < 0 else -np.array([dl[1], -dl[0]]))
+    lw = min(w - 0.1, rec - 0.3)
+    m.caixa_face(fl, 0.0, lw, 0.0, 0.05, za + 0.02, za + 2.6, "madeira_porta")
+    for zf in (za + 0.35, za + 1.55, za + 2.35):
+        m.caixa_face(fl, 0.03, lw - 0.03, 0.05, 0.065, zf, zf + 0.07, "ferro")
+    anel_aduelas(m, f, [p for p in cont if p[1] >= za + alt - w / 2 - 1e-6], aduela, 0.035, "cantaria_lisa")
     for sg in (-1, 1):
         for i in range(4):
             z0 = za + i * (alt - w / 2) / 4
@@ -936,7 +973,8 @@ def cerca():
         # soleira ao nível do chão de fora (o mais baixo à frente do vão)
         za = min(float(cota(*f.xy(s_, d_))) for s_ in (-0.5, 0.0, 0.5) for d_ in (0.6, 1.2, 2.0)) + 0.03
         PORTAS_FORA[nome] = (f, prof, za)
-        pedra = pedra.difference(shapely.Polygon([f.xy(-1.1, -prof), f.xy(1.1, -prof), f.xy(1.1, 1.0), f.xy(-1.1, 1.0)]))
+        lr = 1.4 if nome == "poterna" else 1.1
+        pedra = pedra.difference(shapely.Polygon([f.xy(-lr, -prof), f.xy(lr, -prof), f.xy(lr, 1.0), f.xy(-lr, 1.0)]))
     for p in (pedra.geoms if hasattr(pedra, "geoms") else [pedra]):
         if p.geom_type == "Polygon" and p.area > 0.2:
             prisma_z(m, p.simplify(0.02), zbase, PF.ztopo, 0, 1)
@@ -945,7 +983,10 @@ def cerca():
     # de fora: poterna junto à torre sueste e porta do sul; de dentro (fotografia de 2022 do alto da torre): o arco
     # da poterna, na face de dentro da cerca, encostado à torre sueste
     for nome, (f, prof, za) in PORTAS_FORA.items():
-        portas[nome] = porta_fora(m, f, prof, za)
+        if nome == "poterna":  # arco de c. 1,5 m de vão e 3,0 m até ao fecho, aduelas compridas, folha aberta
+            portas[nome] = porta_fora(m, f, prof, za, w=1.5, alt=3.0, s0=-1.4, s1=1.4, aberta=True, aduela=0.55)
+        else:
+            portas[nome] = porta_fora(m, f, prof, za)
     for nome, az, lado in (("poterna_dentro", 146.0, -1),):
         ro = float(np.interp(az, PF.A, PF.ROUT if lado > 0 else PF.RIN))
         p0, p1 = np.array(PF.ponto(az - 1.2, ro)), np.array(PF.ponto(az + 1.2, ro))
@@ -1064,14 +1105,33 @@ def corredor_corten():
     s_placa = 1.9 if fp.t @ unit(np.array(PF.ponto(az - 5, ro0)) - c) > 0 else -1.9
     m.caixa_face(fc, s_placa - 0.55, s_placa + 0.55, 0.0, 0.03, z_sol + 1.3, z_sol + 2.0, 5)
     # saída para o pátio no topo nascente do corredor, junto à torre (fotografias de nascente e de drone)
+    # (revisão do perito, 16 nov.; Commons «Aerial photographs of Castelo de Montalegre (8)»): a saída é um pórtico
+    # de chapa corten de c. 1,6 × 2,5 m mesmo junto ao cunhal sudoeste da torre, aberto, com a folha de chapa
+    # encostada para fora; já não fica a meio do muro
+    tor_b = POL_TORRES["menagem"].buffer(0.35)
     az_i = 340.0
+    for a_ in np.arange(340.0, 356.0, 0.25):
+        if tor_b.contains(shapely.Point(*PF.ponto(a_, float(np.interp(a_, PF.A, PF.RIN))))):
+            break
+        az_i = a_
+    ri = float(np.interp(az_i, PF.A, PF.RIN)) + 0.05
+    az_i -= math.degrees(1.05 / ri)  # o eixo do pórtico a 1,05 m do encontro com a torre
     ri = float(np.interp(az_i, PF.A, PF.RIN)) + 0.05
     ci = np.array(PF.ponto(az_i, ri))
     ti = unit(np.array(PF.ponto(az_i + 0.5, ri)) - np.array(PF.ponto(az_i - 0.5, ri)))
     fi = Plano(ci, ti, n=-unit(ci - np.array(C.CENTRO_PATIO)))
     zi = float(cota(*fi.xy(0, 1.2)))
-    m.face(orientar([fi.p(s_, 0.012, z_) for s_, z_ in reto(0.0, 1.4, zi, zi + 2.4)], np.array([*fi.n, 0])), 6)
-    m.caixa_face(fi, -0.75, 0.75, 0.0, 0.04, zi + 2.4, zi + 2.48, 3)
+    m.face(orientar([fi.p(s_, 0.012, z_) for s_, z_ in reto(0.0, 1.6, zi, zi + 2.5)], np.array([*fi.n, 0])), 6)
+    for s0_, s1_ in ((-0.9, -0.8), (0.8, 0.9)):  # montantes do pórtico
+        m.caixa_face(fi, s0_, s1_, 0.0, 0.25, zi, zi + 2.6, 3)
+    m.caixa_face(fi, -0.9, 0.9, 0.0, 0.25, zi + 2.5, zi + 2.75, 3)  # padieira
+    # folha de chapa, aberta c. 100° para fora, presa ao montante do lado da torre
+    s_t = 0.8 if fi.t @ (np.asarray(POL_TORRES["menagem"].centroid.coords[0]) - ci) > 0 else -0.8
+    a_ = math.radians(100)
+    dl = -np.sign(s_t) * fi.t * math.cos(a_) + fi.n * math.sin(a_)
+    fl = Plano(fi.xy(s_t, 0.25), dl, n=np.array([dl[1], -dl[0]]))
+    m.caixa_face(fl, 0.0, 1.5, 0.0, 0.03, zi + 0.05, zi + 2.45, 2)
+    m.caixa_face(fl, 0.15, 1.35, 0.03, 0.045, zi + 0.25, zi + 2.25, 3)
     # degraus de granito do passadiço para a soleira
     zc = float(cota(*fp.xy(0, 1.6)))
     for i in range(2):
@@ -1126,10 +1186,18 @@ def cisterna():
     inn = q.buffer(-0.45, join_style="mitre")
     b = np.array(inn.exterior.coords)[:-1]
     m.face(orientar([(x, y, zc - 1.6) for x, y in b], np.array([0, 0, 1.0])), 2)
-    m.objeto("cisterna", "cisterna", GRUPOS["Muralhas"], uv=2.0, vcor=patine_muro)
-    # grade de ferro por cima do bocal (fotografia de 2022)
-    g = Malha(["ferro"])
+    # escada de pedra que desce encostada à parede norte (revisão do perito, 16 nov.; Commons «CASTELO_DE_MONTALEGRE_4»)
     x0_, y0_, x1_, y1_ = inn.bounds
+    for k in range(5):
+        xa_ = x0_ + 0.45 * k
+        m.prisma(ccw([(xa_, y1_ - 0.8), (xa_ + 0.47, y1_ - 0.8), (xa_ + 0.47, y1_), (xa_, y1_)]), zc - 1.62, zc - 0.28 * (k + 1), 0, mat_topo=1)
+    m.objeto("cisterna", "cisterna", GRUPOS["Muralhas"], uv=2.0, vcor=patine_muro)
+    # grade e corrimão de ferro cor de ferrugem (fotografia de 2022; revisão do perito: #6b4a35)
+    g = Malha(["ferro_ferrugem"])
+    g.barra((x0_ + 0.05, y1_ - 0.75, zc + 0.35), (x0_ + 0.05 + 0.45 * 5, y1_ - 0.75, zc - 1.4 + 0.9), 0.02, 0, k=4)
+    for k in (2, 4):  # o corrimão fica todo por baixo da grade
+        xk = x0_ + 0.05 + 0.45 * k
+        g.barra((xk, y1_ - 0.75, zc - 0.28 * k), (xk, y1_ - 0.75, zc - 0.28 * k + 0.9), 0.018, 0, k=4)
     zg = zc + 0.5
     for x in np.arange(x0_ + 0.2, x1_ - 0.05, 0.25):
         g.barra((x, y0_ - 0.1, zg), (x, y1_ + 0.1, zg), 0.025, 0, k=4)

@@ -1220,18 +1220,22 @@ def edificio(m, poly, zt, amarelo):
             passo = 2.6
             k = int((L - 1.6) // passo)
             ss = (np.arange(max(k, 0)) - (k - 1) / 2) * passo
+            rng = np.random.default_rng(int(L * 100) % 9973)
             for pz in np.arange(g + 1.1, zt - 2.0, 3.1):
                 if amarelo and pz < z_am + 0.5:
                     continue
-                for s_ in ss:  # fotografia do pátio: vãos de c. 1 × 1,3 m com caixilho claro e grade
-                    vaos.append((s_, pz + 0.25, 0.95, 1.3, "grade"))
+                for s_ in ss:  # fotografia do pátio: janelas quadradas de c. 1 × 1 m com grade clara, a espaços irregulares
+                    if len(ss) > 2 and rng.random() < 0.15:  # (revisão do perito, 16 nov.: recorte de web/c038.jpg)
+                        continue
+                    vaos.append((s_ + float(rng.uniform(-0.35, 0.35)), pz + 0.4, 1.0, 1.0, "grade"))
         if amarelo and L >= 10:
             # Capela de Santa Bárbara (revisão do perito, 16 nov.; Commons "Entrada exterior para a Capela de Santa
             # Bárbara"): da esquerda para a direita, a janela alta em arco de moldura branca, o nicho sineiro, a porta de
             # madeira de verga reta com moldura de pedra e, na ala baixa, a janela retangular gradeada. Antes era uma
             # grelha de 4 pisos de janelas em arco, que não existe.
-            vaos += [(-L * 0.36, g + 3.4, 1.0, 1.8, "arco"), (-L * 0.20, g + 4.1, 0.55, 0.9, "nicho"),
-                     (L * 0.02, g + 0.15, 1.4, 2.6, "porta"), (L * 0.30, g + 1.4, 1.4, 1.0, "grade")]
+            # (s cresce para a direita de quem olha de dentro, por isso os vãos da foto vão com o sinal trocado)
+            vaos += [(L * 0.36, g + 3.4, 1.0, 1.8, "arco"), (L * 0.20, g + 4.1, 0.55, 0.9, "nicho"),
+                     (-L * 0.02, g + 0.15, 1.4, 2.6, "porta"), (-L * 0.30, g + 1.4, 1.4, 1.0, "grade")]
         # paramento furado: grelha cortada pelos vãos (cada vão em retângulo; o arco leva tímpano por cima)
         z0p, z1p = g + 0.6, zt - 0.5
         sb = sorted({-L / 2 - e, L / 2 + e} | {v[0] + sg * v[2] / 2 for v in vaos for sg in (-1, 1)})
@@ -1273,10 +1277,13 @@ def edificio(m, poly, zt, amarelo):
                 Q.arco_sz(s_, w_ / 2, w_ / 2 + 0.17, z_ + hn, e, e + 0.07, mm_, k=10, aduelas=True)
             else:
                 Q.bloco(s_ - w_ / 2 - 0.17, s_ + w_ / 2 + 0.17, z_ + hn, z_ + hn + 0.2, e, e + 0.07, mm_)
-            if tipo == "grade":
-                for k_ in range(1, 4):  # grade a meio do vão
+            if tipo == "grade":  # grade a meio do vão: branca na prisão, de ferro escuro na ala baixa da capela
+                gm = FER if (amarelo and z_ < z_am) else CAL
+                for k_ in range(1, 4):
                     sx = s_ - w_ / 2 + w_ * k_ / 4
-                    Q.bloco(sx - 0.015, sx + 0.015, z_, z_ + hn, e * 0.5, e * 0.5 + 0.03, FER)
+                    Q.bloco(sx - 0.02, sx + 0.02, z_, z_ + hn, e * 0.5, e * 0.5 + 0.04, gm)
+                if gm == CAL:
+                    Q.bloco(s_ - w_ / 2, s_ + w_ / 2, z_ + hn / 2 - 0.02, z_ + hn / 2 + 0.02, e * 0.5, e * 0.5 + 0.04, gm)
     return n
 
 
@@ -1412,10 +1419,10 @@ def fortim(m):
     Qs = Quadro(m, cs, nf)
     zb = TOP + 1.12
     Qs.bloco(-1.45, 1.45, TOP - 0.5, zb + 0.9, -2.2, 0.0, OGA)
-    Qs.bloco(-1.6, 1.6, zb + 0.9, zb + 1.05, -2.3, 0.4, CAN)          # varanda
-    for k_ in range(8):
-        Qs.bloco(-1.5 + 0.43 * k_ - 0.02, -1.5 + 0.43 * k_ + 0.02, zb + 1.05, zb + 1.8, 0.32, 0.36, FER)
-    Qs.bloco(-1.6, 1.6, zb + 1.8, zb + 1.85, 0.3, 0.38, FER)
+    # sem varanda nem grade (revisão do perito, 16 nov.; Commons «2026-07-31 Peniche Fortress 14»): por baixo do arco,
+    # um painel de pedra com uma fresta de 0,15 × 0,8 m; pelo arco vê-se o céu
+    Qs.bloco(-0.85, 0.85, zb - 0.3, zb + 0.95, 0.0, 0.05, CAN)
+    Qs.bloco(-0.075, 0.075, zb - 0.05, zb + 0.75, 0.05, 0.06, SOM)
     wv, za = 1.2, zb + 1.0
     hn = 2.0
     top = [(-1.35, za), (-wv / 2, za), (-wv / 2, za + hn)]
@@ -1431,7 +1438,6 @@ def fortim(m):
         s0, s1 = sorted((sg * wv / 2, sg * (wv / 2 + 0.17)))
         Qs.bloco(s0, s1, za, za + hn, 0.0, 0.07, CAN)
     Qs.bloco(-0.75, 0.75, za - 0.08, za + 0.04, -0.2, 0.1, CAN)        # peitoril
-    sino(m, Qs.p(0, 0, -1.1)[:2], za + 0.8, r=0.36)
     zt = za + 3.3
     Qs.bloco(-1.5, 1.5, zt, zt + 0.22, -2.35, 0.15, CAN)               # cornija
     # remate bolboso (perfil em S) com pináculo, como na fotografia

@@ -387,11 +387,16 @@ material("intradorso", (0.34, 0.33, 0.31), 0.95)
 material("sombra", (0.06, 0.055, 0.05), 1.0)
 material("madeira", (0.30, 0.22, 0.15), 0.8)
 material("madeira_verde", (0.16, 0.30, 0.22), 0.7)   # portadas da janela da torre (fotografia)
-material("madeira_porta", (0.36, 0.17, 0.12), 0.7)   # portas do museu
+material("madeira_porta", (0.35, 0.16, 0.14), 0.7)   # portas do museu (#5a2a24)
 material("porta_sul", (0.44, 0.45, 0.53), 0.75)   # folhas da porta sul: pintura gasta azul-acinzentada (#6f7486, fotografias)
 material("ferro", (0.16, 0.16, 0.17), 0.5)
 material("reboco", (0.90, 0.89, 0.86), 0.9)
 material("vidro", (0.20, 0.25, 0.28), 0.15)
+material("caixilho", (0.48, 0.17, 0.14), 0.6)   # caixilhos e aro da porta do museu (#7a2a24)
+material("vidro_galeria", (0.72, 0.80, 0.85), 0.1)  # vidro da galeria do museu, transparente (revisão do perito, 16 nov.)
+_vg = bpy.data.materials["vidro_galeria"]
+_vg.node_tree.nodes["Principled BSDF"].inputs["Alpha"].default_value = 0.35
+_vg.surface_render_method = "BLENDED"
 material("metal", (0.38, 0.39, 0.40), 0.5)
 material("bandeira_verde", (0.0, 0.40, 0.18), 0.8)
 material("bandeira_vermelha", (0.80, 0.08, 0.10), 0.8)
@@ -1156,27 +1161,33 @@ def _hip(m, quad, z_beiral, z_cume, beiral=0.45, mat=0, mat_sob=None):
         m.face([P(a, zb - 0.12), P(b, zb - 0.12), P(b, zb), P(a, zb)], mat if mat_sob is None else mat_sob)
 
 
-def _janelas(m, a, b, z0, z1, passo, w, h, z_peit, porta=None):
-    """Janelas (vidro escuro em caixilho recuado) e uma porta, numa fachada de a para b (vista de fora)."""
+def _janelas(m, a, b, z0, z1, passo, w, h, z_peit, porta=None, so=None):
+    """Janelas (vidro em caixilho vermelho-escuro) e uma porta, numa fachada de a para b (vista de fora). A parede
+    rebocada fica 2 cm para dentro da planta, por isso a folha, o caixilho e o vidro ficam à face, um pouco salientes
+    (antes ficavam por trás da parede e não se viam; revisão do perito, 16 nov.)."""
     t = unit(np.asarray(b) - np.asarray(a))
     f = Plano(a, t, n=np.array([t[1], -t[0]]))
     L = float(np.linalg.norm(np.asarray(b) - np.asarray(a)))
     n = max(1, int((L - 1.5) // passo))
     ss = np.linspace(-(n - 1) / 2 * passo, (n - 1) / 2 * passo, n) + L / 2
     for k, s in enumerate(ss):
-        if porta is not None and k == porta:
-            vao(m, f, s, 1.1, z0 + 0.02, z0 + 2.3, 0.18, arco=False, mat_lado="reboco", mat_fundo="madeira_porta", d0=0.0)
-            m.caixa_face(f, s - 0.7, s + 0.7, 0.0, 0.04, z0 + 2.3, z0 + 2.45, "cantaria_lisa")
+        if so is not None and k not in so:
             continue
-        vao(m, f, s, w, z_peit, z_peit + h, 0.14, arco=False, mat_lado="reboco", mat_fundo="vidro", d0=0.0)
-        m.caixa_face(f, s - w / 2 - 0.08, s + w / 2 + 0.08, 0.0, 0.06, z_peit - 0.08, z_peit, "cantaria_lisa")
+        if porta is not None and k == porta:
+            m.caixa_face(f, s - 0.45, s + 0.45, 0.0, 0.03, z0 + 0.02, z0 + 2.12, "madeira_porta")
+            m.caixa_face(f, s - 0.52, s + 0.52, 0.0, 0.02, z0 + 0.02, z0 + 2.19, "caixilho")
+            continue
+        m.caixa_face(f, s - w / 2 - 0.05, s + w / 2 + 0.05, 0.0, 0.025, z_peit - 0.05, z_peit + h + 0.05, "caixilho")
+        m.caixa_face(f, s - w / 2, s + w / 2, 0.0, 0.035, z_peit, z_peit + h, "vidro")
+        m.caixa_face(f, s - 0.025, s + 0.025, 0.0, 0.045, z_peit, z_peit + h, "caixilho")  # junta das folhas
+        m.caixa_face(f, s - w / 2 - 0.08, s + w / 2 + 0.08, 0.0, 0.06, z_peit - 0.08, z_peit - 0.05, "cantaria_lisa")
 
 
 def museu():
     """Os edifícios do museu no pátio (fotografias de drone e satélite): duas alas de paredes rebocadas a branco
     com soco de granito e telhados de quatro águas de telha, e entre elas a galeria envidraçada de cobertura plana.
     Planta do LiDAR e do satélite; cornijas e cumes do LiDAR."""
-    m = Malha(["reboco", "telha", "cantaria_lisa", "vidro", "madeira_porta", "metal", "sombra"])
+    m = Malha(["reboco", "telha", "cantaria_lisa", "vidro_galeria", "madeira_porta", "metal", "sombra", "vidro", "caixilho"])
     out = {}
     for nome, quad in (("ala_oeste", ALA_OESTE), ("ala_sul", ALA_SUL)):
         q = np.array(quad, float)
@@ -1201,7 +1212,8 @@ def museu():
     _janelas(m, qo[1], qo[2], ch, out["ala_oeste"]["beiral"], 2.8, 0.9, 1.2, ch + 1.0, porta=1)
     qs = np.array(ALA_SUL)
     ch = out["ala_sul"]["chao"]
-    _janelas(m, qs[1], qs[0], ch, out["ala_sul"]["beiral"], 2.8, 0.9, 1.2, ch + 1.0, porta=2)
+    # ala sul (foto da galeria da ficha): só a porta vermelho-escura e uma janela pequena de 0,6 × 0,7 m
+    _janelas(m, qs[1], qs[0], ch, out["ala_sul"]["beiral"], 2.8, 0.6, 0.7, ch + 1.3, porta=0, so=(0, 1))
     # galeria envidraçada
     q = np.array(CORREDOR, float)
     if not shapely.Polygon(q).exterior.is_ccw:
@@ -1220,9 +1232,9 @@ def museu():
     for i in range(4):
         a_, b_ = q[i], q[(i + 1) % 4]
         L = np.linalg.norm(b_ - a_)
-        for s in np.arange(0, L + 1e-6, max(L / max(1, round(L / 1.6)), 0.5)):
+        for s in np.arange(0, L + 1e-6, max(L / max(1, round(L / 1.8)), 0.5)):  # montantes de 6 cm a cada 1,8 m
             p = a_ + (b_ - a_) * (s / L)
-            m.barra((*p, chao + 0.3), (*p, zt - 0.35), 0.04, 5, k=4)
+            m.barra((*p, chao + 0.3), (*p, zt - 0.35), 0.03, 5, k=4)
     out["galeria"] = {"chao": round(chao, 2), "cobertura": round(zt, 2)}
     m.objeto("museu", "museu", GRUPOS["Museu"], uv=2.0)
     MEDIDAS["museu"] = out

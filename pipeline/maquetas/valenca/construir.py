@@ -1192,7 +1192,7 @@ def portas():
         enchimento(Q, pid, lambda u: sole, tu["dz"], lambda a, b: topo_k if b <= 1.0 else topo_k - 0.15 if b <= 4.0 else -1e9)
         L = ponte(m, F0, n, Q.t, sole) if d_.get("ponte") else 0.0
         if d_.get("corredor"):
-            guardas_corredor(m, F0, n, pts, NR, A_, TP)
+            guardas_corredor(m, F0, n, pts, NR, A_, TP, balaustres=(pid == "porta_coroada"))
         m.objeto(pid.title(), d_["elemento"], ["cantaria", "sombra", "madeira_verde", "alvenaria"], GRUPOS["Portas"], uv=2.5)
         PONTOS_PORTA[pid] = (F0, n, sole)
         tt = np.array([-n[1], n[0]])  # passagem livre de casas e árvores à frente da porta

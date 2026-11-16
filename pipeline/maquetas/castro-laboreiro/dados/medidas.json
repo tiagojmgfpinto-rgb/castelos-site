@@ -144,7 +144,7 @@
   "atravessa": 1.7
  },
  "escada_norte": {
-  "lanco": 3.0,
+  "lanco": 2.0,
   "desnivel": 2.6,
   "degraus": 13
  },
@@ -169,7 +169,7 @@
   "arvores": 327,
   "sobreiros": 70,
   "castanheiros": 257,
-  "moitas": 744,
+  "moitas": 743,
   "encolhidas": 21,
   "retiradas": 0
  },

@@ -1353,6 +1353,21 @@ def porta_rosal(Q, sole):
     v = PORTAS["porta_rosal"]["vao"]
     r, omb = v["r"], v["omb"]
     tunel(Q, r, sole, omb, v["tunel"])
+    # O túnel dobra para norte ao entrar na galeria e, de frente, via-se a alvenaria do encontro como se o arco
+    # estivesse tapado (revisão do perito, 16 nov.). No fim do troço reto, um fundo escuro só de uma face, virada
+    # para a boca: de fora lê-se como passagem escura; de dentro não se vê e a luz da boca continua à vista.
+    fm = Q.fim
+    e_ = getattr(Q, "eixo", -Q.n)
+    zn_ = sole + omb
+    cont = [(-r, sole), (r, sole)] + [(r * math.cos(a_), zn_ + r * math.sin(a_)) for a_ in np.linspace(0, math.pi, 13)] + [(-r, sole)]
+    # a alvenaria da galeria vê-se logo a seguir ao intradorso de cantaria (0,7 m): o fundo vai para 0,9 m da boca
+    bt0_ = getattr(Q, "bt", 0.0)
+    c_f = Q.o + Q.n * (-bt0_ * omb) + e_ * 0.9
+    pts = [np.array([*(c_f + fm["t"] * s_), z_]) for s_, z_ in cont[:-1]]
+    nrm = np.cross(pts[1] - pts[0], pts[3] - pts[0])
+    if nrm[:2] @ e_ > 0:
+        pts = pts[::-1]
+    Q.m.face([tuple(p_) for p_ in pts], MAT_PORTA.index("sombra_tunel"))
     arco_granito(Q, r, sole, omb, aduela=0.5, n_ad=13, ombreira=(0.55, 0.38))
     Q.bt, bt0 = 0.0, Q.bt
     Q.bloco(-r, r, sole - 0.02, sole + 0.02, 0.0, 0.7, 1)  # grelha de escoamento
@@ -1496,7 +1511,7 @@ def porta_salvaterra(Q, sole):
 
 
 GUAR_EXTRA = []
-MAT_PORTA = ["cantaria", "sombra", "madeira_verde", "alvenaria", "cal", "relva", "vidro", "ferro"]
+MAT_PORTA = ["cantaria", "sombra", "madeira_verde", "alvenaria", "cal", "relva", "vidro", "ferro", "sombra_tunel"]
 
 PORTAS = {
     # ponto e normal (para fora) medidos na nuvem de pontos; o vão é aberto no próprio pano (sem o cortar):
@@ -1673,8 +1688,8 @@ def portas():
 # Cada igreja tem um referencial Quadro na fachada principal: s ao longo da fachada, d para fora; o
 # corpo da igreja fica em d < 0.
 
-CAL, CAN, TEL, SOM, MAD, FER, BRO, VID, LOU, LIS = range(10)
-MAT_IGR = ["cal", "cantaria", "telha", "sombra", "madeira_verde", "ferro", "bronze", "vidro", "lousa", "cantaria_lisa"]
+CAL, CAN, TEL, SOM, MAD, FER, BRO, VID, LOU, LIS, ACZ = range(11)
+MAT_IGR = ["cal", "cantaria", "telha", "sombra", "madeira_verde", "ferro", "bronze", "vidro", "lousa", "cantaria_lisa", "aco_cinza"]
 
 
 def cruz(Q, s, z, d, alt=1.2, mat=FER, esp=0.08):
@@ -2003,17 +2018,25 @@ def ponte_en202(m):
     c = np.array([(xa + xb) / 2, y0])
     m.caixa(c, u, L + 0.4, larg, zt - 0.95, zt - 0.08, FER)
     m.caixa(c, u, L + 0.4, larg - 0.4, zt - 0.08, zt, LIS)  # pavimento
+    # gradeamento alto e contínuo de barras verticais cinzentas, 1,4 m, barras de 20 mm a cada 0,12 m, do tabuleiro
+    # aos dois encontros (revisão do perito, 16 nov.; Street View 07/2026)
     x_ini, x_fim = xa - 1.0, xb + 1.0
+    HG = 1.4
     for sg in (-1, 1):
         yy = y0 + sg * (larg / 2 - 0.06)
-        for x in np.arange(x_ini, x_fim + 0.01, 1.25):
-            barra(m, (x, yy, zt), (x, yy, zt + 1.1), 0.03, FER)
-        barra(m, (x_ini, yy, zt + 1.1), (x_fim, yy, zt + 1.1), 0.04, FER)
-        barra(m, (x_ini, yy, zt + 0.15), (x_fim, yy, zt + 0.15), 0.03, FER)
+        for x in np.arange(x_ini, x_fim + 0.01, 0.12):
+            m.caixa(np.array([x, yy]), u, 0.02, 0.02, zt, zt + HG, ACZ)
+        for x in np.arange(x_ini, x_fim + 0.01, 2.5):
+            m.caixa(np.array([x, yy]), u, 0.06, 0.06, zt, zt + HG + 0.03, ACZ)  # prumos
+        m.caixa(np.array([(x_ini + x_fim) / 2, yy]), u, x_fim - x_ini, 0.05, zt + HG, zt + HG + 0.04, ACZ)
+        m.caixa(np.array([(x_ini + x_fim) / 2, yy]), u, x_fim - x_ini, 0.04, zt + 0.08, zt + 0.12, ACZ)
+    # porta escura na base do encontro poente, virada à estrada
+    m.caixa(np.array([xa + 4.2 + 0.03, y0]), u, 0.06, 1.2, zr + 0.6, zr + 2.8, SOM)
+    m.caixa(np.array([xa + 4.2 + 0.02, y0]), u, 0.04, 1.5, zr + 2.8, zr + 3.0, CAN)
     # silhuetas de torres ameadas sobre a guarda sul (três, como na fotografia)
     ys = y0 - (larg / 2 - 0.06)
     for xc in (-66.0, -62.0, -58.0):
-        z0 = zt + 1.1
+        z0 = zt + HG
         w, hh = 0.9, 1.7
         pts = [(xc - w, z0), (xc - w, z0 + hh), (xc - w * 0.55, z0 + hh), (xc - w * 0.55, z0 + hh - 0.3),
                (xc - w * 0.2, z0 + hh - 0.3), (xc - w * 0.2, z0 + hh + 0.5), (xc + w * 0.2, z0 + hh + 0.5),
@@ -2347,6 +2370,9 @@ material("lousa", (0.42, 0.42, 0.43), 0.8)
 material("madeira_verde", (0.16, 0.33, 0.26), 0.7)
 material("madeira", (0.40, 0.26, 0.16), 0.8)
 material("ferro", (0.16, 0.17, 0.18), 0.5)
+material("aco_cinza", (0.44, 0.45, 0.47), 0.5)  # gradeamento da ponte da EN202 (#6f7377)
+material("sombra_tunel", (0.12, 0.11, 0.10), 1.0)  # fundo do túnel do Rosal (#1e1c1a), só uma face
+bpy.data.materials["sombra_tunel"].use_backface_culling = True
 material("bronze", (0.24, 0.30, 0.25), 0.5)
 material("vidro", (0.20, 0.24, 0.32), 0.25)
 # casas da vila: um só cinzento claro, paredes e telhados, para o destaque ficar nas muralhas, portas e igrejas
