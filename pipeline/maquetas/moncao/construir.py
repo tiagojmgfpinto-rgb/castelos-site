@@ -1414,10 +1414,21 @@ def porta_rosal_dentro(Q, sole):
             Q.bloco(a_, b_, sole - 0.2, sole + (k_ + 1) * (zs - 0.3 - sole) / n, max(d0_ - 0.16, 0.05), 2.6, c)  # o último degrau fica sob o patamar
         a_, b_ = sorted((sg * 5.2, sg * 8.6))
         Q.bloco(a_, b_, zs - 0.25, zs, -0.3 - bt0 * (zs - Q.zb), 2.6, alv)  # patamar, à frente dos arcos
+    # gradeamento de ferro assente no capeamento do pano (revisão do perito, 16 nov.): o pano é em talude, por isso o
+    # alto fica recuado bt × altura; antes as barras ficavam 0,3 m à frente da face de baixo, no ar
+    dg = -bt0 * (topo - Q.zb) - 0.3
+    # o pano sobe até ao capeamento (LiDAR: o terrapleno a 41,5 m, 9,5 m acima da soleira; Street View): antes acabava
+    # c. 3 m abaixo do gradeamento. Enche-se por trás da face, entre e por cima dos arcos dos cantos.
+    dt = -bt0 * (topo - Q.zb)  # a face à cota do topo
+    for a_, b_, z0_ in ((-5.35, 5.35, sole + 4.6), (-8.6, -5.35, zs + 1.85), (5.35, 8.6, zs + 1.85)):
+        Q.bloco(a_, b_, z0_, topo - 0.1, dt - 2.5, dt - 0.02, alv)
+    Q.bloco(-8.7, 8.7, topo - 0.12, topo - 0.05, dt - 2.5, dt + 0.06, c)  # capeamento de granito
     for s0 in np.arange(-8.4, 8.41, 1.2):
-        barra(Q.m, Q.p(s0, topo, 0.3), Q.p(s0, topo + 1.05, 0.3), 0.025, fer)
-    barra(Q.m, Q.p(-8.4, topo + 1.05, 0.3), Q.p(8.4, topo + 1.05, 0.3), 0.03, fer)
-    barra(Q.m, Q.p(-8.4, topo + 0.55, 0.3), Q.p(8.4, topo + 0.55, 0.3), 0.02, fer)
+        barra(Q.m, Q.p(s0, topo - 0.05, dg), Q.p(s0, topo + 1.0, dg), 0.025, fer)  # prumos
+    for s0 in np.arange(-8.4, 8.41, 0.12):
+        barra(Q.m, Q.p(s0, topo + 0.1, dg), Q.p(s0, topo + 0.95, dg), 0.009, fer)
+    barra(Q.m, Q.p(-8.4, topo + 1.0, dg), Q.p(8.4, topo + 1.0, dg), 0.03, fer)
+    barra(Q.m, Q.p(-8.4, topo + 0.1, dg), Q.p(8.4, topo + 0.1, dg), 0.02, fer)
     Q.bt = bt0
     return topo - sole
 

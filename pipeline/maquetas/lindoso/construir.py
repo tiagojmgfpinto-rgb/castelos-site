@@ -53,7 +53,7 @@ from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
 from kit.silhares import textura_silhares  # noqa: E402
 from kit.cena import Obra, uv_mundo  # noqa: E402
 from kit.materiais import MATS, malha_rapida, material  # noqa: E402
-from kit.arquitetura import aduelas, contorno_vao, parede, passagem, vao  # noqa: E402
+from kit.arquitetura import aduelas, contorno_vao, guarda, parede, passagem, vao  # noqa: E402
 
 _cfg = RAIZ / "src" / "data" / "maquetas" / "lindoso.json"
 CFG = json.loads(_cfg.read_text()) if _cfg.exists() else {"origem": {"lat": LAT0, "lon": LON0}, "variante": "estado-atual", "versao": "0.1"}
@@ -362,6 +362,7 @@ material("cantaria_torre", (1, 1, 1), 0.9, imagem("cantaria_torre", TEX), normal
 TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.40, 0.70), comp=(0.6, 1.4), cor=(0.71, 0.695, 0.65), desvio=0.12,
                             paleta=PAL_LINDOSO, junta_m=0.008, junta_cor=(0.36, 0.35, 0.33), liquen=0.15,
                             escorrencias=0.35, irregular=0.02, semente=92)
+material("ferro_guarda", (0.62, 0.64, 0.64), 0.45)  # guardas galvanizadas do adarve (#9fa3a4)
 material("muro_medieval", (1, 1, 1), 0.92, imagem("muro_medieval", TEX), normal=imagem("muro_medieval_n", normais(ALT, 4.0)),
          forca=0.9, escala=0.5, vcor=True)
 PAL_M = np.array([(0.575, 0.565, 0.540), (0.650, 0.640, 0.610), (0.460, 0.450, 0.430), (0.600, 0.570, 0.510),
@@ -639,6 +640,7 @@ def muros():
     abaixo do chão de fora. Dois objetos: a cerca medieval e a muralha abaluartada, que o
     tracar.py traça à parte (topo acima ou abaixo de 466 m), para o topo não fazer rampas de uma para a outra."""
     DEGRAUS.clear()
+    BORDO_ADARVE.clear()
     mm = {True: Malha(["muro_medieval", "alvenaria", "muro_topo", "erva"]), False: Malha(["muro_medieval", "alvenaria", "muro_topo", "erva"])}
     for reg in MUR:
         med = bool(reg.get("medieval", np.mean(reg["aneis"][0]["topo"]) > ALTO_MEDIEVAL))
@@ -655,17 +657,103 @@ def muros():
             DEGRAUS[k] = DEGRAUS.get(k, 0) + info[k]
         for cs, zt in topos:
             mm[med].face([(x, y, z) for (x, y), z in zip(cs, zt)], 2)
+        if med:
+            c_med = np.array(shapely.Polygon(pol.exterior).centroid.coords[0])
         for a, b, za0, zb0, za1, zb1, fora in paredes:
+            if med and fora:  # bordo de dentro do adarve (face virada ao pátio, com queda de mais de 1,2 m)
+                a_, b_ = np.asarray(a, float), np.asarray(b, float)
+                t_ = unit(b_ - a_) if np.linalg.norm(b_ - a_) > 1e-6 else np.array([1.0, 0])
+                nr = np.array([t_[1], -t_[0]])
+                mid = (a_ + b_) / 2
+                if pol.contains(shapely.Point(*(mid + nr * 0.4))):
+                    nr = -nr
+                po = mid + nr * 0.8
+                if (np.linalg.norm(po - c_med) < np.linalg.norm(mid - c_med) and not pol.contains(shapely.Point(*po))
+                        and min(za1, zb1) - float(cota(*po)) > 1.2):
+                    BORDO_ADARVE.append((a_ - nr * 0.06, b_ - nr * 0.06, za1, zb1, nr))
             if fora:
                 za0 = min(za0, cota(*a)) - 0.6
                 zb0 = min(zb0, cota(*b)) - 0.6
             mm[med].face([(*a, za0), (*b, zb0), (*b, zb1), (*a, za1)], 0 if med else 1)
     ob = mm[True].objeto("cerca_medieval", "cerca", GRUPOS["Muralhas"], uv=3.0, vcor=patine_muro)
+    guardas_adarve()
     mm[False].objeto("muralha_abaluartada", "baluartes", GRUPOS["Muralhas"], uv=3.0, vcor=patine_muro)
     MEDIDAS["muros"] = {"regioes": len(MUR), "area_m2": round(POL_MUROS.area),
                         "topo_max": round(max(max(a["topo"]) for r in MUR for a in r["aneis"]), 2),
                         "topo_em_degraus": dict(DEGRAUS)}
     return ob
+
+
+BORDO_ADARVE = []
+
+
+def guardas_adarve():
+    """Guarda metálica em todo o adarve da cerca medieval, do lado do pátio, e a escada de pedra encostada à face de
+    dentro a nascente do arco interior da porta (revisão do perito, 16 nov.; foto da galeria "patio-e-museu"):
+    galvanizado, 1,0 m, prumos a cada 1,5 m, corrimão e uma travessa a meia altura."""
+    g = Malha(["ferro_guarda", "muro_medieval"])
+    # junta os troços pelas pontas (a ordem em que o topo_degraus os devolve não é a do contorno)
+    chave = lambda q: (round(float(q[0]) * 10), round(float(q[1]) * 10))
+    seg = [(np.array([*a, za]), np.array([*b, zb])) for a, b, za, zb, nr in BORDO_ADARVE]
+    por_ponta = {}
+    for i, (p0, p1) in enumerate(seg):
+        for q in (p0, p1):
+            por_ponta.setdefault(chave(q), []).append(i)
+    usado = set()
+    cadeias = []
+    for i in range(len(seg)):
+        if i in usado:
+            continue
+        usado.add(i)
+        cad = [seg[i][0], seg[i][1]]
+        for frente in (True, False):
+            while True:
+                q = cad[-1] if frente else cad[0]
+                nxt = [j for j in por_ponta.get(chave(q), []) if j not in usado]
+                if not nxt:
+                    break
+                j = nxt[0]
+                usado.add(j)
+                o = seg[j][1] if chave(seg[j][0]) == chave(q) else seg[j][0]
+                if frente:
+                    cad.append(o)
+                else:
+                    cad.insert(0, o)
+        cadeias.append(cad)
+    comp = 0.0
+    for c in cadeias:
+        L = float(np.sum(np.linalg.norm(np.diff(np.array(c)[:, :2], axis=0), axis=1)))
+        if L > 2.0:
+            guarda(g, c, 0, alt=1.0, passo=1.5, r=0.022, travessas=(0.5,))
+            comp += L
+    # escada de pedra (degraus em consola de 0,9 m, espelho de 0,2 m) a subir ao adarve, encostada ao bordo mais perto
+    # do ponto que o perito marcou (GLB x 16, z -24,5)
+    alvo = np.array([16.0, -24.5])
+    if BORDO_ADARVE:
+        a, b, za, zb, nr = min(BORDO_ADARVE, key=lambda e: np.linalg.norm((e[0] + e[1]) / 2 - alvo))
+        t_ = unit(b - a)
+        topo_ = (za + zb) / 2
+        desce = t_ if t_[1] < 0 else -t_  # desce para sul, para o arco da porta (foto da galeria)
+        p_c = (a + b) / 2 + nr * 0.51
+        chao_ = float(cota(*(p_c + desce * 3.0 + nr * 0.5)))
+        n = max(3, int(round((topo_ - chao_) / 0.2)))
+        Ls = n * 0.27
+        pts_g = []
+        for k in range(n):
+            q = p_c - desce * Ls / 2 + desce * 0.27 * (k + 0.5)
+            zt = topo_ - k * (topo_ - chao_) / n
+            base = [q - desce * 0.135 - nr * 0.45, q + desce * 0.135 - nr * 0.45, q + desce * 0.135 + nr * 0.45, q - desce * 0.135 + nr * 0.45]
+            g.prisma(orientar_ccw(base), zt - 0.25, zt, 1)
+            pts_g.append((*(q + nr * 0.42), zt))
+        guarda(g, pts_g[::3] + [pts_g[-1]], 0, alt=1.0, passo=1.2, r=0.022, travessas=(0.5,))
+    g.objeto("guardas_adarve", "cerca", GRUPOS["Muralhas"], uv=2.0)
+    MEDIDAS["guardas_adarve"] = {"comprimento_m": round(comp, 1), "troços": len(cadeias)}
+
+
+def orientar_ccw(base):
+    b = [np.asarray(q, float) for q in base]
+    a2 = sum(b[i][0] * b[(i + 1) % 4][1] - b[(i + 1) % 4][0] * b[i][1] for i in range(4))
+    return b if a2 > 0 else b[::-1]
 
 
 def topo_em(pol, pct=90):

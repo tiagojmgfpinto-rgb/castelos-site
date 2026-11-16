@@ -6,7 +6,7 @@ import numpy as np
 import shapely
 from .geometria import _retangulo, _sd, arco_pts, area, ccw, orientar, quad, simplificar, unit
 
-__all__ = ["Quadro", "_vao_desloc", "aduelas", "altura_telhado", "barra", "contorno_vao", "corrimao", "cupula", "faixa_inclinada", "guardas_corredor", "guarita", "merlao", "merlao_boleado", "oitavado", "painel", "parede", "passagem", "piramide", "porta_revelim", "porta_tunel", "telhado_4aguas", "telhado_generico", "tunel", "vao"]
+__all__ = ["Quadro", "_vao_desloc", "aduelas", "altura_telhado", "barra", "contorno_vao", "corrimao", "cupula", "faixa_inclinada", "guarda", "guardas_corredor", "guarita", "merlao", "merlao_boleado", "oitavado", "painel", "parede", "passagem", "piramide", "porta_revelim", "porta_tunel", "telhado_4aguas", "telhado_generico", "tunel", "vao"]
 
 
 class Quadro:
@@ -234,6 +234,32 @@ def faixa_inclinada(Q, pts, esp, d0, d1, mat):
     """Faixa (cornija) que segue uma linha poligonal do plano (s, z), com espessura esp para cima."""
     for (s0, z0), (s1, z1) in zip(pts[:-1], pts[1:]):
         Q.placa([(s0, z0), (s1, z1), (s1, z1 + esp), (s0, z0 + esp)], d0, d1, mat)
+
+
+def guarda(m, pts3, mat, alt=1.0, passo=1.5, r=0.022, travessas=(0.5,), ripas=0.0, cabos=0):
+    """Guarda (guarda-corpo) ao longo de uma linha 3D, o pé dos prumos: prumos a cada `passo`, corrimão à
+    altura `alt` e travessas às frações `travessas` da altura. Com ripas > 0, barras verticais finas a esse
+    espaçamento (gradeamento); com cabos > 0, esse número de cabos finos entre o corrimão e o chão.
+    Usa só m.face, por isso serve a qualquer Malha (mat é o índice ou o nome que a Malha aceita)."""
+    pts3 = [np.asarray(p, float) for p in pts3]
+    up = np.array([0, 0, 1.0])
+    def amostras(dist):
+        out = []
+        for a, b in zip(pts3[:-1], pts3[1:]):
+            L = float(np.linalg.norm((b - a)[:2]))
+            k = max(1, int(math.ceil(L / dist)))
+            out += [a + (b - a) * i / k for i in range(k)]
+        return out + [pts3[-1]]
+    for q in amostras(passo):
+        barra(m, q, q + up * alt, r, mat)
+    hs = [alt] + [alt * f for f in travessas] + [alt * (k + 1) / (cabos + 1) for k in range(cabos)]
+    for h in hs:
+        rr = r * (0.9 if h == alt else (0.35 if h not in [alt * f for f in travessas] else 0.7))
+        for a, b in zip(pts3[:-1], pts3[1:]):
+            barra(m, a + up * h, b + up * h, rr, mat)
+    if ripas > 0:
+        for q in amostras(ripas):
+            barra(m, q, q + up * alt, r * 0.55, mat)
 
 
 def guardas_corredor(m, F0, n, pts, NR, A_, TP):

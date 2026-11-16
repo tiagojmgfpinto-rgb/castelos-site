@@ -161,6 +161,10 @@
   "topo": 1037.5,
   "altura": 2.0
  },
+ "corrimao_norte": {
+  "comprimento": 28.4,
+  "desvio_do_pe_da_escada": 0.2
+ },
  "vegetacao": {
   "arvores": 327,
   "sobreiros": 70,

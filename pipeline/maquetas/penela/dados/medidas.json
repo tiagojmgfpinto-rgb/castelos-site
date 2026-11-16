@@ -90,6 +90,11 @@
    12.1
   ]
  },
+ "escada_castelejo": {
+  "degraus": 17,
+  "desnivel": 2.9,
+  "comprimento": 5.3
+ },
  "torreao_poente_1": {
   "topo": 287.8,
   "pe": 278.2,
@@ -169,7 +174,7 @@
  "ciprestes": 3,
  "vegetacao": {
   "arvores": 560,
-  "encolhidas": 40,
+  "encolhidas": 41,
   "retiradas": 76
  },
  "texturas_foto": {

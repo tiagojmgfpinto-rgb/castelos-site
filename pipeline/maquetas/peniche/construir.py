@@ -1206,28 +1206,36 @@ def edificio(m, poly, zt, amarelo):
         Q = Quadro(m, mid + nr * D, nr)
         mp = OCR if amarelo else CAL
         L = L + 2 * D  # nos cantos, o paramento fecha com o da fachada vizinha
-        Q.bloco(-L / 2 - e, L / 2 + e, g - 0.6, g + 0.6, -0.1, e + 0.06, LIS)  # soco
-        if amarelo:  # cunhais e cornija brancos (fotografias)
-            Q.bloco(L / 2 - 0.5, L / 2 + e + 0.02, g, zt - 0.3, -0.02, e + 0.08, CAL)
-            Q.bloco(-L / 2 - e - 0.02, -L / 2 + 0.5, g, zt - 0.3, -0.02, e + 0.08, CAL)
-            Q.bloco(-L / 2, L / 2, zt - 0.95, zt - 0.6, -0.02, e + 0.1, CAL)
-        vaos = []
+        portas_ = [(L * 0.02 - 0.87, L * 0.02 + 0.87)] if (amarelo and L >= 10) else []  # a porta da capela corta o soco
+        cortes = sorted([-L / 2 - e, L / 2 + e] + [x for pr in portas_ for x in pr])
+        for k_ in range(0, len(cortes) - 1, 2):
+            Q.bloco(cortes[k_], cortes[k_ + 1], g - 0.6, g + 0.6, -0.1, e + 0.06, LIS)  # soco
+        if amarelo:  # cunhais brancos (fotografias), até ao remate do amarelo
+            z_c = min(g + 7.2, zt - 0.95)
+            Q.bloco(L / 2 - 0.5, L / 2 + e + 0.02, g, z_c, -0.02, e + 0.08, CAL)
+            Q.bloco(-L / 2 - e - 0.02, -L / 2 + 0.5, g, z_c, -0.02, e + 0.08, CAL)
+        vaos = []  # (s, z, largura, altura, tipo): tipo "arco" (vidraça em arco), "grade" (janela gradeada), "porta", "nicho"
+        z_am = min(g + 7.2, zt - 0.95) if amarelo else None  # o amarelo da capela só sobe c. 7 m; por cima, a prisão caiada
         if L >= 3.2:
-            pisos = np.arange(g + 1.1, zt - 2.0, 3.1)
-            passo = 3.2 if amarelo else 2.6
+            passo = 2.6
             k = int((L - 1.6) // passo)
             ss = (np.arange(max(k, 0)) - (k - 1) / 2) * passo
-            for pz in pisos:
-                for s_ in ss:
-                    if amarelo:
-                        vaos.append((s_, pz, 1.0, 2.0, True))
-                    else:
-                        # fotografia do pátio: vãos de c. 1 × 1,3 m com caixilho claro e grade
-                        vaos.append((s_, pz + 0.25, 0.95, 1.3, False))
+            for pz in np.arange(g + 1.1, zt - 2.0, 3.1):
+                if amarelo and pz < z_am + 0.5:
+                    continue
+                for s_ in ss:  # fotografia do pátio: vãos de c. 1 × 1,3 m com caixilho claro e grade
+                    vaos.append((s_, pz + 0.25, 0.95, 1.3, "grade"))
+        if amarelo and L >= 10:
+            # Capela de Santa Bárbara (revisão do perito, 16 nov.; Commons "Entrada exterior para a Capela de Santa
+            # Bárbara"): da esquerda para a direita, a janela alta em arco de moldura branca, o nicho sineiro, a porta de
+            # madeira de verga reta com moldura de pedra e, na ala baixa, a janela retangular gradeada. Antes era uma
+            # grelha de 4 pisos de janelas em arco, que não existe.
+            vaos += [(-L * 0.36, g + 3.4, 1.0, 1.8, "arco"), (-L * 0.20, g + 4.1, 0.55, 0.9, "nicho"),
+                     (L * 0.02, g + 0.15, 1.4, 2.6, "porta"), (L * 0.30, g + 1.4, 1.4, 1.0, "grade")]
         # paramento furado: grelha cortada pelos vãos (cada vão em retângulo; o arco leva tímpano por cima)
-        z0p, z1p = g + 0.6, zt - 0.5 if not amarelo else zt - 0.95
+        z0p, z1p = g + 0.6, zt - 0.5
         sb = sorted({-L / 2 - e, L / 2 + e} | {v[0] + sg * v[2] / 2 for v in vaos for sg in (-1, 1)})
-        zb = sorted({z0p, z1p} | {v[1] + dz for v in vaos for dz in (0.0, v[3])})
+        zb = sorted({z0p, z1p} | ({z_am} if amarelo else set()) | {max(v[1], z0p) + dz for v in vaos for dz in (0.0, v[3] - max(0.0, z0p - v[1]))})
         for s0, s1 in zip(sb[:-1], sb[1:]):
             for za, zb_ in zip(zb[:-1], zb[1:]):
                 if zb_ <= z0p or za >= z1p:
@@ -1235,32 +1243,37 @@ def edificio(m, poly, zt, amarelo):
                 sc, zc = (s0 + s1) / 2, (za + zb_) / 2
                 if any(abs(sc - v[0]) < v[2] / 2 and v[1] < zc < v[1] + v[3] for v in vaos):
                     continue
-                Q.bloco(s0, s1, max(za, z0p), min(zb_, z1p), 0.0, e, mp)
-        for s_, z_, w_, h_, arco in vaos:
+                Q.bloco(s0, s1, max(za, z0p), min(zb_, z1p), 0.0, e, OCR if (amarelo and zc < z_am) else CAL)
+        if amarelo:  # cornija branca no remate do amarelo e cunhais brancos só até lá
+            Q.bloco(-L / 2, L / 2, z_am - 0.3, z_am, -0.02, e + 0.1, CAL)
+        for s_, z_, w_, h_, tipo in vaos:
+            arco = tipo in ("arco", "nicho")
             hn = h_ - (w_ / 2 if arco else 0)
-            # fundo do vão (caixilho escuro) e ombreiras por dentro
-            # (em placa fina, que tem as duas faces: o Q.vao faz uma face só, virada para dentro nestas
-            # fachadas, e o visor não a desenhava; via-se a parede caiada através do vão)
+            # fundo do vão (caixilho escuro, porta de madeira) em placa fina, que tem as duas faces
             w2 = w_ / 2
             pv = [(s_ - w2, z_), (s_ + w2, z_), (s_ + w2, z_ + hn)]
             if arco:
                 pv += [(s_ + w2 * math.cos(math.pi * k_ / 14), z_ + hn + w2 * math.sin(math.pi * k_ / 14)) for k_ in range(1, 14)]
             pv += [(s_ - w2, z_ + hn)]
-            Q.placa(pv, 0.0, 0.012, VID if arco else SOM)
+            Q.placa(pv, 0.0 if tipo != "nicho" else e * 0.4, 0.012 if tipo != "nicho" else e * 0.4 + 0.012,
+                    {"arco": VID, "porta": MDE, "nicho": OCR, "grade": SOM}[tipo])
             if arco:  # tímpano do arco: o paramento enche o retângulo por cima do arco
                 r_ = w_ / 2
                 arc = [(s_ + r_ * math.cos(math.pi * k_ / 10), z_ + hn + r_ * math.sin(math.pi * k_ / 10)) for k_ in range(11)]
                 for (sa, za), (sb2, zb2) in zip(arc[:-1], arc[1:]):
-                    Q.placa([(sa, za), (sb2, zb2), (sb2, z_ + h_), (sa, z_ + h_)], 0.0, e, mp)
-            # moldura de cantaria à face do paramento
+                    Q.placa([(sa, za), (sb2, zb2), (sb2, z_ + h_), (sa, z_ + h_)], 0.0, e, OCR if (amarelo and z_ < z_am) else CAL)
+            # moldura à face do paramento: branca na capela, de cantaria na prisão
+            mm_ = CAL if (amarelo and z_ < z_am) else CAN
             for sg in (-1, 1):
-                s2 = sorted((s_ + sg * w_ / 2, s_ + sg * (w_ / 2 + 0.15)))
-                Q.bloco(s2[0], s2[1], z_, z_ + hn, e, e + 0.07, CAN)
-            Q.bloco(s_ - w_ / 2 - 0.21, s_ + w_ / 2 + 0.21, z_ - 0.14, z_, 0.0, e + 0.12, CAN)  # peitoril
+                s2 = sorted((s_ + sg * w_ / 2, s_ + sg * (w_ / 2 + 0.17)))
+                Q.bloco(s2[0], s2[1], z_, z_ + hn, e, e + 0.07, mm_)
+            if tipo != "porta":
+                Q.bloco(s_ - w_ / 2 - 0.21, s_ + w_ / 2 + 0.21, z_ - 0.14, z_, 0.0, e + 0.12, mm_)  # peitoril
             if arco:
-                Q.arco_sz(s_, w_ / 2, w_ / 2 + 0.16, z_ + hn, e, e + 0.07, CAN, k=10, aduelas=True)
+                Q.arco_sz(s_, w_ / 2, w_ / 2 + 0.17, z_ + hn, e, e + 0.07, mm_, k=10, aduelas=True)
             else:
-                Q.bloco(s_ - w_ / 2 - 0.14, s_ + w_ / 2 + 0.14, z_ + hn, z_ + hn + 0.18, e, e + 0.07, CAN)
+                Q.bloco(s_ - w_ / 2 - 0.17, s_ + w_ / 2 + 0.17, z_ + hn, z_ + hn + 0.2, e, e + 0.07, mm_)
+            if tipo == "grade":
                 for k_ in range(1, 4):  # grade a meio do vão
                     sx = s_ - w_ / 2 + w_ * k_ / 4
                     Q.bloco(sx - 0.015, sx + 0.015, z_, z_ + hn, e * 0.5, e * 0.5 + 0.03, FER)
@@ -2131,9 +2144,9 @@ material("pedra_vc", (1, 1, 1), 0.92, None, vcor=True)
 material("mar", (1, 1, 1), 0.12, None, vcor=True, normal=imagem("ondas_normal", normais(textura_ondas(), 1.2)), forca=0.35)
 img_chao = imagem("chao_orto", np.zeros((4, 4, 3)))  # substituída depois do terreno
 
-CAL, CAN, TEL, SOM, MAD, FER, BRO, VID, LOU, LIS, OCR, OGA, CHAO_P = range(13)
+CAL, CAN, TEL, SOM, MAD, FER, BRO, VID, LOU, LIS, OCR, OGA, CHAO_P, MDE = range(14)
 MAT_P = ["cal", "cantaria", "telha", "sombra", "madeira_verde", "ferro", "bronze", "vidro", "lousa", "cantaria_lisa",
-         "ocre", "ocre_gasto", "chao"]
+         "ocre", "ocre_gasto", "chao", "madeira_escura"]
 MEDIDAS = {}
 
 print("plataformas…")
