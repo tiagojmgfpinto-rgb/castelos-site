@@ -55,6 +55,14 @@ PARAPEITO, MERLAO = MUR["parapeito"], MUR["merlao"]
 # Os merlões de Guimarães são chanfrados (rematam em ponta, SIPA e fotografias): o topo medido no
 # LiDAR fica a meio da ponta, porque a nuvem de pontos (c. 4 pontos/m²) raramente apanha o vértice.
 ALT_MERLAO = MERLAO["altura"] + 0.5 * MERLAO.get("ponta", 0.0)
+# Panos da cerca: o caminho de ronda é largo e fica à vista, pouco abaixo das ameias (foto do Tiago a4830001). Nos
+# perfis transversais do MDS o lajeado do adarve está 1,3–1,9 m abaixo do topo medido (mediana 1,55 m), não os
+# 2,8 m que davam o parapeito e os merlões das torres: o adarve ficava enterrado entre as ameias e não parecia
+# caminhável (reparo do Tiago, 16 nov.). Nos panos o adarve passa a ser medido no LiDAR, com parapeito de 0,75 m e
+# merlões de 1,0 m + ponta de 0,55 m; as torres mantêm as medidas de cima.
+PARAPEITO_M = 0.75
+MERLAO_M = {**MERLAO, "altura": 1.0, "ponta": 0.55}
+ALT_MERLAO_M = MERLAO_M["altura"] + 0.5 * MERLAO_M["ponta"]
 # O traçado do OSM está desviado c. 1 m para oeste em relação às plantas dos edifícios no LiDAR
 # (melhor sobreposição das plantas do OSM com as células de classe edifício, medida no lidar.py)
 DESVIO_OSM = np.array([1.0, 0.0])
@@ -413,10 +421,29 @@ def ajustar(linha, fechada=False, maximo=4.5):
     return linha + nrm * d[:, None], d
 
 
-def muralha(m, linha, esp, topo, fora, dentro_, fechada=False, ameias=True, mat=0):
+def adarve_lidar(linha, topo):
+    """Cota do lajeado do adarve, medida no MDS numa faixa de 0,75 a 2,25 m para dentro da crista (a linha está
+    encostada às ameias): mediana das células sem vegetação, filtrada ao longo do pano, entre 1,3 m e
+    PARAPEITO_M + ALT_MERLAO_M abaixo do topo medido."""
+    zs = []
+    for d in np.arange(0.75, 2.26, 0.25):
+        q = desvio(linha, d, False)
+        ci = np.clip(np.round((q[:, 0] + LMEIO) / LPASSO).astype(int), 0, VEG.shape[1] - 1)
+        ri = np.clip(np.round((q[:, 1] + LMEIO) / LPASSO).astype(int), 0, VEG.shape[0] - 1)
+        zs.append(np.where(VEG[ri, ci], np.nan, amostra(MDS, q[:, 0], q[:, 1])))
+    w = np.nanmedian(np.array(zs), axis=0)
+    ok = ~np.isnan(w)
+    w = np.interp(np.arange(len(w)), np.flatnonzero(ok), w[ok]) if ok.any() else topo - PARAPEITO_M - ALT_MERLAO_M
+    w = mediana_movel(w, 7, False)
+    return np.clip(w, topo - PARAPEITO_M - ALT_MERLAO_M, topo - 1.3)
+
+
+def muralha(m, linha, esp, topo, fora, dentro_, fechada=False, ameias=True, mat=0, adarve=None, mat_lajes=None):
     """Pano de muralha ao longo da linha central (o exterior fica à direita), com o topo
-    medido vértice a vértice. Os panos descem 1,5 m abaixo do terreno para não ficarem no ar."""
-    adarve = topo - (PARAPEITO + ALT_MERLAO if ameias else PARAPEITO)
+    medido vértice a vértice. Os panos descem 1,5 m abaixo do terreno para não ficarem no ar.
+    Com `adarve` (por vértice) o caminho de ronda fica a essa cota; com `mat_lajes` o caminho leva lajeado com juntas."""
+    if adarve is None:
+        adarve = topo - (PARAPEITO_M + ALT_MERLAO_M if ameias else PARAPEITO_M)
     adarve = np.maximum(adarve, dentro_)  # onde o chão de dentro chega ao adarve, o pano é só parapeito
     ext = desvio(linha, -esp / 2, fechada)
     inn = desvio(linha, esp / 2, fechada)
@@ -425,24 +452,59 @@ def muralha(m, linha, esp, topo, fora, dentro_, fechada=False, ameias=True, mat=
     zi = np.minimum(dentro_, adarve) - 1.5
     a = adarve
     seg = range(n) if fechada else range(n - 1)
+    par_int = desvio(linha, -esp / 2 + 0.6, fechada)
     for i in seg:
         j = (i + 1) % n
         m.face([(*ext[i], ze[i]), (*ext[j], ze[j]), (*ext[j], a[j]), (*ext[i], a[i])], mat)
         m.face([(*inn[j], zi[j]), (*inn[i], zi[i]), (*inn[i], a[i]), (*inn[j], a[j])], mat)
-        m.face([(*ext[i], a[i]), (*ext[j], a[j]), (*inn[j], a[j]), (*inn[i], a[i])], mat)
+        if mat_lajes is None:
+            m.face([(*ext[i], a[i]), (*ext[j], a[j]), (*inn[j], a[j]), (*inn[i], a[i])], mat)
+        else:
+            m.face([(*ext[i], a[i]), (*ext[j], a[j]), (*par_int[j], a[j]), (*par_int[i], a[i])], mat)
+            m.face([(*par_int[i], a[i]), (*par_int[j], a[j]), (*inn[j], a[j]), (*inn[i], a[i])], mat_lajes)
         m.face([(*ext[j], ze[j]), (*ext[i], ze[i]), (*inn[i], zi[i]), (*inn[j], zi[j])], mat)
     if not fechada:
         for i in (0, n - 1):
             m.face([(*ext[i], ze[i]), (*inn[i], zi[i]), (*inn[i], a[i]), (*ext[i], a[i])], mat)
+    if mat_lajes is not None:
+        lajeado(m, par_int, inn, a, mat_lajes + 1)
     # parapeito do lado exterior e ameias por cima
-    par_int = desvio(linha, -esp / 2 + 0.6, fechada)
     for i in seg:
         j = (i + 1) % n
         q = [ext[i], ext[j], par_int[j], par_int[i]]
-        m.prisma(q, [a[i], a[j], a[j], a[i]], [a[i] + PARAPEITO, a[j] + PARAPEITO, a[j] + PARAPEITO, a[i] + PARAPEITO], mat)
+        m.prisma(q, [a[i], a[j], a[j], a[i]], [a[i] + PARAPEITO_M, a[j] + PARAPEITO_M, a[j] + PARAPEITO_M, a[i] + PARAPEITO_M], mat)
     if ameias:
-        ameias_ao_longo(m, desvio(linha, -esp / 2 + 0.3, fechada), a + PARAPEITO, fechada, mat, seteira=1)
+        ameias_ao_longo(m, desvio(linha, -esp / 2 + 0.3, fechada), a + PARAPEITO_M, fechada, mat, seteira=1, dims=MERLAO_M)
     return adarve
+
+
+def lajeado(m, b0, b1, z, mat, passo=0.95, larg=0.035):
+    """Juntas do lajeado do adarve entre as bordas b0 (parapeito) e b1 (pátio): duas fiadas de lajes de c. 0,95 m,
+    com as juntas transversais desencontradas e uma junta corrida a meio (foto do Tiago a4830001)."""
+    mid = (b0 + b1) / 2
+    seg = np.linalg.norm(np.diff(mid, axis=0), axis=1)
+    acum = np.concatenate([[0], np.cumsum(seg)])
+    zz = z + 0.006
+
+    def em(s, f):
+        j = int(np.clip(np.searchsorted(acum, s) - 1, 0, len(seg) - 1))
+        t = (s - acum[j]) / max(seg[j], 1e-9)
+        p0 = b0[j] + (b0[j + 1] - b0[j]) * t
+        p1 = b1[j] + (b1[j + 1] - b1[j]) * t
+        return p0 + (p1 - p0) * f, float(zz[j] + (zz[j + 1] - zz[j]) * t), unit(mid[j + 1] - mid[j])
+
+    for f0, f1, off in ((0.0, 0.5, 0.0), (0.5, 1.0, 0.45)):
+        s = 0.6 + off
+        while s < acum[-1] - 0.4:
+            pa, za, u = em(s, f0)
+            pb, zb, _ = em(s, f1)
+            w = u * larg / 2
+            m.face([(*(pa - w), za), (*(pa + w), za), (*(pb + w), zb), (*(pb - w), zb)], mat)
+            s += passo * (0.85 + 0.3 * ((s * 7.31) % 1))
+    for i in range(len(mid) - 1):  # junta corrida entre as duas fiadas
+        a_, c_ = em(acum[i] + 1e-6, 0.5)[0], em(acum[i + 1] - 1e-6, 0.5)[0]
+        nrm = np.array([-unit(c_ - a_)[1], unit(c_ - a_)[0]]) * larg / 2
+        m.face([(*(a_ - nrm), zz[i]), (*(c_ - nrm), zz[i + 1]), (*(c_ + nrm), zz[i + 1]), (*(a_ + nrm), zz[i])], mat)
 
 
 def ameias_ao_longo(m, linha, z, fechada=False, mat=0, prof=0.6, dims=None, seteira=None):
@@ -1693,6 +1755,8 @@ material("ferro_grade", (0.18, 0.18, 0.18), 0.6)  # grades de ferro das janelas 
 material("madeira_dourada", (0.54, 0.42, 0.18), 0.7)  # porta da fachada SSO do Paço (#8a6a2e)
 material("ceu_vao", (0.80, 0.85, 0.89), 1.0)  # o céu visto pelas janelas da alcáçova arruinada
 material("fundo_quente", (0.66, 0.53, 0.38), 0.9)  # parede ao sol vista pelas janelas de baixo da alcáçova
+material("lajes_adarve", (0.74, 0.72, 0.67), 0.9)  # lajeado de granito claro do caminho de ronda (foto a4830001)
+material("junta_laje", (0.42, 0.40, 0.37), 0.95)  # juntas do lajeado
 material("ferro_guarda", (0.64, 0.65, 0.66), 0.45)  # aço galvanizado das guardas (#a3a6a8)
 material("tijolo", (0.62, 0.34, 0.24), 0.85)
 material("tijolo_chamine", (0.66, 0.43, 0.35), 0.85)
@@ -1704,6 +1768,7 @@ for _b in ("bronze", "bronze_escamas"):
 MEDIDAS = {}  # o que se mediu no LiDAR, para conferir e citar no guimaraes.json
 PERFIS = {}  # perfis das muralhas (saida/perfis.npz), para conferência
 PONTAS_ADARVE = []  # (pano, ponta, sentido para a torre, cota do adarve)
+ADARVES = {}  # cota do adarve por vértice de cada pano (alinhada com PERFIS)
 
 print("terreno…")
 aplanar_terreiro()
@@ -1721,7 +1786,10 @@ for s_, (pts, esp) in PANOS.items():
     lin, topo, fora, dentro_ = perfil(lin, esp)  # as pontas entram 1,8 m nas torres
     # a alcáçova é a parede arruinada da residência: topo irregular sem merlões (revisão do perito, foto "Castelo de
     # Guimaraes (17)"); os merlões só existem na torre do canto
-    adarve = muralha(m, lin, esp, topo, fora, dentro_, ameias=(s_ != "alcacova"))
+    if s_ == "alcacova":
+        adarve = muralha(m, lin, esp, topo, fora, dentro_, ameias=False)
+    else:
+        adarve = muralha(m, lin, esp, topo, fora, dentro_, adarve=adarve_lidar(lin, topo), mat_lajes=5)
     if s_ != "alcacova":
         # Guarda metálica do lado do pátio (revisão do perito, 16 nov.; foto "Castelo de Guimarães 2024"): tubo
         # galvanizado de 1,0 m, prumos a cada 1,5 m e uma travessa a meio, onde o adarve fica acima do chão.
@@ -1732,6 +1800,7 @@ for s_, (pts, esp) in PANOS.items():
             if fim - ini >= 2:
                 guarda(MG, [(*borda[i], adarve[i]) for i in range(ini, fim)], 0)
     PERFIS[s_] = np.stack([lin[:, 0], lin[:, 1], topo, fora, dentro_], 1)
+    ADARVES[s_] = adarve
     for k_, (q0, q1) in enumerate(((pts[1], pts[0]), (pts[-2], pts[-1]))):  # pontas do adarve, a entrar nas torres
         PONTAS_ADARVE.append((s_, P(*q1), unit(P(*q1) - P(*q0)), float(np.median(adarve[:4] if k_ == 0 else adarve[-4:]))))
     if s_ == "alcacova":
@@ -1765,7 +1834,7 @@ for s_, (pts, esp) in PANOS.items():
                 m.caixa(ext[i] + n_ * 0.06, t, w, 0.06, zz, zz + h, fundo)
                 if gem:
                     m.caixa(ext[i] + n_ * 0.09, t, 0.2, 0.06, zz, zz + h, 2)
-    m.objeto(s_, s_, ["pedra", "sombra", "cantaria", "ceu_vao", "fundo_quente"], GRUPOS["Muralhas"])
+    m.objeto(s_, s_, ["pedra", "sombra", "cantaria", "ceu_vao", "fundo_quente", "lajes_adarve", "junta_laje"], GRUPOS["Muralhas"])
     alt = topo - fora
     MEDIDAS[s_] = {"topo": [float(topo.min() + ZREF), float(topo.max() + ZREF)],
                    "altura_exterior": [float(np.percentile(alt, 10)), float(np.percentile(alt, 90))],
@@ -1930,7 +1999,7 @@ m = Malha()
 esc = {}
 for pano, do_fim in (("muralha_nascente", True), ("muralha_nascente_norte", False)):
     pf = PERFIS[pano]
-    lin, topo_ = pf[:, :2], pf[:, 2]
+    lin, topo_ = pf[:, :2], ADARVES[pano]  # as escadas acabam à cota do adarve do pano
     if do_fim:
         lin, topo_ = lin[::-1], topo_[::-1]
     esp = PANOS[pano][1]
@@ -1948,14 +2017,14 @@ for pano, do_fim in (("muralha_nascente", True), ("muralha_nascente_norte", Fals
     n = 0
     while True:
         p, t, tp = em(sv)
-        alvo = tp - PARAPEITO - ALT_MERLAO
+        alvo = tp
         z = min(z + 0.3, alvo)
         m.caixa(p + t * 0.17, t, 0.36, 1.1, float(cota(*p)) - 0.6, z, 0)
         q_ = lin[int(np.argmin(np.hypot(*(lin - p).T)))]
         degs.append((*(p + t * 0.17 + unit(p - q_) * 0.5), z))
         n += 1
         sv += 0.27  # escada íngreme, como as do castelo
-        if z >= alvo - 0.01 or sv > acum[-1] - 2.0:
+        if z >= alvo - 0.01 or sv > acum[-1] - 0.8:  # o adarve medido subiu c. 1 m (16 nov.): a escada vai mais longe
             break
     guarda(MG, degs[::2] + [degs[-1]], 0, passo=1.2)  # do lado de fora da escada
     esc[pano] = {"degraus": n, "comprimento": round(n * 0.27, 1), "chega_ao_adarve": bool(z >= alvo - 0.01)}
