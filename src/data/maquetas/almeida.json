@@ -50,8 +50,13 @@
   "distancia": 1300,
   "placas": [
     "portas_sao_francisco",
+    "portas_santo_antonio",
+    "porta_nova",
+    "castelo",
     "igreja_matriz",
-    "torre_relogio"
+    "igreja_misericordia",
+    "torre_relogio",
+    "quartel_esquadras"
   ],
   "elementos": [
     {
@@ -221,17 +226,17 @@
       "grupo": "Igrejas",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "Torre quadrada rebocada a ocre, com cunhais e cornijas de granito, porta, janelas, mostrador, sineira com um arco por face e remate de balaustrada, pináculos nos cantos e lanterna pequena com cata-vento (fotografias de Hovallef e D. Perez, Commons, e Street View).",
-      "medidas": "5,5 m de lado; chão a 762,7 m, balaustrada a c. 781 m e lanterna a c. 786 m (MDS).",
+      "descricao": "Torre quadrada de três andares: panos rebocados a ocre entre pilastras largas de granito acinzentado-rosado, cornijas muito salientes, janela gradeada no rés-do-chão, mostrador do relógio no andar do meio e um vão de arco pleno com sino em cada face no de cima; por cima, urnas nos cantos e pedestal com cata-vento. À volta, os ciprestes do adro e do antigo cemitério (fotografias de Hovallef e D. Perez, Commons). A porta, que as fotografias não mostram, fica na face poente (hipótese).",
+      "medidas": "5,5 m de lado; chão a 762,7 m, cornija de remate a c. 779,7 m e urnas a c. 781 m (MDS); andares de 7,4, 3,9 e 5,0 m pela proporção das fotografias.",
       "fontes": [
         "commons",
         "lidar",
         "osm"
       ],
-      "resumo": "Torre ocre com lanterna, junto ao castelo",
+      "resumo": "Torre ocre de três andares, junto ao castelo",
       "ancora": [
         -56.2,
-        789.9,
+        785.9,
         -37.6
       ]
     },

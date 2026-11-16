@@ -1059,6 +1059,11 @@ def plantar(x, y, z, raio, alt, especie, tronco):
     MC.extend([(0.36, 0.30, 0.24)] * 12)
     base, topo = z + tronco, z + tronco + alt
     sh = 0.88 + 0.24 * rng.random()
+    if especie == "cipreste":  # fuso alto e escuro, quase do chão ao topo
+        cor = tuple(np.clip(np.array((0.17, 0.27, 0.15)) * sh, 0, 1))
+        _lobo(x, y, base + alt * 0.45, raio, alt * 0.45, cor, base, topo, 1, 0.06)
+        _lobo(x, y, base + alt * 0.82, raio * 0.55, alt * 0.2, cor, base, topo, 1, 0.06)
+        return
     if especie == "pinheiro":
         cor = tuple(np.clip(np.array((0.22, 0.31, 0.18)) * sh, 0, 1))
         _lobo(x, y, topo - alt * 0.4, raio * 0.85, alt * 0.4, cor, base, topo, 1, 0.12)
@@ -1739,8 +1744,8 @@ def portas():
 
 CAL, CAN, TEL, SOM, MAD, FER, BRO, VID, LOU, LIS = range(10)
 MAT_IGR = ["cal", "cantaria", "telha", "sombra", "madeira_verde", "ferro", "bronze", "vidro", "lousa", "cantaria_lisa", "ocre",
-           "vermelho", "alvenaria", "madeira", "telha_quartel"]
-OCR, VER, ALVI, MADC, TELQ = 10, 11, 12, 13, 14
+           "vermelho", "alvenaria", "madeira", "telha_quartel", "granito_rosa"]
+OCR, VER, ALVI, MADC, TELQ, GRO = 10, 11, 12, 13, 14, 15
 
 
 def cruz(Q, s, z, d, alt=1.2, mat=FER, esp=0.08):
@@ -2147,19 +2152,87 @@ def igreja_misericordia(m):
 
 
 def torre_relogio(m):
-    """Torre do Relógio (fotografias de Hovallef e D. Perez, Commons): torre quadrada rebocada a ocre com
-    cunhais e cornijas de granito, porta e janelas, mostrador do relógio, sineira com um arco por face e
-    remate com balaustrada, pináculos nos cantos e uma lanterna pequena com cata-vento (Street View, 10 nov.). Planta do OSM e do MDS (5,5 m de lado,
-    alinhada com os eixos); chão a 762,7 m, balaustrada a c. 781 m e lanterna a c. 786 m (MDS)."""
+    """Torre do Relógio (fotografias de Hovallef e de D. Perez, Commons): torre quadrada de três andares, com
+    os panos rebocados a ocre metidos entre pilastras largas de granito acinzentado-rosado, separados por
+    cornijas muito salientes. Rés-do-chão alto com uma janela gradeada de moldura de granito; no andar do meio
+    o mostrador do relógio, branco com aro de granito; no de cima um vão de arco pleno com sino em cada face.
+    Por cima da cornija de remate, um plinto baixo com urnas (pinhas) nos cantos e, ao meio, um pedestal com
+    remate e cata-vento. Planta do OSM e do MDS (5,5 m de lado, alinhada com os eixos); chão a 762,7 m e
+    remate a c. 781 m (MDS). Alturas dos andares pela proporção das fotografias (7,4, 3,9 e 5,0 m). A janela e
+    o mostrador estão na face nascente (posição GPS das fotografias); a porta, que as fotografias não mostram,
+    fica na face poente (hipótese)."""
     c = np.array([-56.2, 37.6])
     u = np.array([1.0, 0.0])
+    w = np.array([0.0, 1.0])
+    L = 5.5
+    h = L / 2
     z0 = 762.7 - ZREF
-    torre(m, c, u, 5.5, z0, z0 + 12.9, z0 + 16.7, "lanterna", mw=OCR, faces_janela=(0, 1, 2, 3), zjanela=z0 + 5.6,
-          oculo=(0, z0 + 10.6))
-    Qe = Quadro(m, c + u * 2.75, u)
-    porta_igreja(Qe, 0.0, z0, 1.2, 2.3, moldura=0.25, arco=True, folhas=MAD)
-    for Qf in [Quadro(m, c + v * 2.75, v) for v in (u, -u, np.array([0.0, 1.0]), np.array([0.0, -1.0]))]:
-        Qf.bloco(-2.9, 2.9, z0 + 8.3, z0 + 8.6, -0.2, 0.12, CAN)  # cornija entre andares
+    z1, z2, z3 = z0 + 7.4, z0 + 7.4 + 3.9, z0 + 16.3  # cornijas: 1.º andar, 2.º andar, remate
+    faces = [u, -u, w, -w]
+    QS = [Quadro(m, c + n_ * h, n_) for n_ in faces]
+    m.caixa(c, u, L, L, z0 - 1.5, z3, OCR)  # panos de reboco ocre
+    m.caixa(c, u, L + 0.24, L + 0.24, z0 - 1.5, z0 + 0.6, GRO)  # soco
+    pil = 0.95  # pilastras dos cantos, salientes 0,12 m, com base e capitel em cada andar
+    for zb, zt in ((z0 + 0.6, z1), (z1 + 0.75, z2), (z2 + 0.75, z3)):
+        for a, b in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+            m.caixa(c + (u * a + w * b) * (h - pil / 2 + 0.06), u, pil + 0.12, pil + 0.12, zb, zt, GRO)
+            m.caixa(c + (u * a + w * b) * (h - pil / 2 + 0.09), u, pil + 0.26, pil + 0.26, zt - 0.22, zt, GRO)  # capitel
+        for Qf in QS:
+            Qf.bloco(-h + pil, h - pil, zb, zb + 0.12, 0.0, 0.05, GRO)  # filete na base do pano
+    # cornijas salientes (três fiadas em degrau, a de cima a 0,55 m da parede)
+    for zc_ in (z1, z2, z3):
+        for k_, (dz, sal) in enumerate(((0.0, 0.2), (0.18, 0.38), (0.36, 0.55))):
+            m.caixa(c, u, L + 2 * sal + 0.24, L + 2 * sal + 0.24, zc_ + dz, zc_ + dz + 0.2, GRO)
+        m.caixa(c, u, L + 0.2, L + 0.2, zc_ + 0.56, zc_ + 0.75, GRO)
+    Qe = QS[0]
+    # rés-do-chão: janela gradeada (face nascente) e porta (face poente, hipótese)
+    _vao_desloc(Qe, 0.0, 1.0, z0 + 3.0, 1.35, 0.012, SOM, reto=True)
+    for sg in (-1, 1):
+        ss = sorted((sg * 0.5, sg * 0.75))
+        Qe.bloco(ss[0], ss[1], z0 + 2.85, z0 + 4.6, 0.0, 0.1, GRO)
+    Qe.bloco(-0.85, 0.85, z0 + 2.7, z0 + 2.88, 0.0, 0.16, GRO)
+    Qe.bloco(-0.75, 0.75, z0 + 4.35, z0 + 4.6, 0.0, 0.1, GRO)
+    for k_ in range(1, 4):
+        Qe.bloco(-0.5 + k_ * 0.25 - 0.015, -0.5 + k_ * 0.25 + 0.015, z0 + 3.0, z0 + 4.35, 0.02, 0.05, FER)
+    for zz in (z0 + 3.45, z0 + 3.9):
+        Qe.bloco(-0.5, 0.5, zz - 0.015, zz + 0.015, 0.02, 0.05, FER)
+    porta_igreja(QS[1], 0.0, z0, 1.2, 2.3, moldura=0.25, arco=False, folhas=MAD)
+    # mostrador do relógio (face nascente), com ponteiros
+    zr = (z1 + 0.75 + z2) / 2
+    Qe.m.face([Qe.p(0.85 * math.cos(2 * math.pi * k_ / 28), zr + 0.85 * math.sin(2 * math.pi * k_ / 28), 0.02) for k_ in range(28)], CAL)
+    Qe.arco_sz(0.0, 0.85, 1.08, zr, 0.0, 0.1, GRO, a0=0, a1=2 * math.pi, k=28)
+    Qe.bloco(-0.03, 0.03, zr - 0.05, zr + 0.62, 0.025, 0.045, FER)
+    Qe.bloco(-0.03, 0.42, zr - 0.03, zr + 0.03, 0.025, 0.045, FER)
+    # sineira: um vão de arco pleno por face, com moldura e sino
+    za, wv = z2 + 0.75 + 0.9, 1.2
+    hn = 2.0
+    for Qf in QS:
+        _vao_desloc(Qf, 0.0, wv, za, hn, 0.012, SOM)
+        for sg in (-1, 1):
+            ss = sorted((sg * wv / 2, sg * (wv / 2 + 0.22)))
+            Qf.bloco(ss[0], ss[1], za, za + hn, 0.0, 0.1, GRO)
+        Qf.arco_sz(0.0, wv / 2, wv / 2 + 0.22, za + hn, 0.0, 0.1, GRO, k=12, aduelas=True)
+        Qf.bloco(-wv / 2 - 0.3, wv / 2 + 0.3, za - 0.18, za, 0.0, 0.18, GRO)
+        Qf.bloco(-0.15, 0.15, za + hn + wv / 2 + 0.1, za + hn + wv / 2 + 0.38, 0.0, 0.14, GRO)  # fecho
+    sino(m, c + u * (h - 0.55), za + 0.75, r=0.36)
+    # remate: plinto baixo, urnas nos cantos, pedestal ao meio com remate e cata-vento
+    zt = z3 + 0.75
+    m.caixa(c, u, L - 0.1, L - 0.1, zt, zt + 0.45, GRO)
+    m.caixa(c, u, L + 0.05, L + 0.05, zt + 0.45, zt + 0.55, GRO)
+    for a, b in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+        cc = c + (u * a + w * b) * (h - 0.35)
+        m.caixa(cc, u, 0.45, 0.45, zt + 0.55, zt + 0.8, GRO)
+        m.cilindro(cc, 0.14, zt + 0.8, zt + 0.95, GRO, k=10, r1=0.24)  # urna
+        m.esfera((cc[0], cc[1], zt + 1.12), 0.24, GRO)
+        m.cilindro(cc, 0.12, zt + 1.3, zt + 1.6, GRO, k=8, r1=0.0)  # chama
+    m.caixa(c, u, 1.3, 1.3, zt + 0.55, zt + 0.95, GRO)
+    m.caixa(c, u, 0.9, 0.9, zt + 0.95, zt + 1.6, GRO)
+    m.caixa(c, u, 1.1, 1.1, zt + 1.6, zt + 1.75, GRO)
+    m.esfera((c[0], c[1], zt + 1.98), 0.25, GRO)
+    Qs = Quadro(m, c, u)
+    barra(m, (c[0], c[1], zt + 2.2), (c[0], c[1], zt + 3.6), 0.03, FER)
+    cruz(Qs, 0, zt + 2.6, 0, alt=0.9, mat=FER, esp=0.05)
+    Qs.bloco(0.05, 0.6, zt + 3.25, zt + 3.45, -0.01, 0.01, FER)  # bandeira do cata-vento
     return np.array([c + (-3.3, -3.3), c + (3.3, -3.3), c + (3.3, 3.3), c + (-3.3, 3.3)])
 
 
@@ -2306,6 +2379,8 @@ material("sombra", (0.08, 0.075, 0.07), 1.0)
 material("cal", (0.93, 0.92, 0.88), 0.85)
 material("ocre", (0.90, 0.82, 0.60), 0.85)  # reboco creme-amarelado desbotado (Torre do Relógio, fotografia)
 material("rosa", (0.88, 0.76, 0.70), 0.85)
+# granito acinzentado-rosado das pilastras e cornijas da Torre do Relógio (fotografias de Hovallef e D. Perez)
+material("granito_rosa", (1, 1, 1), 0.9, imagem("granito_rosa", np.clip(TEX_CANT * np.array([0.80, 0.74, 0.72]), 0, 1)), normal=NRM_CANT, forca=0.6)
 TEX_TELHA, ALT_TELHA = textura_foto("roof_09", n=512, metros=2.0, cor=(0.50, 0.50, 0.50), metros_foto=2.0, saturacao=0.3, variacao=0.06)
 material("telha", (1, 1, 1), 0.8, imagem("telha", np.clip(TEX_TELHA * np.array([1.40, 0.80, 0.56]), 0, 1)),
          normal=imagem("telha_normal", normais(ALT_TELHA, 2.0)), forca=0.6)
@@ -2527,6 +2602,13 @@ for x, y, topo, _, r in LID["arvores"]:
         continue
     z = min(z, cota_malha(x, y, z)) - 0.1
     r = float(np.clip(r, 1.0, 6.5))
+    # ciprestes: as árvores altas e estreitas do adro da Torre do Relógio e do antigo cemitério junto ao castelo
+    # (fotografias de Hovallef e D. Perez: filas de ciprestes) e, no resto, as que são muito mais altas do que largas
+    perto_torre = math.hypot(x + 56.2, y - 37.6) < 70
+    if h > 6 and (h / r > 5.0 or (perto_torre and h / r > 2.2)):
+        plantar(x, y, z, float(np.clip(r * 0.55, 0.9, 1.6)), h - 0.6, "cipreste", tronco=0.6)
+        n_arv += 1
+        continue
     especie = "pinheiro" if (h > 13 and r < 3.6 and rng.random() < 0.6) else "folhosa"
     alt = float(np.clip(h * 0.62, 1.6, 2.2 * r))
     plantar(x, y, z, r, alt, especie, tronco=max(h - alt, 0.8))
@@ -2564,7 +2646,7 @@ if GUARITAS:
     g_ = min(GUARITAS, key=lambda g: np.hypot(g[0][0] - _e[0], g[0][1] - _e[1]))[0]
     MEDIDAS["ancoras"]["guaritas"] = [round(float(g_[0]), 1), round(float(cota_t(*g_)) + 6, 1), round(-float(g_[1]), 1)]
 for el_, (x_, y_, h_) in {"igreja_matriz": (146.0, -50.4, 22.0), "igreja_misericordia": (73.0, -137.0, 13.0),
-                          "torre_relogio": (-56.2, 37.6, 27.0), "quartel_esquadras": (52.7, -170.6, 16.0),
+                          "torre_relogio": (-56.2, 37.6, 23.0), "quartel_esquadras": (52.7, -170.6, 16.0),
                           "castelo": (-95.0, -3.0, 8.0)}.items():
     MEDIDAS["ancoras"][el_] = ancora(x_, y_, h_)
 MEDIDAS["ancoras"]["vila"] = ancora(10, -60, 14.0)
