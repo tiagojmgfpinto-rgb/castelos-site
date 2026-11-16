@@ -803,7 +803,7 @@ for g in ["Terreno", "Afloramentos", "Castelo", "Cerca", "Portas", "Reduto", "Ve
 # regulares de 0,40–0,45 m e 0,7–1,2 m de comprimento, juntas fundas e escuras, cinzento médio a claro (#8f9291 ao sol),
 # crostas finas de líquen branco-acinzentado (3 m por imagem); afloramentos de granito com líquen (4 m por imagem, UV
 # em caixa), quase sem cor: o tom vem da cor por vértice, como antes.
-TEX_PEDRA, _ALT_PEDRA = textura_silhares(n=1024, metros=3.0, fiada=(0.40, 0.45), comp=(0.7, 1.2), cor=(0.57, 0.58, 0.575),
+TEX_PEDRA, _ALT_PEDRA = textura_silhares(n=1024, metros=3.0, fiada=(0.40, 0.45), comp=(0.7, 1.2), cor=(0.59, 0.60, 0.595),
                                          desvio=0.10, paleta=[((1.0, 1.0, 1.0), 0.8), ((1.02, 1.0, 0.97), 0.2)], junta_m=0.014,
                                          junta_cor=(0.20, 0.20, 0.20), almofada=1.0, gasto_m=0.07, liquen=0.12,
                                          liquen_cor=(0.80, 0.81, 0.79), semente=111)

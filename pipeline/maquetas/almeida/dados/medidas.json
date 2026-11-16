@@ -9,7 +9,7 @@
  "guaritas": 22,
  "terreno": {
   "vertices": 152311,
-  "triangulos": 300000,
+  "triangulos": 299999,
   "area_ha": 68.3
  },
  "ponte_sao_francisco": {
@@ -44,8 +44,8 @@
    "sobe": 0.0
   },
   "face": [
-   -177.0,
-   -44.0
+   -176.4,
+   -43.9
   ]
  },
  "casas_guarda": {
@@ -159,9 +159,9 @@
  },
  "ancoras": {
   "sa_dentro": [
-   -179.0,
+   -178.4,
    760.4,
-   44.3
+   44.2
   ],
   "sa_fora": [
    -327.9,

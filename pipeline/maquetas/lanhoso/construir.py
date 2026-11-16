@@ -376,16 +376,17 @@ PAL_T = np.array([(0.600, 0.595, 0.570), (0.660, 0.655, 0.630), (0.530, 0.525, 0
 # socalcos não são alvenaria de pedras redondas mas cantaria em fiadas regulares (DGEMN), silhares de 0,35–0,50 m
 # de altura por 0,5–1,1 m, juntas finas, granito #9a958a com musgo em baixo; a torre tem manchas alaranjadas de
 # líquen (#c07a3a) nas faces SE/ENE. Com uv=3,0 e escala=0,5 cada imagem cobre 6 m.
-PAL_LANHOSO = [((1.0, 1.0, 1.0), 0.62), ((1.04, 1.0, 0.93), 0.18), ((0.95, 0.96, 0.98), 0.12), ((1.03, 0.97, 0.94), 0.08)]
-TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.30, 0.45), comp=(0.6, 1.2), cor=(0.59, 0.575, 0.545), desvio=0.15,
+# cor revista pelo perito contra as fotos (15 nov. 2026, revisao-perito/cor-pedra): sem o mosaico rosado (o mesmo que o Tiago recusou em Braga), ocre só em 8 %
+PAL_LANHOSO = [((1.0, 1.0, 1.0), 0.77), ((1.03, 1.0, 0.95), 0.08), ((0.98, 0.985, 0.99), 0.15)]
+TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.30, 0.45), comp=(0.6, 1.2), cor=(0.63, 0.61, 0.555), desvio=0.09,
                             paleta=PAL_LANHOSO, liquen=0.05, liquen_cor=(0.75, 0.48, 0.23), oxido=0.03, escorrencias=0.35, semente=81)
 material("cantaria_torre", (1, 1, 1), 0.9, imagem("cantaria_torre", TEX), normal=imagem("cantaria_torre_n", normais(ALT, 4.0)),
          forca=0.8, escala=0.5, vcor=True)
-TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.35, 0.50), comp=(0.5, 1.1), cor=(0.60, 0.585, 0.54), desvio=0.17,
+TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.35, 0.50), comp=(0.5, 1.1), cor=(0.61, 0.59, 0.53), desvio=0.10,
                             paleta=PAL_LANHOSO, liquen=0.07, oxido=0.03, escorrencias=0.3, irregular=0.02, semente=82)
 material("muro", (1, 1, 1), 0.92, imagem("muro", TEX), normal=imagem("muro_n", normais(ALT, 4.0)), forca=0.9, escala=0.5, vcor=True)
 # topo dos muros e adarve: lajeado de pedras grandes (0,6–1,0 m; foto 14 do adarve poente)
-TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.55, 0.95), comp=(0.6, 1.0), cor=(0.59, 0.585, 0.55), desvio=0.15,
+TEX, ALT = textura_silhares(n=1536, metros=6.0, fiada=(0.55, 0.95), comp=(0.6, 1.0), cor=(0.60, 0.585, 0.54), desvio=0.10,
                             paleta=PAL_LANHOSO, liquen=0.10, irregular=0.08, semente=83)
 material("muro_topo", (1, 1, 1), 0.95, imagem("muro_topo", TEX), normal=imagem("muro_topo_n", normais(ALT, 4.0)), forca=1.0, escala=0.5, vcor=True)
 # santuário: cantaria de granito mais regular e mais clara (fachada de 1680, fotografia de frente)

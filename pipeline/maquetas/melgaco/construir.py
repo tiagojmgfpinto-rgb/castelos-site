@@ -242,15 +242,15 @@ for g in ["Terreno", "Torre", "Muralhas", "Muralha_vila", "Envolvente", "Vegetac
 PAL_MELGACO = [((1.0, 1.0, 1.0), 0.62), ((1.025, 1.0, 0.95), 0.20), ((1.02, 0.99, 0.97), 0.10), ((0.98, 0.99, 1.01), 0.08)]
 # torre: cantaria pseudo-isódoma, fiadas de 0,40–0,55 m e silhares de 0,7–1,2 m, juntas finas; o tom de cada face
 # vem da patine (patine_torre: SSE e OSO douradas, NNO e ENE cinzentas)
-TEX, ALT = textura_silhares(n=1024, metros=4.0, fiada=(0.36, 0.46), comp=(0.6, 1.1), cor=(0.69, 0.65, 0.58), desvio=0.07,
+TEX, ALT = textura_silhares(n=1024, metros=4.0, fiada=(0.36, 0.46), comp=(0.6, 1.1), cor=(0.74, 0.70, 0.63), desvio=0.07,
                             paleta=PAL_MELGACO, junta_m=0.009, junta_cor=(0.40, 0.37, 0.33), liquen=0.12, oxido=0.06,
                             escorrencias=0.5, semente=21)
 material("cantaria_torre", (1, 1, 1), 0.9, imagem("cantaria_torre", TEX), normal=imagem("cantaria_torre_n", normais(ALT, 4.0)),
          forca=0.8, escala=0.5, vcor=True)
 # cerca e muralha: a mesma cantaria em fiadas regulares, por dentro e por fora (fotos c05, c10, "Muralhas de
 # Melgaço (2)"): cinzento-claro ao sol (#b0b1aa), mais líquen branco e negro, juntas escuras
-TEX, ALT = textura_silhares(n=1024, metros=4.0, fiada=(0.40, 0.55), comp=(0.7, 1.2), cor=(0.64, 0.64, 0.61), desvio=0.11,
-                            paleta=PAL_MELGACO, junta_cor=(0.34, 0.33, 0.31), liquen=0.15, escorrencias=0.5, irregular=0.03, semente=22)
+TEX, ALT = textura_silhares(n=1024, metros=4.0, fiada=(0.40, 0.55), comp=(0.7, 1.2), cor=(0.61, 0.59, 0.56), desvio=0.11,
+                            paleta=PAL_MELGACO, junta_cor=(0.25, 0.24, 0.23), liquen=0.15, escorrencias=0.5, irregular=0.03, semente=22)
 material("muro", (1, 1, 1), 0.92, imagem("muro", TEX), normal=imagem("muro_n", normais(ALT, 4.0)), forca=1.0, escala=0.5, vcor=True)
 TEX, ALT = textura_silhares(n=1024, metros=4.0, fiada=(0.45, 0.70), comp=(0.6, 1.1), cor=(0.64, 0.64, 0.60), desvio=0.10,
                             paleta=PAL_MELGACO, liquen=0.16, irregular=0.05, semente=23)
@@ -296,7 +296,8 @@ def patine_torre(co, nrm):
     # quanto a face olha a sul/poente (SSE: -v; OSO: -u) contra norte/nascente
     du, dv = nrm[:, :2] @ EU, nrm[:, :2] @ EV
     sol = np.clip(np.maximum(-dv, -du), 0, 1)[:, None]
-    tom = sol * np.array([1.0, 0.94, 0.82]) + (1 - sol) * np.array([0.90, 0.895, 0.88])
+    # tom forte nas faces ao sol: o tone mapping AgX do visor tira saturação (revisão da cor, 15 nov.)
+    tom = sol * np.array([1.0, 0.82, 0.58]) + (1 - sol) * np.array([0.90, 0.895, 0.88])
     return np.clip(base * tom * (1 - pe), 0, 1)
 
 

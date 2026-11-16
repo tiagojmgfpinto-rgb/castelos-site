@@ -317,8 +317,9 @@ for g in ["Terreno", "Torre", "Envolvente", "Vegetacao"]:
 # (desvio 9 contra 40–57 nas fotos) com faixas a cada 2 m. Agora a cor varia por silhar, entre #6f665a e #a89c88, com
 # alguns ocre; sem o mosaico rosado, que o Tiago já tinha pedido para tirar (2 nov.); fiadas de 0,35–0,45 m, 0,6–1,2 m de comprido,
 # arestas vivas e juntas retas; manchas ocre de líquen (#b08a4a) e escorrências negras. O escuro da base vem da patine.
-PAL_BRAGA = [((1.0, 1.0, 1.0), 0.62), ((1.04, 1.01, 0.94), 0.08), ((0.92, 0.92, 0.92), 0.15), ((1.07, 1.07, 1.06), 0.15)]
-TEX_T, ALT_T = textura_silhares(n=1024, metros=4.0, fiada=(0.35, 0.45), comp=(0.6, 1.2), cor=(0.575, 0.55, 0.505), desvio=0.09,
+# cor revista pelo perito contra as fotos (15 nov. 2026, revisao-perito/cor-pedra): cinzento, sem ocre por pedra
+PAL_BRAGA = [((1.0, 1.0, 1.0), 0.70), ((0.93, 0.93, 0.93), 0.15), ((1.06, 1.06, 1.055), 0.15)]
+TEX_T, ALT_T = textura_silhares(n=1024, metros=4.0, fiada=(0.35, 0.45), comp=(0.6, 1.2), cor=(0.57, 0.55, 0.52), desvio=0.07,
                                 paleta=PAL_BRAGA, junta_m=0.008, junta_cor=(0.30, 0.28, 0.25), gasto_m=0.02, liquen=0.07,
                                 liquen_cor=(0.69, 0.54, 0.29), oxido=0.06, escorrencias=0.5, semente=31)
 material("cantaria", (1, 1, 1), 0.9, imagem("cantaria", TEX_T), normal=imagem("cantaria_normal", normais(ALT_T, 4.0)),

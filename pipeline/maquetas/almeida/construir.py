@@ -709,6 +709,12 @@ def escarpa(e, m, mq):
     # Nas cortinas e baluartes altos o cordão fica a meia altura do pano, com o parapeito de alvenaria vertical por
     # cima (fotografias das portas de São Francisco e de Santo António); nos muros mais baixos, 1,1 m abaixo do topo.
     zc = topo - np.where(h > 7.0, np.clip(0.46 * h, PARAPEITO, 5.2), PARAPEITO if alto else 0.0)
+    # Na cortina das Portas de Santo António o cordão corre à altura das impostas do arco (image 18, revisão do perito):
+    # baixa-se até 35 m da porta e volta à regra geral aos 60 m.
+    g_ = PORTAS["sa_dentro"]
+    zi = g_["soleira"] - ZREF + g_["vao"]["omb"]
+    wg = np.clip((60.0 - np.hypot(*(lin - np.array(g_["ponto"])).T)) / 25.0, 0, 1)
+    zc = np.where(h > 7.0, zc + (np.minimum(zc, zi) - zc) * wg, zc)
     zf = np.maximum(pe - 1.2, zbot)  # nos vãos das portas a face começa no arco
     tem_cordao = hm > 3.4
     # muros estreitos: a face não passa do meio do muro e o maciço chega só ao meio (mais 0,3 m)
@@ -2286,11 +2292,11 @@ for g in ["Terreno", "Muralhas", "Guaritas", "Portas", "Igrejas", "Estatua", "Vi
 # Pedra fotografada (kit.fotos, fotos CC0 da Poly Haven; créditos em medidas.json "texturas_foto"), com o tom do
 # Street View de Almeida: silharia de granito claro bege-acinzentado em fiadas de c. 0,5 m nas escarpas (4 m por
 # imagem, uv=4,0) e cantaria mais clara nos cunhais, cordões e portas (3 m).
-TEX_ALV, ALT_ALV = textura_foto("stone_brick_wall_001", n=1024, metros=4.0, cor=(0.70, 0.67, 0.60), contraste=1.2,
+TEX_ALV, ALT_ALV = textura_foto("stone_brick_wall_001", n=1024, metros=4.0, cor=(0.73, 0.68, 0.58), contraste=1.2,
                                 saturacao=0.7, variacao=0.12, metros_foto=4.0, liquen=0.08, semente=121)
 NRM_ALV = imagem("alvenaria_normal", normais(ALT_ALV, 2.5))
 material("alvenaria", (1, 1, 1), 0.93, imagem("alvenaria", TEX_ALV), normal=NRM_ALV)
-TEX_CANT, ALT_CANT = textura_foto("stone_brick_wall_001", n=1024, metros=3.0, cor=(0.74, 0.71, 0.65), contraste=0.9,
+TEX_CANT, ALT_CANT = textura_foto("stone_brick_wall_001", n=1024, metros=3.0, cor=(0.77, 0.72, 0.62), contraste=0.9,
                                   metros_foto=3.0, liquen=0.05, semente=122, rodar=True)
 NRM_CANT = imagem("cantaria_normal", normais(ALT_CANT, 3.0))
 material("cantaria", (1, 1, 1), 0.88, imagem("cantaria", TEX_CANT), normal=NRM_CANT, forca=0.7)

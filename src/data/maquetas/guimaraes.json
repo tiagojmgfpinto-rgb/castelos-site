@@ -2,8 +2,9 @@
   "monumento": "guimaraes",
   "titulo": "Castelo de Guimarães",
   "variante": "estado-atual",
-  "versao": "0.5 provisória",
+  "versao": "0.6 provisória",
   "data": "2026-11-15",
+  "sol": [0.5, 0.7, 0.5],
   "origem": {
     "lat": 41.447926,
     "lon": -8.290429,

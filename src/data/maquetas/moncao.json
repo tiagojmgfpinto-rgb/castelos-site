@@ -2,7 +2,7 @@
   "monumento": "moncao",
   "titulo": "Fortaleza de Monção",
   "variante": "estado-atual",
-  "versao": "0.5 provisória",
+  "versao": "0.6 provisória",
   "data": "2026-11-15",
   "origem": {
     "lat": 42.07785,
@@ -85,7 +85,7 @@
       "grupo": "Fortificação",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "Guaritas de cantaria de granito, com cúpula e frestas, sobre os ângulos salientes dos baluartes.",
+      "descricao": "Guaritas de cantaria de granito sobre os ângulos salientes dos baluartes, com uma janela quadrada pequena no alto de cada face, cornija, cúpula de oito gomos e remate de dois blocos escalonados (fotografias).",
       "medidas": "24 guaritas nos ângulos salientes, mais a da Porta do Rosal.",
       "fontes": [
         "lidar",
