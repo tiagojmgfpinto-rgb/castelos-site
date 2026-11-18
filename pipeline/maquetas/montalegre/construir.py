@@ -1629,6 +1629,8 @@ if "--sem-glb" not in sys.argv:
     import subprocess  # noqa: E402
     final = SAIDA / "montalegre.glb"
     subprocess.run(["npx", "-y", "@gltf-transform/cli@4.2.1", "draco", str(glb), str(final)], check=True)
+    # texturas JPEG -> WebP (pipeline/kit/webp.py), sem tocar na geometria Draco
+    subprocess.run([sys.executable, str(Path(__file__).resolve().parents[2] / "kit" / "webp.py"), str(final)], check=True)
     print("GLB Draco:", final, round(final.stat().st_size / 1e3), "kB")
 if "--blend" in sys.argv:
     bpy.ops.wm.save_as_mainfile(filepath=str(AQUI / "saida" / "montalegre.blend"))

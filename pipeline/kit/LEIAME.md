@@ -19,7 +19,7 @@ from kit.geometria import unit, area, densificar  # noqa: E402
 
 - Pedra, telha e rocha dos monumentos com `textura_foto`: `stone_brick_wall_001` para silhares (torres, portas), `old_stone_wall` para alvenaria (cercas, muralhas), `castle_wall_slates` para xisto, `roof_09` para telha, `rock_01` para granito à vista. Fiadas com o tamanho das fotos do monumento (c. 0,3–0,5 m).
 - Casas da envolvente num só cinzento claro, sem textura (`cinza_viz`, 0,74/0,74/0,73), paredes e telhados; os monumentos com nome mantêm cor e detalhe.
-- GLB com Draco (`gltf-transform draco`). WebP foi testado em Melgaço e não ganha nada sobre o JPEG (2,49 → 2,49 MB), por isso não se usa.
+- GLB com Draco (`gltf-transform draco`) e, a seguir, texturas em WebP com `pipeline/kit/webp.py` (qualidade 80, extensão `EXT_texture_webp`). O `webp.py` só reescreve as imagens e copia a geometria Draco tal como está; uma imagem só passa a WebP se ficar pelo menos 5 % mais pequena. Em novembro de 2026 tirou 12 % ao total das 13 maquetas (40,3 → 35,5 MB), até 26 % em Braga; a comparação com a mesma câmara deu diferença média abaixo de 0,5 % por píxel. (O teste antigo em Melgaço com o `gltf-transform webp` não ganhava nada.)
 
 ## Regras
 
