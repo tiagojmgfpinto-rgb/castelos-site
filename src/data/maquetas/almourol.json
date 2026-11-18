@@ -2,8 +2,8 @@
  "monumento": "almourol",
  "titulo": "Castelo de Almourol",
  "variante": "estado-atual",
- "versao": "0.1 provisória",
- "data": "2026-11-17",
+ "versao": "0.2 provisória",
+ "data": "2026-11-18",
  "origem": {
   "lat": 39.461973,
   "lon": -8.383981,
@@ -11,7 +11,7 @@
  },
  "fontes": {
   "lidar": {
-   "titulo": "DGT, LiDAR 2024: nuvem de pontos classificada e MDT/MDS de 50 cm, folhas 178278 e 178277 (CC BY 4.0). Planta e cotas da torre, dos dez cubelos, dos panos (estação a cada 0,5 m), dos dois recintos, dos socalcos da escavação, do nível do Tejo e das árvores.",
+   "titulo": "DGT, LiDAR 2024: nuvem de pontos classificada e MDT/MDS de 50 cm, folhas 178278 e 178277 (CC BY 4.0). Planta e cotas da torre, dos dez cubelos, dos panos (estação a cada 0,5 m), dos dois recintos, das plataformas da escavação, do nível do Tejo e das árvores.",
    "url": "https://cdd.dgterritorio.gov.pt"
   },
   "orto": {
@@ -19,7 +19,7 @@
    "url": "https://cdd.dgterritorio.gov.pt"
   },
   "commons": {
-   "titulo": "Wikimedia Commons, «Castelo de Almourol em Julho de 2025» e «em Agosto 2025» (fotografias com GPS, CC BY-SA 4.0): porta principal, porta interior, lápides, adarves, recinto de baixo e torre de menagem.",
+   "titulo": "Wikimedia Commons, «Castelo de Almourol em Julho de 2025» e «em Agosto 2025» (fotografias com GPS, CC BY-SA 4.0): porta principal (por fora e por dentro), porta interior e rampa calcetada, planta do painel informativo à entrada (foto 91), lápides, adarves, recinto de baixo e torre de menagem.",
    "url": "https://commons.wikimedia.org/wiki/Category:Castle_of_Almourol"
   },
   "wiki": {
@@ -34,8 +34,8 @@
   "Não foi usada planta cotada. A planta e as cotas vêm da nuvem de pontos do LiDAR de 2024 (pontos de solo, edifícios e muros, em células de 25 cm): cada pano foi medido numa estação a cada 0,5 m (face de fora, face de dentro, adarve, merlões e chão dos dois lados) e cada cubelo ajustado a um círculo. O erro esperado em planta é de 0,2 a 0,4 m.",
   "Os merlões estão contados nas fotografias dos adarves (c. 0,95 m de merlão e 0,67 m de ameia) e postos a passo constante; o número exato em cada pano não foi contado um a um.",
   "A torre de menagem tem as faces, o terraço, os merlões e a casota da escada medidos no LiDAR; as frestas e as duas janelas estão postas pelas fotografias, com a altura estimada. A escada metálica de 2013–14 fica por dentro e não está modelada.",
-  "A porta do muro interior a poente da torre vê-se numa só fotografia aérea; o que há por dentro dela (escada para o recinto de cima) não se conhece.",
-  "Os socalcos do recinto de baixo seguem os saltos do chão no LiDAR; os muros de suporte e as guardas são esquemáticos (as fotografias mostram guardas de ferro e muros baixos, não o traçado exato de cada um). Os passadiços de madeira e a tenda branca das fotografias aéreas não estão modelados.",
+  "A porta do muro interior a poente da torre, que estava numa versão anterior por causa de uma fotografia aérea, saiu: a fotografia da porta principal tirada de dentro mostra ali muro e penedos.",
+  "O recinto de baixo é feito de plataformas planas às cotas do MDS (32,9 a 39,7 m) com muros de suporte direitos entre elas, orientados pelo pano leste e pela planta do painel informativo à entrada. A planta do painel é esquemática: a posição de cada muro pode ter um erro de 0,5 a 1 m. Os passadiços de madeira e a tenda branca das fotografias aéreas não estão modelados.",
   "As margens são simples: terreno do MDT, a linha da Beira Baixa e o parque do cais pelo ortofotomapa, árvores nas posições do LiDAR com copas esquemáticas e o Tejo plano à cota da água de junho de 2024 (13,2 m)."
  ],
  "distancia": 110,
@@ -56,7 +56,8 @@
   "muro_interior",
   "recinto_cima",
   "recinto_baixo",
-  "cubelos"
+  "cubelos",
+  "rio"
  ],
  "elementos": [
   {
@@ -110,8 +111,8 @@
    "grupo": "Muralhas",
    "estado": "estado-atual",
    "confianca": "média",
-   "descricao": "Um muro ameado separa o recinto de cima (a norte, com a torre) do de baixo. A nascente da torre tem uma porta em arco com lápide por cima e a rocha à vista ao lado; a poente da torre há outra porta ao nível do recinto de baixo.",
-   "medidas": "Adarve a c. 47,2 m e merlões a 49,1 m; soleira da porta nascente a c. 39,75 m (LiDAR).",
+   "descricao": "Um muro ameado separa o recinto de cima (a norte, com a torre) do de baixo. A nascente da torre, ao cimo de uma rampa calcetada encostada ao muro, uma porta em arco de volta perfeita com três degraus, uma lápide branca pequena logo por cima do arco, penedos à esquerda e o painel informativo ao lado.",
+   "medidas": "Adarve a c. 47,2 m e merlões a 49,1 m; rampa de 38,15 a 39,7 m; soleira da porta nascente a c. 40,3 m (LiDAR e fotografias).",
    "fontes": [
     "lidar",
     "commons",
@@ -119,9 +120,9 @@
    ],
    "resumo": "Muro entre os recintos, porta com lápide",
    "ancora": [
-    13.3,
+    14.6,
     44.5,
-    -2.0
+    -2.95
    ]
   },
   {
@@ -149,14 +150,14 @@
    "grupo": "Muralhas",
    "estado": "estado-atual",
    "confianca": "média",
-   "descricao": "O recinto a sul, mais baixo e de muralhas mais baixas. A escavação arqueológica deixou o chão em socalcos, com muros de suporte de pedra e guardas de ferro à volta das zonas escavadas.",
-   "medidas": "Socalcos a 38,1, 36,6, 34,4 e 33,0 m; adarve dos panos sul e leste a c. 39,4 m e merlões a 41,5 m (LiDAR).",
+   "descricao": "O recinto a sul, mais baixo e de muralhas mais baixas. A escavação arqueológica deixou-o em plataformas: um fosso fundo ao longo do pano leste, em três patamares, uma faixa de saibro com guarda de ferro à beira do fosso, a rampa calcetada que sobe junto ao muro interior com um parapeito baixo, e duas plataformas a sul divididas por alicerces.",
+   "medidas": "Fosso a 32,9, 34,5 e 36,8 m; faixa a 36,6 m; plataformas a sul a 36,4 e 37,35 m; rampa de 38,15 a 39,7 m. Adarve dos panos sul e leste a c. 39,4 m e merlões a 41,5 m (LiDAR).",
    "fontes": [
     "lidar",
     "commons",
     "fotos"
    ],
-   "resumo": "Pátio baixo em socalcos escavados",
+   "resumo": "Pátio baixo com o fosso escavado",
    "ancora": [
     6.0,
     39.5,
@@ -201,6 +202,25 @@
     0.0,
     41.5,
     17.0
+   ]
+  },
+  {
+   "id": "rio",
+   "nome": "Rio Tejo",
+   "grupo": "Envolvente",
+   "estado": "estado-atual",
+   "confianca": "alta",
+   "descricao": "O Tejo cerca a ilha de Almourol; a margem norte (Praia do Ribatejo, com o cais e a linha da Beira Baixa) e a sul (Tancos) ficam na base redonda.",
+   "medidas": "Água a 13,2 m de altitude no LiDAR de junho de 2024; o nível muda com o caudal.",
+   "fontes": [
+    "lidar",
+    "orto"
+   ],
+   "resumo": "O rio à volta da ilha",
+   "ancora": [
+    30.0,
+    16.0,
+    42.0
    ]
   }
  ],
