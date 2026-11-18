@@ -52,6 +52,8 @@ test("A: um monumento publicado depois de a página abrir aparece sem recarregar
   await page.goto("./");
   // só depois de a interface montar é que o relógio do painel está a contar
   await expect(page.getByRole("button", { name: "Novidades" })).toBeVisible();
+  // se houver uma maqueta publicada nas 36 h antes deste relógio, as Novidades abrem sozinhas e tapam o painel
+  await fecharNovidadesSozinhas(page);
   await expect(page.locator("#recentes")).toHaveCount(0);
 
   // nova publicação: o ficheiro de dados passa a ter um monumento de há 1 hora, sem maqueta
