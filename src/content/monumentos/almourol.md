@@ -7,15 +7,15 @@ distrito: "Santarém"
 concelho: "Vila Nova da Barquinha"
 localidade: "Praia do Ribatejo"
 coordenadas:
-  lat: 39.4617
-  lon: -8.3842
-  verificadas: false
+  lat: 39.461973
+  lon: -8.383981
+  verificadas: true
 seculoOrigem: "século XII"
 classificacao:
   categoria: "Monumento Nacional (Decreto de 16-06-1910)"
   sipa: "IPA.00003404"
 estadoFicha: publicada
-estadoMaqueta: pendente
+estadoMaqueta: concluida
 adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
@@ -27,17 +27,17 @@ fichaTecnica:
   epoca: "Século XII (início das obras em 1171), com reconstruções nos séculos XIX e XX"
   tipologia: "Castelo de planta poligonal irregular, com recinto inferior (seis cubelos), recinto superior (quatro cubelos) e torre de menagem quadrangular"
   conservacao: "Bom; muralhas e torre muito restauradas entre 1887 e 2014"
-  materiais: "Alvenaria calcária argamassada; cantaria no soco e cunhais da torre"
+  materiais: "Alvenaria de granito argamassada nas muralhas e cubelos; cantaria de granito na torre de menagem, nos cunhais e nas portas"
   protecao: "Monumento Nacional (Decreto de 16-06-1910, DG n.º 136, de 23-06-1910). Zona Especial de Proteção proposta em 2008"
   propriedade: "Pública, do Estado"
   usoAtual: "Cultural e recreativo; afeto ao Ministério da Defesa Nacional (Regimento de Engenharia n.º 1, Tancos)"
 oQueVer:
   - nome: "Porta principal"
-    texto: "Porta fortificada a oeste, em arco de volta perfeita, com a inscrição que data o início da construção."
+    texto: "A poente, ao fundo de um corredor entre dois cubelos, com três degraus, arco de volta perfeita de cantaria e, por cima, a lápide que data o início da construção. Abre para o recinto de baixo."
   - nome: "Torre de menagem"
     texto: "Torre quadrangular de três pisos, com cerca de 20 m, seteiras, janela conversadeira e terraço. Desde 2014 tem um espaço museológico."
   - nome: "Recinto inferior"
-    texto: "O recinto sul, com seis cubelos e um poço entulhado."
+    texto: "O recinto sul, com seis cubelos e um poço entulhado. A escavação arqueológica deixou o chão em socalcos, com guardas de ferro."
   - nome: "Recinto superior"
     texto: "O recinto norte, com quatro cubelos, onde fica a torre de menagem."
   - nome: "Porta da traição"
@@ -76,6 +76,12 @@ cronologia:
   - ano: "2018"
     texto: "Melhoria do acesso à ilha, renovação da vegetação e instalação de um palco."
 medidas:
+  - conceito: "Torre de menagem (LiDAR 2024)"
+    valor: "Planta de 7,3 × 7,4 m; terraço a 59,25 m e merlões a 61,0 m de altitude, c. 17,7 m acima do recinto de cima e 22,6 m acima do de baixo"
+  - conceito: "Recintos (LiDAR 2024)"
+    valor: "Chão do recinto de cima a 41–42 m e do de baixo entre 38 e 33 m, em socalcos; perímetro exterior da cerca c. 176 m"
+  - conceito: "Tejo (LiDAR 2024)"
+    valor: "Água a 13,2 m em junho de 2024: o recinto de cima fica c. 28 m acima do rio"
   - conceito: "Ilhéu"
     valor: "325 m de comprimento e 85 m de largura máxima (SIPA)"
   - conceito: "Implantação"
@@ -107,6 +113,20 @@ fontes:
   - titulo: "Município de Vila Nova da Barquinha, Visit Barquinha — Castelo de Almourol"
     url: "https://visitbarquinha.pt/o-que-fazer/castelo-de-almourol/"
     consultado: "2026-10-27"
+maquetas:
+  - tipo: estado-atual
+    publicada: "2026-11-18"
+    ficheiro: "maquetas/almourol/almourol.glb"
+    capa: "maquetas/almourol/capa.jpg"
+    validada: false
+    provisoria: true
+    fontes:
+      - titulo: "DGT — LiDAR 2024 (MDT, MDS 50 cm e nuvem de pontos, folhas 178278 e 178277) e Ortofotomapa 2025"
+        url: "https://cdd.dgterritorio.gov.pt"
+      - titulo: "Wikimedia Commons — fotografias do castelo de julho e agosto de 2025, com GPS"
+        url: "https://commons.wikimedia.org/wiki/Category:Castle_of_Almourol"
+      - titulo: "Wikipédia — Castelo de Almourol"
+        url: "https://pt.wikipedia.org/wiki/Castelo_de_Almourol"
 imagens:
   - ficheiro: "imagens/almourol/do-rio.jpg"
     legenda: "O castelo na ilha rochosa do Tejo, visto do rio."

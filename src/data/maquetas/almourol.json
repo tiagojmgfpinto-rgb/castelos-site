@@ -1,0 +1,229 @@
+{
+ "monumento": "almourol",
+ "titulo": "Castelo de Almourol",
+ "variante": "estado-atual",
+ "versao": "0.1 provisória",
+ "data": "2026-11-17",
+ "origem": {
+  "lat": 39.461973,
+  "lon": -8.383981,
+  "nota": "Centro da torre de menagem (LiDAR). Eixos da maqueta: x para este, y para norte (PT-TM06 menos a origem), no visor -z é o norte, em metros à escala 1:1; as cotas são altitudes."
+ },
+ "fontes": {
+  "lidar": {
+   "titulo": "DGT, LiDAR 2024: nuvem de pontos classificada e MDT/MDS de 50 cm, folhas 178278 e 178277 (CC BY 4.0). Planta e cotas da torre, dos dez cubelos, dos panos (estação a cada 0,5 m), dos dois recintos, dos socalcos da escavação, do nível do Tejo e das árvores.",
+   "url": "https://cdd.dgterritorio.gov.pt"
+  },
+  "orto": {
+   "titulo": "DGT, Ortofotomapa 2025, 25 cm (CC BY 4.0). Conferência da planta, do coberto da ilha e das margens, do parque e da linha da Beira Baixa.",
+   "url": "https://cdd.dgterritorio.gov.pt"
+  },
+  "commons": {
+   "titulo": "Wikimedia Commons, «Castelo de Almourol em Julho de 2025» e «em Agosto 2025» (fotografias com GPS, CC BY-SA 4.0): porta principal, porta interior, lápides, adarves, recinto de baixo e torre de menagem.",
+   "url": "https://commons.wikimedia.org/wiki/Category:Castle_of_Almourol"
+  },
+  "wiki": {
+   "titulo": "Wikipédia — Castelo de Almourol (história, inscrições de 1171, cruz pátea, obras da DGEMN e de 2013–14)",
+   "url": "https://pt.wikipedia.org/wiki/Castelo_de_Almourol"
+  },
+  "fotos": {
+   "titulo": "Fotografias aéreas e dos adarves enviadas pelo autor do projeto (de autoria desconhecida, usadas só como referência, não publicadas)"
+  }
+ },
+ "limitacoes": [
+  "Não foi usada planta cotada. A planta e as cotas vêm da nuvem de pontos do LiDAR de 2024 (pontos de solo, edifícios e muros, em células de 25 cm): cada pano foi medido numa estação a cada 0,5 m (face de fora, face de dentro, adarve, merlões e chão dos dois lados) e cada cubelo ajustado a um círculo. O erro esperado em planta é de 0,2 a 0,4 m.",
+  "Os merlões estão contados nas fotografias dos adarves (c. 0,95 m de merlão e 0,67 m de ameia) e postos a passo constante; o número exato em cada pano não foi contado um a um.",
+  "A torre de menagem tem as faces, o terraço, os merlões e a casota da escada medidos no LiDAR; as frestas e as duas janelas estão postas pelas fotografias, com a altura estimada. A escada metálica de 2013–14 fica por dentro e não está modelada.",
+  "A porta do muro interior a poente da torre vê-se numa só fotografia aérea; o que há por dentro dela (escada para o recinto de cima) não se conhece.",
+  "Os socalcos do recinto de baixo seguem os saltos do chão no LiDAR; os muros de suporte e as guardas são esquemáticos (as fotografias mostram guardas de ferro e muros baixos, não o traçado exato de cada um). Os passadiços de madeira e a tenda branca das fotografias aéreas não estão modelados.",
+  "As margens são simples: terreno do MDT, a linha da Beira Baixa e o parque do cais pelo ortofotomapa, árvores nas posições do LiDAR com copas esquemáticas e o Tejo plano à cota da água de junho de 2024 (13,2 m)."
+ ],
+ "distancia": 110,
+ "distanciaMinima": 10,
+ "direcao": [
+  -0.3,
+  0.62,
+  0.72
+ ],
+ "sol": [
+  -0.38,
+  0.74,
+  0.55
+ ],
+ "placas": [
+  "torre",
+  "porta_principal",
+  "muro_interior",
+  "recinto_cima",
+  "recinto_baixo",
+  "cubelos"
+ ],
+ "elementos": [
+  {
+   "id": "torre",
+   "nome": "Torre de menagem",
+   "grupo": "Torre",
+   "estado": "estado-atual",
+   "confianca": "alta",
+   "descricao": "Torre quadrangular de cantaria de granito, encostada ao muro interior entre os dois recintos e assente no penedo. Tem frestas estreitas, uma janela virada a nascente com uma cruz pátea em relevo por cima e outra a sul-sueste; no alto, cinco merlões por face e a casota branca da escada.",
+   "medidas": "Planta de 7,3 × 7,4 m, faces rodadas 29° em relação ao norte; terraço a 59,25 m e merlões a 61,0 m, c. 17,7 m acima do recinto de cima e 22,6 m acima do recinto de baixo (LiDAR 2024).",
+   "fontes": [
+    "lidar",
+    "commons",
+    "fotos",
+    "wiki"
+   ],
+   "resumo": "Torre quadrada de granito com cruz pátea",
+   "ancora": [
+    0.0,
+    62.0,
+    0.0
+   ],
+   "desde": 1171,
+   "desdeTexto": "castelo templário de 1171; terraço substituído em 2013–14"
+  },
+  {
+   "id": "porta_principal",
+   "nome": "Porta principal",
+   "grupo": "Muralhas",
+   "estado": "estado-atual",
+   "confianca": "alta",
+   "descricao": "A entrada é a poente, ao fundo de um corredor entre dois cubelos, com penedos de granito do lado norte. Sobe-se por três degraus a um arco de volta perfeita de cantaria, com uma lápide comprida por cima (a inscrição da era de 1209, ano de 1171). Abre para o recinto de baixo; a folha de madeira fica aberta por dentro.",
+   "medidas": "Vão de c. 1,4 m de largura e 2,45 m de altura ao fecho; soleira a c. 37,95 m (LiDAR e fotografias).",
+   "fontes": [
+    "lidar",
+    "commons",
+    "wiki"
+   ],
+   "resumo": "Arco entre dois cubelos, lápide de 1171",
+   "ancora": [
+    -10.2,
+    41.5,
+    5.15
+   ],
+   "desde": 1171,
+   "desdeTexto": "inscrição da era de 1209 (ano de 1171) sobre a porta"
+  },
+  {
+   "id": "muro_interior",
+   "nome": "Muro interior e porta",
+   "grupo": "Muralhas",
+   "estado": "estado-atual",
+   "confianca": "média",
+   "descricao": "Um muro ameado separa o recinto de cima (a norte, com a torre) do de baixo. A nascente da torre tem uma porta em arco com lápide por cima e a rocha à vista ao lado; a poente da torre há outra porta ao nível do recinto de baixo.",
+   "medidas": "Adarve a c. 47,2 m e merlões a 49,1 m; soleira da porta nascente a c. 39,75 m (LiDAR).",
+   "fontes": [
+    "lidar",
+    "commons",
+    "fotos"
+   ],
+   "resumo": "Muro entre os recintos, porta com lápide",
+   "ancora": [
+    13.3,
+    44.5,
+    -2.0
+   ]
+  },
+  {
+   "id": "recinto_cima",
+   "nome": "Recinto de cima",
+   "grupo": "Muralhas",
+   "estado": "estado-atual",
+   "confianca": "alta",
+   "descricao": "O recinto mais alto, a norte, à volta da torre: chão de terra a 41–42 m, cercado por panos ameados com adarve e cubelos redondos a norte e nordeste.",
+   "medidas": "Chão a 41,2–42,3 m; adarve a 46,4–47,2 m e merlões a 48,4–49,2 m (LiDAR).",
+   "fontes": [
+    "lidar",
+    "orto"
+   ],
+   "resumo": "Pátio alto à volta da torre",
+   "ancora": [
+    15.0,
+    43.0,
+    -8.0
+   ]
+  },
+  {
+   "id": "recinto_baixo",
+   "nome": "Recinto de baixo e escavação",
+   "grupo": "Muralhas",
+   "estado": "estado-atual",
+   "confianca": "média",
+   "descricao": "O recinto a sul, mais baixo e de muralhas mais baixas. A escavação arqueológica deixou o chão em socalcos, com muros de suporte de pedra e guardas de ferro à volta das zonas escavadas.",
+   "medidas": "Socalcos a 38,1, 36,6, 34,4 e 33,0 m; adarve dos panos sul e leste a c. 39,4 m e merlões a 41,5 m (LiDAR).",
+   "fontes": [
+    "lidar",
+    "commons",
+    "fotos"
+   ],
+   "resumo": "Pátio baixo em socalcos escavados",
+   "ancora": [
+    6.0,
+    39.5,
+    11.0
+   ]
+  },
+  {
+   "id": "cubelos",
+   "nome": "Dez cubelos",
+   "grupo": "Muralhas",
+   "estado": "estado-atual",
+   "confianca": "alta",
+   "descricao": "Dez torres redondas, ameadas e cheias até ao alto, reforçam a cerca: as dos cantos e duas meio embebidas a meio dos panos sul e leste. A mais alta é a de nordeste.",
+   "medidas": "Raio de 1,8 a 3,3 m; merlões a 51,2–51,7 m no recinto de cima e a 43,6–43,7 m no de baixo (LiDAR).",
+   "fontes": [
+    "lidar",
+    "fotos",
+    "commons"
+   ],
+   "resumo": "Torres redondas da cerca",
+   "ancora": [
+    23.4,
+    52.5,
+    -8.2
+   ]
+  },
+  {
+   "id": "merloes",
+   "nome": "Merlões",
+   "grupo": "Muralhas",
+   "estado": "estado-atual",
+   "confianca": "média",
+   "descricao": "Merlões retangulares iguais em todos os panos e cubelos, refeitos nas obras de restauro do século XX (a Wikipédia portuguesa diz que já eram acrescento romântico do século XIX).",
+   "medidas": "C. 0,95 m de merlão e 0,67 m de ameia, 1,05 m de altura (fotografias e LiDAR).",
+   "fontes": [
+    "lidar",
+    "fotos",
+    "wiki"
+   ],
+   "resumo": "Merlões refeitos no restauro",
+   "ancora": [
+    0.0,
+    41.5,
+    17.0
+   ]
+  }
+ ],
+ "epocas": [
+  {
+   "id": "templarios",
+   "nome": "Castelo templário",
+   "ate": 1939,
+   "periodo": "1171",
+   "texto": "Gualdim Pais, mestre da Ordem do Templo, manda reconstruir o castelo na ilha do Tejo; a obra fica datada pela inscrição da era de 1209 (ano de 1171) sobre a porta principal.",
+   "fontes": [
+    "wiki"
+   ]
+  },
+  {
+   "id": "restauro",
+   "nome": "Restauro da DGEMN",
+   "ate": 2100,
+   "periodo": "1939–1960 e 2013–14",
+   "texto": "Obras da DGEMN refazem merlões, adarves e o caminho de ronda; em 2013–14 substitui-se o terraço da torre e põe-se a escada metálica por dentro.",
+   "fontes": [
+    "wiki"
+   ]
+  }
+ ]
+}

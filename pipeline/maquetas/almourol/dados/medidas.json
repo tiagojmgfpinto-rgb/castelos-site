@@ -1,0 +1,239 @@
+{
+ "escada_norte": {
+  "degraus": 29,
+  "espelho_m": 0.188,
+  "cobertor_m": 0.248
+ },
+ "cubelos": {
+  "sudoeste": {
+   "centro": [
+    -13.5,
+    -14.13
+   ],
+   "raio": 2.16,
+   "soleira": 47.88,
+   "merloes_pontas": 48.93,
+   "merloes": 7,
+   "chao_min": 30.33
+  },
+  "oeste_sul": {
+   "centro": [
+    -12.46,
+    -7.87
+   ],
+   "raio": 2.02,
+   "soleira": 49.78,
+   "merloes_pontas": 50.83,
+   "merloes": 7,
+   "chao_min": 36.39
+  },
+  "oeste": {
+   "centro": [
+    -11.72,
+    -1.04
+   ],
+   "raio": 1.94,
+   "soleira": 50.65,
+   "merloes_pontas": 51.7,
+   "merloes": 6,
+   "chao_min": 36.01
+  },
+  "noroeste": {
+   "centro": [
+    -7.1,
+    8.95
+   ],
+   "raio": 1.98,
+   "soleira": 50.26,
+   "merloes_pontas": 51.31,
+   "merloes": 7,
+   "chao_min": 35.05
+  },
+  "norte": {
+   "centro": [
+    12.08,
+    13.6
+   ],
+   "raio": 2.57,
+   "soleira": 50.26,
+   "merloes_pontas": 51.31,
+   "merloes": 9,
+   "chao_min": 34.32
+  },
+  "nordeste": {
+   "centro": [
+    23.36,
+    8.15
+   ],
+   "raio": 3.28,
+   "soleira": 50.19,
+   "merloes_pontas": 51.24,
+   "merloes": 12,
+   "chao_min": 33.37
+  },
+  "leste": {
+   "centro": [
+    33.31,
+    4.07
+   ],
+   "raio": 2.43,
+   "soleira": 47.66,
+   "merloes_pontas": 48.71,
+   "merloes": 8,
+   "chao_min": 29.58
+  },
+  "sueste": {
+   "centro": [
+    16.99,
+    -18.47
+   ],
+   "raio": 2.03,
+   "soleira": 42.58,
+   "merloes_pontas": 43.63,
+   "merloes": 7,
+   "chao_min": 21.84
+  },
+  "leste_meio": {
+   "centro": [
+    23.75,
+    -8.25
+   ],
+   "raio": 1.9,
+   "soleira": 42.52,
+   "merloes_pontas": 43.57,
+   "merloes": 6,
+   "chao_min": 28.8
+  },
+  "sul_meio": {
+   "centro": [
+    -5.1,
+    -18.0
+   ],
+   "raio": 1.8,
+   "soleira": 42.67,
+   "merloes_pontas": 43.72,
+   "merloes": 6,
+   "chao_min": 29.1
+  }
+ },
+ "panos": {
+  "oeste_sul": {
+   "adarve_mediana": 47.15,
+   "merloes_mediana": 49.05
+  },
+  "oeste_norte": {
+   "adarve_mediana": 47.09,
+   "merloes_mediana": 49.17
+  },
+  "norte": {
+   "adarve_mediana": 46.44,
+   "merloes_mediana": 48.36
+  },
+  "nordeste": {
+   "adarve_mediana": 46.42,
+   "merloes_mediana": 48.72
+  },
+  "leste": {
+   "adarve_mediana": 39.36,
+   "merloes_mediana": 41.43
+  },
+  "sul": {
+   "adarve_mediana": 39.4,
+   "merloes_mediana": 41.49
+  },
+  "interior_oeste": {
+   "adarve_mediana": 47.23,
+   "merloes_mediana": 49.13
+  },
+  "interior_leste": {
+   "adarve_mediana": 47.01,
+   "merloes_mediana": 49.12
+  }
+ },
+ "escavacao": {
+  "socalcos": 6,
+  "comprimento_m": 84.3
+ },
+ "terreno_triangulos": 133993,
+ "edificios_margem": 2,
+ "arvores": 415,
+ "rochedos": 63,
+ "torre": {
+  "ponto_mais_alto": 61.09,
+  "planta": [
+   7.26,
+   7.42
+  ],
+  "terraco": 59.25,
+  "merloes": 60.95,
+  "chao": {
+   "ENE": 41.3,
+   "OSO": 42.2,
+   "NNO": 41.6,
+   "SSE": 38.4
+  },
+  "altura_terraco_recinto_norte": 17.65,
+  "altura_merloes_recinto_sul": 22.55,
+  "azimute_faces": [
+   60.7,
+   150.7
+  ]
+ },
+ "castelo": {
+  "area_m2": 1145,
+  "perimetro_m": 176
+ },
+ "rio_nivel": 13.23,
+ "base": {
+  "centro": [
+   -120.0,
+   -12.0
+  ],
+  "raio": 226.0
+ },
+ "ancoras": {
+  "torre": [
+   -0.0,
+   62.5,
+   -0.2
+  ],
+  "cerca": [
+   12.1,
+   52.5,
+   -13.6
+  ],
+  "cubelos": [
+   23.4,
+   52.5,
+   -8.1
+  ]
+ },
+ "texturas_foto": {
+  "old_stone_wall": {
+   "titulo": "Old Stone Wall",
+   "autores": [
+    "Charlotte Baglioni"
+   ],
+   "licenca": "CC0 1.0 (domínio público)",
+   "pagina": "https://polyhaven.com/a/old_stone_wall",
+   "metros": [
+    2.0,
+    2.0
+   ],
+   "uso": "alvenaria de pedra irregular (muralhas, cercas, muros)"
+  },
+  "rock_01": {
+   "titulo": "Rock 01",
+   "autores": [
+    "Rob Tuytel"
+   ],
+   "licenca": "CC0 1.0 (domínio público)",
+   "pagina": "https://polyhaven.com/a/rock_01",
+   "metros": [
+    1.5,
+    1.5
+   ],
+   "uso": "granito em afloramento (penedos e rocha à vista)"
+  }
+ }
+}
