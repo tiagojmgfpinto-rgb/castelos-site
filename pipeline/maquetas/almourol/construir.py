@@ -42,7 +42,7 @@ from kit.cena import cor_vertices, uv_mundo  # noqa: E402
 from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
 from kit.silhares import textura_silhares  # noqa: E402
 from kit.materiais import MATS, malha_rapida, material  # noqa: E402
-from kit.arquitetura import aduelas, vao, guarda  # noqa: E402
+from kit.arquitetura import aduelas, vao, guarda, barra  # noqa: E402
 
 AQUI = Path(__file__).resolve().parent
 RAIZ = AQUI.parents[2]
@@ -358,22 +358,88 @@ def _patamares(v, tol=0.55, minimo=7):
     return out
 
 
-def _endireitar(ext, n, tol=0.45):
-    """Linha da face com o traçado reto: Douglas-Peucker sobre as estações (tolerância 0,45 m) e as estações
-    reprojetadas por abcissa; a normal passa a ser a do troço reto (com o sentido da original)."""
+def _endireitar(ext, n, tol=0.45, P=None):
+    """Linha da face com o traçado reto: Douglas-Peucker sobre as estações (tolerância 0,45 m), ou a linha P já
+    feita. Devolve as novas estações (as antigas reprojetadas por abcissa mais os cantos da linha reta, que passam a
+    ser estações), as normais dos troços retos (com o sentido da original) em esquadria nos cantos, para as faces de
+    dentro e de fora se encontrarem num canto vivo, e o índice fracionário de cada estação nova nas antigas."""
     s = np.concatenate([[0], np.cumsum(np.linalg.norm(np.diff(ext, axis=0), axis=1))])
+    fi0 = np.arange(len(ext), dtype=float)
     if s[-1] < 1.0:
-        return ext, n
-    P = np.array(shapely.LineString(ext).simplify(tol, preserve_topology=False).coords)
+        return ext, n, fi0
+    if P is None:
+        P = np.array(shapely.LineString(ext).simplify(tol, preserve_topology=False).coords)
     sp = np.concatenate([[0], np.cumsum(np.linalg.norm(np.diff(P, axis=0), axis=1))])
     q = s / s[-1] * sp[-1]
-    novo = np.stack([np.interp(q, sp, P[:, 0]), np.interp(q, sp, P[:, 1])], 1)
-    T = np.gradient(novo, axis=0)
-    T /= np.linalg.norm(T, axis=1)[:, None] + 1e-9
-    nn = np.stack([-T[:, 1], T[:, 0]], 1)
-    sg = np.sign(np.sum(nn * n, axis=1, keepdims=True))
-    sg[sg == 0] = 1
-    return novo, nn * sg
+    cantos = sp[1:-1]
+    longe = np.array([np.all(np.abs(cantos - x) > 0.08) for x in q]) if len(cantos) else np.ones(len(q), bool)
+    longe[0] = longe[-1] = True
+    S = np.unique(np.concatenate([q[longe], cantos]))
+    novo = np.stack([np.interp(S, sp, P[:, 0]), np.interp(S, sp, P[:, 1])], 1)
+    T = np.diff(P, axis=0)
+    T /= np.linalg.norm(T, axis=1)[:, None] + 1e-12
+    NS = np.stack([-T[:, 1], T[:, 0]], 1)                # normal à esquerda de cada troço
+    ref = np.stack([np.interp(S, q, n[:, 0]), np.interp(S, q, n[:, 1])], 1)
+    seg = np.clip(np.searchsorted(sp, S, side="right") - 1, 0, len(T) - 1)
+    sg = 1.0 if np.sum(NS[seg] * ref) >= 0 else -1.0
+    nn = NS[seg] * sg
+    for j, x in enumerate(cantos):
+        k = int(np.argmin(np.abs(S - x)))
+        b = NS[j] + NS[j + 1]
+        b /= np.linalg.norm(b) + 1e-12
+        nn[k] = sg * b / max(float(b @ NS[j]), 0.5)
+    return novo, nn, np.interp(S, q, fi0)
+
+
+def _linha_paralela(c, d, n0, tol=0.45):
+    """Linha à distância d do eixo c (já endireitado), do lado da normal n0, com cantos em esquadria."""
+    eixo = shapely.LineString(c).simplify(tol, preserve_topology=False)
+    T = np.diff(np.array(eixo.coords)[:2], axis=0)[0]
+    lado = 1.0 if (-T[1] * n0[0] + T[0] * n0[1]) >= 0 else -1.0
+    L = eixo.offset_curve(lado * d, join_style="mitre", mitre_limit=4.0)
+    if L.geom_type != "LineString":
+        L = max(L.geoms, key=lambda g: g.length)
+    P = np.array(L.coords)
+    if np.linalg.norm(P[0] - c[0]) > np.linalg.norm(P[-1] - c[0]):
+        P = P[::-1]
+    return P
+
+
+PONTAS_TORRE = {}   # pano -> (ponta inicial, ponta final) prolongadas até à torre de menagem (sem parapeito)
+
+
+def _prolongar_ate_torre(ext, n, esp):
+    """Pano que acaba junto à torre de menagem: prolonga a ponta pela tangente até as duas faces entrarem 5 cm na
+    torre (o LiDAR perde o pano rente à torre e a muralha ficava aberta)."""
+    novos = []
+    for ponta, viz in ((0, 1), (len(ext) - 1, len(ext) - 2)):
+        if not dentro_torre_menagem(ext[ponta] - n[ponta] * esp / 2, 1.5):
+            novos.append(None)
+            continue
+        t = unit(ext[ponta] - ext[viz])
+        nu = unit(n[ponta])
+        p = None
+        for d in np.arange(0.0, 3.01, 0.05):
+            a = ext[ponta] + t * d
+            if dentro_torre_menagem(a, -0.05) and dentro_torre_menagem(a - nu * esp, -0.05):
+                p = a
+                break
+        if p is None:
+            # pano quase paralelo à face da torre (o pano interior de nascente sai do cunhal sueste no alinhamento da
+            # face nascente): a ponta encosta-se à torre na perpendicular dessa face
+            pts = [ext[ponta], ext[ponta] - nu * esp]
+            uv = [(q - W(0, 0)) @ EU for q in pts], [(q - W(0, 0)) @ EV for q in pts]
+            ex_u = max(abs(x) for x in uv[0]) - AU
+            ex_v = max(abs(x) for x in uv[1]) - AV
+            if ex_u >= ex_v:
+                eixo, sg, ex = EU, np.sign(np.mean(uv[0])), max(abs(x) - AU for x in uv[0])
+            else:
+                eixo, sg, ex = EV, np.sign(np.mean(uv[1])), max(abs(x) - AV for x in uv[1])
+            if 0 < ex + 0.1 < 2.0:
+                p = ext[ponta] - eixo * sg * (ex + 0.1)
+                d = ex + 0.1
+        novos.append(p if p is not None and d > 0.02 else None)
+    return novos
 
 
 def estacoes(nome):
@@ -387,15 +453,19 @@ def estacoes(nome):
     esp = ESP[nome]
     torre = np.array([perto_torre(p, 0.8) for p in c])
     if nome in PARAPEITO_DIR:
+        # muro interior: face a distância constante do eixo, paralela e com cantos vivos (as normais do LiDAR viram
+        # nos cantos apertados e a face dobrava sobre si mesma)
         meio = suave(np.clip((fora + dentro) / 2, -1.2, 1.2), 9, 2.0)
+        P = _linha_paralela(c, float(np.median(meio)) + esp / 2, n[0])
         ext = c + n * (meio + esp / 2)[:, None]
+        ext, n2, fi = _endireitar(ext, n, P=P)
     else:
         f = np.where(torre, np.nan, np.clip(fora, -1.6, 1.6))
         idx = np.arange(len(f))
         ok = ~np.isnan(f)
         f = np.interp(idx, idx[ok], f[ok]) if ok.any() else np.zeros(len(f))
         ext = c + n * suave(f, 9, 2.0)[:, None]
-    ext, n = _endireitar(ext, n)
+        ext, n2, fi = _endireitar(ext, n)
     tp = np.where(torre, np.nan, topo)
     idx = np.arange(len(tp))
     ok = ~np.isnan(tp)
@@ -408,6 +478,19 @@ def estacoes(nome):
     ad = _patamares(ndi.median_filter(ad, 9, mode="nearest"), tol=0.45)
     ad = np.minimum(ad, soleira - 0.85)
     ad = np.maximum(ad, soleira - 1.25)
+    # tudo nas estações novas (as do LiDAR reprojetadas e os cantos)
+    rs = lambda v: np.interp(fi, idx, v)  # noqa: E731
+    c = np.stack([rs(c[:, 0]), rs(c[:, 1])], 1)
+    soleira, topo_s, ad = rs(soleira), rs(topo_s), rs(ad)
+    n = n2
+    ini, fim = _prolongar_ate_torre(ext, n, esp)
+    PONTAS_TORRE[nome] = (ini is not None, fim is not None)
+    if ini is not None:
+        c, ext, n = np.vstack([c[:1], c]), np.vstack([ini, ext]), np.vstack([n[:1], n])
+        soleira, topo_s, ad = (np.concatenate([v[:1], v]) for v in (soleira, topo_s, ad))
+    if fim is not None:
+        c, ext, n = np.vstack([c, c[-1:]]), np.vstack([ext, fim]), np.vstack([n, n[-1:]])
+        soleira, topo_s, ad = (np.concatenate([v, v[-1:]]) for v in (soleira, topo_s, ad))
     return c, n, ext, esp, soleira, topo_s, ad
 
 
@@ -574,7 +657,6 @@ def pano(m, nome):
             portas.append(dd)
             novos += [dd["s0"], dd["s1"]]
         (c, n, ext, sol, topo, ad), s = _inserir([c, n, ext, sol, topo, ad], s, novos)
-        n = n / np.linalg.norm(n, axis=1)[:, None]
     lado = -1.0 if nome in PARAPEITO_DIR else 1.0   # sinal da normal do lado do parapeito
     fora_l = ext                     # linha da face do lado do parapeito (ou exterior)
     dent_l = ext - n * esp           # face do outro lado
@@ -585,8 +667,12 @@ def pano(m, nome):
     pe_f = pe_muro(fora_l + npar * 0.4)
     pe_d = pe_muro(dent_l - npar * 0.4)
     N = len(c)
-    keep = np.array([not (perto_torre(p, -0.3) or dentro_torre_menagem(p, -0.2)) for p in (fora_l + dent_l) / 2])
+    # fora só as estações dentro dos cubelos e as que têm as duas faces bem dentro da torre de menagem (a ponta
+    # prolongada fica 5 cm dentro da torre e fecha o pano)
+    keep = np.array([not (perto_torre((a + b) / 2, -0.3) or (dentro_torre_menagem(a, -0.3) and dentro_torre_menagem(b, -0.3)))
+                     for a, b in zip(fora_l, dent_l)])
     s_ext = _s_linha(ext)
+    ponta_ini, ponta_fim = PONTAS_TORRE.get(nome, (False, False))
     for i in range(N - 1):
         if not (keep[i] and keep[i + 1]):
             continue
@@ -604,6 +690,13 @@ def pano(m, nome):
             m.face([(*fora_l[a], za), (*fora_l[b], za), (*fora_l[b], sol[b]), (*fora_l[a], sol[a])], "muro")
             m.face([(*dent_l[b], pe_d[b]), (*dent_l[a], pe_d[a]), (*dent_l[a], zs), (*dent_l[b], zs)], "muro")
             m.face([(*dent_l[b], za), (*dent_l[a], za), (*dent_l[a], ad[a]), (*dent_l[b], ad[b])], "muro")
+        if (i == 0 and ponta_ini) or (i == N - 2 and ponta_fim):
+            # troço que encosta à torre: sem parapeito, o adarve vai de face a face e o parapeito fecha com um topo
+            m.face([(*fora_l[b], sol[b]), (*fora_l[a], sol[a]), (*fora_l[a], ad[a]), (*fora_l[b], ad[b])], "muro")
+            m.face([(*dent_l[a], ad[a]), (*fora_l[a], ad[a]), (*fora_l[b], ad[b]), (*dent_l[b], ad[b])], "muro_topo")
+            k_ = b if i == 0 else a
+            m.face([(*par_l[k_], ad[k_]), (*fora_l[k_], ad[k_]), (*fora_l[k_], sol[k_]), (*par_l[k_], sol[k_])], "muro")
+            continue
         m.face([(*dent_l[a], ad[a]), (*par_l[a], ad[a]), (*par_l[b], ad[b]), (*dent_l[b], ad[b])], "muro_topo")
         m.face([(*par_l[a], ad[a]), (*par_l[a], sol[a]), (*par_l[b], sol[b]), (*par_l[b], ad[b])], "muro")
         m.face([(*par_l[a], sol[a]), (*fora_l[a], sol[a]), (*fora_l[b], sol[b]), (*par_l[b], sol[b])], "muro_topo")
@@ -617,24 +710,51 @@ def pano(m, nome):
                         (*par_l[i], sol[i]), (*fora_l[i], sol[i])], "muro")
     for d in portas:
         vao_porta(m, d, fora_l, dent_l, s_ext, npar)
-    # merlões ao longo da linha do parapeito
+    # merlões ao longo da linha do parapeito, troço reto a troço reto: num canto de fora (convexo) os merlões dos
+    # dois troços encontram-se no canto; num canto de dentro param antes, para não se atravessarem
     s = np.concatenate([[0], np.cumsum(np.linalg.norm(np.diff(fora_l, axis=0), axis=1))])
-    for s0 in np.arange(0.5, s[-1] - 0.5, PERIODO):
-        s1 = s0 + L_MERLAO
-        if s1 > s[-1] - 0.2:
-            break
-        ia, ib = np.searchsorted(s, s0), np.searchsorted(s, s1)
-        ia, ib = min(ia, N - 1), min(ib, N - 1)
-        if not (keep[ia] and keep[ib]):
+    tg = np.diff(fora_l, axis=0)
+    tg /= np.linalg.norm(tg, axis=1)[:, None] + 1e-12
+    cortes = [(s[1], 0.3)] if ponta_ini else [(0.0, 0.5)]
+    for i in range(2 if ponta_ini else 1, N - 2 if ponta_fim else N - 1):
+        cosv = float(tg[i - 1] @ tg[i])
+        if cosv < math.cos(math.radians(12)):
+            convexo = float(tg[i] @ unit(npar[i - 1])) < 0
+            cortes.append((s[i], 0.0 if convexo else ESP_PAR + 0.08))
+    cortes.append((s[-2], 0.3) if ponta_fim else (s[-1], 0.2))
+    for (ra, fa), (rb, fb) in zip(cortes[:-1], cortes[1:]):
+        a0, a1 = ra + fa, rb - fb
+        if a1 - a0 < L_MERLAO:
             continue
-        pa = np.array([np.interp(s0, s, fora_l[:, 0]), np.interp(s0, s, fora_l[:, 1])])
-        pb = np.array([np.interp(s1, s, fora_l[:, 0]), np.interp(s1, s, fora_l[:, 1])])
-        na = npar[ia]
-        z0 = float(np.interp((s0 + s1) / 2, s, sol))
-        z1 = float(np.interp((s0 + s1) / 2, s, topo))
-        q = [pa, pb, pb - na * ESP_PAR, pa - na * ESP_PAR]
-        m.prisma(q, z0 - 0.02, z1, "muro_topo" if False else "muro", topo=True)
-        MERLOES.append((*((pa + pb) / 2), z1))
+        k = int((a1 - a0 + (PERIODO - L_MERLAO)) // PERIODO)
+        folga = (a1 - a0) - (k * PERIODO - (PERIODO - L_MERLAO))
+        # o primeiro e o último merlão encostam às pontas nos cantos de fora; nos outros casos a folga reparte-se
+        if fa == 0.0 and fb == 0.0 and k > 1:
+            passo = (a1 - a0 - L_MERLAO) / (k - 1)
+            inicios = [a0 + j * passo for j in range(k)]
+        elif fa == 0.0:
+            inicios = [a0 + j * PERIODO for j in range(k)]
+        elif fb == 0.0:
+            inicios = [a1 - L_MERLAO - j * PERIODO for j in range(k)][::-1]
+        else:
+            inicios = [a0 + folga / 2 + j * PERIODO for j in range(k)]
+        im = min(int(np.searchsorted(s, (ra + rb) / 2)), N - 1)
+        tr = tg[max(im - 1, 0)]
+        na = np.array([-tr[1], tr[0]])
+        if na @ npar[max(im - 1, 0)] < 0:
+            na = -na
+        for s0 in inicios:
+            s1 = s0 + L_MERLAO
+            ia, ib = min(int(np.searchsorted(s, s0)), N - 1), min(int(np.searchsorted(s, s1)), N - 1)
+            if not (keep[ia] and keep[ib]):
+                continue
+            pa = np.array([np.interp(s0, s, fora_l[:, 0]), np.interp(s0, s, fora_l[:, 1])])
+            pb = np.array([np.interp(s1, s, fora_l[:, 0]), np.interp(s1, s, fora_l[:, 1])])
+            z0 = float(np.interp((s0 + s1) / 2, s, sol))
+            z1 = float(np.interp((s0 + s1) / 2, s, topo))
+            q = [pa, pb, pb - na * ESP_PAR, pa - na * ESP_PAR]
+            m.prisma(q, z0 - 0.02, z1, "muro", topo=True)
+            MERLOES.append((*((pa + pb) / 2), z1))
     return dict(ext=fora_l, dent=dent_l, ad=ad, sol=sol, topo=topo)
 
 
@@ -836,7 +956,10 @@ FACES = {"ENE": (face_torre((1, 0), AU), AV), "NNO": (face_torre((0, 1), AV), AU
 # vãos por face (s ao longo da face, da esquerda para a direita de quem olha de fora): (s0, s1, z0, z1, tipo)
 # tipo: "porta" (arco), "janela" (retangular com verga), "fresta"
 VAOS_T = {
-    "NNO": [(-0.06, 0.06, 47.0, 48.4, "fresta"), (-0.06, 0.06, 52.5, 53.9, "fresta")],
+    # porta de entrada da torre, a 3 m do chão do recinto de cima, retangular, com uma escada metálica a subir
+    # encostada à face (Commons «em Agosto 2025» foto 31; LiDAR: patamar a 44,5 m de s 0,4 a 1,9, lanço a
+    # subir de poente desde s −3,0, chão a 42,0)
+    "NNO": [(0.75, 1.65, 44.6, 46.6, "porta"), (-0.06, 0.06, 47.0, 48.4, "fresta"), (-0.06, 0.06, 52.5, 53.9, "fresta")],
     "ENE": [(-0.45, 0.45, 54.6, 55.9, "janela"), (-0.06, 0.06, 49.0, 50.4, "fresta")],
     "SSE": [(-0.06, 0.06, 50.0, 51.4, "fresta"), (-0.4, 0.4, 54.9, 56.1, "janela")],
     "OSO": [(-0.06, 0.06, 53.0, 54.4, "fresta")],
@@ -856,6 +979,44 @@ def parede_vaos(m, f, meia, z0, z1, vaos, mat):
         m.face([f.p(sa, 0, zc), f.p(sb, 0, zc), f.p(sb, 0, z1), f.p(sa, 0, z1)], mat)
 
 
+def escada_torre(m):
+    """Escada metálica da porta da torre: um lanço reto encostado à face norte-noroeste, a subir de poente
+    para nascente, e um patamar diante da porta; degraus de chapa, duas longarinas, pilares finos e guarda do lado
+    de fora e à volta do patamar (Commons «em Agosto 2025» foto 31; cotas do LiDAR a 0,6–1,4 m da face)."""
+    f, _ = FACES["NNO"]
+    z_ch, z_pat = 42.0, 44.5
+    sa, sb = -3.0, 0.45            # pé do lanço e começo do patamar (s ao longo da face)
+    d0, d1 = 0.12, 1.08            # largura do lanço (afastamento da face)
+    k = 14
+    esp_ = (z_pat - z_ch) / k
+    cob = (sb - sa) / k
+    for j in range(k - 1):
+        s0_, z = sa + cob * j, z_ch + esp_ * (j + 1)
+        m.caixa_face(f, s0_, s0_ + cob + 0.03, d0, d1, z - 0.035, z, "ferro")
+    # longarinas: chapas inclinadas dos dois lados do lanço
+    for d in (d0 - 0.02, d1 + 0.02):
+        for dd in (0.0, 0.015):
+            pts = [f.p(sa, d + dd, z_ch - 0.02), f.p(sb, d + dd, z_pat - 0.05), f.p(sb, d + dd, z_pat + 0.02),
+                   f.p(sa, d + dd, z_ch + 0.3)]
+            m.face(pts if dd else pts[::-1], "ferro")
+    # patamar e pilares
+    s_pat0, s_pat1, d_pat = sb, 1.95, 1.15
+    m.caixa_face(f, s_pat0, s_pat1, 0.0, d_pat, z_pat - 0.06, z_pat, "ferro")
+    for s_ in (s_pat0 + 0.05, s_pat1 - 0.05):
+        barra(m, np.array([*f.xy(s_, d_pat - 0.05), z_ch - 0.2]), np.array([*f.xy(s_, d_pat - 0.05), z_pat - 0.06]),
+              0.035, "ferro")
+    barra(m, np.array([*f.xy((sa + sb) / 2, d1), z_ch - 0.2]),
+          np.array([*f.xy((sa + sb) / 2, d1), (z_ch + z_pat) / 2 - 0.1]), 0.03, "ferro")
+    # guarda: do lado de fora do lanço e à volta do patamar até à torre
+    lanco = [np.array([*f.xy(sa + 0.1, d1 + 0.03), z_ch + esp_]), np.array([*f.xy(sb, d1 + 0.03), z_pat])]
+    guarda(m, lanco, "ferro", alt=1.0, passo=1.2, r=0.02, travessas=(0.5,))
+    pat = [np.array([*f.xy(sb, d_pat - 0.03), z_pat]), np.array([*f.xy(s_pat1 - 0.03, d_pat - 0.03), z_pat]),
+           np.array([*f.xy(s_pat1 - 0.03, 0.05), z_pat])]
+    guarda(m, pat, "ferro", alt=1.0, passo=0.75, r=0.02, travessas=(0.5,))
+    MEDIDAS["escada_torre"] = {"degraus": k, "espelho_m": round(esp_, 3), "cobertor_m": round(cob, 3),
+                               "patamar_m": z_pat, "soleira_porta_m": 44.6}
+
+
 def torre():
     m = Malha(["cantaria_torre", "cantaria_lisa", "sombra", "madeira", "branco", "muro_topo", "ferro"])
     zb = 36.5
@@ -869,6 +1030,14 @@ def torre():
             m.face([f.p(s1, -prof, z0), f.p(s1, 0, z0), f.p(s1, 0, z1), f.p(s1, -prof, z1)], "cantaria_lisa")
             m.face([f.p(s0, -prof, z0), f.p(s0, 0, z0), f.p(s1, 0, z0), f.p(s1, -prof, z0)], "cantaria_lisa")
             m.face([f.p(s1, -prof, z1), f.p(s1, 0, z1), f.p(s0, 0, z1), f.p(s0, -prof, z1)], "cantaria_lisa")
+            if tipo == "porta":
+                # ombreiras, verga e soleira de granito, ligeiramente salientes
+                m.caixa_face(f, s0 - 0.14, s0, -0.02, 0.05, z0, z1, "cantaria_lisa")
+                m.caixa_face(f, s1, s1 + 0.14, -0.02, 0.05, z0, z1, "cantaria_lisa")
+                m.caixa_face(f, s0 - 0.14, s1 + 0.14, -0.02, 0.05, z1, z1 + 0.32, "cantaria_lisa")
+                m.caixa_face(f, s0 - 0.05, s1 + 0.05, -0.02, 0.06, z0 - 0.1, z0, "cantaria_lisa")
+                # folha de madeira aberta para dentro, encostada à ombreira de poente
+                m.caixa_face(f, s0 + 0.02, s0 + 0.07, -0.68, -0.08, z0 + 0.02, z1 - 0.04, "madeira")
             if tipo == "janela":
                 # verga e peitoril de granito salientes
                 m.caixa_face(f, s0 - 0.15, s1 + 0.15, -0.02, 0.06, z1, z1 + 0.22, "cantaria_lisa")
@@ -892,6 +1061,7 @@ def torre():
                 f.p(meia, -0.55, Z_SOLEIRA_T)], "cantaria_torre")
         m.face([f.p(-meia, 0, Z_SOLEIRA_T), f.p(meia, 0, Z_SOLEIRA_T), f.p(meia, -0.55, Z_SOLEIRA_T),
                 f.p(-meia, -0.55, Z_SOLEIRA_T)], "muro_topo")
+    escada_torre(m)
     # cruz pátea em relevo por cima da janela virada a nascente (Wikipédia: «uma cruz pátea sobre uma janela»)
     f, meia = FACES["ENE"]
     zc = 56.75
@@ -949,6 +1119,15 @@ def construir_terreno():
     CH = chao_castelo()
     dentro = shapely.contains_xy(CASTELO_PL.buffer(1.5), X, Y)
     Z = np.where(dentro, amostra(CH, SX0, SY0, SP, X, Y), Z)
+    # a escada metálica da porta da torre não é chão: o LiDAR sobe por ela até 44,8 m; o chão diante da face
+    # norte-noroeste fica à cota medida 2,2 m para fora, ao longo da face
+    f, _ = FACES["NNO"]
+    pe = shapely.Polygon([f.xy(-3.8, -0.6), f.xy(2.6, -0.6), f.xy(2.6, 2.2), f.xy(-3.8, 2.2)])
+    sob = shapely.contains_xy(pe, X, Y)
+    if sob.any():
+        ss = (np.stack([X[sob], Y[sob]], 1) - f.o) @ f.t
+        zs_ = [float(amostra(CH, SX0, SY0, SP, *f.xy(x, 2.2))) for x in np.arange(-3.8, 2.61, 0.2)]
+        Z[sob] = np.minimum(Z[sob], np.interp(ss, np.arange(-3.8, 2.61, 0.2), zs_))
     # recinto de baixo: o terreno fica 0,25 m por baixo das plataformas (e da mais baixa a menos de 1 m), que o tapam
     zp = chao_plat(X, Y)
     zp = ndi.minimum_filter(np.where(np.isnan(zp), np.inf, zp - 0.25), size=3)

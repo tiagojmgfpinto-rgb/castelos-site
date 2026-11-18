@@ -34,7 +34,11 @@ Medido no LiDAR 2024 (pontos das classes 1–6 a 25 cm):
   (23,75; −8,25) e sul (−5,1; −18,0) foram acrescentados à mão porque o topo do pano sobe 2 m ao longo de 3–4 m e a face
   sai 1–2,4 m. Ficam seis no recinto de baixo e quatro no de cima, como diz o SIPA.
 - **Torre:** planta 7,26 × 7,42 m, terraço 59,25 m, merlões 60,95 m (cinco por face), casota branca da escada u 0–3,
-  v −0,8–2,5, topo 61,0 m.
+  v −0,8–2,5, topo 61,0 m. Porta de entrada (0.3) na face norte-noroeste, s 0,75–1,65, soleira 44,6 m, verga 46,6 m,
+  com escada metálica encostada à face: o LiDAR a 0,6–1,4 m da face sobe de 42,0 m (s −3,0) a 44,5 m (patamar de
+  s 0,4 a 1,9) e volta ao chão (41,7 m) a seguir; a 0,3 m vê-se a guarda (45,6–46,4 m). Confere com a fotografia do
+  Commons «em Agosto 2025» n.º 31 (porta alta retangular, escada escura com patamar e guarda). O terreno por baixo da
+  escada fica à cota do chão medida 2,2 m para fora da face.
 - **Chão dos recintos:** recinto de cima a 41–42 m. O recinto de baixo (0.2) é feito de plataformas planas às cotas do
   MDS, desenhadas no referencial do pano leste (u ao longo do pano, v para dentro): fosso escavado em três patamares
   (32,9 / 34,5 / 36,8), faixa a 36,6 com guarda de ferro, rampa calcetada de 38,15 a 39,7 encostada ao muro interior
@@ -91,3 +95,11 @@ com as quatro fotografias do Commons que já lá estavam.
 A face de cada pano é endireitada (Douglas-Peucker com 0,45 m sobre as estações) e a linha dos merlões e o adarve
 ficam em patamares nivelados (o LiDAR alterna pontas dos merlões e soleiras das ameias; toma-se o máximo em 2,5 m e
 juntam-se troços com menos de 0,55 m de diferença). Na 0.1 seguiam as estações suavizadas e ondulavam.
+
+Na 0.3 os cantos da linha reta passam a ser estações, com a normal em esquadria (bissetriz a dividir pelo cosseno do
+meio ângulo), para as duas faces e o parapeito se encontrarem num canto vivo; no muro interior a face é uma paralela
+ao eixo (offset em esquadria), porque as normais do LiDAR viravam no canto apertado a sul da torre e a face dobrava
+sobre si mesma (o «corpo redondo» que se via junto à porta nascente). Os merlões são postos troço reto a troço reto:
+nos cantos de fora encostam ao canto, nos de dentro param antes para não se atravessarem. O muro interior de nascente
+sai do cunhal sueste da torre quase no alinhamento da face nascente e o LiDAR perde-o rente à torre: a ponta é
+prolongada até entrar 10 cm na torre, sem parapeito nesse troço.

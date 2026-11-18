@@ -2,7 +2,7 @@
  "monumento": "almourol",
  "titulo": "Castelo de Almourol",
  "variante": "estado-atual",
- "versao": "0.2 provisória",
+ "versao": "0.3 provisória",
  "data": "2026-11-18",
  "origem": {
   "lat": 39.461973,
@@ -33,7 +33,7 @@
  "limitacoes": [
   "Não foi usada planta cotada. A planta e as cotas vêm da nuvem de pontos do LiDAR de 2024 (pontos de solo, edifícios e muros, em células de 25 cm): cada pano foi medido numa estação a cada 0,5 m (face de fora, face de dentro, adarve, merlões e chão dos dois lados) e cada cubelo ajustado a um círculo. O erro esperado em planta é de 0,2 a 0,4 m.",
   "Os merlões estão contados nas fotografias dos adarves (c. 0,95 m de merlão e 0,67 m de ameia) e postos a passo constante; o número exato em cada pano não foi contado um a um.",
-  "A torre de menagem tem as faces, o terraço, os merlões e a casota da escada medidos no LiDAR; as frestas e as duas janelas estão postas pelas fotografias, com a altura estimada. A escada metálica de 2013–14 fica por dentro e não está modelada.",
+  "A torre de menagem tem as faces, o terraço, os merlões e a casota da escada medidos no LiDAR; as frestas e as duas janelas estão postas pelas fotografias, com a altura estimada. A porta de entrada, a 3 m do chão na face norte-noroeste, e a escada metálica que lhe dá acesso estão postas pela fotografia do Commons e pelas cotas do LiDAR; a escada de dentro não está modelada.",
   "A porta do muro interior a poente da torre, que estava numa versão anterior por causa de uma fotografia aérea, saiu: a fotografia da porta principal tirada de dentro mostra ali muro e penedos.",
   "O recinto de baixo é feito de plataformas planas às cotas do MDS (32,9 a 39,7 m) com muros de suporte direitos entre elas, orientados pelo pano leste e pela planta do painel informativo à entrada. A planta do painel é esquemática: a posição de cada muro pode ter um erro de 0,5 a 1 m. Os passadiços de madeira e a tenda branca das fotografias aéreas não estão modelados.",
   "As margens são simples: terreno do MDT, a linha da Beira Baixa e o parque do cais pelo ortofotomapa, árvores nas posições do LiDAR com copas esquemáticas e o Tejo plano à cota da água de junho de 2024 (13,2 m)."
@@ -66,8 +66,8 @@
    "grupo": "Torre",
    "estado": "estado-atual",
    "confianca": "alta",
-   "descricao": "Torre quadrangular de cantaria de granito, encostada ao muro interior entre os dois recintos e assente no penedo. Tem frestas estreitas, uma janela virada a nascente com uma cruz pátea em relevo por cima e outra a sul-sueste; no alto, cinco merlões por face e a casota branca da escada.",
-   "medidas": "Planta de 7,3 × 7,4 m, faces rodadas 29° em relação ao norte; terraço a 59,25 m e merlões a 61,0 m, c. 17,7 m acima do recinto de cima e 22,6 m acima do recinto de baixo (LiDAR 2024).",
+   "descricao": "Torre quadrangular de cantaria de granito, encostada ao muro interior entre os dois recintos e assente no penedo. Tem frestas estreitas, uma janela virada a nascente com uma cruz pátea em relevo por cima e outra a sul-sueste; no alto, cinco merlões por face e a casota branca da escada. Entra-se por uma porta retangular de granito na face norte-noroeste, a c. 3 m do chão do recinto de cima, por uma escada metálica encostada à face, com patamar diante da porta.",
+   "medidas": "Planta de 7,3 × 7,4 m, faces rodadas 29° em relação ao norte; terraço a 59,25 m e merlões a 61,0 m, c. 17,7 m acima do recinto de cima e 22,6 m acima do recinto de baixo; soleira da porta a c. 44,6 m, patamar da escada a 44,5 m e pé da escada a 42,0 m (LiDAR 2024).",
    "fontes": [
     "lidar",
     "commons",

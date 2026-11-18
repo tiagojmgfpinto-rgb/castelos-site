@@ -150,6 +150,13 @@
    "merloes_mediana": 49.24
   }
  },
+ "escada_torre": {
+  "degraus": 14,
+  "espelho_m": 0.179,
+  "cobertor_m": 0.246,
+  "patamar_m": 44.5,
+  "soleira_porta_m": 44.6
+ },
  "recinto_baixo": {
   "plataformas_m2": {
    "fosso_1": 64.7,
