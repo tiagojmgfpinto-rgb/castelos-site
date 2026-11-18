@@ -118,46 +118,67 @@
  },
  "panos": {
   "oeste_sul": {
-   "adarve_mediana": 47.15,
-   "merloes_mediana": 49.05
+   "adarve_mediana": 48.19,
+   "merloes_mediana": 50.09
   },
   "oeste_norte": {
-   "adarve_mediana": 47.09,
-   "merloes_mediana": 49.17
+   "adarve_mediana": 47.08,
+   "merloes_mediana": 49.19
   },
   "norte": {
-   "adarve_mediana": 46.44,
-   "merloes_mediana": 48.36
+   "adarve_mediana": 46.81,
+   "merloes_mediana": 49.09
   },
   "nordeste": {
-   "adarve_mediana": 46.42,
-   "merloes_mediana": 48.72
+   "adarve_mediana": 46.51,
+   "merloes_mediana": 48.81
   },
   "leste": {
-   "adarve_mediana": 39.36,
-   "merloes_mediana": 41.43
+   "adarve_mediana": 39.47,
+   "merloes_mediana": 41.6
   },
   "sul": {
-   "adarve_mediana": 39.4,
-   "merloes_mediana": 41.49
+   "adarve_mediana": 39.39,
+   "merloes_mediana": 41.54
   },
   "interior_oeste": {
-   "adarve_mediana": 47.23,
-   "merloes_mediana": 49.13
+   "adarve_mediana": 47.35,
+   "merloes_mediana": 49.25
   },
   "interior_leste": {
-   "adarve_mediana": 47.01,
-   "merloes_mediana": 49.12
+   "adarve_mediana": 47.34,
+   "merloes_mediana": 49.24
   }
  },
- "escavacao": {
-  "socalcos": 6,
-  "comprimento_m": 84.3
+ "recinto_baixo": {
+  "plataformas_m2": {
+   "fosso_1": 64.7,
+   "fosso_2": 53.9,
+   "fosso_3": 36.0,
+   "faixa": 82.0,
+   "sul": 90.4,
+   "poente": 63.2,
+   "rampa": 206.0
+  },
+  "muros_m": {
+   "suporte": 69.2,
+   "parapeito": 17.5,
+   "guarda": 50.9
+  },
+  "cotas": {
+   "fosso_1": 32.9,
+   "fosso_2": 34.5,
+   "fosso_3": 36.8,
+   "faixa": 36.6,
+   "sul": 36.4,
+   "poente": 37.35,
+   "rampa": "38,15→39,7"
+  }
  },
  "terreno_triangulos": 133993,
  "edificios_margem": 2,
  "arvores": 415,
- "rochedos": 63,
+ "rochedos": 62,
  "torre": {
   "ponto_mais_alto": 61.09,
   "planta": [
@@ -180,8 +201,8 @@
   ]
  },
  "castelo": {
-  "area_m2": 1145,
-  "perimetro_m": 176
+  "area_m2": 1149,
+  "perimetro_m": 175
  },
  "rio_nivel": 13.23,
  "base": {

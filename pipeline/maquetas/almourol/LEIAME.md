@@ -35,8 +35,12 @@ Medido no LiDAR 2024 (pontos das classes 1–6 a 25 cm):
   sai 1–2,4 m. Ficam seis no recinto de baixo e quatro no de cima, como diz o SIPA.
 - **Torre:** planta 7,26 × 7,42 m, terraço 59,25 m, merlões 60,95 m (cinco por face), casota branca da escada u 0–3,
   v −0,8–2,5, topo 61,0 m.
-- **Chão dos recintos:** recinto de cima a 41–42 m; recinto de baixo em socalcos de escavação (38,1 / 36,6 / 34,4 /
-  33,0 m), com muros de suporte e guardas de ferro onde o salto passa de 1,2 m.
+- **Chão dos recintos:** recinto de cima a 41–42 m. O recinto de baixo (0.2) é feito de plataformas planas às cotas do
+  MDS, desenhadas no referencial do pano leste (u ao longo do pano, v para dentro): fosso escavado em três patamares
+  (32,9 / 34,5 / 36,8), faixa a 36,6 com guarda de ferro, rampa calcetada de 38,15 a 39,7 encostada ao muro interior
+  com parapeito de 0,75 m, e a sul plataformas a 36,4 e 37,35 com um alicerce baixo a x = 3. Os muros de suporte são
+  direitos e saem das arestas das plataformas (guarda onde o salto passa de 0,9 m). A disposição vem da planta do
+  painel informativo à entrada (Commons, julho de 2025, foto 91), ajustada às cotas do MDS.
 - **Escadaria norte:** rampa de 41,0 a 46,45 m em 7,2 m a 2,0–2,5 m do eixo do pano norte (29 degraus).
 - Penedos: máximos do relevo local do MDT (mais de 0,6 m) até 30 m dos muros.
 
@@ -45,8 +49,10 @@ Pelas fotografias:
   três degraus, arco de volta perfeita e lápide comprida por cima (Commons, julho de 2025, fotos 79–82, GPS da câmara).
   Pelo vão vê-se o recinto de baixo e os merlões do pano sul ao nível dos olhos, por isso a porta abre a sul do muro
   interior. Soleira 37,95 m; arco 1,4 × 2,45 m (estimado).
-- Porta do muro interior a nascente da torre, com lápide (fotos aéreas e Commons, agosto de 2025, foto 25); porta do
-  muro interior a poente, ao nível do recinto de baixo (uma só foto aérea: hipótese).
+- Porta do muro interior a nascente da torre, ao cimo da rampa calcetada: três degraus, lápide branca pequena logo
+  por cima do arco, penedos à esquerda e o painel informativo ao lado (Commons, agosto de 2025, fotos 21 e 25, e
+  Flickr 245694640 / 3333289147). Soleira 40,3 m. A porta a poente da torre que estava na 0.1 saiu: a fotografia da
+  porta principal tirada de dentro (julho de 2025, foto 73) mostra ali muro e penedos.
 - Porta do cubelo nordeste ao cimo da escadaria (foto do alto da torre virada a nordeste).
 - Janelas e frestas da torre e a cruz pátea por cima da janela virada a nascente (Wikipédia e fotos): posições estimadas.
 
@@ -62,14 +68,13 @@ Pelas fotografias:
 
 - Porta da traição a sul (SIPA): não aparece nas fotos reunidas nem no LiDAR.
 - Proporção do arco da porta principal (parece mais largo e baixo na foto).
-- Interior da porta do muro interior a poente da torre.
 - Escada metálica de 2013–14 dentro da torre (não modelada).
 - Passadiços de madeira e tenda do recinto de baixo (temporários, não modelados).
 
 ## Visor
 
 Grupos: Torre e Muralhas (enquadramento), Terreno, Vegetacao, Envolvente e Rochedos (fora do enquadramento). Seis
-placas: torre, porta principal, muro interior, recinto de cima, recinto de baixo e cubelos.
+placas: torre, porta principal, muro interior, recinto de cima, recinto de baixo, cubelos e rio Tejo.
 
 ## Revisão
 
@@ -80,3 +85,9 @@ foto/maqueta em `/mnt/project-files/almourol-maqueta/`.
 
 As oito fotografias de referência enviadas não são do autor do projeto e não entram na galeria. A galeria da ficha fica
 com as quatro fotografias do Commons que já lá estavam.
+
+## Panos (0.2)
+
+A face de cada pano é endireitada (Douglas-Peucker com 0,45 m sobre as estações) e a linha dos merlões e o adarve
+ficam em patamares nivelados (o LiDAR alterna pontas dos merlões e soleiras das ameias; toma-se o máximo em 2,5 m e
+juntam-se troços com menos de 0,55 m de diferença). Na 0.1 seguiam as estações suavizadas e ondulavam.
