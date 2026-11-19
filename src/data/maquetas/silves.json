@@ -1,0 +1,287 @@
+{
+ "monumento": "silves",
+ "titulo": "Castelo e Muralha de Silves",
+ "variante": "estado-atual",
+ "versao": "0.1 provisória",
+ "data": "2026-11-18",
+ "origem": {
+  "lat": 37.191034,
+  "lon": -8.437765,
+  "nota": "Centro da alcáçova (LiDAR; PT-TM06 −27050, −274940). Eixos da maqueta: x para este, y para norte (PT-TM06 menos a origem), no visor -z é o norte, em metros à escala 1:1; as cotas são altitudes."
+ },
+ "fontes": {
+  "lidar": {
+   "titulo": "DGT, LiDAR 2024: nuvem de pontos classificada com cor e MDT/MDS de 50 cm, folhas 172025, 172026, 173025 e 173026 (CC BY 4.0). Planta e cotas dos nove panos da alcáçova (estação a cada 0,5 m), das dez torres, da casa da guarda, da cisterna, da cerca da vila (estação a cada metro), das suas torres e do torreão da Porta da Cidade, do chão e das árvores; a cor dos pontos deu a ortofoto de conferência.",
+   "url": "https://cdd.dgterritorio.gov.pt"
+  },
+  "osm": {
+   "titulo": "© colaboradores do OpenStreetMap (ODbL), via Overture Maps 2026-10-21.0: troços da muralha da vila, torres da cerca, Porta de Loulé e nomes das torres da alcáçova.",
+   "url": "https://www.openstreetmap.org/copyright"
+  },
+  "commons": {
+   "titulo": "Wikimedia Commons, categorias «Castelo de Silves», «Muralhas de Silves» e «Portas de Silves» (fotografias com GPS): porta e estátua (fotos 023, 102), corredor da porta (foto 101), adarves e merlões (004, 076), albarrãs (020, 030, 110), torres da cerca (081–083), Porta da Cidade (086–088).",
+   "url": "https://commons.wikimedia.org/wiki/Category:Castelo_de_Silves"
+  },
+  "wiki": {
+   "titulo": "Wikipédia — Castelo de Silves (onze torres, duas albarrãs, caminho de ronda de c. 388 m, cisterna da Moura de 20 × 16 m com quatro naves, muros da cerca de 2,8 m)",
+   "url": "https://pt.wikipedia.org/wiki/Castelo_de_Silves"
+  },
+  "fotos": {
+   "titulo": "Fotografias enviadas pelo autor do projeto (de autoria desconhecida, usadas só como referência, não publicadas)"
+  }
+ },
+ "limitacoes": [
+  "Não foi usada planta cotada nem o SIPA (não respondeu). A planta e as cotas vêm da nuvem de pontos do LiDAR de 2024: cada pano da alcáçova foi medido numa estação a cada 0,5 m (face de fora, face de dentro, adarve, merlões e chão dos dois lados) e cada torre ajustada a um retângulo. O erro esperado em planta é de 0,2 a 0,4 m.",
+  "Os merlões são retangulares, de c. 1,0 m com ameias de c. 0,5 m (contados nas fotografias dos adarves e das torres), postos a passo constante; o número exato em cada pano não foi contado um a um. As seteiras dos merlões não estão modeladas.",
+  "A porta da alcáçova está no sítio certo (arco na face poente da casa da guarda, ao lado da torre da porta e da estátua, pelas fotografias com GPS), mas o corredor por dentro, que vira a norte e sobe em rampa até ao recinto, está desenhado por hipótese a partir de uma única fotografia tirada no seu interior.",
+  "Os braços das duas albarrãs têm o arco por baixo, como nas fotografias, mas a largura do braço (3,0–3,2 m) e a altura do arco são estimadas.",
+  "A cerca da vila tem só os troços que o OpenStreetMap regista e o LiDAR confirma; a altura é a do LiDAR e, onde as casas estão encostadas, pode ser a dos telhados. A espessura é a da Wikipédia (2,8 m). A Porta da Cidade tem o arco de entrada na face poente (fotografias); a passagem em cotovelo por dentro é hipótese.",
+  "Faltam o Palácio das Varandas e as escavações do recinto (ficam no relevo do chão, sem muros próprios), a Cisterna dos Cães, a Porta da Traição, as escadas de acesso aos adarves e as seteiras. A vila está em volumes cinzentos tirados do LiDAR, sem telhados."
+ ],
+ "distancia": 190,
+ "distanciaMinima": 10,
+ "direcao": [
+  -0.45,
+  0.62,
+  0.64
+ ],
+ "sol": [
+  -0.38,
+  0.74,
+  0.55
+ ],
+ "placas": [
+  "menagem",
+  "porta",
+  "albarra_sueste",
+  "albarra_nordeste",
+  "cisterna",
+  "segredo",
+  "porta_cidade"
+ ],
+ "elementos": [
+  {
+   "id": "menagem",
+   "nome": "Torre de menagem",
+   "grupo": "Torre",
+   "estado": "estado-atual",
+   "confianca": "alta",
+   "descricao": "A maior torre da alcáçova, no canto norte, saliente da muralha. Retangular, de grés vermelho em fiadas, com terraço e merlões retangulares em todas as faces.",
+   "medidas": "Planta de 14,3 × 8,9 m; merlões a 66,53 m e terraço a 64,5 m de altitude, c. 12 m acima do chão de fora (LiDAR 2024).",
+   "fontes": [
+    "lidar",
+    "osm",
+    "commons"
+   ],
+   "resumo": "A maior das onze torres",
+   "ancora": [
+    20.1,
+    68.0,
+    -67.2
+   ]
+  },
+  {
+   "id": "porta",
+   "nome": "Porta e casa da guarda",
+   "grupo": "Muralhas",
+   "estado": "estado-atual",
+   "confianca": "média",
+   "descricao": "Entra-se por um arco de volta perfeita na face poente da casa da guarda, logo a norte da torre da porta e recuado em relação a ela, com a estátua de bronze de D. Sancho I diante da torre. Dentro, o corredor abobadado, de calçada e com as folhas de madeira abertas, vira a norte e sobe até ao recinto (porta em cotovelo; o traçado do corredor de saída é hipótese).",
+   "medidas": "Arco de 2,4 m de largura e c. 3,4 m ao fecho; soleira a 47,4 m e recinto a 50,6 m; casa da guarda de 15,2 × 19,4 m com terraço a 55,6 m (LiDAR e fotografias).",
+   "fontes": [
+    "lidar",
+    "commons",
+    "fotos"
+   ],
+   "resumo": "Arco ao lado da estátua de D. Sancho I",
+   "ancora": [
+    -32.6,
+    52.0,
+    60.4
+   ],
+   "desde": 1965,
+   "desdeTexto": "estátua de D. Sancho I de Leopoldo de Almeida, 1965"
+  },
+  {
+   "id": "albarra_sueste",
+   "nome": "Torre albarrã de sueste",
+   "grupo": "Torre",
+   "estado": "estado-atual",
+   "confianca": "média",
+   "descricao": "Torre destacada da muralha e ligada a ela por um braço com adarve e merlões, atravessado por um arco alto por onde se passa ao pé da muralha.",
+   "medidas": "Torre de c. 7,2 × 7,2 m com merlões a 54,90 m; braço com adarve a 52,98 m e chão a 42,3 m; arco de c. 4 m de vão (LiDAR; largura do braço e altura do arco estimadas pelas fotos).",
+   "fontes": [
+    "lidar",
+    "commons"
+   ],
+   "resumo": "Torre destacada com braço em arco",
+   "ancora": [
+    34.0,
+    56.5,
+    49.5
+   ]
+  },
+  {
+   "id": "albarra_nordeste",
+   "nome": "Torre albarrã de nordeste",
+   "grupo": "Torre",
+   "estado": "estado-atual",
+   "confianca": "média",
+   "descricao": "A outra albarrã, no canto nordeste, presa ao ângulo da muralha por um braço curto em arco, com merlões por cima.",
+   "medidas": "Planta de 6,7 × 6,5 m; merlões a 61,65 m; braço com adarve a 58,69 m (LiDAR).",
+   "fontes": [
+    "lidar",
+    "commons"
+   ],
+   "resumo": "Albarrã do canto nordeste",
+   "ancora": [
+    54.6,
+    63.0,
+    -32.8
+   ]
+  },
+  {
+   "id": "cisterna",
+   "nome": "Cisterna da Moura",
+   "grupo": "Interior",
+   "estado": "estado-atual",
+   "confianca": "alta",
+   "descricao": "Grande cisterna almóada de quatro naves com abóbadas de berço sobre doze colunas. À superfície vê-se o extradorso rebocado das quatro abóbadas, um pouco abaixo do chão à volta, rodeado por um murete.",
+   "medidas": "Planta de c. 20,0 × 15,3 m pelo LiDAR (20 × 16 × 7 m na Wikipédia); extradorso a 52,4–53,6 m.",
+   "fontes": [
+    "lidar",
+    "wiki"
+   ],
+   "resumo": "Quatro naves abobadadas, 1,3 milhões de litros",
+   "ancora": [
+    31.7,
+    55.5,
+    -26.3
+   ]
+  },
+  {
+   "id": "segredo",
+   "nome": "Torre do Segredo",
+   "grupo": "Torre",
+   "estado": "estado-atual",
+   "confianca": "alta",
+   "descricao": "Torre do canto noroeste, onde a muralha da vila se liga à alcáçova.",
+   "medidas": "Planta de 10,4 × 6,5 m; merlões a 64,38 m (LiDAR).",
+   "fontes": [
+    "lidar",
+    "osm"
+   ],
+   "resumo": "Onde a cerca da vila encontra a alcáçova",
+   "ancora": [
+    -48.8,
+    65.9,
+    -49.9
+   ]
+  },
+  {
+   "id": "mulheres",
+   "nome": "Torre das Mulheres",
+   "grupo": "Torre",
+   "estado": "estado-atual",
+   "confianca": "alta",
+   "descricao": "Torre do canto sudoeste, à esquerda de quem chega à porta.",
+   "medidas": "Planta de 9,0 × 8,4 m; merlões a 62,78 m (LiDAR).",
+   "fontes": [
+    "lidar",
+    "osm",
+    "commons"
+   ],
+   "resumo": "Canto sudoeste, junto à porta",
+   "ancora": [
+    -41.6,
+    64.3,
+    61.6
+   ]
+  },
+  {
+   "id": "muralha_alcacova",
+   "nome": "Muralha da alcáçova",
+   "grupo": "Muralhas",
+   "estado": "estado-atual",
+   "confianca": "alta",
+   "descricao": "Nove panos de taipa forrada de grés vermelho, com adarve, guardas de ferro do lado de dentro e merlões retangulares, entre onze torres (dez medidas no LiDAR e a casa da guarda). Sobe-se ao adarve norte por uma escada de pedra com patamar, encostada ao muro.",
+   "medidas": "Perímetro de c. 542 m e área de c. 1,08 ha; panos de 2,4 a 3,0 m de espessura; 209 merlões (LiDAR e fotografias).",
+   "fontes": [
+    "lidar",
+    "commons",
+    "wiki"
+   ],
+   "resumo": "Caminho de ronda de c. 388 m",
+   "ancora": [
+    -50.0,
+    62.0,
+    20.0
+   ]
+  },
+  {
+   "id": "cerca",
+   "nome": "Muralha da vila",
+   "grupo": "Muralha_vila",
+   "estado": "estado-atual",
+   "confianca": "média",
+   "descricao": "Os troços da cerca da vila que sobrevivem, de taipa forrada de grés, entre as casas, com as torres que restam (embasamento de grés e taipa à vista por cima).",
+   "medidas": "Seis troços com c. 0,66 km no total e 13 torres; 2,8 m de espessura (Wikipédia); altura do LiDAR.",
+   "fontes": [
+    "lidar",
+    "osm",
+    "wiki",
+    "commons"
+   ],
+   "resumo": "Cerca urbana de taipa e grés",
+   "ancora": [
+    -176.5,
+    60.0,
+    -29.0
+   ]
+  },
+  {
+   "id": "porta_cidade",
+   "nome": "Porta da Cidade",
+   "grupo": "Muralha_vila",
+   "estado": "estado-atual",
+   "confianca": "média",
+   "descricao": "Torreão maciço de grés vermelho a sul da cerca, sem merlões, com duas janelas de sacada de moldura branca e guarda de ferro no andar de cima. Entra-se por um arco alto e estreito na face poente, por baixo da janela norte, e a passagem vira para dentro da vila (o corredor por dentro é hipótese).",
+   "medidas": "Planta de c. 20,0 × 11,6 m e terraço a 32,5 m, c. 15 m acima do largo (LiDAR).",
+   "fontes": [
+    "lidar",
+    "osm",
+    "commons"
+   ],
+   "resumo": "Torreão da Porta de Loulé, século XIV",
+   "ancora": [
+    -141.5,
+    36.0,
+    252.9
+   ],
+   "desde": 1300,
+   "desdeTexto": "século XIV"
+  }
+ ],
+ "epocas": [
+  {
+   "id": "almoada",
+   "nome": "Alcáçova almóada",
+   "ate": 1940,
+   "periodo": "séculos XII–XIII",
+   "texto": "A alcáçova de taipa forrada de grés, com as torres albarrãs e a cisterna da Moura, é provavelmente almóada. D. Sancho I toma a cidade em 1189; a reconquista definitiva é de 1249.",
+   "fontes": [
+    "wiki"
+   ]
+  },
+  {
+   "id": "restauro",
+   "nome": "Restauro da DGEMN",
+   "ate": 2100,
+   "periodo": "década de 1940",
+   "texto": "A DGEMN consolida a torre de menagem e refaz os parapeitos e as ameias; em 1965 põe-se a estátua de D. Sancho I à porta.",
+   "fontes": [
+    "wiki"
+   ]
+  }
+ ]
+}
