@@ -1,0 +1,184 @@
+{
+ "superficie_celulas": 126198,
+ "terreno_triangulos": 86107,
+ "mar": {
+  "nivel": 0.63
+ },
+ "guaritas": [
+  {
+   "centro": [
+    59.56,
+    30.84
+   ],
+   "topo_lidar": 36.86,
+   "topo": 37.16
+  },
+  {
+   "centro": [
+    -38.76,
+    60.22
+   ],
+   "topo_lidar": 38.65,
+   "topo": 38.95
+  }
+ ],
+ "espadana": {
+  "centro": [
+   -55.0,
+   -19.91
+  ],
+  "topo_lidar": 35.07
+ },
+ "portao_armas": {
+  "centro": [
+   0.94,
+   29.32
+  ],
+  "soleira": 27.52,
+  "ponte_m": 9.6,
+  "passagem_m": 12.0,
+  "chao_recinto": 26.62,
+  "fundo_fosso": 25.15
+ },
+ "fachadas": {
+  "casa_so": {
+   "de": [
+    8.94,
+    -0.15
+   ],
+   "a": [
+    18.62,
+    -6.88
+   ],
+   "alto": 32.19,
+   "chao": 26.47
+  },
+  "casa_se": {
+   "de": [
+    18.83,
+    -7.08
+   ],
+   "a": [
+    33.63,
+    12.98
+   ],
+   "alto": 32.23,
+   "chao": 26.58
+  },
+  "casa_no": {
+   "de": [
+    9.23,
+    0.18
+   ],
+   "a": [
+    16.53,
+    9.85
+   ],
+   "alto": 32.17,
+   "chao": 26.6
+  },
+  "pousada_ala": {
+   "de": [
+    -27.75,
+    8.0
+   ],
+   "a": [
+    -27.75,
+    -21.0
+   ],
+   "alto": 30.63,
+   "chao": 25.37
+  },
+  "pousada_no1": {
+   "de": [
+    -31.91,
+    13.3
+   ],
+   "a": [
+    -21.91,
+    16.4
+   ],
+   "alto": 30.22,
+   "chao": 26.77
+  },
+  "pousada_no2": {
+   "de": [
+    -22.21,
+    17.61
+   ],
+   "a": [
+    -12.71,
+    19.81
+   ],
+   "alto": 32.75,
+   "chao": 30.23
+  },
+  "pousada_so": {
+   "de": [
+    -30.62,
+    -21.8
+   ],
+   "a": [
+    -30.62,
+    -30.6
+   ],
+   "alto": 30.38,
+   "chao": 25.33
+  }
+ },
+ "edificios_envolvente": 2,
+ "arvores": 48,
+ "forte": {
+  "area_m2": 7417,
+  "perimetro_m": 460,
+  "bateria_baixa_m2": 1230
+ },
+ "base": {
+  "centro": [
+   0.0,
+   -22.0
+  ],
+  "raio": 112.0
+ },
+ "texturas_foto": {
+  "old_stone_wall": {
+   "titulo": "Old Stone Wall",
+   "autores": [
+    "Charlotte Baglioni"
+   ],
+   "licenca": "CC0 1.0 (domínio público)",
+   "pagina": "https://polyhaven.com/a/old_stone_wall",
+   "metros": [
+    2.0,
+    2.0
+   ],
+   "uso": "alvenaria de pedra irregular (muralhas, cercas, muros)"
+  },
+  "rock_01": {
+   "titulo": "Rock 01",
+   "autores": [
+    "Rob Tuytel"
+   ],
+   "licenca": "CC0 1.0 (domínio público)",
+   "pagina": "https://polyhaven.com/a/rock_01",
+   "metros": [
+    1.5,
+    1.5
+   ],
+   "uso": "granito em afloramento (penedos e rocha à vista)"
+  },
+  "roof_09": {
+   "titulo": "Roof 09",
+   "autores": [
+    "Rob Tuytel"
+   ],
+   "licenca": "CC0 1.0 (domínio público)",
+   "pagina": "https://polyhaven.com/a/roof_09",
+   "metros": [
+    4.0,
+    4.0
+   ],
+   "uso": "telha de canudo velha (telhados dos monumentos)"
+  }
+ }
+}

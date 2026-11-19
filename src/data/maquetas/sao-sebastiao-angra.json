@@ -1,0 +1,277 @@
+{
+ "monumento": "sao-sebastiao-angra",
+ "titulo": "Forte de São Sebastião",
+ "variante": "estado-atual",
+ "versao": "0.1 provisória",
+ "data": "2026-11-18",
+ "origem": {
+  "lat": 38.651886,
+  "lon": -27.211995,
+  "nota": "Centro aproximado do recinto do forte (LiDAR). Eixos da maqueta: x para este, y para norte (PTRA08 / UTM 26N menos a origem), no visor -z é o norte, em metros à escala 1:1; as cotas são altitudes."
+ },
+ "fontes": {
+  "lidar": {
+   "titulo": "Região Autónoma dos Açores, LiDAR 2024 da ilha Terceira: nuvem de pontos classificada com cor RGBI (bloco 24-4-2-5) e MDT/MDS. Planta da magistral (estação a cada 0,25 m), alturas do talude, do cordão e do parapeito, canhoneiras e merlões, terraplenos, edifícios, guaritas, Portão de Armas, fosso, bateria baixa, nível do mar e árvores.",
+   "url": "https://ot.azores.gov.pt"
+  },
+  "orto": {
+   "titulo": "Cores dos pontos do mesmo voo (RGB, 25 cm), usadas como ortofoto para relva, saibro, calçada, rocha e coberturas.",
+   "url": "https://ot.azores.gov.pt"
+  },
+  "commons": {
+   "titulo": "Wikimedia Commons, categoria Forte de São Sebastião (Angra do Heroísmo): Portão de Armas por fora e por dentro, armas reais, Casa do Governador, guaritas, frente de terra e vista da marina.",
+   "url": "https://commons.wikimedia.org/wiki/Category:Forte_de_S%C3%A3o_Sebasti%C3%A3o_(Angra_do_Hero%C3%ADsmo)"
+  },
+  "streetview": {
+   "titulo": "Google Street View na Rua do Castelinho e na marina de Angra: frente de terra, ponte e Portão de Armas, muralha do mar e bateria baixa.",
+   "url": "https://www.google.com/maps/@38.6524,-27.2117,17z"
+  },
+  "wiki": {
+   "titulo": "Wikipédia — Forte de São Sebastião (Angra do Heroísmo): história, relatório de 1767, Bateria da Heroicidade (1828), Pousada",
+   "url": "https://pt.wikipedia.org/wiki/Forte_de_S%C3%A3o_Sebasti%C3%A3o_(Angra_do_Hero%C3%ADsmo)"
+  }
+ },
+ "limitacoes": [
+  "Não foi usada planta cotada. A magistral foi traçada no LiDAR de 2024 (erro mediano de 0,10 m na linha das faces) e as muralhas são construídas estação a estação, a cada 0,25 m: talude da escarpa, cordão, parapeito com a espessura, o adarve, as canhoneiras e os merlões medidos no perfil do MDS.",
+  "Dentro das muralhas o chão, os terraplenos, as rampas e os volumes dos edifícios vêm diretamente do MDS de 25 cm; por isso as faces íngremes sem fachada desenhada mostram degraus de 25 cm.",
+  "As fachadas da Casa do Governador e da Pousada estão medidas no LiDAR (alinhamento e altura do beirado), mas o número e o ritmo das janelas foram estimados pelas fotografias; os edifícios novos da Pousada estão simplificados.",
+  "O Portão de Armas, as armas reais, a ponte de dois arcos e o arco interior estão postos pelas fotografias e pelo Street View com as cotas do LiDAR; o túnel de passagem por baixo do terrapleno não está modelado por dentro.",
+  "As guaritas foram detetadas no LiDAR nos salientes nordeste e noroeste; a forma (corpo redondo, mísula, cúpula e pináculo) é a das fotografias, com medidas estimadas. No saliente sudoeste o LiDAR tem uma mancha de c. 4 × 4 m a 35 m, que é a sineira da fotografia de Diego Delso; a posição dos vãos dos sinos é estimada.",
+  "A envolvente é simples: terreno do MDT, a rocha da costa, as árvores nas posições do LiDAR com copas esquemáticas e o mar plano a 0,63 m."
+ ],
+ "distancia": 150,
+ "distanciaMinima": 12,
+ "direcao": [
+  0.62,
+  0.54,
+  0.56
+ ],
+ "sol": [
+  0.45,
+  0.75,
+  0.48
+ ],
+ "placas": [
+  "portao_armas",
+  "frente_terra",
+  "guaritas",
+  "espadana",
+  "casa_governador",
+  "pousada",
+  "muralha_mar",
+  "bateria_baixa"
+ ],
+ "elementos": [
+  {
+   "id": "portao_armas",
+   "nome": "Portão de Armas",
+   "grupo": "Muralhas",
+   "estado": "estado-atual",
+   "confianca": "alta",
+   "descricao": "A entrada do forte é pela frente de terra, a norte. Uma ponte de pedra de dois arcos atravessa o fosso até ao portão em arco de volta perfeita, com moldura de cantaria e fecho, e por cima um painel com as armas reais coroado por frontão. Do lado de dentro, a passagem sai para o recinto por um segundo arco.",
+   "medidas": "Vão de c. 3 m; soleira a 27,5 m; ponte de c. 9,6 m sobre o fosso, cujo fundo está a c. 25,2 m (LiDAR e fotografias).",
+   "fontes": [
+    "lidar",
+    "commons",
+    "streetview"
+   ],
+   "resumo": "Portão com armas reais e ponte sobre o fosso",
+   "ancora": [
+    0.94,
+    33.5,
+    -29.32
+   ],
+   "desde": 1698,
+   "desdeTexto": "reconstrução do tempo de D. Pedro II"
+  },
+  {
+   "id": "frente_terra",
+   "nome": "Frente de terra",
+   "grupo": "Muralhas",
+   "estado": "estado-atual",
+   "confianca": "alta",
+   "descricao": "Do lado da cidade, a muralha desenha baluartes e cortinas com escarpa em talude de alvenaria de basalto, cordão de cantaria e parapeito com canhoneiras. À frente corre um fosso seco.",
+   "medidas": "Perímetro exterior da magistral c. 460 m; parapeito entre 33 e 36 m de altitude (LiDAR 2024).",
+   "fontes": [
+    "lidar",
+    "streetview",
+    "commons"
+   ],
+   "resumo": "Baluartes e cortinas com cordão",
+   "ancora": [
+    -25.0,
+    37.5,
+    -50.0
+   ]
+  },
+  {
+   "id": "guaritas",
+   "nome": "Guaritas",
+   "grupo": "Muralhas",
+   "estado": "estado-atual",
+   "confianca": "alta",
+   "descricao": "Nos ângulos salientes há guaritas de pedra de corpo redondo, assentes em mísula, com frestas, porta para o adarve, cúpula e pináculo em bola. A de noroeste, sobre a baía, é a mais fotografada, com o Monte Brasil ao fundo.",
+   "medidas": "Duas guaritas, nos salientes nordeste e noroeste; topo a 37,2 e 39,0 m (LiDAR 2024).",
+   "fontes": [
+    "lidar",
+    "commons"
+   ],
+   "resumo": "Guaritas redondas nos salientes",
+   "ancora": [
+    -38.76,
+    41.0,
+    -60.22
+   ]
+  },
+  {
+   "id": "espadana",
+   "nome": "Sineira",
+   "grupo": "Muralhas",
+   "estado": "estado-atual",
+   "confianca": "média",
+   "descricao": "Sobre o baluarte de sudoeste, do lado do mar, ergue-se uma pequena sineira de pedra, uma torrinha quadrada com dois vãos em arco para os sinos, cornija e cruz no remate.",
+   "medidas": "Planta de c. 3,6 × 3,4 m; topo a c. 35,1 m, c. 4 m acima do adarve (LiDAR 2024).",
+   "fontes": [
+    "lidar",
+    "commons"
+   ],
+   "resumo": "Torrinha dos sinos no baluarte",
+   "ancora": [
+    -55.0,
+    37.5,
+    19.9
+   ]
+  },
+  {
+   "id": "casa_governador",
+   "nome": "Casa do Governador",
+   "grupo": "Edifícios",
+   "estado": "estado-atual",
+   "confianca": "média",
+   "descricao": "Casa de dois pisos pintada de ocre, com cunhais e cornija brancos e telhado de telha, no meio do recinto. A fachada virada a sudoeste tem uma porta em arco ao centro.",
+   "medidas": "Planta em L de c. 25 × 12 m; beirado a c. 32,2 m, c. 5,7 m acima do chão do recinto (LiDAR 2024).",
+   "fontes": [
+    "lidar",
+    "commons",
+    "orto"
+   ],
+   "resumo": "Casa ocre com telhado de telha",
+   "ancora": [
+    21.0,
+    35.0,
+    -5.0
+   ]
+  },
+  {
+   "id": "pousada",
+   "nome": "Pousada de Angra",
+   "grupo": "Edifícios",
+   "estado": "estado-atual",
+   "confianca": "média",
+   "descricao": "Os quartéis do lado poente foram adaptados a Pousada de Portugal, com edifícios brancos de linhas simples ao longo da cortina poente e um corpo novo junto à frente de terra.",
+   "medidas": "Beirado das alas a c. 30,2–30,6 m de altitude (LiDAR 2024).",
+   "fontes": [
+    "lidar",
+    "commons",
+    "wiki"
+   ],
+   "resumo": "Antigos quartéis, hoje Pousada",
+   "ancora": [
+    -32.0,
+    33.0,
+    5.0
+   ]
+  },
+  {
+   "id": "muralha_mar",
+   "nome": "Muralha do mar",
+   "grupo": "Muralhas",
+   "estado": "estado-atual",
+   "confianca": "alta",
+   "descricao": "A sul e a sueste o forte assenta na rocha da costa, sobre o mar da entrada da baía. A muralha sobe direita da rocha basáltica, com parapeito e canhoneiras viradas ao porto.",
+   "medidas": "Parapeito a c. 27–28 m de altitude, c. 15 m acima da rocha onde assenta, que está a 9–12 m (LiDAR 2024).",
+   "fontes": [
+    "lidar",
+    "streetview"
+   ],
+   "resumo": "Muralha sobre a rocha da costa",
+   "ancora": [
+    27.0,
+    30.0,
+    14.0
+   ]
+  },
+  {
+   "id": "bateria_baixa",
+   "nome": "Bateria baixa",
+   "grupo": "Muralhas",
+   "estado": "estado-atual",
+   "confianca": "média",
+   "descricao": "A sul do forte, mais abaixo e rente à água, a bateria baixa (Bateria da Heroicidade) cruzava fogos com a Fortaleza de São João Baptista, do outro lado da baía.",
+   "medidas": "Área c. 1230 m²; plataforma a c. 13 m de altitude (LiDAR 2024).",
+   "fontes": [
+    "lidar",
+    "wiki"
+   ],
+   "resumo": "Bateria rente ao mar, de 1828",
+   "ancora": [
+    -40.0,
+    16.0,
+    80.0
+   ],
+   "desde": 1828,
+   "desdeTexto": "Bateria da Heroicidade, acrescentada em 1828"
+  },
+  {
+   "id": "recinto",
+   "nome": "Recinto e terraplenos",
+   "grupo": "Recinto",
+   "estado": "estado-atual",
+   "confianca": "média",
+   "descricao": "Por dentro, o recinto é um terreiro largo com relva e caminhos de saibro, e os terraplenos sobem junto ao parapeito para as plataformas de artilharia.",
+   "medidas": "Chão do recinto a c. 26,6 m de altitude; adarve c. 6 a 8 m acima (LiDAR 2024).",
+   "fontes": [
+    "lidar",
+    "orto"
+   ],
+   "resumo": "Terreiro com relva e terraplenos",
+   "ancora": [
+    0.0,
+    29.0,
+    -5.0
+   ]
+  }
+ ],
+ "epocas": [
+  {
+   "id": "sebastiao",
+   "nome": "Forte de D. Sebastião",
+   "ate": 1697,
+   "periodo": "1572–1580",
+   "texto": "D. Sebastião manda fazer fortes na entrada da baía de Angra, ao Porto de Pipas; o forte está em uso em 1576 e ainda sem a muralha de leste em 1580.",
+   "fontes": [
+    "wiki"
+   ]
+  },
+  {
+   "id": "pedro_ii",
+   "nome": "Reconstrução de D. Pedro II",
+   "ate": 1827,
+   "periodo": "1698",
+   "texto": "Reconstrução no reinado de D. Pedro II; em 1767 o relatório de Júdice conta 18 canhoneiras na bateria alta e 15 na baixa.",
+   "fontes": [
+    "wiki"
+   ]
+  },
+  {
+   "id": "heroicidade",
+   "nome": "Bateria da Heroicidade e Pousada",
+   "ate": 2100,
+   "periodo": "1828 até hoje",
+   "texto": "Em 1828 acrescenta-se a Bateria da Heroicidade; o forte é hoje a Pousada de Angra do Heroísmo.",
+   "fontes": [
+    "wiki"
+   ]
+  }
+ ]
+}
