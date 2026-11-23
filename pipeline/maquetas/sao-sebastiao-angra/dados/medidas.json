@@ -40,92 +40,169 @@
   "chao_recinto": 26.62,
   "fundo_fosso": 25.15
  },
- "fachadas": {
-  "casa_so": {
-   "de": [
-    8.94,
-    -0.15
+ "casa_governador": {
+  "chao": 26.5,
+  "beirado": 32.1,
+  "cume": 33.45,
+  "corpos_uv": {
+   "A": [
+    0.0,
+    0.0,
+    23.6,
+    6.1
    ],
-   "a": [
-    18.62,
-    -6.88
+   "B": [
+    0.0,
+    6.1,
+    13.0,
+    11.85
    ],
-   "alto": 32.19,
-   "chao": 26.47
+   "C": [
+    17.0,
+    6.1,
+    23.4,
+    12.4
+   ]
   },
-  "casa_se": {
-   "de": [
-    18.83,
-    -7.08
-   ],
-   "a": [
-    33.63,
-    12.98
-   ],
-   "alto": 32.23,
-   "chao": 26.58
-  },
-  "casa_no": {
-   "de": [
-    9.23,
-    0.18
-   ],
-   "a": [
-    16.53,
-    9.85
-   ],
-   "alto": 32.17,
-   "chao": 26.6
-  },
-  "pousada_ala": {
-   "de": [
-    -27.75,
-    8.0
-   ],
-   "a": [
-    -27.75,
-    -21.0
-   ],
-   "alto": 30.63,
-   "chao": 25.37
-  },
-  "pousada_no1": {
-   "de": [
-    -31.91,
-    13.3
-   ],
-   "a": [
-    -21.91,
-    16.4
-   ],
-   "alto": 30.22,
-   "chao": 26.77
-  },
-  "pousada_no2": {
-   "de": [
-    -22.21,
-    17.61
-   ],
-   "a": [
-    -12.71,
-    19.81
-   ],
-   "alto": 32.75,
-   "chao": 30.23
-  },
-  "pousada_so": {
-   "de": [
-    -30.62,
-    -21.8
-   ],
-   "a": [
-    -30.62,
-    -30.6
-   ],
-   "alto": 30.38,
-   "chao": 25.33
-  }
+  "origem": [
+   18.6,
+   -6.9
+  ],
+  "azimute_u": 37.0
  },
+ "pousada_norte": {
+  "chao": 26.65,
+  "cobertura": 34.7,
+  "planta": [
+   [
+    3.6,
+    16.0
+   ],
+   [
+    17.3,
+    11.6
+   ],
+   [
+    19.0,
+    22.5
+   ],
+   [
+    4.1,
+    22.5
+   ]
+  ],
+  "fachada_sul_m": 14.4
+ },
+ "edificios": [
+  {
+   "area_m2": 39.8,
+   "topo": 30.22,
+   "chao": 26.48,
+   "telha": false
+  },
+  {
+   "area_m2": 12.4,
+   "topo": 30.24,
+   "chao": 26.66,
+   "telha": false
+  },
+  {
+   "area_m2": 6.1,
+   "topo": 31.5,
+   "chao": 25.43,
+   "telha": false
+  },
+  {
+   "area_m2": 94.9,
+   "topo": 31.2,
+   "chao": 25.48,
+   "telha": false
+  },
+  {
+   "area_m2": 329.4,
+   "topo": 31.59,
+   "chao": 25.05,
+   "telha": false
+  },
+  {
+   "area_m2": 12.0,
+   "topo": 31.98,
+   "chao": 26.69,
+   "telha": true
+  },
+  {
+   "area_m2": 6.8,
+   "topo": 31.82,
+   "chao": 26.09,
+   "telha": false
+  },
+  {
+   "area_m2": 5.2,
+   "topo": 31.71,
+   "chao": 25.73,
+   "telha": false
+  },
+  {
+   "area_m2": 18.5,
+   "topo": 32.47,
+   "chao": 25.08,
+   "telha": false
+  },
+  {
+   "area_m2": 36.0,
+   "topo": 32.38,
+   "chao": 26.62,
+   "telha": true
+  },
+  {
+   "area_m2": 20.8,
+   "topo": 32.75,
+   "chao": 26.41,
+   "telha": false
+  },
+  {
+   "area_m2": 130.6,
+   "topo": 32.78,
+   "chao": 25.74,
+   "telha": false
+  },
+  {
+   "area_m2": 51.0,
+   "topo": 32.87,
+   "chao": 24.81,
+   "telha": false
+  },
+  {
+   "area_m2": 80.1,
+   "topo": 33.42,
+   "chao": 26.13,
+   "telha": false
+  },
+  {
+   "area_m2": 23.4,
+   "topo": 33.53,
+   "chao": 26.17,
+   "telha": true
+  },
+  {
+   "area_m2": 10.7,
+   "topo": 33.76,
+   "chao": 25.2,
+   "telha": false
+  },
+  {
+   "area_m2": 7.2,
+   "topo": 34.77,
+   "chao": 26.45,
+   "telha": true
+  },
+  {
+   "area_m2": 24.6,
+   "topo": 34.76,
+   "chao": 25.96,
+   "telha": true
+  }
+ ],
  "edificios_envolvente": 2,
  "arvores": 48,
  "forte": {
