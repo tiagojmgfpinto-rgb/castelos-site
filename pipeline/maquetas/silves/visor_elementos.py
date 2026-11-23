@@ -25,9 +25,10 @@ PC = M["porta_cidade"]
 CG = M["casa_guarda"]
 CI = M["cisterna"]
 BR = M["bracos_albarras"]
+ESC = M["escavacoes"]
 EL = [
     dict(id="menagem", nome="Torre de menagem", grupo="Torre", estado="estado-atual", confianca="alta",
-         descricao="A maior torre da alcáçova, no canto norte, saliente da muralha. Retangular, de grés vermelho em fiadas, com terraço e merlões retangulares em todas as faces.",
+         descricao="A maior torre da alcáçova, no canto norte, saliente da muralha. Retangular, de grés vermelho em fiadas, com terraço e merlões retangulares com seteira em todas as faces; entra-se do recinto por uma porta de arco quebrado.",
          medidas=f"Planta de {pl('menagem')}; merlões a {n(T['menagem']['merloes_pontas'], 2)} m e terraço a {n(T['menagem']['terraco'])} m de altitude, c. 12 m acima do chão de fora (LiDAR 2024).",
          fontes=["lidar", "osm", "commons"], resumo="A maior das onze torres", ancora=A["menagem"]),
     dict(id="porta", nome="Porta e casa da guarda", grupo="Muralhas", estado="estado-atual", confianca="média",
@@ -44,9 +45,13 @@ EL = [
          medidas=f"Planta de {pl('albarra_nordeste')}; merlões a {n(T['albarra_nordeste']['merloes_pontas'], 2)} m; braço com adarve a {n(BR['albarra_nordeste']['adarve'], 2)} m (LiDAR).",
          fontes=["lidar", "commons"], resumo="Albarrã do canto nordeste", ancora=A["albarra_nordeste"]),
     dict(id="cisterna", nome="Cisterna da Moura", grupo="Interior", estado="estado-atual", confianca="alta",
-         descricao="Grande cisterna almóada de quatro naves com abóbadas de berço sobre doze colunas. À superfície vê-se o extradorso rebocado das quatro abóbadas, um pouco abaixo do chão à volta, rodeado por um murete.",
+         descricao="Grande cisterna almóada de quatro naves com abóbadas de berço sobre doze colunas. À superfície vê-se o extradorso das quatro abóbadas, rebocado e pintado de vermelho-rosa, rodeado por um murete da mesma cor que a norte e a poente segura a encosta.",
          medidas=f"Planta de c. {n(CI['planta'][0])} × {n(CI['planta'][1])} m pelo LiDAR (20 × 16 × 7 m na Wikipédia); extradorso a {n(CI['extradorso'][0])}–{n(CI['extradorso'][1])} m.",
          fontes=["lidar", "wiki"], resumo="Quatro naves abobadadas, 1,3 milhões de litros", ancora=A["cisterna"]),
+    dict(id="escavacoes", nome="Escavações do Palácio das Varandas", grupo="Interior", estado="estado-atual", confianca="média",
+         descricao="A sueste do recinto, as escavações puseram à vista os alicerces de taipa e grés do palácio almóada e das casas à volta, com pátios, compartimentos e ruas; percorrem-se por passadiços de madeira com guarda. Os muros são os que o LiDAR mede acima do fundo das escavações.",
+         medidas=f"{ESC['muros']} troços de muro em c. {ESC['area_muros_m2']} m² de planta, de 0,4 a 2 m de altura; {ESC['passadicos']} passadiços com c. {ESC['area_passadicos_m2']} m² (LiDAR 2024 de 25 cm e ortofotomapa).",
+         fontes=["lidar", "commons"], resumo="Alicerces do palácio e do bairro almóada", ancora=A["escavacoes"]),
     dict(id="segredo", nome="Torre do Segredo", grupo="Torre", estado="estado-atual", confianca="alta",
          descricao="Torre do canto noroeste, onde a muralha da vila se liga à alcáçova.",
          medidas=f"Planta de {pl('segredo')}; merlões a {n(T['segredo']['merloes_pontas'], 2)} m (LiDAR).",
@@ -64,7 +69,7 @@ EL = [
          medidas="Seis troços com c. " + n(sum(v["comprimento_m"] for v in M["cerca"].values()) / 1000, 2) + " km no total e 13 torres; 2,8 m de espessura (Wikipédia); altura do LiDAR.",
          fontes=["lidar", "osm", "wiki", "commons"], resumo="Cerca urbana de taipa e grés", ancora=A["cerca_norte"]),
     dict(id="porta_cidade", nome="Porta da Cidade", grupo="Muralha_vila", estado="estado-atual", confianca="média",
-         descricao="Torreão maciço de grés vermelho a sul da cerca, sem merlões, com duas janelas de sacada de moldura branca e guarda de ferro no andar de cima. Entra-se por um arco alto e estreito na face poente, por baixo da janela norte, e a passagem vira para dentro da vila (o corredor por dentro é hipótese).",
+         descricao="Torreão maciço de grés vermelho a sul da cerca, sem merlões, com um telhado de quatro águas escondido atrás do parapeito e duas janelas de sacada de moldura branca e guarda de ferro. Entra-se por um arco alto e estreito na face poente, por baixo da janela norte, e a passagem vira para dentro da vila (o corredor por dentro é hipótese). Do largo sobe-se por uma escada íngreme, encostada à face norte, até um terraço com guarda.",
          medidas=f"Planta de c. {n(PC['planta'][1])} × {n(PC['planta'][0])} m e terraço a {n(PC['terraco'])} m, c. {n(PC['terraco'] - min(PC['chao_sul'], PC['chao_norte']), 0)} m acima do largo (LiDAR).",
          fontes=["lidar", "osm", "commons"], resumo="Torreão da Porta de Loulé, século XIV", ancora=A["porta_cidade"], desde=1300,
          desdeTexto="século XIV"),

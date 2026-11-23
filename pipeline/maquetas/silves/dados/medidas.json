@@ -1,7 +1,7 @@
 {
  "panos": {
   "norte_oeste": {
-   "adarve_mediana": 57.9,
+   "adarve_mediana": 57.91,
    "merloes_mediana": 59.94,
    "espessura": 3.0
   },
@@ -22,7 +22,7 @@
   },
   "leste": {
    "adarve_mediana": 54.26,
-   "merloes_mediana": 56.19,
+   "merloes_mediana": 56.17,
    "espessura": 2.5
   },
   "sueste": {
@@ -36,17 +36,17 @@
    "espessura": 2.4
   },
   "sul_oeste": {
-   "adarve_mediana": 56.16,
+   "adarve_mediana": 56.15,
    "merloes_mediana": 58.06,
    "espessura": 2.6
   },
   "oeste": {
-   "adarve_mediana": 57.59,
-   "merloes_mediana": 59.84,
+   "adarve_mediana": 57.6,
+   "merloes_mediana": 59.85,
    "espessura": 3.0
   }
  },
- "merloes_alcacova": 209,
+ "merloes_alcacova": 237,
  "torres": {
   "menagem": {
    "planta": [
@@ -173,6 +173,13 @@
    "chao": 50.61
   }
  },
+ "porta_menagem": {
+  "centro": [
+   18.02,
+   60.31
+  ],
+  "soleira": 55.52
+ },
  "casa_guarda": {
   "z_in": 47.4,
   "z_out": 50.6,
@@ -204,28 +211,43 @@
  "cisterna": {
   "naves": 4,
   "extradorso": [
-   52.4,
-   53.6
+   52.1,
+   52.9
   ],
-  "murete": 54.5,
+  "murete": 53.95,
   "planta": [
    20.0,
    15.3
   ]
  },
+ "escavacoes": {
+  "muros": 35,
+  "passadicos": 4,
+  "area_muros_m2": 184,
+  "area_passadicos_m2": 25
+ },
+ "seteiras": 491,
  "edificios_recinto": 2,
  "porta_cidade": {
+  "escada": {
+   "degraus": 37,
+   "de": 19.41,
+   "ate": 26.9
+  },
   "z_in": 17.55,
   "z_out": 18.91,
   "arco_entrada": [
    2.6,
-   25.75
+   25.15
   ],
   "arco_saida": [
    3.0,
-   27.01
+   26.66
   ],
-  "terraco": 32.52,
+  "terraco": 33.0,
+  "beirado": 31.9,
+  "cume": 33.9,
+  "terraco_norte": 26.9,
   "planta": [
    11.6,
    20.0
@@ -380,6 +402,11 @@
    -176.5,
    60.0,
    -29.0
+  ],
+  "escavacoes": [
+   24.0,
+   55.0,
+   32.0
   ]
  },
  "texturas_foto": {
