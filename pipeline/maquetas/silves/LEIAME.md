@@ -82,9 +82,15 @@ python pipeline/maquetas/silves/visor_elementos.py  # elementos do JSON do visor
 - **Torre de menagem.** Porta em arco quebrado na face virada ao recinto (soleira 55,5 m, medida no LiDAR). As pontas
   dos panos prolongam-se pelo eixo até entrarem na torre, para não ficar fresta (vista `f046_menagem`).
 - **Porta da alcáçova.** Aduelas de grés no arco exterior e um segundo arco, mais estreito, recuado (foto 101).
-- **Porta da Cidade.** Telhado de quatro águas (beirado 31,9 m, cume 33,9 m) sobre platibanda, terraço a norte a
-  26,9 m com guarda e escada íngreme encostada com parapeito amarelo (37 degraus desde 19,4 m; foto 087 e LiDAR).
-  O telhado e a escada são lidos no LiDAR, mas o desenho das águas é hipótese.
+- **Porta da Cidade (revista a 23 nov., depois da crítica do Tiago).** A superfície LiDAR de 25 cm e as fotos 086–088
+  mostram dois corpos. O corpo sul (u 0–11, janela de sul) sobe a 33,0 m em platibanda lisa, com telhado escondido
+  (cume 34,0 m). O corpo norte (u 11–19, arco e janela de norte) é mais baixo e tem telhado de quatro águas à vista
+  (beirado 31,8 m, cume 33,8 m). A varanda corrida a 26,9 m vai do terraço norte até à janela de norte (LiDAR:
+  26,9–27,9 m a 1 m da face). A escada (37 degraus desde 19,4 m) assenta na cerca, que desce com ela para poente: do
+  largo vê-se a pedra da cerca (088), do lado da vila o murete amarelo (087). O desenho das águas é hipótese.
+- **Texturas (23 nov.).** Muros e torres com a foto castle_wall_varriation (blocos retangulares em fiadas irregulares,
+  como nas fotos 046, 053 e 060), recolorida para o grés medido nas fotos ao sol, sem as pintas de líquen. Chão de
+  terra ocre (dry_ground_rocks) e saibro (gravelly_sand), em vez da cor lisa rosada da 0.2. Fotos Poly Haven, CC0.
 
 ## Por fazer / por confirmar
 

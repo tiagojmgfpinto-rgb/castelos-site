@@ -69,8 +69,8 @@ EL = [
          medidas="Seis troços com c. " + n(sum(v["comprimento_m"] for v in M["cerca"].values()) / 1000, 2) + " km no total e 13 torres; 2,8 m de espessura (Wikipédia); altura do LiDAR.",
          fontes=["lidar", "osm", "wiki", "commons"], resumo="Cerca urbana de taipa e grés", ancora=A["cerca_norte"]),
     dict(id="porta_cidade", nome="Porta da Cidade", grupo="Muralha_vila", estado="estado-atual", confianca="média",
-         descricao="Torreão maciço de grés vermelho a sul da cerca, sem merlões, com um telhado de quatro águas escondido atrás do parapeito e duas janelas de sacada de moldura branca e guarda de ferro. Entra-se por um arco alto e estreito na face poente, por baixo da janela norte, e a passagem vira para dentro da vila (o corredor por dentro é hipótese). Do largo sobe-se por uma escada íngreme, encostada à face norte, até um terraço com guarda.",
-         medidas=f"Planta de c. {n(PC['planta'][1])} × {n(PC['planta'][0])} m e terraço a {n(PC['terraco'])} m, c. {n(PC['terraco'] - min(PC['chao_sul'], PC['chao_norte']), 0)} m acima do largo (LiDAR).",
+         descricao="Torreão maciço de grés vermelho, sem merlões, em dois corpos: o de sul, mais alto, fecha em platibanda lisa; o de norte, mais baixo, tem telhado de quatro águas à vista. Duas janelas de sacada de moldura branca; a de norte abre para uma varanda corrida que vem do terraço. Entra-se por um arco alto e estreito na face poente, por baixo da janela norte, e a passagem vira para dentro da vila (o corredor por dentro é hipótese). Sobe-se ao terraço por uma escada íngreme assente na cerca, com murete amarelo do lado da vila.",
+         medidas=f"Planta de c. {n(PC['planta'][1])} × {n(PC['planta'][0])} m; platibanda do corpo sul a {n(PC['platibanda_sul'])} m, c. {n(PC['platibanda_sul'] - min(PC['chao_sul'], PC['chao_norte']), 0)} m acima do largo; beirado do corpo norte a {n(PC['beirado_norte'])} m; varanda e terraço a {n(PC['terraco_norte'])} m (LiDAR).",
          fontes=["lidar", "osm", "commons"], resumo="Torreão da Porta de Loulé, século XIV", ancora=A["porta_cidade"], desde=1300,
          desdeTexto="século XIV"),
 ]

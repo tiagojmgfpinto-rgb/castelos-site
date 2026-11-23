@@ -28,6 +28,9 @@ TEXTURAS = {
     "roof_09": "telha de canudo velha (telhados dos monumentos)",
     "rock_01": "granito em afloramento (penedos e rocha à vista)",
     "cliff_side": "calcário de arriba em camadas partidas (arribas de Peniche)",
+    "castle_wall_varriation": "aparelho de blocos em fiadas irregulares com juntas largas (grés de Silves)",
+    "gravelly_sand": "areia com cascalho (saibro dos recintos)",
+    "dry_ground_rocks": "terra seca com pedrinhas (chão de terra batida)",
 }
 
 
