@@ -49,7 +49,13 @@ O JSON do visor (`src/data/maquetas/sao-sebastiao-angra.json`) é escrito à mã
   portas por baixo das das pontas; topo sudoeste com três janelas por piso.
 - **Ala norte da Pousada (0.2)**: bloco de cobertura plana a 34,7 m entre a casa da guarda e a Casa (planta PN em
   `construir.py`). É o prédio amarelo do óculo da fotografia «F s seb angra 2» (2009), que a 0.1 tomava pela Casa do
-  Governador: fachada sul de 14,4 m com dois pares de janelas por piso, óculo ao centro e porta por baixo dele.
+  Governador: fachada sul de 13,4 m com dois pares de janelas por piso, óculo ao centro e porta por baixo dele.
+- **Casa da guarda (0.2)**: planta GU pela ortofoto (telhado de telha de c. 14 × 7 m), uma água de 31,65 a 33,75 m;
+  o arco interior do Portão de Armas fica na fachada amarela, onde o eixo da passagem a corta (`frente_guarda()`).
+- **Chão (0.2, revisto)**: classes da ortofoto sem manchas de menos de 3 m²; a terra batida dos caminhos e dos
+  terraplenos tem a cor medida (c. 0,46/0,42/0,37 sRGB ao sol) e cada vértice leva o tom da ortofoto sem as sombras.
+- **Basalto (0.2)**: patine por vértice com manchas largas, escorrências que descem do parapeito com comprimentos
+  variados, pé húmido com musgo e líquen claro (fotografias de Diego Delso e de C. Cruz).
 - **Picos do recinto (0.2)**: a araucária e os chapéus de sol que ficaram no MDS saem com uma abertura de 2,25 m onde
   o resultado é o chão do recinto (abaixo de 28,5 m).
 - **Torrinha da sineira (0.2)**: bloco do MDS de 5,5 × 5 m a 35,1 m no ângulo SO; terraço a 34,3 m, merlões a 35,1 m,
