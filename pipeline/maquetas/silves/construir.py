@@ -290,19 +290,23 @@ for g in ["Terreno", "Torre", "Muralhas", "Interior", "Muralha_vila", "Envolvent
 # e mais regulares nas torres (fotografias do Commons: 004, 005, 019, 020, 023 e as do Tiago). Cor medida nas fotos ao
 # sol: vermelho-acastanhado, mais escuro e saturado que o granito do norte; o AgX do visor tira saturação, por isso a
 # cor de base fica um pouco mais quente do que a média das fotos.
-TEX, ALT = textura_foto("old_stone_wall", n=1024, metros=4.0, cor=(0.58, 0.33, 0.24), contraste=1.2, saturacao=0.55,
-                        variacao=0.10, liquen=0.02, semente=41)
+# 23 nov.: a foto castle_wall_varriation (blocos retangulares de tamanhos variados em fiadas, juntas largas) é a que
+# mais se parece com o aparelho das fotos 046, 053 e 060; cor medida nas fotos ao sol (c. 185/132/106 sRGB, grés
+# rosado-acastanhado, menos laranja do que a 0.2) e sem líquen (as pintas brancas não existem nas fotos)
+TEX, ALT = textura_foto("castle_wall_varriation", n=1024, metros=4.0, cor=(0.64, 0.40, 0.27), contraste=1.35,
+                        saturacao=0.7, variacao=0.12, liquen=0.0, semente=41)
 material("muro", (1, 1, 1), 0.92, imagem("muro", TEX), normal=imagem("muro_n", normais(ALT, 4.0)), forca=1.0, escala=0.5, vcor=True)
-TEX, ALT = textura_foto("old_stone_wall", n=1024, metros=4.0, cor=(0.60, 0.37, 0.27), contraste=1.1, saturacao=0.5,
-                        variacao=0.08, semente=42)
+TEX, ALT = textura_foto("castle_wall_varriation", n=1024, metros=4.0, cor=(0.66, 0.44, 0.31), contraste=1.2,
+                        saturacao=0.6, variacao=0.08, semente=42)
 material("muro_topo", (1, 1, 1), 0.95, imagem("muro_topo", TEX), normal=imagem("muro_topo_n", normais(ALT, 4.0)), forca=0.8, escala=0.5, vcor=True)
-TEX, ALT = textura_silhares(n=1024, metros=4.0, fiada=(0.28, 0.48), comp=(0.4, 1.0), cor=(0.58, 0.34, 0.25), desvio=0.10,
-                            junta_m=0.018, junta_cor=(0.55, 0.43, 0.35), liquen=0.0, irregular=0.4, semente=43)
+# torres: o mesmo aparelho em fiadas irregulares (fotos 046 e 060), com blocos um pouco maiores
+TEX, ALT = textura_foto("castle_wall_varriation", n=1024, metros=4.0, metros_foto=2.67, cor=(0.64, 0.41, 0.28),
+                        contraste=1.35, saturacao=0.7, variacao=0.12, liquen=0.0, semente=43)
 material("cantaria_torre", (1, 1, 1), 0.9, imagem("cantaria_torre", TEX), normal=imagem("cantaria_torre_n", normais(ALT, 4.0)),
          forca=0.9, escala=0.5, vcor=True)
 # cerca da vila: taipa forrada de grés, mais ocre e gasta que a alcáçova (fotografias das muralhas da vila)
-TEX, ALT = textura_foto("old_stone_wall", n=1024, metros=4.0, cor=(0.62, 0.42, 0.31), contraste=1.15, saturacao=0.5,
-                        variacao=0.12, liquen=0.03, semente=44)
+TEX, ALT = textura_foto("old_stone_wall", n=1024, metros=4.0, cor=(0.66, 0.48, 0.37), contraste=1.15, saturacao=0.45,
+                        variacao=0.12, liquen=0.0, semente=44)
 material("cerca", (1, 1, 1), 0.93, imagem("cerca", TEX), normal=imagem("cerca_n", normais(ALT, 4.0)), forca=0.9, escala=0.5, vcor=True)
 # torres da cerca: taipa à vista, bege-ocre, sobre embasamento de grés (fotos 081–083)
 TEX, ALT = textura_foto("old_stone_wall", n=512, metros=4.0, cor=(0.72, 0.59, 0.44), contraste=0.8, saturacao=0.35,
@@ -333,8 +337,14 @@ material("bandeira_vermelha", (0.80, 0.12, 0.12), 0.8)
 TEX, ALT = textura_relva()
 material("relva", (1, 1, 1), 0.95, imagem("relva", TEX), normal=imagem("relva_n", normais(ALT, 1.0)), forca=0.4)
 material("mato", (0.52, 0.47, 0.33), 0.95)
-material("terra", (0.62, 0.45, 0.33), 0.97)           # terra vermelha das encostas (grés desfeito)
-material("saibro", (0.70, 0.55, 0.42), 0.95)
+# chão de terra: nas fotos ao sol é ocre-bege (c. 200/160/110 sRGB, fotos 053 e 060), não rosado; fotos dry_ground_rocks
+# e gravelly_sand (Poly Haven, CC0) recoloridas
+TEX, ALT = textura_foto("dry_ground_rocks", n=1024, metros=8.0, cor=(0.74, 0.53, 0.33), contraste=1.25, saturacao=0.6,
+                        variacao=0.14, semente=48)
+material("terra", (1, 1, 1), 0.97, imagem("terra", TEX), normal=imagem("terra_n", normais(ALT, 8.0)), forca=0.4, escala=0.25)
+TEX, ALT = textura_foto("gravelly_sand", n=512, metros=5.0, cor=(0.78, 0.62, 0.44), contraste=1.15, saturacao=0.5,
+                        variacao=0.08, semente=49)
+material("saibro", (1, 1, 1), 0.95, imagem("saibro", TEX), normal=imagem("saibro_n", normais(ALT, 5.0)), forca=0.3, escala=0.4)
 material("asfalto", (0.40, 0.40, 0.41), 0.95)
 material("calcada", (0.66, 0.64, 0.60), 0.95)
 material("cinza_viz", (0.74, 0.74, 0.73), 0.9)        # a vila: um só cinzento
@@ -1329,6 +1339,16 @@ def cerca():
         # extensão que o OSM regista; onde as casas o escondem, o LiDAR dá-lhe a altura dos telhados encostados)
         tp = _patamares(ndi.median_filter(tp, 7, mode="nearest"), tol=0.8, minimo=4)
         tp = np.maximum(tp, np.maximum(cd, cf) + 1.5)
+        if nome == "cerca_porta":
+            # a poente da Porta da Cidade a escada do terraço assenta sobre a cerca (fotos 087 e 088: o muro desce
+            # para poente com a escada); aí o topo do muro é o perfil da escada, não os telhados que o LiDAR apanha
+            B_ = TORREAO
+            z0_ = float(cota(*B_.xy(21.1, -8.0)))
+            for i_, p_ in enumerate(c):
+                u_, v_ = float(np.dot(p_ - B_.O, B_.t)), float(np.dot(p_ - B_.O, B_.e))
+                if 18.5 <= u_ <= 24.0 and -12.0 <= v_ <= 3.2:
+                    tp[i_] = min(tp[i_], z0_ + (26.9 - z0_) * float(np.clip((v_ + 7.5) / 9.5, 0, 1)) - 0.05)
+                    tp[i_] = max(tp[i_], max(cd[i_], cf[i_]) + 0.8)
         esp = ESP_CERCA if nome != "cerca_porta" else 2.4
         fora_l = c + n * esp / 2
         dent_l = c - n * esp / 2
@@ -1358,7 +1378,7 @@ def cerca():
     # torres da cerca: prismas da planta do OSM até ao topo do LiDAR, terraço com parapeito (as mais altas que o
     # muro) — sem merlões, que as fotografias das torres da vila não mostram
     mt = Malha(["cerca", "muro_topo", "terraco", "cantaria_lisa", "muro", "taipa", "vidro", "branco", "madeira", "ferro",
-                "telha", "reboco_amarelo"])
+                "telha", "reboco_amarelo", "pedestal"])
     tinfo = {}
     for nome, t in MUR["cerca_torres"].items():
         if nome == "porta_cidade":
@@ -1392,14 +1412,19 @@ def porta_cidade(m):
     z_in = float(cota(*B.xy(14.1, -2.0)))     # largo a poente
     z_out = float(cota(*B.xy(B.LU + 2.0, 5.0)))   # rua a norte, dentro da vila
     piso = round(t["meio"], 2)
-    # LiDAR: o corpo do torreão (u 0–18,6) tem parapeito a 33,0 m e, por dentro dele, um telhado de quatro águas
-    # (beirado a 31,9 m, cume a c. 33,9 m; fotos 087 e 088); a faixa de norte (u 18,6–20) fica mais baixa, num terraço
-    # com guarda a 26,9 m, a que se sobe por uma escada íngreme encostada à face norte, do largo para nascente
+    # LiDAR (superfície de 25 cm) e fotos 086–088: o torreão tem dois corpos. O corpo sul (u 0–11, a janela de sul)
+    # sobe a 33,0 m numa platibanda lisa, sem merlões, com um telhado de quatro águas escondido por dentro (beirado
+    # 31,9 m, cume 34,0 m). O corpo norte (u 11–19, o arco e a janela de norte) é c. 1,2 m mais baixo e tem o telhado de
+    # quatro águas à vista: beirado a 31,8 m, cume a 33,8 m de nascente a poente (u 15, v 4–7,6). A norte fica um
+    # terraço com guarda a 26,9 m, que continua numa varanda corrida pela face poente até à janela de norte (foto 087;
+    # o LiDAR dá 26,9–27,9 m a 1 m da face entre u 16 e 20). Sobe-se por uma escada íngreme encostada à face norte.
     z_bal = 26.9
+    U_SUL, U_NORTE = 11.0, 19.0
     info = passagem_cotovelo(m, B, min(z_in, z_out) - 1.5, z_bal, (12.8, 15.4), (3.5, 6.5), z_in, z_out, 6.3, 6.25, "cerca")
-    UB = Bloco(B.O, B.t, 18.6, B.LV)
-    corpo(m, UB.q(), 31.9, "cerca", z_pe=z_bal)
-    q = UB.q()
+    # corpo sul: paredes até 33,0 m, platibanda de 0,45 m e telhado escondido
+    SB = Bloco(B.O, B.t, U_SUL, B.LV)
+    corpo(m, SB.q(), 31.9, "cerca", z_pe=z_bal)
+    q = SB.q()
     qi = _inset(q, 0.45)
     z_par = 33.0
     for i in range(4):
@@ -1407,20 +1432,38 @@ def porta_cidade(m):
         m.face([(*q[i], 31.9), (*q[j], 31.9), (*q[j], z_par), (*q[i], z_par)], "cerca")
         m.face([(*q[i], z_par), (*q[j], z_par), (*qi[j], z_par), (*qi[i], z_par)], "muro_topo")
         m.face([(*qi[j], 31.6), (*qi[i], 31.6), (*qi[i], z_par), (*qi[j], z_par)], "cerca")
-    # telhado de quatro águas sobre o recinto do parapeito
-    LUi, LVi = UB.LU - 0.9, UB.LV - 0.9
-    a_ = LVi / 2
-    def R(u, v):
-        return UB.xy(0.45 + u, 0.45 + v)
-    c0, c1 = (*R(a_, a_), 33.9), (*R(LUi - a_, a_), 33.9)
-    e = [(*R(0, 0), 31.9), (*R(LUi, 0), 31.9), (*R(LUi, LVi), 31.9), (*R(0, LVi), 31.9)]
-    for f in ([e[0], e[1], c1, c0], [e[1], e[2], c1], [e[2], e[3], c0, c1], [e[3], e[0], c0]):
-        m.face(f, "telha")
-    m.face(e[::-1], "terraco")
+
+    def quatro_aguas(Bl, u0, u1, v0, v1, z_b, z_c, ao_longo_v):
+        """Telhado de quatro águas sobre o retângulo (u0..u1, v0..v1) do bloco, cume ao longo de v (ou de u)."""
+        R = lambda u, v: (*Bl.xy(u, v), z_b)  # noqa: E731
+        e = [R(u0, v0), R(u1, v0), R(u1, v1), R(u0, v1)]
+        if ao_longo_v:
+            h = (u1 - u0) / 2
+            c0, c1 = (*Bl.xy(u0 + h, v0 + h), z_c), (*Bl.xy(u0 + h, v1 - h), z_c)
+            fs = ([e[0], e[1], c0], [e[1], e[2], c1, c0], [e[2], e[3], c1], [e[3], e[0], c0, c1])
+        else:
+            h = (v1 - v0) / 2
+            c0, c1 = (*Bl.xy(u0 + h, v0 + h), z_c), (*Bl.xy(u1 - h, v0 + h), z_c)
+            fs = ([e[0], e[1], c1, c0], [e[1], e[2], c1], [e[2], e[3], c0, c1], [e[3], e[0], c0])
+        for f in fs:
+            m.face(f, "telha")
+        m.face(e[::-1], "terraco")
+
+    quatro_aguas(SB, 0.45, U_SUL - 0.45, 0.45, B.LV - 0.45, 31.9, 34.0, False)
+    # corpo norte: paredes até ao beirado (31,8 m) e telhado à vista com beiral de 0,35 m; encosta ao corpo sul
+    NB_q = ccw([B.xy(U_SUL, 0), B.xy(U_NORTE, 0), B.xy(U_NORTE, B.LV), B.xy(U_SUL, B.LV)])
+    corpo(m, NB_q, 31.8, "cerca", z_pe=z_bal)
+    quatro_aguas(B, U_SUL + 0.45, U_NORTE + 0.35, -0.35, B.LV + 0.35, 31.65, 33.8, True)
+    # cimalha: friso de reboco claro por baixo do beiral (fotos 087 e 088)
+    for (pa_, pb_) in ((B.xy(U_NORTE, 0), B.xy(U_SUL, 0)), (B.xy(U_NORTE, B.LV), B.xy(U_NORTE, 0)),
+                       (B.xy(U_SUL, B.LV), B.xy(U_NORTE, B.LV))):
+        d_ = unit(np.subtract(pb_, pa_))
+        n_ = np.array([d_[1], -d_[0]])
+        m.prisma(ccw([pa_, pb_, pb_ + n_ * 0.2, pa_ + n_ * 0.2]), 31.45, 31.7, "branco")
     # terraço de norte com guarda
-    tq = [B.xy(18.6, 0), B.xy(B.LU, 0), B.xy(B.LU, B.LV), B.xy(18.6, B.LV)]
+    tq = [B.xy(U_NORTE, 0), B.xy(B.LU, 0), B.xy(B.LU, B.LV), B.xy(U_NORTE, B.LV)]
     m.face([(*p_, z_bal) for p_ in ccw(tq)], "terraco")
-    guarda(m, [(*B.xy(B.LU - 0.05, 2.0), z_bal), (*B.xy(B.LU - 0.05, B.LV - 0.1), z_bal), (*B.xy(18.65, B.LV - 0.1), z_bal)],
+    guarda(m, [(*B.xy(B.LU - 0.05, 3.3), z_bal), (*B.xy(B.LU - 0.05, B.LV - 0.1), z_bal), (*B.xy(U_NORTE + 0.05, B.LV - 0.1), z_bal)],
            "ferro", alt=1.0, passo=1.4, r=0.02, travessas=(0.1, 0.5))
     # escada de norte: lanço único de c. 0,2 × 0,22 m, de 1,8 m de largura, com murete rebocado do lado de fora
     v0, v1 = -7.5, 2.0
@@ -1429,25 +1472,36 @@ def porta_cidade(m):
     for k in range(n):
         va, vb = v0 + (v1 - v0) * k / n, v0 + (v1 - v0) * (k + 1) / n
         zk = z0 + (z_bal - z0) * (k + 1) / n
-        m.prisma(ccw([B.xy(20.05, va), B.xy(22.0, va), B.xy(22.0, vb), B.xy(20.05, vb)]), z0 - 0.6, zk, "cantaria_lisa",
-                 mat_topo="muro_topo")
+        m.prisma(ccw([B.xy(20.05, va), B.xy(22.0, va), B.xy(22.0, vb), B.xy(20.05, vb)]), z0 - 0.6, zk, "pedestal",
+                 mat_topo="pedestal")
     m.prisma(ccw([B.xy(20.05, v1), B.xy(22.0, v1), B.xy(22.0, 3.2), B.xy(20.05, 3.2)]), z0 - 0.6, z_bal, "cantaria_lisa",
              mat_topo="terraco")
+    # murete rebocado a amarelo do lado de norte, virado para a vila (foto 087, tirada de noroeste); do lado de sul
+    # a escada assenta na cerca, que se vê de pedra a partir do largo (foto 088)
     pa, pb = (22.0, 22.3)
     for k in range(n):
         va, vb = v0 + (v1 - v0) * k / n, v0 + (v1 - v0) * (k + 1) / n
         zk = z0 + (z_bal - z0) * (k + 1) / n
-        m.prisma(ccw([B.xy(pa, va), B.xy(pb, va), B.xy(pb, vb), B.xy(pa, vb)]), z0 - 0.6, zk + 0.9, "reboco_amarelo")
+        m.prisma(ccw([B.xy(pa, va), B.xy(pb, va), B.xy(pb, vb), B.xy(pa, vb)]), z0 - 0.6, zk + 0.9, "reboco_amarelo",
+                 mat_topo="branco")
     PORTA_CIDADE["escada"] = dict(degraus=n, de=round(z0, 2), ate=z_bal)
     # janelas de sacada da face poente (foto 086): vão de c. 1,3 × 2,0 m com moldura branca larga e cornija, a de
     # norte por cima do arco; varanda de pedra com guarda de ferro
+    # as duas janelas assentam à cota do terraço (086: as varandas estão à mesma altura); a de norte abre para a
+    # varanda corrida, que vai do terraço norte até à janela (087, 088)
+    ub0 = 12.9
+    m.prisma(ccw([B.xy(ub0, 0), B.xy(B.LU, 0), B.xy(B.LU, -1.0), B.xy(ub0, -1.0)]), z_bal - 0.18, z_bal, "branco")
+    guarda(m, [(*B.xy(ub0, -0.02), z_bal), (*B.xy(ub0, -0.95), z_bal), (*B.xy(B.LU - 0.05, -0.95), z_bal),
+               (*B.xy(B.LU - 0.05, 2.0), z_bal)], "ferro", alt=1.0, passo=1.2, r=0.02, travessas=(0.1, 0.5))
     for u in (5.8, 14.1):
-        zj = z_in + 10.0
+        zj = z_bal
         a, b = B.xy(u - 0.65, -0.02), B.xy(u + 0.65, -0.02)
         m.face([(*a, zj), (*b, zj), (*b, zj + 2.0), (*a, zj + 2.0)], "vidro")
         for (u0, u1, z0, z1) in ((u - 0.95, u - 0.65, zj, zj + 2.0), (u + 0.65, u + 0.95, zj, zj + 2.0),
                                  (u - 0.95, u + 0.95, zj + 2.0, zj + 2.3), (u - 1.1, u + 1.1, zj + 2.3, zj + 2.45)):
             m.prisma(ccw([B.xy(u0, 0), B.xy(u1, 0), B.xy(u1, -0.12), B.xy(u0, -0.12)]), z0, z1, "branco")
+        if u > ub0:
+            continue
         # varanda: laje e guarda (prumos e corrimão)
         m.prisma(ccw([B.xy(u - 1.0, 0), B.xy(u + 1.0, 0), B.xy(u + 1.0, -0.55), B.xy(u - 1.0, -0.55)]), zj - 0.15, zj,
                  "branco")
@@ -1457,7 +1511,7 @@ def porta_cidade(m):
         for uu in (u - 0.95, u + 0.95):
             m.barra((*B.xy(uu, -0.02), zj + 0.95), (*B.xy(uu, -0.5), zj + 0.95), 0.025, "ferro", k=4)
             m.barra((*B.xy(uu, -0.05), zj + 0.1), (*B.xy(uu, -0.05), zj + 0.95), 0.015, "ferro", k=4)
-    PORTA_CIDADE.update(info, terraco=z_par, beirado=31.9, cume=33.9, terraco_norte=z_bal, planta=[B.LV, B.LU], chao_norte=round(z_out, 2), chao_sul=round(z_in, 2))
+    PORTA_CIDADE.update(info, platibanda_sul=z_par, beirado_norte=31.8, cume_norte=33.8, cume_sul=34.0, varanda=[ub0, B.LU], terraco_norte=z_bal, planta=[B.LV, B.LU], chao_norte=round(z_out, 2), chao_sul=round(z_in, 2))
     MEDIDAS["porta_cidade"] = dict(PORTA_CIDADE)
 
 
@@ -1964,7 +2018,8 @@ if "--vistas" in sys.argv:
         vista("f060_escavacoes", (8.0, -58.0), 56.5, (22, -30), 51.5, lente=24, res=(1200, 800))
         vista("f053_cisterna", (12.0, 10.0), 57.5, (31, 26), 53.0, lente=28, res=(1200, 800))
         vista("recinto_alto", (-40, -80), 85.0, (5, -10), 52.0, lente=30, res=(1280, 900))
-        vista("f087_porta_cidade", (-166.0, -249.0), 22.0, (-147, -254), 25.0, lente=26, res=(1100, 800))
+        vista("f087_porta_cidade", (-162.0, -240.0), 22.2, (-147.5, -252.5), 24.0, lente=22, res=(1100, 800))
+        vista("f088_porta_cidade", (-180.0, -266.0), 19.0, (-146.5, -256.5), 24.0, lente=30, res=(1100, 800))
         vista("f046_menagem", (12.0, 45.0), None, (20, 62), 58.0, lente=28, res=(1000, 800))
         vista("f101_corredor", (-20.3, -64.8), 49.1, (-30, -64.8), 48.9, lente=22, res=(800, 1100))
         vista("f086_porta_cidade", (-170.0, -252.0), None, (-147, -253.5), 25.0, lente=30, res=(1100, 1000))

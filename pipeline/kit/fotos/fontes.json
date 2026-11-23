@@ -92,5 +92,44 @@
    1.8300000429153442
   ],
   "uso": "calcário de arriba em camadas partidas (arribas de Peniche)"
+ },
+ "castle_wall_varriation": {
+  "titulo": "Castle Wall Variation",
+  "autores": [
+   "Rob Tuytel"
+  ],
+  "licenca": "CC0 1.0 (domínio público)",
+  "pagina": "https://polyhaven.com/a/castle_wall_varriation",
+  "metros": [
+   2.0,
+   2.0
+  ],
+  "uso": "aparelho de blocos em fiadas irregulares com juntas largas (grés de Silves)"
+ },
+ "gravelly_sand": {
+  "titulo": "Gravelly Sand",
+  "autores": [
+   "Dario Barresi"
+  ],
+  "licenca": "CC0 1.0 (domínio público)",
+  "pagina": "https://polyhaven.com/a/gravelly_sand",
+  "metros": [
+   2.4800000190734863,
+   2.4800000190734863
+  ],
+  "uso": "areia com cascalho (saibro dos recintos)"
+ },
+ "dry_ground_rocks": {
+  "titulo": "Dry Ground Rocks",
+  "autores": [
+   "Rob Tuytel"
+  ],
+  "licenca": "CC0 1.0 (domínio público)",
+  "pagina": "https://polyhaven.com/a/dry_ground_rocks",
+  "metros": [
+   4.0,
+   4.0
+  ],
+  "uso": "terra seca com pedrinhas (chão de terra batida)"
  }
 }

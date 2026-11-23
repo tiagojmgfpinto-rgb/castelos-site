@@ -2,7 +2,7 @@
  "monumento": "silves",
  "titulo": "Castelo e Muralha de Silves",
  "variante": "estado-atual",
- "versao": "0.2 provisória",
+ "versao": "0.2.1 provisória",
  "data": "2026-11-23",
  "origem": {
   "lat": 37.191034,
@@ -265,8 +265,8 @@
    "grupo": "Muralha_vila",
    "estado": "estado-atual",
    "confianca": "média",
-   "descricao": "Torreão maciço de grés vermelho a sul da cerca, sem merlões, com um telhado de quatro águas escondido atrás do parapeito e duas janelas de sacada de moldura branca e guarda de ferro. Entra-se por um arco alto e estreito na face poente, por baixo da janela norte, e a passagem vira para dentro da vila (o corredor por dentro é hipótese). Do largo sobe-se por uma escada íngreme, encostada à face norte, até um terraço com guarda.",
-   "medidas": "Planta de c. 20,0 × 11,6 m e terraço a 33,0 m, c. 15 m acima do largo (LiDAR).",
+   "descricao": "Torreão maciço de grés vermelho, sem merlões, em dois corpos: o de sul, mais alto, fecha em platibanda lisa; o de norte, mais baixo, tem telhado de quatro águas à vista. Duas janelas de sacada de moldura branca; a de norte abre para uma varanda corrida que vem do terraço. Entra-se por um arco alto e estreito na face poente, por baixo da janela norte, e a passagem vira para dentro da vila (o corredor por dentro é hipótese). Sobe-se ao terraço por uma escada íngreme assente na cerca, com murete amarelo do lado da vila.",
+   "medidas": "Planta de c. 20,0 × 11,6 m; platibanda do corpo sul a 33,0 m, c. 15 m acima do largo; beirado do corpo norte a 31,8 m; varanda e terraço a 26,9 m (LiDAR).",
    "fontes": [
     "lidar",
     "osm",
