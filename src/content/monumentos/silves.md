@@ -7,16 +7,16 @@ distrito: "Faro"
 concelho: "Silves"
 localidade: "Silves"
 coordenadas:
-  lat: 37.19111
-  lon: -8.43778
-  verificadas: false
-  fonte: "Caixa do artigo da Wikipédia em português; por conferir no ortofotomapa"
+  lat: 37.191034
+  lon: -8.437765
+  verificadas: true
+  fonte: "Centro da alcáçova medido no LiDAR 2024 da DGT"
 seculoOrigem: "século VIII"
 classificacao:
   categoria: "Monumento Nacional (1910)"
   sipa: "IPA.00001288"
 estadoFicha: publicada
-estadoMaqueta: pendente
+estadoMaqueta: concluida
 adicionado: "2026-10-26T14:52:00Z"
 prioritario: true
 
@@ -67,6 +67,12 @@ cronologia:
   - ano: "2012"
     texto: "Classificação das muralhas da cidade e da Porta de Almedina."
 medidas:
+  - conceito: "Alcáçova (LiDAR 2024)"
+    valor: "Perímetro exterior de c. 540 m e área de c. 1,1 ha; panos de 2,4 a 3,0 m de espessura, adarve a 53–59 m e merlões c. 2 m acima dele"
+  - conceito: "Torre de menagem (LiDAR 2024)"
+    valor: "Planta de 14,3 × 9,0 m; merlões a 66,5 m de altitude, c. 12 m acima do chão de fora"
+  - conceito: "Porta da Cidade (LiDAR 2024)"
+    valor: "Torreão de c. 20 × 11,6 m, com o terraço a 32,5 m de altitude, c. 16 m acima do largo"
   - conceito: "Torres da alcáçova"
     valor: "11"
   - conceito: "Caminho de ronda"
@@ -82,7 +88,7 @@ curiosidades:
   - "À entrada está uma estátua de bronze de D. Sancho I, que conquistou o castelo pela primeira vez, em 1189."
 visita:
   resumo: "Aberto ao público, com receção, loja e casa de chá"
-verificadoEm: "2026-11-09"
+verificadoEm: "2026-11-18"
 notas:
   - "Ficha redigida a partir dos artigos da Wikipédia em português e inglês, que divergem nas medidas das cisternas (a da Moura tem 7 m de altura no português e 10 m no inglês; a dos Cães mais de 40 m ou 60 m) e na origem do castelo. O SIPA (ficha n.º 1288) não respondeu a 9 de novembro de 2026; as datas devem ser confirmadas lá."
 fontes:
@@ -92,9 +98,43 @@ fontes:
   - titulo: "Wikipedia — Castle of Silves (restauro, escavações e propriedade)"
     url: "https://en.wikipedia.org/wiki/Castle_of_Silves"
     consultado: "2026-11-09"
+  - titulo: "DGT — LiDAR 2024 (nuvem de pontos e MDT/MDS de 50 cm, folhas 172025, 172026, 173025 e 173026)"
+    url: "https://cdd.dgterritorio.gov.pt"
+    consultado: "2026-11-18"
   - titulo: "SIPA — Castelo de Silves, n.º 1288 (por consultar)"
     url: "http://www.monumentos.gov.pt/Site/APP_PagesUser/SIPA.aspx?id=1288"
+maquetas:
+  - tipo: estado-atual
+    publicada: "2026-11-18"
+    ficheiro: "maquetas/silves/silves.glb"
+    capa: "maquetas/silves/capa.jpg"
+    validada: false
+    provisoria: true
+    fontes:
+      - titulo: "DGT — LiDAR 2024 (MDT, MDS 50 cm e nuvem de pontos com cor, folhas 172025, 172026, 173025 e 173026)"
+        url: "https://cdd.dgterritorio.gov.pt"
+      - titulo: "OpenStreetMap (via Overture Maps) — troços e torres da muralha da vila"
+        url: "https://www.openstreetmap.org/copyright"
+      - titulo: "Wikimedia Commons — fotografias do castelo, das muralhas e das portas de Silves, com GPS"
+        url: "https://commons.wikimedia.org/wiki/Category:Castelo_de_Silves"
+      - titulo: "Wikipédia — Castelo de Silves"
+        url: "https://pt.wikipedia.org/wiki/Castelo_de_Silves"
 imagens:
+  - ficheiro: "imagens/silves/aerea.jpg"
+    legenda: "A alcáçova vista do ar, de sudoeste: a torre da porta com a bandeira, a casa da guarda e, dentro, o jardim e as escavações do palácio."
+    autor: "Bextrel, Wikimedia Commons"
+    licenca: "CC BY-SA 4.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Silves_-_Algarve,_Portugal_-_11.03.2023.jpg"
+  - ficheiro: "imagens/silves/entrada.jpg"
+    legenda: "A torre da porta com a estátua de D. Sancho I; à esquerda, o arco de entrada."
+    autor: "Marty B, Wikimedia Commons"
+    licenca: "CC BY-SA 2.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Silves_entrance_(52859678648).jpg"
+  - ficheiro: "imagens/silves/merloes.jpg"
+    legenda: "Merlões retangulares do adarve e uma torre, com o arco de uma albarrã ao fundo."
+    autor: "Marty B, Wikimedia Commons"
+    licenca: "CC BY-SA 2.0"
+    url: "https://commons.wikimedia.org/wiki/File:Castelo_de_Silves_(52859628915).jpg"
   - ficheiro: "imagens/silves/sobre-a-cidade.jpg"
     legenda: "O castelo de grés vermelho por cima das casas da cidade velha."
     autor: "Norbert Nagel, Wikimedia Commons"

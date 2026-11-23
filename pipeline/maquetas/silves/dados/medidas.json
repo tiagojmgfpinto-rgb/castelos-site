@@ -1,0 +1,439 @@
+{
+ "panos": {
+  "norte_oeste": {
+   "adarve_mediana": 57.9,
+   "merloes_mediana": 59.94,
+   "espessura": 3.0
+  },
+  "norte_diagonal": {
+   "adarve_mediana": 57.15,
+   "merloes_mediana": 59.4,
+   "espessura": 3.0
+  },
+  "norte": {
+   "adarve_mediana": 58.88,
+   "merloes_mediana": 60.88,
+   "espessura": 3.0
+  },
+  "nordeste": {
+   "adarve_mediana": 58.69,
+   "merloes_mediana": 60.67,
+   "espessura": 2.6
+  },
+  "leste": {
+   "adarve_mediana": 54.26,
+   "merloes_mediana": 56.19,
+   "espessura": 2.5
+  },
+  "sueste": {
+   "adarve_mediana": 52.99,
+   "merloes_mediana": 54.93,
+   "espessura": 2.5
+  },
+  "sul": {
+   "adarve_mediana": 52.96,
+   "merloes_mediana": 54.9,
+   "espessura": 2.4
+  },
+  "sul_oeste": {
+   "adarve_mediana": 56.16,
+   "merloes_mediana": 58.06,
+   "espessura": 2.6
+  },
+  "oeste": {
+   "adarve_mediana": 57.59,
+   "merloes_mediana": 59.84,
+   "espessura": 3.0
+  }
+ },
+ "merloes_alcacova": 209,
+ "torres": {
+  "menagem": {
+   "planta": [
+    14.3,
+    8.95
+   ],
+   "merloes_pontas": 66.53,
+   "terraco": 64.53,
+   "merloes": 32
+  },
+  "segredo": {
+   "planta": [
+    10.44,
+    6.52
+   ],
+   "merloes_pontas": 64.38,
+   "terraco": 62.38,
+   "merloes": 22
+  },
+  "norte": {
+   "planta": [
+    6.45,
+    4.67
+   ],
+   "merloes_pontas": 62.03,
+   "terraco": 60.03,
+   "merloes": 14
+  },
+  "albarra_nordeste": {
+   "planta": [
+    6.65,
+    6.52
+   ],
+   "merloes_pontas": 61.65,
+   "terraco": 59.65,
+   "merloes": 16
+  },
+  "centro": {
+   "planta": [
+    10.87,
+    7.72
+   ],
+   "merloes_pontas": 59.14,
+   "terraco": 57.14,
+   "merloes": 24
+  },
+  "albarra_sueste": {
+   "planta": [
+    7.18,
+    7.18
+   ],
+   "merloes_pontas": 54.9,
+   "terraco": 52.9,
+   "merloes": 20
+  },
+  "sueste": {
+   "planta": [
+    7.11,
+    6.55
+   ],
+   "merloes_pontas": 56.33,
+   "terraco": 54.33,
+   "merloes": 18
+  },
+  "porta": {
+   "planta": [
+    5.56,
+    6.14
+   ],
+   "merloes_pontas": 59.46,
+   "terraco": 57.46,
+   "merloes": 16
+  },
+  "mulheres": {
+   "planta": [
+    8.43,
+    8.96
+   ],
+   "merloes_pontas": 62.78,
+   "terraco": 60.78,
+   "merloes": 24
+  },
+  "oeste": {
+   "planta": [
+    5.86,
+    5.78
+   ],
+   "merloes_pontas": 61.21,
+   "terraco": 59.21,
+   "merloes": 16
+  }
+ },
+ "bracos_albarras": {
+  "albarra_sueste": {
+   "eixo": [
+    [
+     27.59,
+     -46.6
+    ],
+    [
+     33.86220986868835,
+     -49.396339863514996
+    ]
+   ],
+   "adarve": 52.98,
+   "chao": 42.32,
+   "arco": [
+    4.0,
+    49.32
+   ]
+  },
+  "albarra_nordeste": {
+   "eixo": [
+    [
+     47.3,
+     29.9
+    ],
+    [
+     51.555,
+     31.535000000000004
+    ]
+   ],
+   "adarve": 58.69,
+   "chao": 50.61
+  }
+ },
+ "casa_guarda": {
+  "z_in": 47.4,
+  "z_out": 50.6,
+  "arco_entrada": [
+   2.4,
+   50.8
+  ],
+  "arco_saida": [
+   3.0,
+   54.5
+  ],
+  "planta": [
+   15.2,
+   19.4
+  ],
+  "terraco": 55.6,
+  "merloes_pontas": 57.6,
+  "merloes": 36
+ },
+ "escada_adarve": {
+  "degraus": 22,
+  "largura": 1.95,
+  "cotas": [
+   53.4,
+   55.6,
+   57.85
+  ]
+ },
+ "cisterna": {
+  "naves": 4,
+  "extradorso": [
+   52.4,
+   53.6
+  ],
+  "murete": 54.5,
+  "planta": [
+   20.0,
+   15.3
+  ]
+ },
+ "edificios_recinto": 2,
+ "porta_cidade": {
+  "z_in": 17.55,
+  "z_out": 18.91,
+  "arco_entrada": [
+   2.6,
+   25.75
+  ],
+  "arco_saida": [
+   3.0,
+   27.01
+  ],
+  "terraco": 32.52,
+  "planta": [
+   11.6,
+   20.0
+  ],
+  "chao_norte": 18.91,
+  "chao_sul": 17.55
+ },
+ "cerca": {
+  "cerca_norte": {
+   "comprimento_m": 290.8,
+   "topo_mediana": 54.55,
+   "altura_fora_mediana": 5.66
+  },
+  "cerca_oeste": {
+   "comprimento_m": 156.1,
+   "topo_mediana": 42.57,
+   "altura_fora_mediana": 7.16
+  },
+  "cerca_sudoeste": {
+   "comprimento_m": 55.4,
+   "topo_mediana": 25.02,
+   "altura_fora_mediana": 5.06
+  },
+  "cerca_porta": {
+   "comprimento_m": 32.0,
+   "topo_mediana": 24.37,
+   "altura_fora_mediana": 6.88
+  },
+  "cerca_sul": {
+   "comprimento_m": 97.5,
+   "topo_mediana": 28.64,
+   "altura_fora_mediana": 7.58
+  },
+  "cerca_leste": {
+   "comprimento_m": 33.1,
+   "topo_mediana": 47.43,
+   "altura_fora_mediana": 8.88
+  }
+ },
+ "torres_cerca": {
+  "norte_1": {
+   "topo": 58.07,
+   "altura": 12.97
+  },
+  "norte_2": {
+   "topo": 58.86,
+   "altura": 12.92
+  },
+  "norte_3": {
+   "topo": 57.75,
+   "altura": 11.09
+  },
+  "norte_4": {
+   "topo": 57.79,
+   "altura": 9.12
+  },
+  "norte_5": {
+   "topo": 47.73,
+   "altura": 3.06
+  },
+  "oeste_1": {
+   "topo": 45.35,
+   "altura": 14.89
+  },
+  "oeste_2": {
+   "topo": 47.16,
+   "altura": 16.75
+  },
+  "sudoeste_1": {
+   "topo": 23.92,
+   "altura": 5.99
+  },
+  "sudoeste_2": {
+   "topo": 24.65,
+   "altura": 8.37
+  },
+  "sul_1": {
+   "topo": 29.4,
+   "altura": 12.23
+  },
+  "leste_1": {
+   "topo": 29.6,
+   "altura": 2.21
+  },
+  "leste_2": {
+   "topo": 29.77,
+   "altura": 8.01
+  },
+  "leste_3": {
+   "topo": 23.15,
+   "altura": 5.86
+  }
+ },
+ "terreno_triangulos": 131306,
+ "edificios_vila": 603,
+ "arvores": 554,
+ "alcacova": {
+  "area_m2": 10810,
+  "perimetro_m": 542,
+  "torres": 10,
+  "ponto_mais_alto_menagem": 66.54
+ },
+ "base": {
+  "centro": [
+   -110.0,
+   -100.0
+  ],
+  "raio": 245.0
+ },
+ "ancoras": {
+  "menagem": [
+   20.1,
+   68.0,
+   -67.2
+  ],
+  "porta": [
+   -32.6,
+   52.0,
+   60.4
+  ],
+  "albarra_sueste": [
+   34.0,
+   56.5,
+   49.5
+  ],
+  "albarra_nordeste": [
+   54.6,
+   63.0,
+   -32.8
+  ],
+  "cisterna": [
+   31.7,
+   55.5,
+   -26.3
+  ],
+  "segredo": [
+   -48.8,
+   65.9,
+   -49.9
+  ],
+  "mulheres": [
+   -41.6,
+   64.3,
+   61.6
+  ],
+  "porta_cidade": [
+   -141.5,
+   36.0,
+   252.9
+  ],
+  "cerca_norte": [
+   -176.5,
+   60.0,
+   -29.0
+  ]
+ },
+ "texturas_foto": {
+  "old_stone_wall": {
+   "titulo": "Old Stone Wall",
+   "autores": [
+    "Charlotte Baglioni"
+   ],
+   "licenca": "CC0 1.0 (domínio público)",
+   "pagina": "https://polyhaven.com/a/old_stone_wall",
+   "metros": [
+    2.0,
+    2.0
+   ],
+   "uso": "alvenaria de pedra irregular (muralhas, cercas, muros)"
+  },
+  "rock_01": {
+   "titulo": "Rock 01",
+   "autores": [
+    "Rob Tuytel"
+   ],
+   "licenca": "CC0 1.0 (domínio público)",
+   "pagina": "https://polyhaven.com/a/rock_01",
+   "metros": [
+    1.5,
+    1.5
+   ],
+   "uso": "granito em afloramento (penedos e rocha à vista)"
+  },
+  "roof_09": {
+   "titulo": "Roof 09",
+   "autores": [
+    "Rob Tuytel"
+   ],
+   "licenca": "CC0 1.0 (domínio público)",
+   "pagina": "https://polyhaven.com/a/roof_09",
+   "metros": [
+    4.0,
+    4.0
+   ],
+   "uso": "telha de canudo velha (telhados dos monumentos)"
+  },
+  "seaworn_stone_tiles": {
+   "titulo": "Seaworn Stone Tiles",
+   "autores": [
+    "Dimitrios Savva"
+   ],
+   "licenca": "CC0 1.0 (domínio público)",
+   "pagina": "https://polyhaven.com/a/seaworn_stone_tiles",
+   "metros": [
+    2.0,
+    2.0
+   ],
+   "uso": "cantaria regular de fiadas baixas (portas, paramentos aparelhados)"
+  }
+ }
+}

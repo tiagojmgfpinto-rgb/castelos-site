@@ -31,7 +31,7 @@ test("catálogo: pesquisa, filtros e endereço", async ({ page }) => {
   // o endereço repõe os filtros e as regiões vazias escondem-se
   await page.goto("castelos/?maqueta=1&regiao=algarve");
   await expect(page.locator("select[name=regiao]")).toHaveValue("algarve");
-  await expect(page.locator(".catalogo-vazio, [data-seccao='algarve'] [data-cartao]:not([hidden])").first()).toBeVisible();
+  await expect(page.locator(".catalogo-vazio:visible, [data-seccao='algarve'] [data-cartao]:visible").first()).toBeVisible();
 
   // cada cartão leva a uma ficha que existe
   await page.goto("castelos/");
