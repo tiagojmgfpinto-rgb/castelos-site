@@ -57,7 +57,7 @@ python pipeline/maquetas/silves/visor_elementos.py  # elementos do JSON do visor
 - **Albarrãs.** Os braços têm arco por baixo (fotos 020, 030 e a de Marty B no Commons). Largura do braço (3,0–3,2 m)
   e altura dos arcos estimadas.
 - **Merlões.** Retangulares, c. 1,0 m com ameias de 0,5 m (fotos 004, 023, 076). Passo constante; não contados um a
-  um. As seteiras dos merlões (076) não estão modeladas.
+  um. Cada merlão tem uma seteira estreita nas duas faces (076), como vão escuro de 0,08 × 0,5 m.
 - **Cerca.** Só os troços que o OSM regista. O topo é o LiDAR (mediana em 7 m, em patamares, nunca menos de 1,5 m
   acima do chão de dentro): onde há casas encostadas pode ser a altura dos telhados. Sem merlões (as fotos dos troços
   e das torres da vila não os mostram). Torres da cerca com embasamento de grés e taipa à vista (081–083).
@@ -69,8 +69,25 @@ python pipeline/maquetas/silves/visor_elementos.py  # elementos do JSON do visor
 - **Contradição.** A Wikipédia fala em onze torres; o LiDAR dá dez torres retangulares mais a casa da guarda, que
   conta como a décima primeira.
 
+## Versão 0.2 (23 nov. 2026)
+
+- **Escavações do Palácio das Varandas.** Os muros saem do LiDAR: relevo local (superfície menos a abertura de
+  17 × 17 células) entre 0,35 e 2,2 m, só a crista, só onde a densidade é alta (zona escavada a sudeste do recinto),
+  sem relva nem copas. Os polígonos são esquadriados pelo retângulo mínimo. Os passadiços (cinzento-azulado no
+  ortofoto) têm estrado, prumos e guarda. 35 muros em c. 184 m². As plantas dos compartimentos são aproximadas.
+- **Cisterna da Moura.** Abóbadas e bordo em vermelho, como nas fotos 053–055. O bordo segue o terreno aresta a aresta
+  (murete a c. 54 m).
+- **Chão do recinto.** Material lido no ortofoto em janelas de 5 × 5: saibro claro, lajeado de grés, relva e terra.
+  Palmeiras onde o LiDAR dá copas pequenas e altas dentro da alcáçova.
+- **Torre de menagem.** Porta em arco quebrado na face virada ao recinto (soleira 55,5 m, medida no LiDAR). As pontas
+  dos panos prolongam-se pelo eixo até entrarem na torre, para não ficar fresta (vista `f046_menagem`).
+- **Porta da alcáçova.** Aduelas de grés no arco exterior e um segundo arco, mais estreito, recuado (foto 101).
+- **Porta da Cidade.** Telhado de quatro águas (beirado 31,9 m, cume 33,9 m) sobre platibanda, terraço a norte a
+  26,9 m com guarda e escada íngreme encostada com parapeito amarelo (37 degraus desde 19,4 m; foto 087 e LiDAR).
+  O telhado e a escada são lidos no LiDAR, mas o desenho das águas é hipótese.
+
 ## Por fazer / por confirmar
 
-- Palácio das Varandas e escavações (ficam no relevo do chão), Cisterna dos Cães, Porta da Traição (norte), outras escadas
-  dos adarves, aduelas e arco de descarga da porta (foto 101), arco branco reconstruído, casa de chá e o jardim de traçado islâmico.
+- Cisterna dos Cães, Porta da Traição (norte), outras escadas
+  dos adarves, arco branco reconstruído, casa de chá e o jardim de traçado islâmico.
 - Confirmar no SIPA as datas e o traçado da porta em cotovelo; contar os merlões face a face.

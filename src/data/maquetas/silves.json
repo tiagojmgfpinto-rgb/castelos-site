@@ -2,8 +2,8 @@
  "monumento": "silves",
  "titulo": "Castelo e Muralha de Silves",
  "variante": "estado-atual",
- "versao": "0.1 provisória",
- "data": "2026-11-18",
+ "versao": "0.2 provisória",
+ "data": "2026-11-23",
  "origem": {
   "lat": 37.191034,
   "lon": -8.437765,
@@ -57,7 +57,8 @@
   "albarra_nordeste",
   "cisterna",
   "segredo",
-  "porta_cidade"
+  "porta_cidade",
+  "escavacoes"
  ],
  "elementos": [
   {
@@ -66,7 +67,7 @@
    "grupo": "Torre",
    "estado": "estado-atual",
    "confianca": "alta",
-   "descricao": "A maior torre da alcáçova, no canto norte, saliente da muralha. Retangular, de grés vermelho em fiadas, com terraço e merlões retangulares em todas as faces.",
+   "descricao": "A maior torre da alcáçova, no canto norte, saliente da muralha. Retangular, de grés vermelho em fiadas, com terraço e merlões retangulares com seteira em todas as faces; entra-se do recinto por uma porta de arco quebrado.",
    "medidas": "Planta de 14,3 × 8,9 m; merlões a 66,53 m e terraço a 64,5 m de altitude, c. 12 m acima do chão de fora (LiDAR 2024).",
    "fontes": [
     "lidar",
@@ -146,8 +147,8 @@
    "grupo": "Interior",
    "estado": "estado-atual",
    "confianca": "alta",
-   "descricao": "Grande cisterna almóada de quatro naves com abóbadas de berço sobre doze colunas. À superfície vê-se o extradorso rebocado das quatro abóbadas, um pouco abaixo do chão à volta, rodeado por um murete.",
-   "medidas": "Planta de c. 20,0 × 15,3 m pelo LiDAR (20 × 16 × 7 m na Wikipédia); extradorso a 52,4–53,6 m.",
+   "descricao": "Grande cisterna almóada de quatro naves com abóbadas de berço sobre doze colunas. À superfície vê-se o extradorso das quatro abóbadas, rebocado e pintado de vermelho-rosa, rodeado por um murete da mesma cor que a norte e a poente segura a encosta.",
+   "medidas": "Planta de c. 20,0 × 15,3 m pelo LiDAR (20 × 16 × 7 m na Wikipédia); extradorso a 52,1–52,9 m.",
    "fontes": [
     "lidar",
     "wiki"
@@ -157,6 +158,25 @@
     31.7,
     55.5,
     -26.3
+   ]
+  },
+  {
+   "id": "escavacoes",
+   "nome": "Escavações do Palácio das Varandas",
+   "grupo": "Interior",
+   "estado": "estado-atual",
+   "confianca": "média",
+   "descricao": "A sueste do recinto, as escavações puseram à vista os alicerces de taipa e grés do palácio almóada e das casas à volta, com pátios, compartimentos e ruas; percorrem-se por passadiços de madeira com guarda. Os muros são os que o LiDAR mede acima do fundo das escavações.",
+   "medidas": "35 troços de muro em c. 184 m² de planta, de 0,4 a 2 m de altura; 4 passadiços com c. 25 m² (LiDAR 2024 de 25 cm e ortofotomapa).",
+   "fontes": [
+    "lidar",
+    "commons"
+   ],
+   "resumo": "Alicerces do palácio e do bairro almóada",
+   "ancora": [
+    24.0,
+    55.0,
+    32.0
    ]
   },
   {
@@ -205,7 +225,7 @@
    "estado": "estado-atual",
    "confianca": "alta",
    "descricao": "Nove panos de taipa forrada de grés vermelho, com adarve, guardas de ferro do lado de dentro e merlões retangulares, entre onze torres (dez medidas no LiDAR e a casa da guarda). Sobe-se ao adarve norte por uma escada de pedra com patamar, encostada ao muro.",
-   "medidas": "Perímetro de c. 542 m e área de c. 1,08 ha; panos de 2,4 a 3,0 m de espessura; 209 merlões (LiDAR e fotografias).",
+   "medidas": "Perímetro de c. 542 m e área de c. 1,08 ha; panos de 2,4 a 3,0 m de espessura; 237 merlões (LiDAR e fotografias).",
    "fontes": [
     "lidar",
     "commons",
@@ -245,8 +265,8 @@
    "grupo": "Muralha_vila",
    "estado": "estado-atual",
    "confianca": "média",
-   "descricao": "Torreão maciço de grés vermelho a sul da cerca, sem merlões, com duas janelas de sacada de moldura branca e guarda de ferro no andar de cima. Entra-se por um arco alto e estreito na face poente, por baixo da janela norte, e a passagem vira para dentro da vila (o corredor por dentro é hipótese).",
-   "medidas": "Planta de c. 20,0 × 11,6 m e terraço a 32,5 m, c. 15 m acima do largo (LiDAR).",
+   "descricao": "Torreão maciço de grés vermelho a sul da cerca, sem merlões, com um telhado de quatro águas escondido atrás do parapeito e duas janelas de sacada de moldura branca e guarda de ferro. Entra-se por um arco alto e estreito na face poente, por baixo da janela norte, e a passagem vira para dentro da vila (o corredor por dentro é hipótese). Do largo sobe-se por uma escada íngreme, encostada à face norte, até um terraço com guarda.",
+   "medidas": "Planta de c. 20,0 × 11,6 m e terraço a 33,0 m, c. 15 m acima do largo (LiDAR).",
    "fontes": [
     "lidar",
     "osm",
