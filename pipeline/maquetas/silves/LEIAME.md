@@ -82,12 +82,28 @@ python pipeline/maquetas/silves/visor_elementos.py  # elementos do JSON do visor
 - **Torre de menagem.** Porta em arco quebrado na face virada ao recinto (soleira 55,5 m, medida no LiDAR). As pontas
   dos panos prolongam-se pelo eixo até entrarem na torre, para não ficar fresta (vista `f046_menagem`).
 - **Porta da alcáçova.** Aduelas de grés no arco exterior e um segundo arco, mais estreito, recuado (foto 101).
-- **Porta da Cidade.** Telhado de quatro águas (beirado 31,9 m, cume 33,9 m) sobre platibanda, terraço a norte a
-  26,9 m com guarda e escada íngreme encostada com parapeito amarelo (37 degraus desde 19,4 m; foto 087 e LiDAR).
-  O telhado e a escada são lidos no LiDAR, mas o desenho das águas é hipótese.
+- **Porta da Cidade (revista a 23 nov., depois da crítica do Tiago).** A superfície LiDAR de 25 cm e as fotos 086–088
+  mostram dois corpos. O corpo sul (u 0–11, janela de sul) sobe a 33,0 m em platibanda lisa, com telhado escondido
+  (cume 34,0 m). O corpo norte (u 11–19, arco e janela de norte) é mais baixo e tem telhado de quatro águas à vista
+  (beirado 31,8 m, cume 33,8 m). A varanda corrida a 26,9 m vai do terraço norte até à janela de norte (LiDAR:
+  26,9–27,9 m a 1 m da face). A escada (37 degraus desde 19,4 m) assenta na cerca, que desce com ela para poente: do
+  largo vê-se a pedra da cerca (088), do lado da vila o murete amarelo (087). O desenho das águas é hipótese.
+- **Texturas (23 nov.).** Muros e torres com a foto castle_wall_varriation (blocos retangulares em fiadas irregulares,
+  como nas fotos 046, 053 e 060), recolorida para o grés medido nas fotos ao sol, sem as pintas de líquen. Chão de
+  terra ocre (dry_ground_rocks) e saibro (gravelly_sand), em vez da cor lisa rosada da 0.2. Fotos Poly Haven, CC0.
+
+- **Escavações (24 nov., depois da crítica do Tiago à falta do passadiço).** Quatro passadiços de tábuas traçados à
+  mão no ortofotomapa (faixas de tabuado, c. 54 m no total): A sai do pé do pano sul para norte até um patamar
+  (x 10–15,6; y −28,2 a −22), B desce para sueste, C sobe para nordeste e D segue para norte. Cota do tabuado tirada da
+  superfície LiDAR ao longo do eixo, filtrada (`perfil_passadico`); o chão fica 8 cm abaixo da tábua até 1 m para cada
+  lado. Prumos até ao fundo e guarda de corrimão e três cabos só onde o lado cai mais de 0,5 m (foto 060). As ruínas
+  são agora muros direitos de 0,6 m: cristas da superfície (filtro de Sato), esqueleto e retas de Hough
+  (`muros_lineares.py`), cortadas em troços de c. 1 m com o topo medido; sem sobreposições nos cruzamentos. Cada
+  compartimento fechado tem chão plano (percentil 40 do fundo). No muro mais alto (c. 2,8 m), a janela geminada de
+  estuque branco com dois arcos de ferradura (foto 061). Vistas `f060_escavacoes` e `f061_ruinas`, das posições das fotos.
 
 ## Por fazer / por confirmar
 
 - Cisterna dos Cães, Porta da Traição (norte), outras escadas
-  dos adarves, arco branco reconstruído, casa de chá e o jardim de traçado islâmico.
+  dos adarves, casa de chá e o jardim de traçado islâmico.
 - Confirmar no SIPA as datas e o traçado da porta em cotovelo; contar os merlões face a face.

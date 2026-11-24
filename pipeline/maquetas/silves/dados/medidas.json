@@ -221,10 +221,60 @@
   ]
  },
  "escavacoes": {
-  "muros": 35,
+  "muros": 77,
   "passadicos": 4,
-  "area_muros_m2": 184,
-  "area_passadicos_m2": 25
+  "passadicos_info": {
+   "A": {
+    "comprimento_m": 27.6,
+    "largura_m": 1.8,
+    "cota": [
+     51.22,
+     51.65
+    ]
+   },
+   "B": {
+    "comprimento_m": 6.9,
+    "largura_m": 1.6,
+    "cota": [
+     51.27,
+     51.62
+    ]
+   },
+   "C": {
+    "comprimento_m": 9.4,
+    "largura_m": 1.7,
+    "cota": [
+     50.91,
+     51.12
+    ]
+   },
+   "D": {
+    "comprimento_m": 10.1,
+    "largura_m": 1.7,
+    "cota": [
+     50.49,
+     51.4
+    ]
+   },
+   "patamar": {
+    "cota": 51.48,
+    "planta_m": [
+     5.6,
+     6.2
+    ]
+   }
+  },
+  "comprimento_muros_m": 245.0,
+  "janela_geminada": {
+   "centro": [
+    27.1,
+    -30.36
+   ],
+   "topo": 53.41,
+   "largura": 1.25,
+   "altura": 1.45
+  },
+  "comprimento_passadicos_m": 54.0
  },
  "seteiras": 491,
  "edificios_recinto": 2,
@@ -244,9 +294,14 @@
    3.0,
    26.66
   ],
-  "terraco": 33.0,
-  "beirado": 31.9,
-  "cume": 33.9,
+  "platibanda_sul": 33.0,
+  "beirado_norte": 31.8,
+  "cume_norte": 33.8,
+  "cume_sul": 34.0,
+  "varanda": [
+   12.9,
+   20.0
+  ],
   "terraco_norte": 26.9,
   "planta": [
    11.6,
@@ -274,7 +329,7 @@
   "cerca_porta": {
    "comprimento_m": 32.0,
    "topo_mediana": 24.37,
-   "altura_fora_mediana": 6.88
+   "altura_fora_mediana": 6.58
   },
   "cerca_sul": {
    "comprimento_m": 97.5,
@@ -410,6 +465,45 @@
   ]
  },
  "texturas_foto": {
+  "castle_wall_varriation": {
+   "titulo": "Castle Wall Variation",
+   "autores": [
+    "Rob Tuytel"
+   ],
+   "licenca": "CC0 1.0 (domínio público)",
+   "pagina": "https://polyhaven.com/a/castle_wall_varriation",
+   "metros": [
+    2.0,
+    2.0
+   ],
+   "uso": "aparelho de blocos em fiadas irregulares com juntas largas (grés de Silves)"
+  },
+  "dry_ground_rocks": {
+   "titulo": "Dry Ground Rocks",
+   "autores": [
+    "Rob Tuytel"
+   ],
+   "licenca": "CC0 1.0 (domínio público)",
+   "pagina": "https://polyhaven.com/a/dry_ground_rocks",
+   "metros": [
+    4.0,
+    4.0
+   ],
+   "uso": "terra seca com pedrinhas (chão de terra batida)"
+  },
+  "gravelly_sand": {
+   "titulo": "Gravelly Sand",
+   "autores": [
+    "Dario Barresi"
+   ],
+   "licenca": "CC0 1.0 (domínio público)",
+   "pagina": "https://polyhaven.com/a/gravelly_sand",
+   "metros": [
+    2.4800000190734863,
+    2.4800000190734863
+   ],
+   "uso": "areia com cascalho (saibro dos recintos)"
+  },
   "old_stone_wall": {
    "titulo": "Old Stone Wall",
    "autores": [
@@ -422,19 +516,6 @@
     2.0
    ],
    "uso": "alvenaria de pedra irregular (muralhas, cercas, muros)"
-  },
-  "rock_01": {
-   "titulo": "Rock 01",
-   "autores": [
-    "Rob Tuytel"
-   ],
-   "licenca": "CC0 1.0 (domínio público)",
-   "pagina": "https://polyhaven.com/a/rock_01",
-   "metros": [
-    1.5,
-    1.5
-   ],
-   "uso": "granito em afloramento (penedos e rocha à vista)"
   },
   "roof_09": {
    "titulo": "Roof 09",
