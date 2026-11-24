@@ -2,7 +2,7 @@
  "monumento": "silves",
  "titulo": "Castelo e Muralha de Silves",
  "variante": "estado-atual",
- "versao": "0.2.1 provisória",
+ "versao": "0.2.2 provisória",
  "data": "2026-11-23",
  "origem": {
   "lat": 37.191034,
@@ -167,7 +167,7 @@
    "estado": "estado-atual",
    "confianca": "média",
    "descricao": "A sueste do recinto, as escavações puseram à vista os alicerces de taipa e grés do palácio almóada e das casas à volta, com pátios, compartimentos e ruas; percorrem-se por passadiços de madeira com guarda. Os muros são os que o LiDAR mede acima do fundo das escavações.",
-   "medidas": "35 troços de muro em c. 184 m² de planta, de 0,4 a 2 m de altura; 4 passadiços com c. 25 m² (LiDAR 2024 de 25 cm e ortofotomapa).",
+   "medidas": "77 muros com c. 245 m de comprimento, 0,6 m de espessura e 0,4 a 2,8 m de altura (no mais alto, a janela geminada de estuque branco com dois arcos de ferradura); 4 passadiços de madeira com c. 54 m e guarda de cabos, traçados no ortofotomapa (LiDAR 2024 de 25 cm).",
    "fontes": [
     "lidar",
     "commons"

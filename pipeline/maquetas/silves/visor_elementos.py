@@ -50,7 +50,7 @@ EL = [
          fontes=["lidar", "wiki"], resumo="Quatro naves abobadadas, 1,3 milhões de litros", ancora=A["cisterna"]),
     dict(id="escavacoes", nome="Escavações do Palácio das Varandas", grupo="Interior", estado="estado-atual", confianca="média",
          descricao="A sueste do recinto, as escavações puseram à vista os alicerces de taipa e grés do palácio almóada e das casas à volta, com pátios, compartimentos e ruas; percorrem-se por passadiços de madeira com guarda. Os muros são os que o LiDAR mede acima do fundo das escavações.",
-         medidas=f"{ESC['muros']} troços de muro em c. {ESC['area_muros_m2']} m² de planta, de 0,4 a 2 m de altura; {ESC['passadicos']} passadiços com c. {ESC['area_passadicos_m2']} m² (LiDAR 2024 de 25 cm e ortofotomapa).",
+         medidas=f"{ESC['muros']} muros com c. {n(ESC['comprimento_muros_m'], 0)} m de comprimento, 0,6 m de espessura e 0,4 a 2,8 m de altura (no mais alto, a janela geminada de estuque branco com dois arcos de ferradura); {ESC['passadicos']} passadiços de madeira com c. {n(ESC['comprimento_passadicos_m'], 0)} m e guarda de cabos, traçados no ortofotomapa (LiDAR 2024 de 25 cm).",
          fontes=["lidar", "commons"], resumo="Alicerces do palácio e do bairro almóada", ancora=A["escavacoes"]),
     dict(id="segredo", nome="Torre do Segredo", grupo="Torre", estado="estado-atual", confianca="alta",
          descricao="Torre do canto noroeste, onde a muralha da vila se liga à alcáçova.",
