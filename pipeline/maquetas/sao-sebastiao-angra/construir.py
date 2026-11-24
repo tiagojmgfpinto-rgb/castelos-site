@@ -315,6 +315,7 @@ material("reboco_branco", (0.90, 0.89, 0.86), 0.8)    # Pousada (fotosfera e fot
 material("ocre_casa", (0.93, 0.80, 0.47), 0.82)       # Casa do Governador (fotografia 18 do Commons)
 material("moldura_branca", (0.94, 0.93, 0.90), 0.7)   # cunhais, cornijas e molduras dos vãos da Casa do Governador
 material("cobertura", (0.13, 0.145, 0.13), 0.9)   # coberturas planas da Pousada: ortofoto c. 0,28/0,31/0,27 sRGB        # terraços e coberturas planas da Pousada
+material("terraco", (0.34, 0.36, 0.32), 0.9)   # terraços da Casa do Governador (ortofoto sem sombra c. 0,33/0,37/0,31)
 material("soco", (0.13, 0.13, 0.13), 0.85)            # soco de basalto pintado de negro (fotografia da Casa do Governador)
 TEX, ALT = textura_foto("roof_09", n=512, metros=4.0, cor=(0.52, 0.36, 0.27), contraste=1.1, saturacao=0.4, variacao=0.10,
                         semente=44)
@@ -338,6 +339,13 @@ material("bagacina", (0.43, 0.27, 0.21), 0.97)        # bagacina (escória vulc�
 TEX, ALT = textura_foto("rock_01", n=512, metros=3.0, cor=(0.24, 0.24, 0.23), contraste=1.15, saturacao=0.2, semente=47)
 material("rocha", (1, 1, 1), 0.85, imagem("rocha", TEX), normal=imagem("rocha_n", normais(ALT, 3.0)), forca=0.8)
 material("mato", (0.42, 0.45, 0.28), 0.95)
+# chão de fora e de dentro (estrada, passeios, lancis, passadeiras, relva, terra, calçada, tijoleira): a cor dos pontos do
+# LiDAR da Região Açores (25 cm, a mesma geometria do modelo), com as sombras do voo compensadas e os carros tirados
+# (chao.py). Cobre x -116..116, y -138..94 em 2048 px (11,3 cm por píxel), em planta.
+CHAO_X0, CHAO_Y0, CHAO_L = -116.0, -138.0, 232.0
+_chao_img = bpy.data.images.load(str(Path(__file__).resolve().parent / "dados" / "chao.jpg"))
+_chao_img.name = "chao"
+material("chao", (1, 1, 1), 0.95, _chao_img)
 material("asfalto", (0.13, 0.135, 0.125), 0.95)   # estrada e parque: ortofoto c. 0,29/0,31/0,28 sRGB
 material("cinza_viz", (0.74, 0.74, 0.73), 0.9)        # casario da envolvente: um só cinzento
 material("base", (0.20, 0.19, 0.18), 0.95)
@@ -385,6 +393,40 @@ def patine_chao(co):
     dec = amostra(np.hypot(gx, gy), SX0, SY0, SP, co[:, 0], co[:, 1])
     w = np.clip((dec - 0.6) / 0.8, 0, 1)[:, None]
     return np.clip(t * (1 - w) + patine(co) * w, 0, 1)
+
+
+def chao_planar(me, i_chao):
+    """Faces com o material "chao": UV em planta sobre a textura de 232 m e cor de vértice branca (o glTF leva a cor de
+    vértice para todas as primitivas e o three.js multiplica-a pela textura)."""
+    mi = np.empty(len(me.polygons), int)
+    me.polygons.foreach_get("material_index", mi)
+    lt = np.empty(len(me.polygons), int)
+    me.polygons.foreach_get("loop_total", lt)
+    sel = np.repeat(mi == i_chao, lt)
+    vi = np.empty(len(me.loops), int)
+    me.loops.foreach_get("vertex_index", vi)
+    co = np.empty(len(me.vertices) * 3)
+    me.vertices.foreach_get("co", co)
+    p = co.reshape(-1, 3)[vi]
+    uv = np.empty(len(me.loops) * 2)
+    me.uv_layers[0].data.foreach_get("uv", uv)
+    uv = uv.reshape(-1, 2)
+    uv[sel, 0] = (p[sel, 0] - CHAO_X0) / CHAO_L
+    uv[sel, 1] = (p[sel, 1] - CHAO_Y0) / CHAO_L
+    me.uv_layers[0].data.foreach_set("uv", uv.ravel())
+    at = me.color_attributes.get("Col")
+    if at is None:
+        return
+    cv = np.empty(len(at.data) * 4, np.float32)
+    at.data.foreach_get("color", cv)
+    cv = cv.reshape(-1, 4)
+    if at.domain == "POINT":
+        cv = cv[vi]
+        me.color_attributes.remove(at)
+        at = me.color_attributes.new("Col", "FLOAT_COLOR", "CORNER")
+    cv[sel] = 1.0
+    at.data.foreach_set("color", cv.ravel())
+    me.color_attributes.active_color = at
 
 
 # ---------------------------------------------------------------- planta e estações das faces de fora
@@ -875,7 +917,7 @@ def construir_superficie():
     Fq = np.stack([idx[I, J], idx[I, J + 1], idx[I + 1, J + 1], idx[I + 1, J]], 1)
     # materiais por face
     mats = ["alvenaria", "reboco_branco", "ocre_casa", "telha", "cobertura", "relva", "tijoleira", "calcada", "saibro",
-            "alvenaria_topo", "bagacina"]
+            "alvenaria_topo", "bagacina", "chao"]
     zc4 = V[Fq][:, :, 2]
     fx, fy = cx[I, J], cy[I, J]
     a = V[Fq[:, 1]] - V[Fq[:, 0]]
@@ -902,6 +944,7 @@ def construir_superficie():
     mi[em_p & alto] = 4
     mi[em_g & alto] = 3
     mi[ingreme] = 0
+    mi[(mi >= 5) & (mi <= 8)] = 11   # relva, tijoleira, calçada e terra: a ortofoto do LiDAR
     ob = malha_rapida("Forte_superficie", V, Fq, mats[0], GRUPOS["Muralhas"], "muralhas")
     for mt in mats[1:]:
         ob.data.materials.append(MATS[mt])
@@ -911,6 +954,7 @@ def construir_superficie():
     me2 = decimar(ob, 0.35)
     uv_superficie(ob)
     cor_vertices(me2, patine_chao)
+    chao_planar(me2, 11)
     return ob, clip
 
 
@@ -1008,6 +1052,118 @@ SUPERF, CLIP = construir_superficie()
 
 # ---------------------------------------------------------------- terreno, mar e base
 
+# ---------------------------------------------------------------- muros de fora (0.5)
+# Muros de suporte e muretes caiados à volta do forte, traçados à mão na ortofoto do LiDAR (25 cm) e assentes no
+# relevo: cada traço desenhado é encostado à crista (o maior salto entre o ponto e o chão a 0,75 m de cada lado, numa
+# faixa de ±1,5 m), e a cota do topo e do pé vêm da superfície de 25 cm. Nenhum tem parapeito acima do lado alto no
+# LiDAR (o topo fica à cota da estrada ou do relvado); a face é de basalto e o capeamento é caiado onde a ortofoto o
+# mostra branco (hipótese: as faces não se veem de cima).
+MUROS_FORA = {
+    # muro de suporte da estrada de poente sobre o talude relvado (capeamento branco contínuo na ortofoto)
+    "estrada_poente": [(-105.2, 86.1), (-95, 85.3), (-85, 84), (-75, 81.5), (-69.3, 79), (-64.5, 75), (-61.8, 72.3),
+                       (-59.8, 66), (-60, 60), (-61.5, 45), (-65, 30), (-70, 18), (-76, 10), (-82, 4), (-90, -2), (-98, -9)],
+    # muro do parque de poente, que desce em diagonal para o estaleiro
+    "parque_poente": [(-112, 45), (-93, 43.5), (-86, 38.5), (-80, 32), (-78.5, 27), (-80, 18), (-84, 13), (-89, 10)],
+    # muro alto do estaleiro (a estrada fica c. 8 m acima dos barcos), em alvenaria escura
+    "estaleiro": [(-100, -12), (-92, -17), (-85, -22), (-78, -27), (-72.7, -31), (-65, -36), (-58, -40), (-54, -41.5),
+                  (-50.5, -42.5)],
+    # muros de suporte em degraus do parque baixo a nordeste e do canteiro, com capeamento branco
+    "parque_nordeste": [(10, 41.6), (20, 44), (22.5, 47), (30, 49.3), (36, 50), (40.5, 53.4), (45, 53.2), (51.5, 46),
+                        (52.5, 45), (60.8, 52.3), (63.5, 55.5)],
+    "canteiro_nordeste": [(51, 37.8), (57, 43.5), (63.5, 49)],
+}
+
+
+MUROS_BRANCOS = {"estrada_poente", "parque_poente", "parque_nordeste", "canteiro_nordeste"}
+
+
+def _densificar(P, d=0.5):
+    P = np.asarray(P, float)
+    out = [P[0]]
+    for a, b in zip(P[:-1], P[1:]):
+        n = max(1, int(np.ceil(np.linalg.norm(b - a) / d)))
+        out += [a + (b - a) * t for t in np.arange(1, n + 1) / n]
+    return np.array(out)
+
+
+def preparar_muros_fora():
+    lum_o = ndi.uniform_filter(ORTO.mean(2), 3)
+    sat_o = ndi.uniform_filter(ORTO.max(2) - ORTO.min(2), 3)
+    supmax = ndi.maximum_filter(SUP, 3)
+    res = []
+    for nome, P in MUROS_FORA.items():
+        p = _densificar(P)
+        t = np.gradient(p, axis=0)
+        t /= np.linalg.norm(t, axis=1)[:, None]
+        n = np.stack([-t[:, 1], t[:, 0]], 1)
+        offs = np.arange(-1.5, 1.51, 0.125)
+        S = np.stack([sup(p[:, 0] + n[:, 0] * o, p[:, 1] + n[:, 1] * o) for o in offs], 1)
+        if nome in MUROS_BRANCOS:
+            # capeamento caiado: a faixa branca da ortofoto mais perto do traço (±3 m), depois a crista a ±1,5 m (a cor
+            # dos pontos está desviada até 0,5 m da geometria em algumas fiadas)
+            offs_b = np.arange(-3.0, 3.01, 0.125)
+            xs_ = p[:, 0, None] + n[:, 0, None] * offs_b
+            ys_ = p[:, 1, None] + n[:, 1, None] * offs_b
+            L_ = ndi.map_coordinates(lum_o, [(OY1 - ys_) / OP, (xs_ - OX0) / OP], order=1, mode="nearest")
+            St_ = ndi.map_coordinates(sat_o, [(OY1 - ys_) / OP, (xs_ - OX0) / OP], order=1, mode="nearest")
+            bri = (L_ > 0.58) & (St_ < 0.15)
+            pen = np.where(bri, np.abs(offs_b)[None, :], 99.0)
+            ob_ = offs_b[np.argmin(pen, 1)]
+            tem = bri.any(1)
+            ob_ = np.where(tem, ob_, np.nan)
+            ok_ = np.isfinite(ob_)
+            ob_ = np.interp(np.arange(len(p)), np.flatnonzero(ok_), ob_[ok_]) if ok_.sum() > 3 else np.zeros(len(p))
+            ob_ = ndi.uniform_filter1d(ndi.median_filter(ob_, 11), 7)
+            p = p + n * ob_[:, None]
+            S = np.stack([sup(p[:, 0] + n[:, 0] * o, p[:, 1] + n[:, 1] * o) for o in offs], 1)
+        k = 6
+        sc = np.full(S.shape, -9.0)
+        for j in range(k, len(offs) - k):
+            sc[:, j] = S[:, j] - np.minimum(S[:, j - k], S[:, j + k])
+        sc[S < -50] = -9.0
+        jb = np.argmax(ndi.uniform_filter1d(sc, 9, axis=0), 1)
+        o = ndi.uniform_filter1d(ndi.median_filter(offs[jb], 9), 9)
+        q = p + n * o[:, None]
+        l1 = sup(q[:, 0] + n[:, 0], q[:, 1] + n[:, 1])
+        l2 = sup(q[:, 0] - n[:, 0], q[:, 1] - n[:, 1])
+        alto_n = np.median(l1 - l2) > 0      # o lado alto é o da normal?
+        na = n if alto_n else -n             # para o lado alto
+        na_ = na
+
+        top = ndi.median_filter(amostra(supmax, SX0, SY0, SP, q[:, 0], q[:, 1]), 5)
+        # pé: o chão mais baixo do lado baixo até 2,5 m da face (o MDT de 0,5 m faz do pé de um muro alto uma rampa)
+        lb_ = np.min([sup(q[:, 0] - na_[:, 0] * d, q[:, 1] - na_[:, 1] * d) for d in (1.0, 1.5, 2.0, 2.5)], 0)
+        baixo = ndi.median_filter(lb_, 7)
+        alto_ = ndi.median_filter(np.maximum(l1, l2), 7)
+        dentro = np.hypot(q[:, 0] - BASE_C[0], q[:, 1] - BASE_C[1]) < BASE_R - 0.6
+        if dentro.sum() < 4:
+            continue
+        lum = np.max([ndi.map_coordinates(lum_o, [(OY1 - q[:, 1] - na[:, 1] * d) / OP, (q[:, 0] + na[:, 0] * d - OX0) / OP], order=1,
+                                          mode="nearest") for d in (0.0, 0.25, 0.5)], 0)
+        branco = nome in MUROS_BRANCOS or float(np.median(lum)) > 0.5
+        res.append(dict(nome=nome, q=q[dentro], na=na[dentro], top=top[dentro], baixo=baixo[dentro], alto=alto_[dentro], branco=branco,
+                        altura=round(float(np.median((top - baixo)[dentro])), 2)))
+    return res
+
+
+MUROS_F = preparar_muros_fora()
+
+
+def corredor_muros_fora(x, y):
+    """Células do terreno no corredor de cada muro de fora (de 2,2 m à frente da face a 0,8 m atrás): saem, e o muro
+    leva o seu próprio chão à cota do pé e à cota de cima (o MDT de 0,5 m fazia do muro um talude, e o degrau da grelha
+    ficava à frente da face)."""
+    q = np.stack([np.ravel(x), np.ravel(y)], 1)
+    fora = np.zeros(len(q), bool)
+    for m in MUROS_F:
+        d, j = cKDTree(m["q"]).query(q, distance_upper_bound=2.5)
+        ok = np.isfinite(d) & (j > 0) & (j < len(m["q"]) - 1)
+        jj = j[ok]
+        di = np.einsum("ij,ij->i", q[ok] - m["q"][jj], m["na"][jj])
+        fora[np.flatnonzero(ok)[(di > -2.2) & (di < 0.8)]] = True
+    return fora.reshape(np.shape(x))
+
+
 def construir_terreno():
     passo = 0.5
     xs = np.arange(BASE_C[0] - BASE_R, BASE_C[0] + BASE_R + 1e-6, passo)
@@ -1034,6 +1190,7 @@ def construir_terreno():
     r = np.hypot(X - BASE_C[0], Y - BASE_C[1])
     cxg, cyg = (X[:-1, :-1] + X[1:, 1:]) / 2, (Y[:-1, :-1] + Y[1:, 1:]) / 2
     dentro_q = (np.hypot(cxg - BASE_C[0], cyg - BASE_C[1]) < BASE_R - 0.3) & ~shapely.contains_xy(ZONA.buffer(-0.4), cxg, cyg)
+    dentro_q &= ~corredor_muros_fora(cxg, cyg)
     I, J = np.nonzero(dentro_q)
     usa = np.zeros(X.shape, bool)
     for a_, b_ in ((0, 0), (0, 1), (1, 0), (1, 1)):
@@ -1042,7 +1199,7 @@ def construir_terreno():
     idx[usa] = np.arange(usa.sum())
     V = np.stack([X[usa], Y[usa], Z[usa]], 1)
     Fq = np.stack([idx[I, J], idx[I, J + 1], idx[I + 1, J + 1], idx[I + 1, J]], 1)
-    mats = ["mato", "relva", "rocha", "saibro", "asfalto", "calcada"]
+    mats = ["mato", "relva", "rocha", "saibro", "asfalto", "calcada", "chao"]
     ob = malha_rapida("Terreno", V, Fq, mats[0], GRUPOS["Terreno"], "terreno")
     for mt in mats[1:]:
         ob.data.materials.append(MATS[mt])
@@ -1065,13 +1222,22 @@ def construir_terreno():
     mi[asf_f & (decl < 0.12)] = 4
     mi[(lum > 0.55) & (sat < 0.10)] = 5
     mi[classe_orto(fx, fy) == 0] = 1
-    rocha = ((decl > 0.9) & (zf < 20) & (mi != 1)) | ((zf < NIVEL + 6) & (lum < 0.35)) | (zf < NIVEL + 0.2)   # talude relvado na ortofoto fica relva
+    # tudo o que é chão (estrada, passeios, parque, relva, estaleiro) leva a ortofoto do LiDAR; só a escarpa a pique e o
+    # que fica à cota do mar são rocha (a regra antiga "baixo e escuro" punha a estrada de poente e o estaleiro em rocha)
+    mi[:] = 6
+    verde_f = (oc[:, 1] > oc[:, 0] * 1.03) & (oc[:, 1] > oc[:, 2] * 1.03)
+    rocha = ((decl > 1.2) & (zf < 12) & ~verde_f) | (zf < NIVEL + 0.2)   # o talude relvado a pique fica com a ortofoto
+    # faces a mais de c. 63° (a ortofoto, vista de cima, esticava-se nelas em riscas)
+    a4, b4 = V[Fq[:, 1]] - V[Fq[:, 0]], V[Fq[:, 3]] - V[Fq[:, 0]]
+    cz = np.cross(a4, b4)
+    rocha |= np.abs(cz[:, 2]) / np.maximum(np.linalg.norm(cz, axis=1), 1e-9) < 0.45
     mi[rocha] = 2
     ob.data.polygons.foreach_set("material_index", mi)
     uv_mundo(ob, 2.0)
     decimar(ob, 0.35)
     MEDIDAS["terreno_triangulos"] = len(ob.data.polygons)
     cor_vertices(ob.data, lambda co: tinta_orto(co[:, 0], co[:, 1]))
+    chao_planar(ob.data, 6)
     # lados da base redonda
     m = Malha(["base"])
     zb = NIVEL - 9.0
@@ -1380,6 +1546,57 @@ def construir_envolvente():
         m.objeto("Envolvente_casario", "envolvente", GRUPOS["Envolvente"], uv=2.0)
 
 
+def construir_muros_fora():
+    """Os muros de fora como fitas de 0,4 m de espessura: a face no traço, o corpo para o lado alto, o pé 0,4 m abaixo
+    do chão do lado baixo e o capeamento 3 cm acima do topo; mais o chão do corredor (2,6 m à frente, da cota do pé à do terreno, e
+    0,8 m atrás, à cota do lado alto), com a textura da ortofoto, onde o terreno foi tirado."""
+    for m in MUROS_F:
+        q, na, n = m["q"], m["na"], len(m["q"])
+        w = 0.4
+        zt = np.maximum(m["top"], m["alto"]) + 0.03
+        zb = m["baixo"] - 0.4
+        zf, zh = m["baixo"] + 0.02, m["alto"] + 0.02
+        b = q + na * w
+        fr, tr = q - na * 2.6, q + na * 1.2
+        # as bordas de fora do chão do corredor vão à cota do terreno (MDT), com uma saia de 1,5 m para baixo que tapa
+        # o recorte das células tiradas
+        zfr, ztr = cota(fr[:, 0], fr[:, 1]) + 0.02, cota(tr[:, 0], tr[:, 1]) + 0.02
+        V = np.concatenate([np.c_[q, zb], np.c_[q, zt], np.c_[b, zt], np.c_[b, zb],
+                            np.c_[fr, zfr], np.c_[q, zf], np.c_[b, zh], np.c_[tr, ztr],
+                            np.c_[fr, zfr - 1.5], np.c_[tr, ztr - 1.5]])
+        i = np.arange(n - 1)
+        fb, ft, bt, bb, a0, a1, c0, c1, s0, s1 = (k * n + i for k in range(10))
+        Fq = np.concatenate([np.stack([fb, fb + 1, ft + 1, ft], 1),     # face (lado baixo)
+                             np.stack([ft, ft + 1, bt + 1, bt], 1),     # capeamento
+                             np.stack([bb + 1, bb, bt, bt + 1], 1),     # costas
+                             [[0, n, 2 * n, 3 * n], [n - 1, 4 * n - 1, 3 * n - 1, 2 * n - 1]],
+                             np.stack([a0, a0 + 1, a1 + 1, a1], 1),     # chão à frente
+                             np.stack([c0, c0 + 1, c1 + 1, c1], 1),     # chão atrás
+                             np.stack([s0, s0 + 1, a0 + 1, a0], 1),     # saias
+                             np.stack([c1, c1 + 1, s1 + 1, s1], 1)])
+        ob = malha_rapida("Muro_" + m["nome"], V, Fq, "alvenaria", GRUPOS["Envolvente"], "muros_fora")
+        ob.data.materials.append(MATS["reboco_branco" if m["branco"] else "alvenaria_topo"])
+        ob.data.materials.append(MATS["chao"])
+        mi = np.zeros(len(Fq), np.int32)
+        mi[n - 1:2 * (n - 1)] = 1
+        mi[3 * (n - 1) + 2:] = 2
+        ob.data.polygons.foreach_set("material_index", mi)
+        bm = bmesh.new()
+        bm.from_mesh(ob.data)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        bm.normal_update()
+        for f_ in bm.faces:
+            if f_.material_index == 2 and f_.normal.z < -0.3:   # o chão do corredor sempre para cima
+                f_.normal_flip()
+        bm.to_mesh(ob.data)
+        bm.free()
+        uv_mundo(ob, 2.0)
+        cor_vertices(ob.data, patine)
+        chao_planar(ob.data, 2)
+    MEDIDAS["muros_fora"] = [{"nome": m["nome"], "comprimento_m": round(float(np.sum(np.linalg.norm(np.diff(m["q"], axis=0), axis=1))), 1),
+                              "altura_mediana_m": m["altura"], "capeamento": "caiado" if m["branco"] else "basalto"} for m in MUROS_F]
+
+
 def construir_arvores():
     """Árvores: as copas do LiDAR (classes 3 a 5) dentro da base, fora dos muros, em dois lobos."""
     V, Fc, C = [], [], []
@@ -1549,8 +1766,9 @@ def janelas(f, passo=3.0, larg=1.0, alt=1.35, porta=None, pisos=None, margem=1.2
     return v
 
 
-def telhado_4aguas(m, cantos, z_beirado, z_cume, mat, aba=0.35):
-    """Telhado de quatro águas sobre o retângulo cantos (4 pontos, em ordem), cume ao longo do lado maior."""
+def telhado_4aguas(m, cantos, z_beirado, z_cume, mat, aba=0.35, empena=None):
+    """Telhado de quatro águas sobre o retângulo cantos (4 pontos, em ordem), cume ao longo do lado maior. Com
+    empena=<material>, o topo do lado de cantos[1] fica em empena (o cume vai até ao fim), para um corpo encostado."""
     P = [np.asarray(c, float) for c in cantos]
     c = sum(P) / 4
     P = [c + (p - c) * (1 + aba / max(np.linalg.norm(p - c), 1e-6) * 0.7) for p in P]
@@ -1561,12 +1779,12 @@ def telhado_4aguas(m, cantos, z_beirado, z_cume, mat, aba=0.35):
     la, lb = np.linalg.norm(a), np.linalg.norm(b)
     ua = a / la
     r0 = P[0] + b / 2 + ua * min(lb / 2, la / 2)
-    r1 = P[0] + b / 2 + ua * max(la - lb / 2, la / 2)
+    r1 = P[0] + b / 2 + ua * (la if empena else max(la - lb / 2, la / 2))
     R0, R1 = (r0[0], r0[1], z_cume), (r1[0], r1[1], z_cume)
     Q = [(p[0], p[1], z_beirado) for p in P]
     m.face([Q[0], Q[1], R1, R0], mat)
     m.face([Q[2], Q[3], R0, R1], mat)
-    m.face([Q[1], Q[2], R1], mat)
+    m.face([Q[1], Q[2], R1], empena or mat)
     m.face([Q[3], Q[0], R0], mat)
     m.face([Q[3], Q[2], Q[1], Q[0]], mat)   # forro do beirado, por baixo
 
@@ -1665,25 +1883,24 @@ def pousada_norte():
 def casa_governador():
     """Casa do Governador (LiDAR 2024 + fotografia de C. Cruz, 2009): dois corpos paralelos de dois pisos com telhados
     de quatro águas (A, a sueste, 23,6 × 6,1 m; B, a noroeste, 13 × 5,8 m; beirado 32,1 m, cume 33,45 m) e, a nordeste
-    de B, um pátio fechado por um muro com portão em arco e uma ala baixa de um piso com telhado de uma água (30,0 m).
+    de B, um pátio fechado por um muro com portão em arco e uma ala baixa de um piso (C).
+    0.5, pelo LiDAR de 25 cm medido no referencial u/v: o cume de A (33,5 m) corre até ao topo nordeste, onde A encosta
+    ao prédio de 34–35 m (empena, sem tacaniça); a ala baixa C é um terraço plano a 30,0 m (±0,1 m em toda a área, e
+    cinzento na ortofoto, não telha), e entre B e C, encostada a A, há uma faixa coberta plana a 29,4 m (v 6,1–8,7).
     Fachada noroeste de B pela fotografia «7181537601» (Vítor Oliveira): três janelas no andar, com aventais brancos
     recortados, e duas portas por baixo das das pontas; topo sudoeste com três janelas; cunhais brancos, soco negro."""
-    m = Malha(["ocre_casa", "moldura_branca", "telha", "vidro", "sombra", "soco"])
+    m = Malha(["ocre_casa", "moldura_branca", "telha", "vidro", "sombra", "soco", "terraco"])
     P = lambda u, v: CASA_O + CASA_U * u + CASA_V * v   # noqa: E731
     chao, beir, cume = 26.5, 32.1, 33.45
     z0 = chao - 0.4
     corpos = {"A": (0.0, 0.0, 23.6, 6.1), "B": (0.0, 6.1, 13.0, 11.85), "C": (17.0, 6.1, 23.4, 12.4)}
     for nome, (u0, v0, u1, v1) in corpos.items():
         base = [P(u0, v0), P(u1, v0), P(u1, v1), P(u0, v1)]
-        zt = beir if nome != "C" else 29.75
-        m.prisma(base, z0, zt, "ocre_casa", topo=False)
         if nome == "C":
-            a, b, c, d = P(u0 - 0.3, v1 + 0.35), P(u1 + 0.3, v1 + 0.35), P(u1 + 0.3, v0), P(u0 - 0.3, v0)
-            m.face([(*a, 29.7), (*b, 29.7), (*c, 30.35), (*d, 30.35)], "telha")
-            m.face([(*d, 30.33), (*c, 30.33), (*b, 29.68), (*a, 29.68)], "telha")
-            m.face([(*a, 29.68), (*a, 29.7), (*d, 30.35), (*d, 30.33)], "telha")
+            m.prisma(base, z0, 30.0, "ocre_casa", topo=True, mat_topo="terraco")
         else:
-            telhado_4aguas(m, base, beir, cume, "telha")
+            m.prisma(base, z0, beir, "ocre_casa", topo=False)
+            telhado_4aguas(m, base, beir, cume, "telha", empena="ocre_casa" if nome == "A" else None)
             # cornija branca
             for (pa, pb) in zip(base, base[1:] + base[:1]):
                 t_ = unit(pb - pa)
@@ -1692,6 +1909,8 @@ def casa_governador():
                 if (pa - c_) @ n_ < 0:
                     n_ = -n_
                 m.face([(*(pa + n_ * 0.02), beir - 0.35), (*(pb + n_ * 0.02), beir - 0.35), (*(pb + n_ * 0.15), beir), (*(pa + n_ * 0.15), beir)], "moldura_branca")
+    # faixa coberta entre B e C, encostada a A (LiDAR: 29,4 m de u 12 a 17, v 7 a 8,5)
+    m.prisma([P(13.0, 6.1), P(17.0, 6.1), P(17.0, 8.7), P(13.0, 8.7)], z0, 29.4, "ocre_casa", topo=True, mat_topo="terraco")
     # muro do pátio com o portão em arco, e o pilar entre a ala baixa e o corpo B
     u0, u1, v = 13.0, 17.0, 12.25
     fw = face_uv(u0, v, u1, v, P(15, 20), 29.75, chao)
@@ -1779,6 +1998,7 @@ construir_edificios()
 
 print("casario e árvores…")
 construir_envolvente()
+construir_muros_fora()
 construir_arvores()
 
 
@@ -1853,7 +2073,8 @@ if "--vistas" in sys.argv:
     sc.render.image_settings.file_format = "JPEG"
     sc.render.image_settings.quality = 86
 
-    def vista(nome, cam_xy, cam_z, alvo_xy, alvo_z, lente=35, res=(1000, 1000), destino=None, perto=0.1, sem_veg=False):
+    def vista(nome, cam_xy, cam_z, alvo_xy, alvo_z, lente=35, res=(1000, 1000), destino=None, perto=0.1, sem_veg=False,
+              orto=None):
         if SO and nome not in SO:
             return
         for o in GRUPOS["Vegetacao"].children:
@@ -1861,7 +2082,9 @@ if "--vistas" in sys.argv:
         co.location = Vector((cam_xy[0], cam_xy[1], cam_z))
         alvo = Vector((alvo_xy[0], alvo_xy[1], alvo_z))
         co.rotation_euler = (alvo - co.location).to_track_quat("-Z", "Y").to_euler()
-        cam.type = "PERSP"
+        cam.type = "ORTHO" if orto else "PERSP"
+        if orto:
+            cam.ortho_scale = orto
         cam.lens = lente
         cam.clip_start = perto
         cam.clip_end = 3000
@@ -1873,6 +2096,10 @@ if "--vistas" in sys.argv:
     vista("capa", (110, -120), 120, (0, -20), 24, lente=36, res=(1280, 800), destino=SAIDA / "capa.jpg")
     if "--capa" not in sys.argv:
         vista("topo", (0, -22), 260, (0, -21.99), 20, lente=30, res=(1000, 1000))
+        # planta ortogonal x -130..130, y -150..110 (10 px/m), para comparar com a ortofoto quadrícula a quadrícula
+        vista("planta_orto", (0, -20), 300, (0, -19.999), 0, res=(2600, 2600), orto=260.0, sem_veg=True)
+        vista("muro_poente", (-48, 22), 34, (-66, 42), 12, lente=30, res=(1200, 800))   # muro da estrada de poente (0.5)
+        vista("parque_ne", (72, 28), 40, (38, 50), 26, lente=32, res=(1200, 800))        # muros do parque baixo a nordeste
         vista("topo_recinto", (-5, 5), 200, (-5, 5.01), 20, lente=50, res=(1400, 1400), sem_veg=True)
         vista("norte_sv", (-7.5, 70.6), 27.5, (2, 30), 30, lente=28, res=(1200, 800))
         vista("noroeste", (-90, 110), 70, (-10, 0), 25, lente=32, res=(1200, 800))

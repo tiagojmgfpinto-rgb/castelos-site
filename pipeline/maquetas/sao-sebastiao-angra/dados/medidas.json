@@ -1,6 +1,6 @@
 {
  "superficie_celulas": 126198,
- "terreno_triangulos": 86107,
+ "terreno_triangulos": 83801,
  "mar": {
   "nivel": 0.63
  },
@@ -204,6 +204,38 @@
   }
  ],
  "edificios_envolvente": 2,
+ "muros_fora": [
+  {
+   "nome": "estrada_poente",
+   "comprimento_m": 93.9,
+   "altura_mediana_m": 3.15,
+   "capeamento": "caiado"
+  },
+  {
+   "nome": "parque_poente",
+   "comprimento_m": 41.5,
+   "altura_mediana_m": 1.07,
+   "capeamento": "caiado"
+  },
+  {
+   "nome": "estaleiro",
+   "comprimento_m": 58.9,
+   "altura_mediana_m": 8.3,
+   "capeamento": "basalto"
+  },
+  {
+   "nome": "parque_nordeste",
+   "comprimento_m": 65.3,
+   "altura_mediana_m": 2.68,
+   "capeamento": "caiado"
+  },
+  {
+   "nome": "canteiro_nordeste",
+   "comprimento_m": 16.8,
+   "altura_mediana_m": 0.54,
+   "capeamento": "caiado"
+  }
+ ],
  "arvores": 48,
  "forte": {
   "area_m2": 7417,

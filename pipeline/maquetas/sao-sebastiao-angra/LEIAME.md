@@ -10,6 +10,8 @@ com o forte, a bateria baixa, a costa e o mar numa base redonda (centro x 0, y �
 python3 pipeline/maquetas/sao-sebastiao-angra/lidar.py 2024_TER_ANG_24-4-2-5_CCL_RGBI.laz …_01_MDE.tif
 # 2. magistral do forte e da bateria baixa -> dados/planta.json
 python3 pipeline/maquetas/sao-sebastiao-angra/tracar.py
+# 2b. textura do chão (ortofoto do LiDAR sem sombras nem carros) -> dados/chao.jpg
+python3 pipeline/maquetas/sao-sebastiao-angra/chao.py
 # 3. maqueta (bpy) -> public/maquetas/sao-sebastiao-angra/sao-sebastiao-angra.glb (Draco + WebP), capa.jpg,
 #    dados/medidas.json; vistas/ com --vistas; --diag imprime os perfis medidos
 python3 pipeline/maquetas/sao-sebastiao-angra/construir.py --vistas
@@ -44,7 +46,9 @@ O JSON do visor (`src/data/maquetas/sao-sebastiao-angra.json`) é escrito à mã
   extrudido do solo à cota mediana, com janelas a passo de 2,6 m nas faces livres. A superfície fica com o MDT por baixo.
 - **Casa do Governador (0.2)**: referencial u (azimute 37°) / v a partir de (18,6; −6,9). Corpo A u 0–23,6, v 0–6,1;
   corpo B u 0–13, v 6,1–11,85; telhados de quatro águas, beirado 32,1 m, cume 33,45 m; pátio u 13–17 (chão a 26,8 m)
-  com muro e portão em arco; ala baixa C u 17–23,4, v 6,1–12,4, telhado de uma água a 29,7–30,35 m. Vãos da fachada
+  com muro e portão em arco; ala baixa C u 17–23,4, v 6,1–12,4. Revisto na 0.5 pela grelha de 1 m do MDS em u/v: C é
+  terraço plano a 30,0 m (±0,1 m), entre B e C há uma faixa coberta plana a 29,4 m (u 13–17, v 6,1–8,7) e o cume de A
+  corre até ao topo nordeste, onde encosta ao prédio de 34–35 m (empena, sem tacaniça). Vãos da fachada
   noroeste de B pela fotografia «7181537601» de Vítor Oliveira: três janelas no andar com aventais recortados, duas
   portas por baixo das das pontas; topo sudoeste com três janelas por piso.
 - **Ala norte da Pousada (0.2)**: bloco de cobertura plana a 34,7 m entre a casa da guarda e a Casa (planta PN em
@@ -65,6 +69,19 @@ O JSON do visor (`src/data/maquetas/sao-sebastiao-angra.json`) é escrito à mã
   o parapeito baixa ao piso dentro do corpo e os merlões a menos de 3,2 m não passam do parapeito de 3–7 m.
 - **Estrada e telhados (0.3)**: a relva exige saturação (o asfalto cinzento-esverdeado deixou de passar por relva);
   asfalto e coberturas planas com a cor da ortofoto em linear; capeamento branco nas platibandas; telha mais castanha.
+- **Chão (0.5)**: a cor dos pontos do LiDAR passa a ser a textura do chão, em planta, dentro e fora do forte
+  (`chao.py` -> `dados/chao.jpg`, x −116..116, y −138..94 em 2048 px, 11,3 cm por píxel): estrada, passeios, lancis,
+  passadeiras, parques, relva, terra, calçada e tijoleira ficam onde estão, metro a metro. As sombras do voo (sol a
+  271°, 44°, ajustado às sombras da ortofoto) são marcadas por traçado de raios no MDS e compensadas em Lab pela cor do
+  chão iluminado à volta (relva e não relva à parte); os carros (saliências de 0,7–2,8 m, 3–16 m²) saem por inpaint,
+  fora do estaleiro. A regra antiga "baixo e escuro = rocha" punha a estrada de poente e o estaleiro em rocha: agora só
+  é rocha a escarpa a pique (declive > 1,2, abaixo de 12 m, não verde), as faces a mais de c. 63° (onde a
+  ortofoto vista de cima se esticava em riscas) e o que fica à cota do mar.
+- **Muros de fora (0.5)**: muro de suporte da estrada de poente, muro do parque de poente, muro alto do estaleiro e
+  muros em degraus do parque baixo a nordeste, traçados à mão na ortofoto (com um painel da altura sobre o chão local) e
+  assentes no LiDAR: o traço encosta à faixa branca do capeamento (±6 m) e depois à crista (maior salto entre o ponto e
+  o chão a 0,75 m de cada lado); topo e pé medidos no MDS de 25 cm; o terreno do lado baixo fica à cota do pé até 0,9 m
+  da face (as células do terreno no corredor saem e o muro leva o seu chão). Nenhum tem parapeito acima do lado alto. Faces em basalto: hipótese (não se veem de cima).
 - **Chão (0.2)**: classes pela cor dos pontos (relva por verde relativo, também na sombra; tijoleira; calçada; saibro),
   mediana de 5×5 células; no recinto (abaixo de 28 m) o saibro passa a bagacina vermelha.
 
