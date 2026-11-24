@@ -339,13 +339,16 @@ material("bagacina", (0.43, 0.27, 0.21), 0.97)        # bagacina (escória vulc�
 TEX, ALT = textura_foto("rock_01", n=512, metros=3.0, cor=(0.24, 0.24, 0.23), contraste=1.15, saturacao=0.2, semente=47)
 material("rocha", (1, 1, 1), 0.85, imagem("rocha", TEX), normal=imagem("rocha_n", normais(ALT, 3.0)), forca=0.8)
 material("mato", (0.42, 0.45, 0.28), 0.95)
-# chão de fora e de dentro (estrada, passeios, lancis, passadeiras, relva, terra, calçada, tijoleira): a cor dos pontos do
-# LiDAR da Região Açores (25 cm, a mesma geometria do modelo), com as sombras do voo compensadas e os carros tirados
-# (chao.py). Cobre x -116..116, y -138..94 em 2048 px (11,3 cm por píxel), em planta.
-CHAO_X0, CHAO_Y0, CHAO_L = -116.0, -138.0, 232.0
-_chao_img = bpy.data.images.load(str(Path(__file__).resolve().parent / "dados" / "chao.jpg"))
-_chao_img.name = "chao"
-material("chao", (1, 1, 1), 0.95, _chao_img)
+# chão de fora e de dentro (estrada, parque, passeios, lancis, passadeiras, relva, mato, terra, calçada, tijoleira, betão do
+# estaleiro, rocha): materiais nítidos por classe, sem nenhum píxel de fotografia (textura_chao.py). As classes vêm de
+# chao.py: traços à mão na ortofoto, estradas e edifícios do LiDAR e fronteiras encostadas às arestas reais.
+# Cobre x -116..116, y -138..94 em 4096 px (5,7 cm por píxel), em planta.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from textura_chao import textura_chao, X0 as CHAO_X0, Y0 as CHAO_Y0, L as CHAO_L  # noqa: E402
+CHAO_TEX, CHAO_LAB = textura_chao(Path(__file__).resolve().parent / "dados", 4096)
+material("chao", (1, 1, 1), 0.95, imagem("chao", CHAO_TEX))
+del CHAO_TEX
+material("lancil", (0.60, 0.59, 0.56), 0.85)   # lancis de betão claro (0.5)
 material("asfalto", (0.13, 0.135, 0.125), 0.95)   # estrada e parque: ortofoto c. 0,29/0,31/0,28 sRGB
 material("cinza_viz", (0.74, 0.74, 0.73), 0.9)        # casario da envolvente: um só cinzento
 material("base", (0.20, 0.19, 0.18), 0.95)
@@ -1150,17 +1153,17 @@ MUROS_F = preparar_muros_fora()
 
 
 def corredor_muros_fora(x, y):
-    """Células do terreno no corredor de cada muro de fora (de 2,2 m à frente da face a 0,8 m atrás): saem, e o muro
+    """Células do terreno no corredor de cada muro de fora (de 2,85 m à frente da face a 0,8 m atrás): saem, e o muro
     leva o seu próprio chão à cota do pé e à cota de cima (o MDT de 0,5 m fazia do muro um talude, e o degrau da grelha
     ficava à frente da face)."""
     q = np.stack([np.ravel(x), np.ravel(y)], 1)
     fora = np.zeros(len(q), bool)
     for m in MUROS_F:
-        d, j = cKDTree(m["q"]).query(q, distance_upper_bound=2.5)
+        d, j = cKDTree(m["q"]).query(q, distance_upper_bound=3.2)
         ok = np.isfinite(d) & (j > 0) & (j < len(m["q"]) - 1)
         jj = j[ok]
         di = np.einsum("ij,ij->i", q[ok] - m["q"][jj], m["na"][jj])
-        fora[np.flatnonzero(ok)[(di > -2.2) & (di < 0.8)]] = True
+        fora[np.flatnonzero(ok)[(di > -2.85) & (di < 0.8)]] = True
     return fora.reshape(np.shape(x))
 
 
@@ -1549,7 +1552,7 @@ def construir_envolvente():
 def construir_muros_fora():
     """Os muros de fora como fitas de 0,4 m de espessura: a face no traço, o corpo para o lado alto, o pé 0,4 m abaixo
     do chão do lado baixo e o capeamento 3 cm acima do topo; mais o chão do corredor (2,6 m à frente, da cota do pé à do terreno, e
-    0,8 m atrás, à cota do lado alto), com a textura da ortofoto, onde o terreno foi tirado."""
+    1,2 m atrás, à cota do lado alto), com a textura do chão, onde o terreno foi tirado."""
     for m in MUROS_F:
         q, na, n = m["q"], m["na"], len(m["q"])
         w = 0.4
@@ -1557,7 +1560,7 @@ def construir_muros_fora():
         zb = m["baixo"] - 0.4
         zf, zh = m["baixo"] + 0.02, m["alto"] + 0.02
         b = q + na * w
-        fr, tr = q - na * 2.6, q + na * 1.2
+        fr, tr = q - na * 3.3, q + na * 1.2   # o chão da frente passa 0,45 m por cima do corte do terreno (2,85 m)
         # as bordas de fora do chão do corredor vão à cota do terreno (MDT), com uma saia de 1,5 m para baixo que tapa
         # o recorte das células tiradas
         zfr, ztr = cota(fr[:, 0], fr[:, 1]) + 0.02, cota(tr[:, 0], tr[:, 1]) + 0.02
@@ -1595,6 +1598,69 @@ def construir_muros_fora():
         chao_planar(ob.data, 2)
     MEDIDAS["muros_fora"] = [{"nome": m["nome"], "comprimento_m": round(float(np.sum(np.linalg.norm(np.diff(m["q"], axis=0), axis=1))), 1),
                               "altura_mediana_m": m["altura"], "capeamento": "caiado" if m["branco"] else "basalto"} for m in MUROS_F]
+
+
+def construir_lancis():
+    """Lancis em volume (0.5): onde o asfalto da estrada ou do parque encosta a passeio, relva, mato, terra ou calçada
+    (fronteiras de textura_chao.py, 5,7 cm), uma fita de 15 cm de largura, 13 cm acima da estrada, do lado de fora do
+    asfalto; o pé desce 25 cm abaixo da estrada para não deixar frestas no terreno de 0,5 m."""
+    from skimage import measure
+    from textura_chao import CL as CL_CHAO
+    p = CHAO_L / CHAO_LAB.shape[0]
+    asf = np.isin(CHAO_LAB, [CL_CHAO.index(c) for c in ("asfalto", "asfalto2", "branco")])
+    viz = np.isin(CHAO_LAB, [CL_CHAO.index(c) for c in ("passeio", "relva", "mato", "terra", "calcada")])
+    s_ = ndi.gaussian_filter(asf.astype(np.float32), 2.0)
+    V, Fq, tot = [], [], 0.0
+    for c in measure.find_contours(s_, 0.5):
+        q = np.c_[CHAO_X0 + (c[:, 1] + 0.5) * p, CHAO_Y0 + (c[:, 0] + 0.5) * p]
+        if len(q) < 8:
+            continue
+        q = _densificar(shapely.LineString(q).simplify(0.08).coords, 0.4)
+        if len(q) < 6:
+            continue
+        fechado = np.linalg.norm(q[0] - q[-1]) < 0.6
+        q = ndi.gaussian_filter1d(q, 3.0, axis=0, mode="wrap" if fechado else "nearest")   # sem serpentear (1,2 m)
+        tg = np.gradient(q, axis=0)
+        tg /= np.linalg.norm(tg, axis=1, keepdims=True) + 1e-9
+        nr = np.c_[tg[:, 1], -tg[:, 0]]
+        # a normal aponta para fora do asfalto
+        fora = q + nr * 0.3
+        ii = np.clip(((fora[:, 1] - CHAO_Y0) / p).astype(int), 0, CHAO_LAB.shape[0] - 1)
+        jj = np.clip(((fora[:, 0] - CHAO_X0) / p).astype(int), 0, CHAO_LAB.shape[1] - 1)
+        if asf[ii, jj].mean() > 0.5:
+            nr = -nr
+            fora = q + nr * 0.3
+            ii = np.clip(((fora[:, 1] - CHAO_Y0) / p).astype(int), 0, CHAO_LAB.shape[0] - 1)
+            jj = np.clip(((fora[:, 0] - CHAO_X0) / p).astype(int), 0, CHAO_LAB.shape[1] - 1)
+        ok = viz[ii, jj] & (np.hypot(q[:, 0] - BASE_C[0], q[:, 1] - BASE_C[1]) < BASE_R - 1.0)
+        ok = ndi.binary_opening(ok, iterations=2)   # troços de pelo menos c. 2 m
+        lab_, nl = ndi.label(ok)
+        for k in range(1, nl + 1):
+            sel = np.flatnonzero(lab_ == k)
+            a = q[sel]
+            b = a + nr[sel] * 0.15
+            zr = ndi.gaussian_filter1d(ndi.median_filter(cota(*(a - nr[sel] * 0.3).T), 9, mode="nearest"), 2.0, mode="nearest")
+            zt = np.maximum(zr + 0.13, ndi.gaussian_filter1d(cota(*b.T), 2.0, mode="nearest") + 0.03)
+            zb = zr - 0.25
+            n = len(a)
+            base = len(V) and sum(len(v_) for v_ in V)
+            V.append(np.concatenate([np.c_[a, zb], np.c_[a, zt], np.c_[b, zt], np.c_[b, zb]]))
+            i = base + np.arange(n - 1)
+            Fq.append(np.concatenate([np.stack([i, i + 1, i + n + 1, i + n], 1),
+                                      np.stack([i + n, i + n + 1, i + 2 * n + 1, i + 2 * n], 1),
+                                      np.stack([i + 3 * n + 1, i + 3 * n, i + 2 * n, i + 2 * n + 1], 1)]))
+            tot += float(np.sum(np.linalg.norm(np.diff(a, axis=0), axis=1)))
+    if not V:
+        return
+    V, Fq = np.concatenate(V), np.concatenate(Fq)
+    ob = malha_rapida("Lancis", V, Fq, "lancil", GRUPOS["Envolvente"], "muros_fora")
+    bm = bmesh.new()
+    bm.from_mesh(ob.data)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(ob.data)
+    bm.free()
+    uv_mundo(ob, 1.0)
+    MEDIDAS["lancis"] = {"comprimento_m": round(tot, 1), "altura_m": 0.13, "largura_m": 0.15}
 
 
 def construir_arvores():
@@ -1999,6 +2065,7 @@ construir_edificios()
 print("casario e árvores…")
 construir_envolvente()
 construir_muros_fora()
+construir_lancis()
 construir_arvores()
 
 
@@ -2100,6 +2167,11 @@ if "--vistas" in sys.argv:
         vista("planta_orto", (0, -20), 300, (0, -19.999), 0, res=(2600, 2600), orto=260.0, sem_veg=True)
         vista("muro_poente", (-48, 22), 34, (-66, 42), 12, lente=30, res=(1200, 800))   # muro da estrada de poente (0.5)
         vista("parque_ne", (72, 28), 40, (38, 50), 26, lente=32, res=(1200, 800))        # muros do parque baixo a nordeste
+        # ao nível do chão (0.5): estrada e passeio de poente, acesso norte, estaleiro e recinto
+        vista("chao_poente", (-68.5, 24), 11.3, (-64, 56), 11.0, lente=30, res=(1200, 800))
+        vista("chao_acesso", (-4, 78), 30.0, (16, 56), 27.5, lente=30, res=(1200, 800))
+        vista("chao_estaleiro", (-98, -38), 4.4, (-70, -66), 3.2, lente=30, res=(1200, 800))
+        vista("chao_recinto", (-10, -42), 27.0, (-4, -5), 26.4, lente=30, res=(1200, 800))
         vista("topo_recinto", (-5, 5), 200, (-5, 5.01), 20, lente=50, res=(1400, 1400), sem_veg=True)
         vista("norte_sv", (-7.5, 70.6), 27.5, (2, 30), 30, lente=28, res=(1200, 800))
         vista("noroeste", (-90, 110), 70, (-10, 0), 25, lente=32, res=(1200, 800))

@@ -1,6 +1,6 @@
 {
  "superficie_celulas": 126198,
- "terreno_triangulos": 83801,
+ "terreno_triangulos": 83334,
  "mar": {
   "nivel": 0.63
  },
@@ -236,6 +236,11 @@
    "capeamento": "caiado"
   }
  ],
+ "lancis": {
+  "comprimento_m": 445.1,
+  "altura_m": 0.13,
+  "largura_m": 0.15
+ },
  "arvores": 48,
  "forte": {
   "area_m2": 7417,
@@ -288,6 +293,19 @@
     4.0
    ],
    "uso": "telha de canudo velha (telhados dos monumentos)"
+  },
+  "seaworn_stone_tiles": {
+   "titulo": "Seaworn Stone Tiles",
+   "autores": [
+    "Dimitrios Savva"
+   ],
+   "licenca": "CC0 1.0 (domínio público)",
+   "pagina": "https://polyhaven.com/a/seaworn_stone_tiles",
+   "metros": [
+    2.0,
+    2.0
+   ],
+   "uso": "cantaria regular de fiadas baixas (portas, paramentos aparelhados)"
   }
  }
 }

@@ -15,7 +15,7 @@
    "url": "https://ot.azores.gov.pt"
   },
   "orto": {
-   "titulo": "Cores dos pontos do mesmo voo (RGB, 25 cm), usadas como ortofoto: desde a 0.5 são a textura do chão (estrada, passeios, lancis, passadeiras, relva, terra, calçada), com as sombras do voo compensadas e os carros tirados; serviram também para traçar os muros de fora e as coberturas.",
+   "titulo": "Cores dos pontos do mesmo voo (RGB, 25 cm), usadas como ortofoto: servem só para saber o que é cada sítio (estrada, passeio, relva, terra, betão, rocha) e para traçar as fronteiras do chão, os muros de fora e as coberturas. Não entram na maqueta como textura.",
    "url": "https://ot.azores.gov.pt"
   },
   "commons": {
@@ -38,7 +38,7 @@
   "O Portão de Armas, as armas reais, a ponte de dois arcos e o arco interior estão postos pelas fotografias e pelo Street View com as cotas do LiDAR; o túnel de passagem por baixo do terrapleno não está modelado por dentro.",
   "As guaritas foram detetadas no LiDAR nos salientes nordeste e noroeste; a forma (corpo redondo, mísula, cúpula e pináculo) é a das fotografias, com medidas estimadas. No saliente sudoeste o LiDAR tem uma mancha de c. 4 × 4 m a 35 m, que é a sineira da fotografia de Diego Delso; a posição dos vãos dos sinos é estimada.",
   "A envolvente é simples: terreno do MDT, a rocha da costa, as árvores nas posições do LiDAR com copas esquemáticas e o mar plano a 0,63 m.",
-  "Os relvados, a terra batida dos caminhos e dos terraplenos e as calçadas vêm da cor dos pontos do voo (filtro de 1,75 m, manchas de menos de 3 m² tiradas), e o tom de cada sítio é o da ortofoto sem as sombras; os lancis e os bancos não estão desenhados. A sujidade do basalto (escorrências, pé húmido, líquen) é estimada pelas fotografias, não medida."
+  "O chão é feito de materiais nítidos (asfalto, passeio, relva, mato, terra batida, betão do estaleiro, rocha). As fronteiras foram traçadas à mão na ortofoto, zona a zona, e as estradas vêm da classe «estrada» do LiDAR; cada fronteira encosta à aresta que se vê na ortofoto e no relevo. Os lancis estão em volume (15 × 13 cm), as passadeiras e as linhas pintadas são retângulos medidos na ortofoto, e os bancos não estão desenhados. A sujidade do basalto (escorrências, pé húmido, líquen) é estimada pelas fotografias, não medida."
  ],
  "distancia": 150,
  "distanciaMinima": 12,
@@ -248,7 +248,7 @@
    "grupo": "Envolvente",
    "estado": "estado-atual",
    "confianca": "média",
-   "descricao": "À volta do forte, o chão é a ortofoto do voo: a estrada de poente com as passadeiras e os lancis, os parques, os relvados e o estaleiro dos barcos. Os muros de suporte (da estrada de poente sobre o talude, do parque de poente, do estaleiro e os muros em degraus do parque baixo a nordeste) têm capeamento caiado onde a ortofoto o mostra branco; as faces em basalto são hipótese.",
+   "descricao": "À volta do forte, o chão leva o material de cada sítio, com as fronteiras traçadas na ortofoto: a estrada de poente com o passeio, os lancis e as passadeiras, os parques, os relvados e o betão do estaleiro dos barcos. Os muros de suporte (da estrada de poente sobre o talude, do parque de poente, do estaleiro e os muros em degraus do parque baixo a nordeste) têm capeamento caiado onde a ortofoto o mostra branco; as faces em basalto são hipótese.",
    "medidas": "Muro da estrada de poente c. 94 m e c. 3 m sobre o talude; muro do estaleiro c. 59 m e c. 8 m sobre os barcos; muros em degraus do parque a nordeste c. 65 m e c. 2,7 m (LiDAR 2024, 25 cm).",
    "fontes": [
     "lidar",

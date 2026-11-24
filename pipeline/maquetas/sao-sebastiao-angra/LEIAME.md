@@ -10,7 +10,8 @@ com o forte, a bateria baixa, a costa e o mar numa base redonda (centro x 0, y �
 python3 pipeline/maquetas/sao-sebastiao-angra/lidar.py 2024_TER_ANG_24-4-2-5_CCL_RGBI.laz …_01_MDE.tif
 # 2. magistral do forte e da bateria baixa -> dados/planta.json
 python3 pipeline/maquetas/sao-sebastiao-angra/tracar.py
-# 2b. textura do chão (ortofoto do LiDAR sem sombras nem carros) -> dados/chao.jpg
+# 2b. classes do chão (traços à mão em dados/chao_tracos.json + LiDAR + ortofoto) -> dados/chao_classes.png, chao_tinta.png
+#     (construir.py faz a textura com textura_chao.py: materiais nítidos, nenhum píxel de fotografia)
 python3 pipeline/maquetas/sao-sebastiao-angra/chao.py
 # 3. maqueta (bpy) -> public/maquetas/sao-sebastiao-angra/sao-sebastiao-angra.glb (Draco + WebP), capa.jpg,
 #    dados/medidas.json; vistas/ com --vistas; --diag imprime os perfis medidos
@@ -69,14 +70,21 @@ O JSON do visor (`src/data/maquetas/sao-sebastiao-angra.json`) é escrito à mã
   o parapeito baixa ao piso dentro do corpo e os merlões a menos de 3,2 m não passam do parapeito de 3–7 m.
 - **Estrada e telhados (0.3)**: a relva exige saturação (o asfalto cinzento-esverdeado deixou de passar por relva);
   asfalto e coberturas planas com a cor da ortofoto em linear; capeamento branco nas platibandas; telha mais castanha.
-- **Chão (0.5)**: a cor dos pontos do LiDAR passa a ser a textura do chão, em planta, dentro e fora do forte
-  (`chao.py` -> `dados/chao.jpg`, x −116..116, y −138..94 em 2048 px, 11,3 cm por píxel): estrada, passeios, lancis,
-  passadeiras, parques, relva, terra, calçada e tijoleira ficam onde estão, metro a metro. As sombras do voo (sol a
-  271°, 44°, ajustado às sombras da ortofoto) são marcadas por traçado de raios no MDS e compensadas em Lab pela cor do
-  chão iluminado à volta (relva e não relva à parte); os carros (saliências de 0,7–2,8 m, 3–16 m²) saem por inpaint,
-  fora do estaleiro. A regra antiga "baixo e escuro = rocha" punha a estrada de poente e o estaleiro em rocha: agora só
-  é rocha a escarpa a pique (declive > 1,2, abaixo de 12 m, não verde), as faces a mais de c. 63° (onde a
-  ortofoto vista de cima se esticava em riscas) e o que fica à cota do mar.
+- **Chão (0.5, refeito)**: a primeira 0.5 drapeava a ortofoto como textura do chão e ficava uma fotografia esborratada
+  (rejeitada pelo Tiago). Agora a ortofoto só diz o que é cada sítio. `chao.py` compensa as sombras do voo (sol a 271°,
+  44°) e tira os carros. Depois faz uma segmentação semeada (watershed sobre o gradiente Lab da ortofoto e do SUP),
+  para cada fronteira encostar à aresta real. As sementes são:
+  - traços à mão por zona (`dados/chao_tracos.json`), mais faixas de largura constante para passeios e caminhos;
+  - classes do LiDAR: 11 = estrada (só o meio; dentro do forte é o caminho de terra batida), 6 com mais de 3 m =
+    edifício, 4 e 5 = mato;
+  - relva muito verde e mar.
+  As fronteiras são alisadas a 0,75 m. As marcas brancas (passadeiras, linhas) são retângulos ajustados às manchas
+  finas dentro do asfalto, e as manchas redondas saem. `textura_chao.py` pinta cada classe com o seu material, repetido
+  à escala real: asfalto, asfalto gasto do parque, passeio, lajeado, relva com o tom seco/verde da ortofoto a 3 m, mato,
+  terra batida castanho-arroxeada, betão do estaleiro, rocha, tinta. A textura tem 4096 px (5,7 cm), com manchas largas
+  que não se repetem. Os lancis estão em volume (`construir_lancis`, c. 464 m, 15 × 13 cm, alisados a 1,2 m) onde o
+  asfalto encosta a passeio, relva ou terra. A rocha continua a ser a escarpa a pique, as faces a mais de c. 63° e o que
+  fica à cota do mar.
 - **Muros de fora (0.5)**: muro de suporte da estrada de poente, muro do parque de poente, muro alto do estaleiro e
   muros em degraus do parque baixo a nordeste, traçados à mão na ortofoto (com um painel da altura sobre o chão local) e
   assentes no LiDAR: o traço encosta à faixa branca do capeamento (±6 m) e depois à crista (maior salto entre o ponto e
