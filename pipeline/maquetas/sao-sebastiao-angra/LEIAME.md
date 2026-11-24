@@ -58,8 +58,13 @@ O JSON do visor (`src/data/maquetas/sao-sebastiao-angra.json`) é escrito à mã
   variados, pé húmido com musgo e líquen claro (fotografias de Diego Delso e de C. Cruz).
 - **Picos do recinto (0.2)**: a araucária e os chapéus de sol que ficaram no MDS saem com uma abertura de 2,25 m onde
   o resultado é o chão do recinto (abaixo de 28,5 m).
-- **Torrinha da sineira (0.2)**: bloco do MDS de 5,5 × 5 m a 35,1 m no ângulo SO; terraço a 34,3 m, merlões a 35,1 m,
-  sineira de dois vãos sobre a face sul até 36,2 m (fotografia «7366767456» de Vítor Oliveira).
+- **Sineira (0.3)**: bloco maciço do MDS de 5,5 × 5 m no ângulo SO, cobertura plana a 35,1 m (c. 2,3 m acima do
+  parapeito), faces de fora no prumo do baluarte, vãos em arco no alto (dois a poente e a sul, um a norte e a nascente),
+  cata-vento e chaminé (fotografia de Diego Delso, 2020). A 0.2 tinha-a como terraço ameado com uma sineira pequena.
+- **Guaritas (0.3)**: assentes no vértice do saliente, 0,35 m para fora pela bissetriz, no alto do parapeito vizinho;
+  o parapeito baixa ao piso dentro do corpo e os merlões a menos de 3,2 m não passam do parapeito de 3–7 m.
+- **Estrada e telhados (0.3)**: a relva exige saturação (o asfalto cinzento-esverdeado deixou de passar por relva);
+  asfalto e coberturas planas com a cor da ortofoto em linear; capeamento branco nas platibandas; telha mais castanha.
 - **Chão (0.2)**: classes pela cor dos pontos (relva por verde relativo, também na sombra; tijoleira; calçada; saibro),
   mediana de 5×5 células; no recinto (abaixo de 28 m) o saibro passa a bagacina vermelha.
 

@@ -2,7 +2,7 @@
  "monumento": "sao-sebastiao-angra",
  "titulo": "Forte de São Sebastião",
  "variante": "estado-atual",
- "versao": "0.3 provisória",
+ "versao": "0.4 provisória",
  "data": "2026-11-23",
  "origem": {
   "lat": 38.651886,
@@ -130,13 +130,13 @@
    "grupo": "Muralhas",
    "estado": "estado-atual",
    "confianca": "média",
-   "descricao": "No ângulo do baluarte de sudoeste ergue-se uma torrinha quadrada ameada e, sobre ela, a sineira de alvenaria com dois vãos em arco para os sinos (um maior) e um cata-vento.",
-   "medidas": "Torrinha de c. 5,5 × 5 m, terraço a c. 34,3 m e merlões a 35,1 m; sineira até c. 36,2 m (LiDAR 2024).",
+   "descricao": "No ângulo do baluarte de sudoeste ergue-se a sineira: um bloco quadrado de alvenaria que sobe acima do parapeito, no prumo das faces do baluarte, com vãos altos em arco no alto das paredes, cobertura plana, um cata-vento e um tubo de chaminé.",
+   "medidas": "Bloco de c. 5,5 × 5 m com a cobertura a c. 35,1 m, c. 2,3 m acima do parapeito; cata-vento e chaminé até c. 36,2 m (LiDAR 2024).",
    "fontes": [
     "lidar",
     "commons"
    ],
-   "resumo": "Torrinha ameada com a sineira",
+   "resumo": "Sineira em bloco sobre o baluarte",
    "ancora": [
     -55.0,
     37.5,
