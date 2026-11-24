@@ -49,11 +49,22 @@ O JSON do visor (`src/data/maquetas/sao-sebastiao-angra.json`) é escrito à mã
   portas por baixo das das pontas; topo sudoeste com três janelas por piso.
 - **Ala norte da Pousada (0.2)**: bloco de cobertura plana a 34,7 m entre a casa da guarda e a Casa (planta PN em
   `construir.py`). É o prédio amarelo do óculo da fotografia «F s seb angra 2» (2009), que a 0.1 tomava pela Casa do
-  Governador: fachada sul de 14,4 m com dois pares de janelas por piso, óculo ao centro e porta por baixo dele.
+  Governador: fachada sul de 13,4 m com dois pares de janelas por piso, óculo ao centro e porta por baixo dele.
+- **Casa da guarda (0.2)**: planta GU pela ortofoto (telhado de telha de c. 14 × 7 m), uma água de 31,65 a 33,75 m;
+  o arco interior do Portão de Armas fica na fachada amarela, onde o eixo da passagem a corta (`frente_guarda()`).
+- **Chão (0.2, revisto)**: classes da ortofoto sem manchas de menos de 3 m²; a terra batida dos caminhos e dos
+  terraplenos tem a cor medida (c. 0,46/0,42/0,37 sRGB ao sol) e cada vértice leva o tom da ortofoto sem as sombras.
+- **Basalto (0.2)**: patine por vértice com manchas largas, escorrências que descem do parapeito com comprimentos
+  variados, pé húmido com musgo e líquen claro (fotografias de Diego Delso e de C. Cruz).
 - **Picos do recinto (0.2)**: a araucária e os chapéus de sol que ficaram no MDS saem com uma abertura de 2,25 m onde
   o resultado é o chão do recinto (abaixo de 28,5 m).
-- **Torrinha da sineira (0.2)**: bloco do MDS de 5,5 × 5 m a 35,1 m no ângulo SO; terraço a 34,3 m, merlões a 35,1 m,
-  sineira de dois vãos sobre a face sul até 36,2 m (fotografia «7366767456» de Vítor Oliveira).
+- **Sineira (0.3)**: bloco maciço do MDS de 5,5 × 5 m no ângulo SO, cobertura plana a 35,1 m (c. 2,3 m acima do
+  parapeito), faces de fora no prumo do baluarte, vãos em arco no alto (dois a poente e a sul, um a norte e a nascente),
+  cata-vento e chaminé (fotografia de Diego Delso, 2020). A 0.2 tinha-a como terraço ameado com uma sineira pequena.
+- **Guaritas (0.3)**: assentes no vértice do saliente, 0,35 m para fora pela bissetriz, no alto do parapeito vizinho;
+  o parapeito baixa ao piso dentro do corpo e os merlões a menos de 3,2 m não passam do parapeito de 3–7 m.
+- **Estrada e telhados (0.3)**: a relva exige saturação (o asfalto cinzento-esverdeado deixou de passar por relva);
+  asfalto e coberturas planas com a cor da ortofoto em linear; capeamento branco nas platibandas; telha mais castanha.
 - **Chão (0.2)**: classes pela cor dos pontos (relva por verde relativo, também na sombra; tijoleira; calçada; saibro),
   mediana de 5×5 células; no recinto (abaixo de 28 m) o saibro passa a bagacina vermelha.
 

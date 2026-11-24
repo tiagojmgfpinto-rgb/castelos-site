@@ -7,19 +7,19 @@
  "guaritas": [
   {
    "centro": [
-    59.56,
-    30.84
+    61.97,
+    32.12
    ],
    "topo_lidar": 36.86,
-   "topo": 37.16
+   "topo": 38.47
   },
   {
    "centro": [
-    -38.76,
-    60.22
+    -39.69,
+    63.21
    ],
    "topo_lidar": 38.65,
-   "topo": 38.95
+   "topo": 39.38
   }
  ],
  "espadana": {
@@ -36,8 +36,8 @@
   ],
   "soleira": 27.52,
   "ponte_m": 9.6,
-  "passagem_m": 12.0,
-  "chao_recinto": 26.62,
+  "passagem_m": 10.2,
+  "chao_recinto": 26.6,
   "fundo_fosso": 25.15
  },
  "casa_governador": {
@@ -75,8 +75,8 @@
   "cobertura": 34.7,
   "planta": [
    [
-    3.6,
-    16.0
+    4.5,
+    15.7
    ],
    [
     17.3,
@@ -87,11 +87,35 @@
     22.5
    ],
    [
-    4.1,
-    22.5
+    5.3,
+    24.0
    ]
   ],
-  "fachada_sul_m": 14.4
+  "fachada_sul_m": 13.4
+ },
+ "casa_guarda": {
+  "chao": 26.6,
+  "beirado": 31.65,
+  "cume": 33.75,
+  "planta": [
+   [
+    -9.5,
+    22.1
+   ],
+   [
+    4.5,
+    17.35
+   ],
+   [
+    5.3,
+    24.0
+   ],
+   [
+    -7.0,
+    28.6
+   ]
+  ],
+  "arco_s": 7.58
  },
  "edificios": [
   {
@@ -101,7 +125,7 @@
    "telha": false
   },
   {
-   "area_m2": 12.4,
+   "area_m2": 12.3,
    "topo": 30.24,
    "chao": 26.66,
    "telha": false
@@ -125,12 +149,6 @@
    "telha": false
   },
   {
-   "area_m2": 12.0,
-   "topo": 31.98,
-   "chao": 26.69,
-   "telha": true
-  },
-  {
    "area_m2": 6.8,
    "topo": 31.82,
    "chao": 26.09,
@@ -149,21 +167,15 @@
    "telha": false
   },
   {
-   "area_m2": 36.0,
-   "topo": 32.38,
-   "chao": 26.62,
-   "telha": true
-  },
-  {
    "area_m2": 20.8,
    "topo": 32.75,
    "chao": 26.41,
    "telha": false
   },
   {
-   "area_m2": 130.6,
-   "topo": 32.78,
-   "chao": 25.74,
+   "area_m2": 98.9,
+   "topo": 32.77,
+   "chao": 25.66,
    "telha": false
   },
   {
@@ -173,16 +185,10 @@
    "telha": false
   },
   {
-   "area_m2": 80.1,
+   "area_m2": 80.6,
    "topo": 33.42,
    "chao": 26.13,
    "telha": false
-  },
-  {
-   "area_m2": 23.4,
-   "topo": 33.53,
-   "chao": 26.17,
-   "telha": true
   },
   {
    "area_m2": 10.7,
@@ -191,15 +197,9 @@
    "telha": false
   },
   {
-   "area_m2": 7.2,
-   "topo": 34.77,
-   "chao": 26.45,
-   "telha": true
-  },
-  {
-   "area_m2": 24.6,
-   "topo": 34.76,
-   "chao": 25.96,
+   "area_m2": 5.4,
+   "topo": 34.66,
+   "chao": 25.86,
    "telha": true
   }
  ],

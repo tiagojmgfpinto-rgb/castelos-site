@@ -36,7 +36,7 @@ oQueVer:
   - nome: "Guaritas"
     texto: "Guaritas de pedra redondas nos ângulos dos baluartes. A de noroeste enquadra o Monte Brasil e a baía."
   - nome: "Sineira"
-    texto: "No ângulo do baluarte de sudoeste, sobre o mar, uma torrinha ameada com a sineira de dois vãos em arco e um cata-vento."
+    texto: "No ângulo do baluarte de sudoeste, sobre o mar, um bloco quadrado que sobe acima do parapeito, com vãos altos em arco e um cata-vento."
   - nome: "Casa do Governador"
     texto: "Casa ocre de dois pisos no meio do recinto, com telhados de telha, cunhais brancos, soco negro e aventais recortados por baixo das janelas do andar; ao lado, um pátio com portão em arco."
   - nome: "Muralha do mar e bateria baixa"
