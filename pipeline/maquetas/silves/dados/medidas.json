@@ -221,10 +221,60 @@
   ]
  },
  "escavacoes": {
-  "muros": 35,
+  "muros": 77,
   "passadicos": 4,
-  "area_muros_m2": 184,
-  "area_passadicos_m2": 25
+  "passadicos_info": {
+   "A": {
+    "comprimento_m": 27.6,
+    "largura_m": 1.8,
+    "cota": [
+     51.22,
+     51.65
+    ]
+   },
+   "B": {
+    "comprimento_m": 6.9,
+    "largura_m": 1.6,
+    "cota": [
+     51.27,
+     51.62
+    ]
+   },
+   "C": {
+    "comprimento_m": 9.4,
+    "largura_m": 1.7,
+    "cota": [
+     50.91,
+     51.12
+    ]
+   },
+   "D": {
+    "comprimento_m": 10.1,
+    "largura_m": 1.7,
+    "cota": [
+     50.49,
+     51.4
+    ]
+   },
+   "patamar": {
+    "cota": 51.48,
+    "planta_m": [
+     5.6,
+     6.2
+    ]
+   }
+  },
+  "comprimento_muros_m": 245.0,
+  "janela_geminada": {
+   "centro": [
+    27.1,
+    -30.36
+   ],
+   "topo": 53.41,
+   "largura": 1.25,
+   "altura": 1.45
+  },
+  "comprimento_passadicos_m": 54.0
  },
  "seteiras": 491,
  "edificios_recinto": 2,
