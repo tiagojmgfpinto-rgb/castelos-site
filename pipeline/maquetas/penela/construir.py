@@ -636,11 +636,23 @@ def casa(m, poly, altura, mat_par=0, mat_tel=1):
     medido = not math.isnan(cume) and cume > float(np.median(zt)) + 2.0
     z1 = max(cume - altura_telhado(poly), float(np.median(zt)) + 2.0) if medido else float(np.median(zt)) + altura
     m.prisma(poly, z0, z1, mat_par, topo=False)
+    # 0.9 (modelo do castillos.site): beirado de 35 cm à volta, com a face de baixo e a testa de 12 cm do telhado;
+    # o telhado assenta na planta alargada, por isso o cume medido no LiDAR fica à mesma cota
     s = simplificar(poly)
-    if len(s) == 4 and abs(area(s)) > 0.85 * abs(area(poly)):
-        telhado_4aguas(m, s, z1, mat=mat_tel)
+    rect = len(s) == 4 and abs(area(s)) > 0.85 * abs(area(poly))
+    base_t = s if rect else poly
+    fora = desvio(base_t, -0.35, True)
+    zr = z1 - (0.35 * math.tan(math.radians(24)) if rect else 0.0)  # a água passa pelo topo da parede
+    zb = zr - 0.12
+    n = len(base_t)
+    for i in range(n):
+        j = (i + 1) % n
+        m.face([(*base_t[j], zb), (*base_t[i], zb), (*fora[i], zb), (*fora[j], zb)], mat_tel)  # face de baixo
+        m.face([(*fora[i], zb), (*fora[j], zb), (*fora[j], zr), (*fora[i], zr)], mat_tel)  # testa
+    if rect:
+        telhado_4aguas(m, fora, zr, mat=mat_tel)
     else:
-        telhado_generico(m, poly, z1, mat=mat_tel)
+        telhado_generico(m, fora, zr, mat=mat_tel)
     return z1, medido
 
 
