@@ -2,8 +2,8 @@
   "monumento": "almeida",
   "titulo": "Praça-forte de Almeida",
   "variante": "estado-atual",
-  "versao": "0.7 provisória",
-  "data": "2026-11-16",
+  "versao": "0.8 provisória",
+  "data": "2026-11-25",
   "origem": {
     "lat": 40.725642,
     "lon": -6.906288,
@@ -15,7 +15,7 @@
       "url": "https://cdd.dgterritorio.gov.pt"
     },
     "orto": {
-      "titulo": "Ortoimagem de 50 cm feita com a cor dos pontos do LiDAR 2024 da DGT (CC BY 4.0). Cor do chão, dos fossos e dos taludes.",
+      "titulo": "Ortoimagem de 50 cm feita com a cor dos pontos do LiDAR 2024 da DGT (CC BY 4.0). Fronteiras das classes do chão (calçada, asfalto, prados, erva seca, terra) e verificação em planta.",
       "url": "https://cdd.dgterritorio.gov.pt"
     },
     "osm": {
@@ -45,7 +45,7 @@
     "Os arcos das pontes foram contados pela medida (vãos de c. 6,5 m), não nas fotografias de cada ponte.",
     "O SIPA não respondeu durante o trabalho (erro 503); as fontes escritas são a Wikipédia e o Município.",
     "O casario fica em volumes simples cinzentos, com a altura do MDS; o Picadeiro, o Paiol e a Casa dos Governadores estão nesse casario. As Casamatas são subterrâneas e só se vê o pátio, no relevo.",
-    "As cores do chão vêm da ortoimagem do LiDAR (voo de 2024), com as manchas e sombras desse dia."
+    "O chão já não é a ortoimagem drapeada: é desenhado por classes nítidas, cada uma com a sua cor (calçada de granito nas ruas e praças da vila, asfalto nas estradas de fora, relva nos prados verdes dos fossos e da esplanada, erva seca nos terraplenos, mato debaixo das copas, saibro, terra no campo lavrado a nascente), metro a metro a 50 cm pela cor da nuvem de pontos do voo de 2024 (de primavera), com correções à mão. As flores amarelas dos prados não entram."
   ],
   "distancia": 1300,
   "placas": [
@@ -307,13 +307,13 @@
       "grupo": "Envolvente",
       "estado": "estado-atual",
       "confianca": "alta",
-      "descricao": "Relevo do MDT de 50 cm: terraplenos, fossos, estrada coberta e esplanada, com a cor da ortoimagem do LiDAR.",
+      "descricao": "Relevo do MDT de 50 cm (terraplenos, fossos, estrada coberta e esplanada) numa malha adaptativa, com o chão por classes nítidas: calçada, asfalto, prados, erva seca, mato, saibro e terra.",
       "medidas": "41.7 ha, 299999 triângulos.",
       "fontes": [
         "lidar",
         "orto"
       ],
-      "resumo": "Relevo do LiDAR com a cor do voo"
+      "resumo": "Relevo do LiDAR com o chão por classes"
     },
     {
       "id": "vegetacao",

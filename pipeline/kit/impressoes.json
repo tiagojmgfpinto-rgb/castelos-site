@@ -59,5 +59,9 @@
   "pyproj": "3.8.0",
   "matplotlib": "3.11.2",
   "PIL": "13.0.0"
+ },
+ "almeida": {
+  "glb": "23bc382fb55899207fafc38563238ebc44410596",
+  "medidas": "8cb589da0febd62ff20ab9277b2918ea52d024cf"
  }
 }
