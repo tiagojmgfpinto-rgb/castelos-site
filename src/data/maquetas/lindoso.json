@@ -2,8 +2,8 @@
   "monumento": "lindoso",
   "titulo": "Castelo de Lindoso e espigueiros",
   "variante": "estado-atual",
-  "versao": "0.9 provisória",
-  "data": "2026-11-16",
+  "versao": "0.10 provisória",
+  "data": "2026-11-25",
   "origem": {
     "lat": 41.867167,
     "lon": -8.199305,
@@ -15,7 +15,7 @@
       "url": "https://cdd.dgterritorio.gov.pt"
     },
     "orto": {
-      "titulo": "DGT, Ortofotomapa 2021, 25 cm (CC BY 4.0). Conferência da planta, dos telhados, do pátio e do monte dos espigueiros.",
+      "titulo": "DGT, Ortofotomapa 2021, 25 cm (CC BY 4.0). Conferência da planta, dos telhados, do pátio e do monte dos espigueiros; fronteiras das classes do chão (erva, relvado, arvoredo, granito, ruas), sem o pôr como textura.",
       "url": "https://cdd.dgterritorio.gov.pt"
     },
     "geoportal": {
@@ -42,7 +42,7 @@
     "As guaritas redondas (cunhal sueste da cerca e ponta do baluarte poente) seguem as fotografias; o diâmetro (1,25 m) e a altura são estimativas.",
     "Museu: plantas do LiDAR e do satélite, cornijas e cumes do LiDAR. A porta vermelho-escura, a janela pequena da ala sul e a galeria de vidro transparente seguem a fotografia do pátio; as janelas da ala poente são esquemáticas.",
     "Espigueiros: 63 (62 com a planta do OSM e os restantes do LiDAR), com o comprimento, a largura, a orientação e a altura do cume medidos. Os pés, as mesas, as grades de madeira, as empenas, a porta em arco, o telhado de lajes, a cruz e o pináculo são iguais em todos e seguem as fotografias; o número de pés e de esteios depende do comprimento. As portas foram postas, alternadamente, num topo ou no outro. Alguns espigueiros fora da área da maqueta ou escondidos por árvores podem faltar.",
-    "A pedra: cantaria pseudo-isódoma de granito cinzento-claro, de juntas estreitas, em fiadas deitadas na torre e na cerca medieval, desenhada silhar a silhar; alvenaria mais miúda na muralha abaluartada, granito liquenado nos espigueiros. O pátio é relvado; o monte tem erva verde e afloramentos de granito onde o MDT e o ortofotomapa os mostram.",
+    "A pedra: cantaria pseudo-isódoma de granito cinzento-claro, de juntas estreitas, em fiadas deitadas na torre e na cerca medieval, desenhada silhar a silhar; alvenaria mais miúda na muralha abaluartada, granito liquenado nos espigueiros. O chão é feito de classes com materiais nítidos, com as fronteiras tiradas do ortofotomapa e do LiDAR e corrigidas à mão: o pátio é relvado; o monte é de erva seca e urze, com os afloramentos de granito onde o MDT e o ortofotomapa os mostram e a laje da eira traçada à mão; as ruas da aldeia são de calçada de granito (claras no ortofotomapa) e só a estrada nacional é de asfalto, o que não se confirmou no Street View.",
     "As casas à volta são volumes simples, num só cinzento, para dar a escala sem tirar destaque ao castelo e aos espigueiros (plantas do OSM e, onde faltam, do LiDAR; cornija e cume medidos no MDS). As árvores estão nas posições do LiDAR (julho), com copas esquemáticas.",
     "O Google Street View não chega ao interior do castelo nem à eira; a conferência foi feita com as fotografias enviadas, o ortofotomapa de 2021 e a imagem de satélite da plataforma do Município de Ponte da Barca."
   ],
@@ -333,7 +333,7 @@
       "grupo": "Terreno",
       "estado": "estado-atual",
       "confianca": "alta",
-      "descricao": "O relevo do LiDAR, com o pátio relvado, as lices, o monte de erva com os afloramentos de granito e as ruas.",
+      "descricao": "O relevo do LiDAR numa só malha, com o chão em classes nítidas: o pátio relvado, as lices, o monte de erva seca e urze com os afloramentos de granito, a laje da eira dos espigueiros, os carreiros de terra, as ruas de calçada e a estrada nacional de asfalto.",
       "medidas": "MDT de 50 cm (LiDAR 2025), com os terraplenos dos baluartes do MDS.",
       "fontes": [
         "lidar",

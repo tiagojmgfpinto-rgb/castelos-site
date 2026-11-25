@@ -35,7 +35,6 @@ import bpy  # noqa: I001 (o bpy tem de vir antes do bmesh)
 import bmesh
 import numpy as np
 import shapely
-from PIL import Image
 from scipy import ndimage as ndi
 from scipy.spatial import cKDTree
 
@@ -52,7 +51,8 @@ from kit.texturas import ruido, fbm, textura_cantaria, textura_cubos, textura_ro
 from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
 from kit.silhares import textura_silhares  # noqa: E402
 from kit.cena import Obra, uv_mundo  # noqa: E402
-from kit.materiais import MATS, malha_rapida, material  # noqa: E402
+from kit.materiais import MATS, material  # noqa: E402
+from kit import chao, chao_blender  # noqa: E402
 from kit.arquitetura import aduelas, contorno_vao, guarda, parede, passagem, vao  # noqa: E402
 
 _cfg = RAIZ / "src" / "data" / "maquetas" / "lindoso.json"
@@ -68,8 +68,6 @@ CLS = LID["classe"]
 SUPF = np.load(AQUI / "dados" / "superficie.npz")
 SP, SX0, SY0 = float(SUPF["passo"]), float(SUPF["x0"]), float(SUPF["y0"])
 SUP = SUPF["z"] / 100.0 + float(SUPF["base"])
-ORTO = np.asarray(Image.open(AQUI / "dados" / "orto.jpg").convert("RGB"), float) / 255.0  # 25 cm, norte em cima
-OX0, OY1, OP = -130.0, 70.0, 0.25
 
 X0, X1, Y0, Y1 = -124.0, 74.0, -156.0, 64.0  # a maqueta: 198 × 220 m, do castelo aos espigueiros
 rng = np.random.default_rng(1258)
@@ -413,6 +411,17 @@ material("terra", (1, 1, 1), 0.95, imagem("terra", TEX), normal=imagem("terra_n"
 TEX, ALT = textura_rocha()
 material("rocha", (1, 1, 1), 0.85, imagem("rocha", TEX), normal=imagem("rocha_n", normais(ALT, 2.0)), forca=0.6)
 material("terreiro", (0.62, 0.60, 0.55), 0.95)
+# chão por classes (chao.py -> dados/chao.json; kit/chao_blender.py): o monte de erva e urze com o granito à vista
+PALETA_CHAO = {
+    "asfalto": {"cor": (0.36, 0.36, 0.37)},
+    "calcada": {"cor": (0.64, 0.62, 0.58)},
+    "saibro": {"cor": (0.74, 0.69, 0.59)},
+    "terra": {"cor": (0.55, 0.46, 0.35)},
+    "relva": {"cor": (0.44, 0.52, 0.30)},
+    "erva": {"cor": (0.45, 0.50, 0.30)},  # verde apagado, não palha: o Tiago achou o monte "verde seco" na 0.2
+    "mato": {"cor": (0.30, 0.35, 0.21)},
+    "rocha": {"cor": (0.62, 0.61, 0.57)},
+}
 material("verde_viz", (0.48, 0.54, 0.38), 0.95)
 material("hera", (0.13, 0.24, 0.09), 0.9)
 material("chapa", (0.30, 0.31, 0.32), 0.55)
@@ -1397,19 +1406,6 @@ def espigueiros():
 
 # ---------------------------------------------------------------- terreno e envolvente
 
-def caminhos():
-    out_a, out_t = [], []
-    for f in F["caminhos"]:
-        if f["geometria"]["type"] != "LineString":
-            continue
-        cl = f["classe"]
-        larg = {"residential": 5.0, "tertiary": 6.0, "secondary": 6.5, "unclassified": 5.0, "service": 3.5,
-                "living_street": 4.0, "pedestrian": 3.0, "unknown": 3.0, "track": 2.5}.get(cl, 1.8)
-        g = shapely.LineString(f["geometria"]["coordinates"]).buffer(larg / 2, cap_style="flat")
-        (out_a if cl in ("residential", "tertiary", "secondary", "unclassified", "living_street", "service") else out_t).append(g)
-    return (shapely.union_all(out_a) if out_a else shapely.Polygon()), (shapely.union_all(out_t) if out_t else shapely.Polygon())
-
-
 def monumento_pl():
     """Planta de tudo o que é monumento (para tirar casas e árvores de cima dele)."""
     torre_pl = shapely.Polygon([W(-A - 1, -A - 1), W(A + 1, -A - 1), W(A + 1, A + 1), W(-A - 1, A + 1)])
@@ -1450,40 +1446,19 @@ def construir_terreno(esp):
     fosso = shapely.Polygon([F_PN.xy(-1.0, 0.0), F_PN.xy(1.0, 0.0), F_PN.xy(1.0, 2.6), F_PN.xy(-1.0, 2.6)]).buffer(0.2)
     Z = np.where(shapely.contains(fosso, pts_all).reshape(X.shape), np.minimum(Z, MEDIDAS["porta_norte"]["levadica"]["fosso_fundo"]), Z)
     ny, nx = X.shape
-    V = np.stack([X.ravel(), Y.ravel(), Z.ravel()], 1)
-    idx = np.arange(ny * nx).reshape(ny, nx)
-    Fq = np.stack([idx[:-1, :-1].ravel(), idx[:-1, 1:].ravel(), idx[1:, 1:].ravel(), idx[1:, :-1].ravel()], 1)
-    mats = ["erva", "relva", "rocha", "terra", "asfalto", "calcada", "terreiro"]
-    ob = malha_rapida("Terreno", V, Fq, mats[0], GRUPOS["Terreno"], "terreno")
-    for mt in mats[1:]:
-        ob.data.materials.append(MATS[mt])
-    cx = V[Fq].mean(1)
-    pts = shapely.points(cx[:, 0], cx[:, 1])
-    mi_ = np.zeros(len(Fq), np.int32)
-    ci = np.clip(((cx[:, 0] - OX0) / OP).astype(int), 0, ORTO.shape[1] - 1)
-    ri = np.clip(((OY1 - cx[:, 1]) / OP).astype(int), 0, ORTO.shape[0] - 1)
-    o = ndi.uniform_filter(ORTO, size=(7, 7, 1))[ri, ci]
-    verde = (o[:, 1] > o[:, 0] * 1.03) & (o[:, 1] > o[:, 2] * 1.08)
-    sat = o.max(1) - o.min(1)
-    cinza = (sat < 0.07) & (o.mean(1) > 0.38)
-    # afloramentos de granito: relevo local positivo do MDT ou pedra cinzenta no ortofotomapa
-    rel = ndi.gaussian_filter(MDT - ndi.gaussian_filter(MDT, 3.0), 0.7)
-    rl = amostra(rel, LX0, LY0, LP, cx[:, 0], cx[:, 1])
-    mi_[verde] = 1
-    # só os afloramentos claros: com o limiar baixo o monte ficava salpicado de cinzento
-    mi_[ndi.binary_opening(((rl > 0.22) | (cinza & (rl > 0.12))).reshape(ny - 1, nx - 1)).ravel()] = 2
-    asf, trilho = caminhos()
-    if not trilho.is_empty:
-        mi_[shapely.contains(trilho, pts)] = 3
-    if not asf.is_empty:
-        mi_[shapely.contains(asf, pts)] = 4
-    # pátio do castelo: relvado (fotografias de drone), com os afloramentos
-    patio = shapely.Polygon(PATIO)
-    no_patio = shapely.contains(patio, pts)
-    mi_[no_patio] = 1
-    mi_[no_patio & (rl > 0.12)] = 2
-    ob.data.polygons.foreach_set("material_index", mi_)
-    uv_mundo(ob, 2.0)
+    # O chão já não é a grelha de 50 cm com o material escolhido face a face pela cor do ortofotomapa (saía aos
+    # quadrados): método "metro a metro" (25 nov. 2026), cada classe de dados/chao.json (chao.py) é um objeto com o
+    # seu material nítido, numa só malha adaptativa com as fronteiras das classes como arestas. Erro de 10 cm: o chão
+    # junto aos muros foi rebaixado acima e não pode voltar a subir pelas faces.
+    classes = chao.ler(AQUI / "dados" / "chao.json")
+    pecas = chao.malhas_adaptativas(classes, xs, ys, Z, shapely.box(X0, Y0, X1, Y1), tol=0.10)
+    obs = chao_blender.objetos(pecas, pai=GRUPOS["Terreno"], paleta=PALETA_CHAO)
+    for nome, o2 in obs.items():
+        if nome in ("asfalto", "calcada", "terra"):
+            o2["elemento"] = "terreno"
+    MEDIDAS["chao"] = {k: {"area_m2": round(float(g.area), 1), "triangulos": int(len(pecas[k][1])) if k in pecas else 0}
+                       for k, g in classes.items()}
+    print("  chão por classes:", sum(len(f) for _, f in pecas.values()), "triângulos")
     m = Malha(["base"])
     zb = float(Z.min()) - 1.5
     borda = [(X[0, i], Y[0, i], Z[0, i]) for i in range(nx)] + [(X[i, -1], Y[i, -1], Z[i, -1]) for i in range(1, ny)] + \
@@ -1491,7 +1466,8 @@ def construir_terreno(esp):
     for a, b in zip(borda, borda[1:] + borda[:1]):
         m.face([(a[0], a[1], zb), (b[0], b[1], zb), b, a], 0)
     m.objeto("base", None, GRUPOS["Terreno"], uv=None)
-    MEDIDAS["terreno"] = {"plataformas_m2": round(float(plat.sum()) * passo * passo)}
+    MEDIDAS["terreno"] = {"plataformas_m2": round(float(plat.sum()) * passo * passo),
+                          "triangulos": int(sum(len(f) for _, f in pecas.values()))}
 
 
 # o pátio, por dentro da cerca medieval (relvado)
@@ -1626,7 +1602,7 @@ def construir_arvores(mon):
     mon_l = mon.buffer(1.0)
     # nenhuma copa entra nos muros nem passa da borda da maqueta (auditoria de novembro de 2026: 4 copas
     # tocavam nos muros e 2 pendiam fora do terreno)
-    obra = Obra(excluir=("Terreno", "terreno", "base", "Base", "arvores"))
+    obra = Obra(excluir=("Terreno", "terreno", "base", "Base", "arvores", "Chao_"))
     n = 0
     for (r, c) in ndi.center_of_mass(topo, lab, range(1, k + 1)):
         r, c = int(round(r)), int(round(c))
