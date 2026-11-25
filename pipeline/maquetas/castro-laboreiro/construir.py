@@ -32,6 +32,18 @@ from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
 from kit.silhares import textura_silhares  # noqa: E402
 from kit.cena import arvore_modelo  # noqa: E402
 from kit.arquitetura import piramide, guarda  # noqa: E402
+from kit import chao, chao_blender  # noqa: E402
+
+# Chão por classes (kit/chao.py, dados/chao.json): cor média de cada classe tirada das fotografias (25 nov. 2026):
+# erva seca dourada no recinto e nas encostas, mato verde-escuro de carqueja e urze, carvalhal a poente, trilhos de
+# terra granítica clara.
+PALETA_CHAO = {
+    "erva": {"cor": (0.72, 0.63, 0.42)},
+    "relva": {"cor": (0.57, 0.58, 0.37)},  # manchas mais verdes da erva, sem o verde de jardim
+    "mato": {"cor": (0.34, 0.38, 0.24)},
+    "terra": {"cor": (0.79, 0.74, 0.64)},  # saibro granítico claro dos trilhos
+    "rocha": {"cor": (0.70, 0.69, 0.65)},
+}
 
 AQUI = Path(__file__).resolve().parent
 RAIZ = AQUI.parents[2]
@@ -738,7 +750,10 @@ def construir_terreno():
     rocha_f = rocha[faces].mean(1) > 0.5
     cor_lin = np.clip(cor, 0, 1) ** 2.2
     obs = {}
-    for nome, sel, el, mat in (("Terreno", ~rocha_f, "terreno", "terreno"), ("Afloramentos", rocha_f, "afloramentos", "granito")):
+    # O chão (fora das lajes e penedos) já não se pinta com a cor da ortoimagem (método "metro a metro", 25 nov. 2026):
+    # cada classe (erva seca, relva, mato, terra dos trilhos) é um objeto com material nítido, a partir de dados/chao.json
+    # (chao.py). As cores por vértice de cima só servem aqui para decidir a rocha e pintar os Afloramentos.
+    for nome, sel, el, mat in (("Afloramentos", rocha_f, "afloramentos", "granito"),):
         fs = faces[sel]
         usa, inv = np.unique(fs.ravel(), return_inverse=True)
         me = bpy.data.meshes.new(nome.lower())
@@ -752,11 +767,20 @@ def construir_terreno():
         uv_mundo(ob, 8.0 if nome == "Terreno" else 4.0, caixa=nome != "Terreno")
         obs[nome] = ob
     MEDIDAS["terreno"] = {"vertices": int(len(V)), "faces_rocha": int(rocha_f.sum()), "faces": int(len(faces))}
+    # chão por classes, recortado onde ficam os afloramentos (as mesmas células, para não haver fendas)
+    Ir, Jr = I[rocha_f], J[rocha_f]
+    rochas = shapely.union_all(shapely.box(X[Ir, Jr], Y[Ir, Jr], X[Ir, Jr] + passo, Y[Ir, Jr] + passo))
+    classes = chao.ler(AQUI / "dados" / "chao.json")
+    pecas = chao.malhas(classes, xs, Z, raio=RAIO - passo * 0.6, recorte=rochas)
+    obs_c = chao_blender.objetos(pecas, pai=GRUPOS["Terreno"], paleta=PALETA_CHAO)
+    if "terra" in obs_c:
+        obs_c["terra"]["elemento"] = "caminhos"
+    MEDIDAS["chao"] = {n: {"area_m2": round(float(classes[n].intersection(chao.disco(RAIO)).area), 1),
+                           "triangulos": int(len(f))} for n, (_v, f) in pecas.items()}
 
     # borda circular e base de maqueta de museu (saia e fundo)
-    ang = np.linspace(0, 2 * math.pi, 361)[:-1]
-    bxy = np.stack([np.cos(ang), np.sin(ang)], 1) * (RAIO - passo * 0.6)
-    bz = cota(bxy[:, 0], bxy[:, 1])
+    anel_d = chao.borda_disco(xs, Z, RAIO - passo * 0.6)
+    bxy, bz = anel_d[:, :2], anel_d[:, 2]
     fundo = float(bz.min()) - 14.0
     k = len(bxy)
     anel = np.stack([bxy[:, 0], bxy[:, 1], bz], 1)
@@ -1209,34 +1233,9 @@ m.objeto("Marco_Geodesico", "marco_geodesico", ["cal"], GRUPOS["Vestigios"], uv=
 MEDIDAS["marco_geodesico"] = {"chao": z0_m + ZREF, "topo": z1_m + ZREF, "altura": h_m}
 
 print("caminhos…")
-# Trilhos de terra do OSM: o acesso pela Porta do Sol, os carreiros do recinto e a escadaria da porta norte.
-m = Malha()
-paredes = [v[0] for v in MEDIDOS.values()]
-for f in F["caminhos"]:
-    if f["subtipo"] != "road" or f["geometria"]["type"] != "LineString" or f["classe"] not in ("path", "footway", "steps", "track"):
-        continue
-    lw = 1.6 if f["classe"] == "steps" else 1.2
-    pts = densificar(geom(f), 0.5)
-    ok = np.hypot(*pts.T) < RAIO - 1.5
-    for lin_ in paredes:  # não sobem às muralhas (passam nas portas, que ficam por baixo do coroamento)
-        ok &= distancia(pts[:, 0], pts[:, 1], lin_)[0] > 1.2
-    ok &= ~dentro(pts[:, 0], pts[:, 1], REDUTO)
-    ok &= distancia(pts[:, 0], pts[:, 1], np.array([ini - n_ * 0.5, ini + n_ * (L + 0.8)]))[0] > LARG_E / 2 + 0.3  # a escada
-    troco = []
-    for i, (p, k) in enumerate(zip(pts, ok)):
-        if k:
-            troco.append(p)
-        if (not k or i == len(pts) - 1) and len(troco) > 1:
-            t = np.array(troco)
-            L_ = desvio(t, lw / 2)
-            R_ = desvio(t, -lw / 2)
-            zl = np.maximum(cota(L_[:, 0], L_[:, 1]), cota(*t.T)) + 0.12  # por cima da rocha rugosa
-            zr = np.maximum(cota(R_[:, 0], R_[:, 1]), cota(*t.T)) + 0.12
-            for j in range(len(t) - 1):
-                m.face([(*R_[j], zr[j]), (*R_[j + 1], zr[j + 1]), (*L_[j + 1], zl[j + 1]), (*L_[j], zl[j])], 0)
-        if not k:
-            troco = []
-m.objeto("Caminhos", "caminhos", ["trilho"], GRUPOS["Caminhos"], uv=None, liso=True)
+# Os trilhos de terra do OSM (acesso pela Porta do Sol, carreiros do recinto, escadaria da porta norte) são agora a
+# classe "terra" do chão (chao.py), assente no terreno: já não há fitas por cima dele.
+paredes = [v[0] for v in MEDIDOS.values()]  # eixos das muralhas medidas (as árvores não nascem em cima delas)
 # Corrimão de ferro da subida norte (revisão do perito, 16 nov.; Flickr 50550332536 "On the way to the castle III"):
 # prumos de ferro cor de ferrugem a cada 2 m, chumbados na laje, e um só corrimão a 0,95 m, ao longo do carreiro
 # do OSM que chega ao pé da escada metálica, à esquerda de quem sobe, por c. 28 m.
@@ -1342,7 +1341,7 @@ from mathutils import Vector  # noqa: E402
 from mathutils.bvhtree import BVHTree  # noqa: E402
 _ov, _of = [], []
 for _ob in bpy.data.objects:
-    if _ob.type != "MESH" or _ob.name in ("Terreno", "Afloramentos", "Base", "Vegetacao"):
+    if _ob.type != "MESH" or _ob.name in ("Terreno", "Afloramentos", "Base", "Vegetacao") or _ob.name.startswith("Chao_"):
         continue
     _b = len(_ov)
     _ov.extend([tuple(_ob.matrix_world @ v.co) for v in _ob.data.vertices])

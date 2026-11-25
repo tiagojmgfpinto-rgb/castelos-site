@@ -111,6 +111,28 @@
   "faces_rocha": 26627,
   "faces": 106008
  },
+ "chao": {
+  "terra": {
+   "area_m2": 705.5,
+   "triangulos": 6220
+  },
+  "rocha": {
+   "area_m2": 2953.8,
+   "triangulos": 12727
+  },
+  "relva": {
+   "area_m2": 1043.9,
+   "triangulos": 9561
+  },
+  "erva": {
+   "area_m2": 7865.3,
+   "triangulos": 32695
+  },
+  "mato": {
+   "area_m2": 14020.4,
+   "triangulos": 114591
+  }
+ },
  "porta_sol": {
   "soleira": 1016.9,
   "topo_muralha": 1021.8,
@@ -167,10 +189,10 @@
  },
  "vegetacao": {
   "arvores": 327,
-  "sobreiros": 70,
-  "castanheiros": 257,
-  "moitas": 743,
-  "encolhidas": 21,
+  "sobreiros": 80,
+  "castanheiros": 247,
+  "moitas": 762,
+  "encolhidas": 3,
   "retiradas": 0
  },
  "ancoras": {
