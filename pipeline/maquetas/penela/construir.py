@@ -303,29 +303,14 @@ def construir_terreno():
     mapa_i[I, J] = ingreme & perto
     mapa_i = ndi.binary_opening(ndi.binary_closing(mapa_i, np.ones((3, 3), bool)), np.ones((2, 2), bool))
     ingreme = mapa_i[I, J]
-    ocre = np.array([0.80, 0.70, 0.50]) * (0.9 + 0.2 * fbm(xv, yv, 4.0, 9)[:, None])
-    cinza = np.array([0.62, 0.61, 0.56]) * (0.9 + 0.2 * fbm(xv, yv, 4.0, 9)[:, None])
-    g_ = np.clip((np.hypot(xv - castelejo[:, 0].mean(), yv - castelejo[:, 1].mean()) - 14.0) / 6.0, 0, 1)[:, None]
-    cor_roc = cinza * (1 - g_) + ocre * g_
     ingreme_cel = ingreme.copy()
-    fr = faces[ingreme]
-    usa = np.unique(fr)
-    mapa = -np.ones(len(V), int)
-    mapa[usa] = np.arange(len(usa))
-    mr = bpy.data.meshes.new("rocha")
-    mr.from_pydata(V[usa].tolist(), [], mapa[fr].tolist())
-    mr.update()
-    car = mr.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
-    car.data.foreach_set("color", np.hstack([np.clip(cor_roc[usa], 0, 1) ** 2.2, np.ones((len(usa), 1))]).astype(np.float32).ravel())
-    mr.color_attributes.active_color = car
-    mr.shade_smooth()
-    obr = novo_objeto("Terreno_rocha", mr, "terreno", mat="rocha", pai=GRUPOS["Terreno"])
-    uv_mundo(obr, 8.0)  # 0.9: 8 m por imagem (mosaico de recortes de 2 m da foto)
-    faces = faces[~ingreme]
-
-    # chão por classes, recortado onde ficam as falésias (as mesmas células, para não haver fendas)
+    # 0.9: a falésia passa a um polígono alisado (fecho de 1 m e simplificação de 0,3 m) em vez das células de 1 m;
+    # o chão e a rocha cortam-se pela mesma fronteira exata (chao.malhas), sem os dentes de serra da 0.8.
     falesia = shapely.union_all(shapely.box(X[I[ingreme_cel], J[ingreme_cel]], Y[I[ingreme_cel], J[ingreme_cel]],
                                             X[I[ingreme_cel], J[ingreme_cel]] + passo, Y[I[ingreme_cel], J[ingreme_cel]] + passo))
+    falesia = falesia.buffer(1.0).buffer(-1.6).buffer(0.6).simplify(0.3)
+    falesia = shapely.MultiPolygon([q for q in getattr(falesia, "geoms", [falesia]) if q.area > 6.0])
+
     classes = chao.ler(AQUI / "dados" / "chao.json")
     # ruas, calçadas e lajes não ondulam com o ruído do MDT (pedras, carros, muretes): alisa-se o Z debaixo delas
     Z = chao.aplanar(xs, Z, [classes.get(n) for n in ("asfalto", "calcada", "lajeado", "saibro")], sigma=1.2)
@@ -338,6 +323,21 @@ def construir_terreno():
     BRECHA_Q = shapely.Polygon([c_ - u_ * L_ / 2 - w_ * 5, c_ + u_ * L_ / 2 - w_ * 5, c_ + u_ * L_ / 2 + w_ * 5,
                                 c_ - u_ * L_ / 2 + w_ * 5])
     pecas = chao.malhas(classes, xs, Z, raio=RAIO, recorte=falesia.union(BRECHA_Q))
+    Vr, Fr = chao.malhas({"rocha": falesia}, xs, Z, raio=RAIO)["rocha"]
+    xr, yr = Vr[:, 0], Vr[:, 1]
+    ocre = np.array([0.80, 0.70, 0.50]) * (0.9 + 0.2 * fbm(xr, yr, 4.0, 9)[:, None])
+    cinza = np.array([0.62, 0.61, 0.56]) * (0.9 + 0.2 * fbm(xr, yr, 4.0, 9)[:, None])
+    g_ = np.clip((np.hypot(xr - castelejo[:, 0].mean(), yr - castelejo[:, 1].mean()) - 14.0) / 6.0, 0, 1)[:, None]
+    cor_roc = cinza * (1 - g_) + ocre * g_
+    mr = bpy.data.meshes.new("rocha")
+    mr.from_pydata(Vr.tolist(), [], Fr.tolist())
+    mr.update()
+    car = mr.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
+    car.data.foreach_set("color", np.hstack([np.clip(cor_roc, 0, 1) ** 2.2, np.ones((len(Vr), 1))]).astype(np.float32).ravel())
+    mr.color_attributes.active_color = car
+    mr.shade_smooth()
+    obr = novo_objeto("Terreno_rocha", mr, "terreno", mat="rocha", pai=GRUPOS["Terreno"])
+    uv_mundo(obr, 8.0)  # 0.9: 8 m por imagem (mosaico de recortes de 2 m da foto)
     obs = chao_blender.objetos(pecas, pai=GRUPOS["Terreno"], paleta=PALETA_CHAO)
     ob_b = chao_blender.objetos(chao.malhas({"calcada": BRECHA_Q}, xs, Z, recorte=falesia), pai=GRUPOS["Brecha_Desaparecidas"],
                                 elemento="brecha", paleta=PALETA_CHAO)["calcada"]
@@ -957,7 +957,13 @@ def assentar_na_rocha():
     r0, r1 = np.searchsorted(LXS, [y0, y1])
     k = shapely.contains_xy(cast_in, _LX[r0:r1 + 1, c0:c1 + 1], _LY[r0:r1 + 1, c0:c1 + 1])
     blk = MDT[r0:r1 + 1, c0:c1 + 1]
-    blk[k] = np.maximum(blk[k], plat[r0:r1 + 1, c0:c1 + 1][k])
+    pl = plat[r0:r1 + 1, c0:c1 + 1]
+    chao_cast = float(np.median(np.maximum(blk[k], pl[k])))
+    # 0.9: junto aos panos (1,5 m por dentro de cast_in) a mediana de 4,5 m ainda apanha o topo dos muros e o chão
+    # subia em bicos até aos merlões (grandes planos da 0.9); aí a plataforma fica no máximo 1,2 m acima da mediana
+    borda = k & ~shapely.contains_xy(cast_in.buffer(-1.5), _LX[r0:r1 + 1, c0:c1 + 1], _LY[r0:r1 + 1, c0:c1 + 1])
+    pl = np.where(borda, np.minimum(pl, chao_cast + 1.2), pl)
+    blk[k] = np.maximum(blk[k], pl[k])
     chao_cast = float(np.median(blk[k]))
     # à frente dos panos (o exterior é fora do perímetro; no castelejo, fora dele)
     for linha, esp, fech, fora_de in [(l_, MUR["espessura"], False, PERIM_POLY) for l_ in SECTORES.values()] + [(castelejo, 1.8, True, CAST_POLY)]:
