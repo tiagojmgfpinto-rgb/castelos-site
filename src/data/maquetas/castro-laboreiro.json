@@ -2,8 +2,8 @@
   "monumento": "castro-laboreiro",
   "titulo": "Castelo de Castro Laboreiro",
   "variante": "estado-atual",
-  "versao": "0.8 provisória",
-  "data": "2026-11-16",
+  "versao": "0.9 provisória",
+  "data": "2026-11-25",
   "origem": {
     "lat": 42.022746,
     "lon": -8.15837,
@@ -49,7 +49,7 @@
     "O reduto da ponta sul é lido no MDT e no MDS e na fotografia aérea: uma cinta de muralha de 12 × 9 m em volta de um penedo. O SIPA não o nomeia e descreve aí uma frente sul estreita e retilínea. A espessura da cinta (1,5 m) e a altura por dentro (0,4 a 1,2 m acima do penedo) são estimadas.",
     "A escada metálica do portal norte (SIPA) é desenhada como um lanço reto da soleira até ao chão medido no MDT; largura, degraus e guardas são estimados.",
     "Não se representam a torre de menagem (destruída em 1659), as torres e o cubelo desenhados por Duarte de Armas c. 1509, a cisterna, os alicerces do quartel nem as escadas embutidas nas muralhas, porque não se vêem no LiDAR nem há planta que os situe.",
-    "Os afloramentos de granito e as cores do chão vêm do MDT e da ortoimagem da nuvem de pontos; a textura da rocha é esquemática. Debaixo do arvoredo cerrado da encosta poente o MDT foi suavizado, porque ali tem poucos pontos de solo e mostrava picos e paredes que não existem. As árvores e as moitas estão nas posições e alturas medidas na nuvem de pontos, com forma esquemática; a espécie de cada árvore (castanheiro ou sobreiro) não se mede no LiDAR e é atribuída pelo coberto à volta."
+    "Os afloramentos de granito vêm do MDT e da cor da nuvem de pontos; a textura da rocha é esquemática. O resto do chão vai por classes nítidas (erva seca, relva, mato e a terra dos trilhos), traçadas metro a metro sobre a cor da nuvem de pontos, que só decide as fronteiras e não vai para o chão. Debaixo do arvoredo cerrado da encosta poente o MDT foi suavizado, porque ali tem poucos pontos de solo e mostrava picos e paredes que não existem. As árvores e as moitas estão nas posições e alturas medidas na nuvem de pontos, com forma esquemática; a espécie de cada árvore (castanheiro ou sobreiro) não se mede no LiDAR e é atribuída pelo coberto à volta."
   ],
   "muralha": {
     "espessura": 1.7,
@@ -284,7 +284,7 @@
       "grupo": "Envolvente",
       "estado": "estado-atual",
       "confianca": "alta",
-      "descricao": "Relevo do LiDAR da DGT (MDT de 50 cm), num círculo de 92 m de raio à volta do recinto, com a cor da ortoimagem da nuvem de pontos.",
+      "descricao": "Relevo do LiDAR da DGT (MDT de 50 cm), num círculo de 92 m de raio à volta do recinto. O chão vai por classes (erva seca dourada, relva, mato debaixo das copas), com materiais nítidos.",
       "fontes": [
         "lidar",
         "orto"
@@ -296,7 +296,7 @@
       "grupo": "Envolvente",
       "estado": "estado-atual",
       "confianca": "média",
-      "descricao": "Trilhos de terra do OpenStreetMap: o acesso a sul pela Porta do Sol, a escadaria da porta norte e os carreiros dos dois recintos.",
+      "descricao": "Trilhos de terra do OpenStreetMap, assentes no terreno: o acesso a sul pela Porta do Sol, a escadaria da porta norte e os carreiros dos dois recintos.",
       "fontes": [
         "osm",
         "orto",

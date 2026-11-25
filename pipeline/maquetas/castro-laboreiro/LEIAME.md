@@ -1,6 +1,6 @@
 # Maqueta 3D do Castelo de Castro Laboreiro (estado atual)
 
-Versão 0.2, **provisória**. Gerada por código, à escala 1:1 e georreferenciada (origem no centro do recinto, 42.022746, −8.158370; x para este, y para norte; no visor, −z é o norte). É só o monte do castelo, num círculo de 92 m de raio: os dois recintos, as portas e a escada metálica do portal norte, o reduto da ponta sul, os vestígios da capela, o marco geodésico e os afloramentos de granito à volta. O relevo, o traçado dos panos, as cotas e as alturas são medidos no LiDAR da DGT de 2025.
+Versão 0.9, **provisória**. Gerada por código, à escala 1:1 e georreferenciada (origem no centro do recinto, 42.022746, −8.158370; x para este, y para norte; no visor, −z é o norte). É só o monte do castelo, num círculo de 92 m de raio: os dois recintos, as portas e a escada metálica do portal norte, o reduto da ponta sul, os vestígios da capela, o marco geodésico e os afloramentos de granito à volta. O relevo, o traçado dos panos, as cotas e as alturas são medidos no LiDAR da DGT de 2025.
 
 ## Como reconstruir
 
@@ -18,6 +18,7 @@ python pipeline/maquetas/castro-laboreiro/lidar.py PASTA
 
 # 3. maqueta em Blender (módulo bpy) -> public/maquetas/castro-laboreiro/castro-laboreiro.glb (Draco) e capa.jpg
 pip install bpy==5.2.3 numpy scipy shapely   # Python 3.13
+python pipeline/maquetas/castro-laboreiro/chao.py        # classes do chão -> dados/chao.json
 python pipeline/maquetas/castro-laboreiro/construir.py --vistas
 ```
 
@@ -27,7 +28,7 @@ O `bpy` do PyPI não traz o Draco, por isso o script comprime o GLB com `npx @gl
 
 ## O que se mede no LiDAR e o que é estimativa
 
-- **Terreno e afloramentos**: MDT de 50 cm, sem reamostrar. A rocha separa-se da erva pela cor da nuvem de pontos (clara e pouco saturada) e pelo declive, e vai num objeto próprio (`Afloramentos`), com as fissuras escurecidas pela curvatura do terreno. Debaixo dos panos e do reduto, onde a nuvem classifica o topo das muralhas como solo, o terreno desce ao chão vizinho.
+- **Terreno e afloramentos**: MDT de 50 cm, sem reamostrar. A rocha separa-se da erva pela cor da nuvem de pontos (clara e pouco saturada) e pelo declive, e vai num objeto próprio (`Afloramentos`), com as fissuras escurecidas pela curvatura do terreno. O resto do chão é por classes (`chao.py`, 25 nov. 2026: erva seca, relva, mato e a terra dos trilhos do OSM), um objeto `Chao_<classe>` cada, recortado debaixo dos afloramentos; já não há fitas de trilho por cima do terreno. Debaixo dos panos e do reduto, onde a nuvem classifica o topo das muralhas como solo, o terreno desce ao chão vizinho.
 - **Panos**: linha do meio desenhada sobre o relevo local do MDS (o que sobressai numa janela de 6 m) e encostada à crista medida, metro a metro. O topo é o percentil 92 do MDS num raio de 1 m, em todas as classes (as muralhas aparecem na nuvem ora como solo ora como vegetação), filtrado ao longo do pano; pé exterior e chão interior no MDT. A frente poente da cerca e o pano poente do castelo quase não se destacam no LiDAR: seguem o OSM, como troços de 0,9 a 2,4 m acima do chão de dentro.
 - **Reduto**: cinta de muralha de 12 × 9 m em volta do penedo da ponta sul (MDT, MDS e fotografia aérea); por fora desce ao pé medido, por dentro sobe 0,4 a 1,2 m acima do penedo.
 - **Coroamento**: nos panos altos, patamares horizontais com espelhos verticais (como nas fotografias), à média do topo medido em cada troço; os troços baixos do poente acompanham o chão. As juntas da cantaria têm relevo (mapa de normais tirado da própria textura).
