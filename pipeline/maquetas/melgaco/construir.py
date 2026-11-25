@@ -35,7 +35,6 @@ import bpy  # noqa: I001 (o bpy tem de vir antes do bmesh)
 import bmesh
 import numpy as np
 import shapely
-from PIL import Image
 from scipy import ndimage as ndi
 from scipy.spatial import cKDTree
 
@@ -45,8 +44,9 @@ from kit.texturas import ruido, fbm, textura_cubos, textura_relva, imagem  # noq
 from kit.cena import cor_vertices, uv_mundo  # noqa: E402
 from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
 from kit.silhares import textura_silhares  # noqa: E402
-from kit.materiais import MATS, malha_rapida, material  # noqa: E402
+from kit.materiais import MATS, material  # noqa: E402
 from kit.arquitetura import aduelas, contorno_vao, parede, passagem, vao  # noqa: E402
+from kit import chao, chao_blender  # noqa: E402
 
 AQUI = Path(__file__).resolve().parent
 RAIZ = AQUI.parents[2]
@@ -62,8 +62,6 @@ CLS = LID["classe"]
 SUPF = np.load(AQUI / "dados" / "superficie.npz")
 SP, SX0, SY0 = float(SUPF["passo"]), float(SUPF["x0"]), float(SUPF["y0"])
 SUP = SUPF["z"] / 100.0 + float(SUPF["base"])
-ORTO = np.asarray(Image.open(AQUI / "dados" / "orto.jpg").convert("RGB"), float) / 255.0  # 25 cm, norte em cima
-OX0, OY1, OP = -140.0, 60.0, 0.25
 
 X0, X1, Y0, Y1 = -112.0, 46.0, -40.0, 46.0  # a maqueta: 158 × 86 m, do castelo à Porta de Baixo
 rng = np.random.default_rng(1170)
@@ -275,8 +273,16 @@ TEX, ALT = textura_relva()
 material("relva", (1, 1, 1), 0.95, imagem("relva", TEX), normal=imagem("relva_n", normais(ALT, 1.0)), forca=0.4)
 TEX, ALT = textura_foto("rock_01", n=512, metros=2.0, cor=(0.66, 0.65, 0.61), contraste=1.2, liquen=0.12, semente=25)
 material("rocha", (1, 1, 1), 0.85, imagem("rocha", TEX), normal=imagem("rocha_n", normais(ALT, 2.0)), forca=0.6)
-material("terreiro", (0.62, 0.60, 0.55), 0.95)   # pátios, quintais e lajeados à volta (neutro)
-material("verde_viz", (0.50, 0.56, 0.42), 0.95)  # hortas e jardins à volta (verde apagado)
+# chão por classes (chao.py -> dados/chao.json; kit/chao_blender.py): granito do Minho, mais cinzento do que o da Beira
+PALETA_CHAO = {
+    "calcada": {"cor": (0.63, 0.62, 0.58)},
+    "lajeado": {"cor": (0.70, 0.68, 0.63)},
+    "saibro": {"cor": (0.76, 0.71, 0.61)},
+    "relva": {"cor": (0.44, 0.52, 0.30)},
+    "erva": {"cor": (0.60, 0.58, 0.40)},
+    "mato": {"cor": (0.30, 0.36, 0.21)},
+    "rocha": {"cor": (0.60, 0.59, 0.55)},
+}
 material("asfalto", (0.33, 0.33, 0.34), 0.95)
 # casas vizinhas: um só cinzento claro, sem cor nem textura, para o destaque ficar todo no castelo
 material("cinza_viz", (0.74, 0.74, 0.73), 0.9)
@@ -989,18 +995,6 @@ def poligono_muralha(folga=0.0):
     return shapely.union_all(pts)
 
 
-def caminhos():
-    out_c, out_a = [], []
-    for f in F["caminhos"]:
-        if f["geometria"]["type"] != "LineString":
-            continue
-        cl = f["classe"]
-        larg = {"residential": 5.0, "service": 4.0, "pedestrian": 4.0, "unknown": 4.0, "track": 3.0}.get(cl, 2.0)
-        g = shapely.LineString(f["geometria"]["coordinates"]).buffer(larg / 2, cap_style="flat")
-        (out_a if cl == "residential" and f.get("nome") and "Avenida" in (f.get("nome") or "") else out_c).append(g)
-    return (shapely.union_all(out_c) if out_c else shapely.Polygon()), (shapely.union_all(out_a) if out_a else shapely.Polygon())
-
-
 def construir_terreno():
     passo = 0.5
     xs = np.arange(X0, X1 + 1e-6, passo)
@@ -1015,53 +1009,17 @@ def construir_terreno():
     plano = PB_CHAO_F + (PB_CHAO_D - PB_CHAO_F) * np.clip(-d_ / PB_PROF, 0, 1)
     Z = np.where(zona & (np.abs(s_) < 3.0), np.minimum(Z, plano), Z)
     ny, nx = X.shape
-    V = np.stack([X.ravel(), Y.ravel(), Z.ravel()], 1)
-    idx = np.arange(ny * nx).reshape(ny, nx)
-    Fq = np.stack([idx[:-1, :-1].ravel(), idx[:-1, 1:].ravel(), idx[1:, 1:].ravel(), idx[1:, :-1].ravel()], 1)
-    mats = ["terreiro", "relva", "rocha", "calcada", "asfalto", "verde_viz"]
-    ob = malha_rapida("Terreno", V, Fq, mats[0], GRUPOS["Terreno"], "terreno")
-    for mt in mats[1:]:
-        ob.data.materials.append(MATS[mt])
-    cx = V[Fq].mean(1)
-    pts = shapely.points(cx[:, 0], cx[:, 1])
-    mi_ = np.zeros(len(Fq), np.int32)
-    # fora: verde apagado onde o ortofotomapa é verde (hortas, jardins), lajeado neutro no resto
-    ci = np.clip(((cx[:, 0] - OX0) / OP).astype(int), 0, ORTO.shape[1] - 1)
-    ri = np.clip(((OY1 - cx[:, 1]) / OP).astype(int), 0, ORTO.shape[0] - 1)
-    o = ndi.uniform_filter(ORTO, size=(9, 9, 1))[ri, ci]
-    verde = (o[:, 1] > o[:, 0] * 1.04) & (o[:, 1] > o[:, 2] * 1.08)
-
-    def manchas(mask, minimo=12):
-        """Arredonda uma máscara por face (grelha do terreno) e tira as manchas pequenas: sem isto o relvado e
-        a rocha saíam aos quadrados soltos de 50 cm (auditoria de novembro de 2026)."""
-        g = mask.reshape(ny - 1, nx - 1).astype(float)
-        g = ndi.gaussian_filter(g, 1.2) > 0.5
-        lab_, k_ = ndi.label(g)
-        if k_:
-            tam = ndi.sum(g, lab_, range(1, k_ + 1))
-            g &= np.isin(lab_, 1 + np.nonzero(tam >= minimo)[0])
-        return g.ravel()
-
-    verde = manchas(verde, 20)
-    mi_[verde] = 5
-    calc, asf = caminhos()
-    if not calc.is_empty:
-        mi_[shapely.contains(calc, pts)] = 3
-    if not asf.is_empty:
-        mi_[shapely.contains(asf, pts)] = 4
-    # recinto: relvado, com os afloramentos de granito onde o chão sobressai (relevo local do MDT)
-    rec = poligono_recinto(0.0)
-    dentro = shapely.contains(rec, pts)
-    rel = ndi.gaussian_filter(MDT - ndi.gaussian_filter(MDT, 4.0), 0.8)
-    rl = amostra(rel, LX0, LY0, LP, cx[:, 0], cx[:, 1])
-    mi_[dentro] = 1
-    mi_[dentro & manchas(rl > 0.09)] = 2
-    # carreiro de lajes da entrada (fotografia de cima) e pátio da barbacã
-    carreiro = shapely.LineString([(-3.0, -29.5), (-3.0, -24.0), (-2.0, -19.5)]).buffer(0.9)
-    patio = shapely.Polygon([(-5.5, -28.6), (2.6, -28.6), (2.6, -32.6), (-5.5, -32.6)])
-    mi_[shapely.contains(carreiro, pts) | shapely.contains(patio, pts)] = 0
-    ob.data.polygons.foreach_set("material_index", mi_)
-    uv_mundo(ob, 2.0)
+    # O chão já não é a grelha de 50 cm com o material escolhido face a face pela cor do ortofotomapa (saía aos
+    # quadrados): método "metro a metro" (25 nov. 2026), cada classe de dados/chao.json (chao.py) é um objeto com o
+    # seu material nítido, numa só malha adaptativa com as fronteiras das classes como arestas.
+    classes = chao.ler(AQUI / "dados" / "chao.json")
+    pecas = chao.malhas_adaptativas(classes, xs, ys, Z, shapely.box(X0, Y0, X1, Y1))
+    chao_blender.objetos(pecas, pai=GRUPOS["Terreno"], paleta=PALETA_CHAO)
+    MEDIDAS["chao"] = {k: {"area_m2": round(float(g.area), 1), "triangulos": int(len(pecas[k][1])) if k in pecas else 0}
+                       for k, g in classes.items()}
+    MEDIDAS["terreno"] = {"vertices": int(sum(len(v) for v, _ in pecas.values())),
+                          "triangulos": int(sum(len(f) for _, f in pecas.values()))}
+    print("  chão por classes:", MEDIDAS["terreno"]["triangulos"], "triângulos")
     # lados da maqueta
     m = Malha(["base"])
     zb = float(Z.min()) - 1.5

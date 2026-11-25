@@ -1,4 +1,34 @@
 {
+ "chao": {
+  "calcada": {
+   "area_m2": 8290.1,
+   "triangulos": 13357
+  },
+  "lajeado": {
+   "area_m2": 49.8,
+   "triangulos": 103
+  },
+  "rocha": {
+   "area_m2": 288.6,
+   "triangulos": 966
+  },
+  "relva": {
+   "area_m2": 2038.3,
+   "triangulos": 2123
+  },
+  "erva": {
+   "area_m2": 596.2,
+   "triangulos": 2149
+  },
+  "mato": {
+   "area_m2": 2324.9,
+   "triangulos": 4519
+  }
+ },
+ "terreno": {
+  "vertices": 14843,
+  "triangulos": 23217
+ },
  "postigo_ne": {
   "az": 53.5,
   "chao_dentro": 189.69,

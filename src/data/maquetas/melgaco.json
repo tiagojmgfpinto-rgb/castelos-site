@@ -2,8 +2,8 @@
   "monumento": "melgaco",
   "titulo": "Castelo e muralha de Melgaço",
   "variante": "estado-atual",
-  "versao": "0.4 provisória",
-  "data": "2026-11-15",
+  "versao": "0.5 provisória",
+  "data": "2026-11-25",
   "origem": {
     "lat": 42.114413,
     "lon": -8.25979,
@@ -15,7 +15,7 @@
       "url": "https://cdd.dgterritorio.gov.pt"
     },
     "orto": {
-      "titulo": "DGT, Ortofotomapa 2021, 25 cm (CC BY 4.0). Conferência da planta, telhado da torre, cisterna, relvado e afloramentos do pátio.",
+      "titulo": "DGT, Ortofotomapa 2021, 25 cm (CC BY 4.0). Conferência da planta, telhado da torre e cisterna; fronteiras das classes do chão (relvado, erva, arvoredo, calçada), sem a pôr como textura.",
       "url": "https://cdd.dgterritorio.gov.pt"
     },
     "geoportal": {
@@ -42,7 +42,7 @@
     "Escadas em V: o LiDAR mede uma faixa de c. 1 m encostada à face de dentro, com degraus de 191 a 195,5 m, a norte (pé a 346°) e a nordeste (pé a 53°). As portas da traição ao pé de cada V (arco de 1,2 × 2,3 m) estão nas fotografias; a de nordeste é certa, a de norte é provável. A Wikipédia refere uma porta da traição a norte.",
     "A entrada a sul é uma passagem aberta no muro (LiDAR e fotografia do alto da torre). A barbacã em U, o pátio a 187,7 m e as duas arcadas do muro sul seguem o LiDAR e essa fotografia; as arcadas (1,3 × 2,05 m) e a sua profundidade são estimativas. A Wikipédia põe o portão principal a oeste; não se encontrou vestígio dele no LiDAR.",
     "Muralha da vila: topo medido no LiDAR, de 194,5 m junto ao castelo a 184,4 m junto à Porta de Baixo, sem ameias (não as tem hoje). As casas encostadas à muralha ficam como volumes cinzentos. A Porta de Baixo tem as medidas da fotografia de frente, à escala da altura do LiDAR (7,0 m do chão de fora ao topo); a passagem coberta tem c. 4,5 m. A Porta da Rua do Carvalho só vem do OSM: o LiDAR não vê a passagem e não há fotografia, por isso o arco (2,6 × 3,4 m) é uma estimativa.",
-    "A pedra é desenhada silhar a silhar, com o tom de cada pedra e o grão de uma fotografia de granito: cantaria pseudo-isódoma de fiadas de 0,36 a 0,55 m na torre, na cerca e na muralha, como nas fotografias, com líquenes brancos; as faces sul e poente da torre são douradas e as do norte e nascente mais cinzentas. O relvado e os afloramentos de granito do pátio seguem o relevo do MDT.",
+    "A pedra é desenhada silhar a silhar, com o tom de cada pedra e o grão de uma fotografia de granito: cantaria pseudo-isódoma de fiadas de 0,36 a 0,55 m na torre, na cerca e na muralha, como nas fotografias, com líquenes brancos; as faces sul e poente da torre são douradas e as do norte e nascente mais cinzentas. O chão é feito de classes com materiais nítidos (relvado, erva, arvoredo, calçada e lajes de granito, rocha), com as fronteiras tiradas do ortofotomapa e do LiDAR e corrigidas à mão; os afloramentos de granito do pátio seguem o relevo do MDT. As ruas são todas de calçada de granito: sem o Street View não se confirmou se alguma tem asfalto.",
     "As casas à volta são volumes simples, num só cinzento, para dar a escala sem tirar destaque ao monumento (plantas do OSM e, onde faltam, manchas de edifícios do LiDAR; cornija e cume medidos no MDS). As árvores estão nas posições do LiDAR (julho, com folha), com copas esquemáticas; tiraram-se as que caíam sobre o monumento.",
     "O Google Street View não estava acessível a partir desta sessão; a conferência foi feita com as fotografias enviadas, o ortofotomapa de 2021 e o geoportal da Câmara."
   ],
@@ -348,14 +348,14 @@
       "grupo": "Terreno",
       "estado": "estado-atual",
       "confianca": "alta",
-      "descricao": "O relevo do LiDAR, com o relvado e os afloramentos de granito do pátio, o carreiro da entrada, as ruas de calçada e os quintais.",
+      "descricao": "O relevo do LiDAR numa só malha, com o chão em classes nítidas: o pátio relvado com os afloramentos de granito, o carreiro de lajes da entrada, as ruas, vielas e largos em calçada de granito, os quintais e a encosta a norte com arvoredo e erva.",
       "medidas": "MDT de 50 cm (LiDAR 2025); do pátio a 191 m à rua de fora da Porta de Baixo a 177 m.",
       "fontes": [
         "lidar",
         "orto",
         "osm"
       ],
-      "resumo": "Relevo, pátio relvado e ruas"
+      "resumo": "Relevo, pátio relvado e ruas de calçada"
     },
     {
       "id": "envolvente",
