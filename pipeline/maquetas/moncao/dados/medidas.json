@@ -10,17 +10,50 @@
  "terreno_terraplenos": {
   "celulas_planas": 7603
  },
+ "chao": {
+  "agua": {
+   "area_m2": 24514.7,
+   "triangulos": 5096
+  },
+  "asfalto": {
+   "area_m2": 18991.2,
+   "triangulos": 18627
+  },
+  "calcada": {
+   "area_m2": 126355.2,
+   "triangulos": 119373
+  },
+  "saibro": {
+   "area_m2": 43067.3,
+   "triangulos": 42202
+  },
+  "terra": {
+   "area_m2": 7260.0,
+   "triangulos": 2046
+  },
+  "rocha": {
+   "area_m2": 1118.4,
+   "triangulos": 3012
+  },
+  "relva": {
+   "area_m2": 66151.3,
+   "triangulos": 106812
+  },
+  "erva": {
+   "area_m2": 65334.4,
+   "triangulos": 88625
+  },
+  "mato": {
+   "area_m2": 106475.4,
+   "triangulos": 139241
+  }
+ },
  "terreno": {
-  "vertices": 151400,
-  "triangulos": 299999,
+  "vertices": 310946,
+  "triangulos": 525034,
   "area_ha": 45.9
  },
  "passadico": 356.9,
- "chao": {
-  "fonte": "DGT OrtoSat 2023 (WMS ortosat2023), 25 cm, acertado ao LiDAR 2025",
-  "trocos_limpos": 300,
-  "rua_limpa_pct": 37.7
- },
  "porta_rosal": {
   "soleira": 30.9,
   "topo_muralha": 40.3,

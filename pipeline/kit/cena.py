@@ -51,7 +51,7 @@ class Obra:
     """Folga das copas às construções já feitas (auditoria de novembro de 2026: copas a entrar em muros e
     telhados). Junta numa BVH todas as malhas da cena menos as que se excluem (terreno, base, vegetação)."""
 
-    def __init__(self, excluir=("Terreno", "Base", "Vegetacao")):
+    def __init__(self, excluir=("Terreno", "Base", "Vegetacao", "Chao_")):
         from mathutils.bvhtree import BVHTree
         v, f = [], []
         for ob in bpy.data.objects:
