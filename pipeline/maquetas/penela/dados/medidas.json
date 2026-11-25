@@ -8,11 +8,11 @@
  "chao": {
   "asfalto": {
    "area_m2": 6511.7,
-   "triangulos": 16636
+   "triangulos": 16759
   },
   "calcada": {
    "area_m2": 2188.2,
-   "triangulos": 4886
+   "triangulos": 4936
   },
   "lajeado": {
    "area_m2": 337.5,
@@ -20,27 +20,27 @@
   },
   "saibro": {
    "area_m2": 1840.1,
-   "triangulos": 4937
+   "triangulos": 5048
   },
   "terra": {
    "area_m2": 701.7,
-   "triangulos": 2955
+   "triangulos": 3033
   },
   "rocha": {
    "area_m2": 1183.8,
-   "triangulos": 2477
+   "triangulos": 2670
   },
   "relva": {
    "area_m2": 4867.2,
-   "triangulos": 11492
+   "triangulos": 11618
   },
   "erva": {
    "area_m2": 24418.2,
-   "triangulos": 59429
+   "triangulos": 60262
   },
   "mato": {
    "area_m2": 28634.2,
-   "triangulos": 63497
+   "triangulos": 64207
   }
  },
  "pano_norte": {
@@ -124,7 +124,7 @@
    15.4
   ],
   "acima_do_chao_interior": [
-   1.4,
+   1.7,
    12.1
   ]
  },
@@ -227,11 +227,11 @@
   "do_lidar": 34,
   "medidos": 60
  },
- "ciprestes": 3,
+ "ciprestes": 2,
  "vegetacao": {
-  "arvores": 560,
-  "encolhidas": 31,
-  "retiradas": 76
+  "arvores": 563,
+  "encolhidas": 35,
+  "retiradas": 73
  },
  "texturas_foto": {
   "cliff_side": {
