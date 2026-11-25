@@ -227,11 +227,11 @@
   "do_lidar": 34,
   "medidos": 60
  },
- "ciprestes": 2,
+ "ciprestes": 3,
  "vegetacao": {
-  "arvores": 563,
-  "encolhidas": 35,
-  "retiradas": 73
+  "arvores": 564,
+  "encolhidas": 33,
+  "retiradas": 72
  },
  "texturas_foto": {
   "cliff_side": {

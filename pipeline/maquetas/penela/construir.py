@@ -31,7 +31,7 @@ from kit.texturas import imagem  # noqa: E402
 from kit.cena import limpar, arvore_modelo  # noqa: E402
 from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
 from kit.materiais import material as material_kit  # noqa: E402  (com mapa de normais)
-from kit.arquitetura import piramide, barra, merlao_rustico  # noqa: E402
+from kit.arquitetura import piramide, barra  # noqa: E402
 from kit import passagens  # noqa: E402
 from kit import chao, chao_blender  # noqa: E402
 
@@ -64,7 +64,6 @@ CENTRO = np.array([-40.0, 0.0])
 RAIO = 150.0
 ZREF = 250.0  # cota que fica em z = 0
 rng = np.random.default_rng(1064)
-RNG_MERLAO = np.random.default_rng(2025)  # gerador próprio: não mexe na sequência de `rng` (árvores, casas)
 
 MUR = CFG["muralha"]
 PARAPEITO, MERLAO = MUR["parapeito"], MUR["merlao"]
@@ -550,8 +549,7 @@ def ameias_ao_longo(m, linha, z, fechada=False, mat=0, prof=0.6):
         c = pts[j] + (pts[j + 1] - pts[j]) * t
         zc = zs[j] + (zs[j + 1] - zs[j]) * t
         u = unit(pts[j + 1] - pts[j])
-        # 0.9: merlões de alvenaria gasta, desiguais (fotografia do adarve, Tiago 26 out.), em vez de caixas iguais
-        merlao_rustico(m, c, u, MERLAO["largura"], prof, zc, zc + MERLAO["altura"], mat, RNG_MERLAO)
+        m.caixa(c, u, MERLAO["largura"], prof, zc, zc + MERLAO["altura"], mat)
 
 
 def torre(m, base, pe, topo, mat=0):
@@ -636,23 +634,11 @@ def casa(m, poly, altura, mat_par=0, mat_tel=1):
     medido = not math.isnan(cume) and cume > float(np.median(zt)) + 2.0
     z1 = max(cume - altura_telhado(poly), float(np.median(zt)) + 2.0) if medido else float(np.median(zt)) + altura
     m.prisma(poly, z0, z1, mat_par, topo=False)
-    # 0.9 (modelo do castillos.site): beirado de 35 cm à volta, com a face de baixo e a testa de 12 cm do telhado;
-    # o telhado assenta na planta alargada, por isso o cume medido no LiDAR fica à mesma cota
     s = simplificar(poly)
-    rect = len(s) == 4 and abs(area(s)) > 0.85 * abs(area(poly))
-    base_t = s if rect else poly
-    fora = desvio(base_t, -0.35, True)
-    zr = z1 - (0.35 * math.tan(math.radians(24)) if rect else 0.0)  # a água passa pelo topo da parede
-    zb = zr - 0.12
-    n = len(base_t)
-    for i in range(n):
-        j = (i + 1) % n
-        m.face([(*base_t[j], zb), (*base_t[i], zb), (*fora[i], zb), (*fora[j], zb)], mat_tel)  # face de baixo
-        m.face([(*fora[i], zb), (*fora[j], zb), (*fora[j], zr), (*fora[i], zr)], mat_tel)  # testa
-    if rect:
-        telhado_4aguas(m, fora, zr, mat=mat_tel)
+    if len(s) == 4 and abs(area(s)) > 0.85 * abs(area(poly)):
+        telhado_4aguas(m, s, z1, mat=mat_tel)
     else:
-        telhado_generico(m, fora, zr, mat=mat_tel)
+        telhado_generico(m, poly, z1, mat=mat_tel)
     return z1, medido
 
 
@@ -1551,10 +1537,9 @@ novo_objeto("Vegetacao", me, "vegetacao", mat="arvore", pai=GRUPOS["Vegetacao"])
 # partem-se em faixas de 1,2 m para a faixa do pé não se esticar até ao topo.
 
 
-def sujidade(ob, passo=0.6, amp=0.04):
-    """Rugosidade e sujidade dos panos (0.9, modelo do castillos.site). As faces partem-se numa grelha de c. 0,6 m e
-    cada vértice sai ou entra até ±4 cm ao longo da normal (ruído no mundo, com períodos de 1,5–3 m e de 0,4 m):
-    a alvenaria de Penela não é plana (fotografia do adarve e aéreas). Depois, a cor por vértice."""
+def sujidade(ob, passo=0.6, amp=0.0):  # amp=0: a forma das muralhas fica igual à 0.8 (Tiago, 25 nov.)
+    """Sujidade dos panos (0.9, modelo do castillos.site): as faces partem-se numa grelha de c. 0,6 m só para levar
+    cor por vértice (pé mais escuro, manchas). Com amp=0 nenhum vértice sai do sítio: a forma é a da 0.8."""
     me = ob.data
     bm = bmesh.new()
     bm.from_mesh(me)
