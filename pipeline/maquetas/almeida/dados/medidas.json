@@ -7,9 +7,43 @@
   "altura_max": 15.3
  },
  "guaritas": 22,
+ "chao": {
+  "asfalto": {
+   "area_m2": 40527.1,
+   "triangulos": 13820
+  },
+  "calcada": {
+   "area_m2": 87545.0,
+   "triangulos": 30304
+  },
+  "saibro": {
+   "area_m2": 45252.5,
+   "triangulos": 19655
+  },
+  "terra": {
+   "area_m2": 11810.8,
+   "triangulos": 798
+  },
+  "rocha": {
+   "area_m2": 3473.2,
+   "triangulos": 3460
+  },
+  "relva": {
+   "area_m2": 440834.4,
+   "triangulos": 254157
+  },
+  "erva": {
+   "area_m2": 271656.3,
+   "triangulos": 84459
+  },
+  "mato": {
+   "area_m2": 38900.5,
+   "triangulos": 21152
+  }
+ },
  "terreno": {
-  "vertices": 152311,
-  "triangulos": 299999,
+  "vertices": 264355,
+  "triangulos": 427805,
   "area_ha": 68.3
  },
  "ponte_sao_francisco": {

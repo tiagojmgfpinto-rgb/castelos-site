@@ -1,6 +1,6 @@
 # Maqueta 3D da Praça-forte de Almeida (estado atual)
 
-Versão 0.2, **provisória** (10 de novembro de 2026). A 0.2 corrige o que o autor do projeto pediu e o que se viu no Google Maps e no Street View (ver «Correções da 0.2»). A maqueta é gerada por código, à escala 1:1 e georreferenciada.
+Versão 0.8, **provisória** (25 de novembro de 2026: chão por classes nítidas, metro a metro, sem a ortoimagem drapeada). A 0.2 corrige o que o autor do projeto pediu e o que se viu no Google Maps e no Street View (ver «Correções da 0.2»). A maqueta é gerada por código, à escala 1:1 e georreferenciada.
 
 - **Origem:** centróide do anel da contraescarpa do fosso principal no OSM (retaining_wall fc68b085, 33,1 ha).
   - WGS84: 40,725642, −6,906288.
@@ -24,6 +24,9 @@ python pipeline/maquetas/almeida/lidar.py PASTA
 # 3. traçado das escarpas no MDT -> dados/escarpas.json; pontes (classe 26) -> dados/pontes.json
 python pipeline/maquetas/almeida/tracar.py
 python pipeline/maquetas/almeida/pontes.py PASTA
+
+# 3b. classes do chão (proposta pela cor do LiDAR + correções à mão) -> dados/chao.json
+python pipeline/maquetas/almeida/chao.py
 
 # 4. maqueta em Blender (bpy 5.2.3, Python 3.13) -> public/maquetas/almeida/almeida.glb (Draco) e capa.jpg
 python pipeline/maquetas/almeida/construir.py --vistas
@@ -149,3 +152,7 @@ A pegada vem do OSM e as cotas do MDS. A orientação das fachadas foi conferida
 - Pedra e telha fotográficas (`kit/fotos.py`, fotos CC0 da Poly Haven): silharia das escarpas e cantaria das portas em `stone_brick_wall_001` (fiadas de c. 0,5 m nas escarpas), recolorida para o granito claro bege-acinzentado do Street View; telhas `roof_09` com os três tons (viva, velha e do Quartel). Créditos em `dados/medidas.json` (`texturas_foto`). As casas já eram cinzentas.
 - **Torre do Relógio, remate (16 nov.):** a fotografia de frente de 2019 (Hovallef), tirada ao pé da torre, escondia a cúpula atrás da cornija, e o remate tinha ficado só com urnas. As fotografias de longe (D. Perez 2013, Hovallef 2019, Alvesgaspar março de 2026) e o LiDAR de 2024 mostram um terraço com balaustrada de granito e pinhas nos cantos, e ao meio uma cúpula bolbosa sobre embasamento quadrado com pinhas pequenas, pináculo de anéis, cruz e cata-vento vermelho. Cotas pelo LiDAR (perfil radial dos pontos à volta do eixo): cornija 779,85, corrimão c. 780,8, pinhas c. 782,4, bojo com 1,75 m de raio, ombro 783,7 e pináculo 786,2 m. Juntou-se o friso de granito por baixo da cornija de remate e um sino à vista em cada vão.
 - **Placas (16 nov.):** no visor da ficha (c. 710 × 440 px) três das oito placas escondiam-se por falta de lugar por cima do ponto. O visor passou a tentar desvios maiores para o lado e, em último caso, a pôr o cartão por baixo do ponto; ao abrir aparecem as oito.
+
+## Chão (0.8, 25 nov. 2026)
+
+O chão deixou de ser a ortoimagem drapeada (`chao.py` -> `dados/chao.json`, `kit/chao.py`, `kit/chao_blender.py`, método "metro a metro"). A proposta automática lê a cor da nuvem de pontos (voo de primavera: prados verdes), as classes e o declive a 50 cm: relva, erva seca, mato debaixo das copas, saibro e rocha. As correções à mão, por ordem: a vila dentro das muralhas (`INTRAMUROS`, pela rua que corre por dentro do terrapleno), onde o chão sem verde até 12 m das casas e as ruas do OSM (que aqui assentam bem) são calçada de granito; as estradas de fora em asfalto, com o traçado do OSM assente na faixa cinzenta (`chao.alinhar_osm`); o claro até 10 m das casas dos bairros de fora em calçada; o campo lavrado a nascente (`CAMPO_LAVRADO`) em terra. O relevo é uma malha adaptativa única (`chao.malhas_adaptativas`, 25 cm de erro, blocos até 16 m), um objeto por classe, com os buracos das frontarias das portas; as árvores assentam nessa malha (BVH dos objetos `Chao_`).
