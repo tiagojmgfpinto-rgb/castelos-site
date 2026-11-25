@@ -1,4 +1,34 @@
 {
+ "chao": {
+  "asfalto": {
+   "area_m2": 19214.9,
+   "triangulos": 42627
+  },
+  "calcada": {
+   "area_m2": 3149.8,
+   "triangulos": 7190
+  },
+  "lajeado": {
+   "area_m2": 807.9,
+   "triangulos": 2287
+  },
+  "saibro": {
+   "area_m2": 6219.0,
+   "triangulos": 18595
+  },
+  "rocha": {
+   "area_m2": 196.1,
+   "triangulos": 609
+  },
+  "relva": {
+   "area_m2": 43649.5,
+   "triangulos": 99532
+  },
+  "erva": {
+   "area_m2": 12288.1,
+   "triangulos": 32761
+  }
+ },
  "muralha_nascente": {
   "topo": [
    249.3,

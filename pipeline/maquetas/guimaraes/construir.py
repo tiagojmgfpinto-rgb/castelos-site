@@ -32,6 +32,22 @@ from kit.fotos import fontes_fotos  # noqa: E402
 from kit.silhares import textura_silhares  # noqa: E402
 from kit.materiais import material as material_kit  # noqa: E402  (com mapa de normais)
 from kit.arquitetura import barra, piramide, guarda  # noqa: E402
+from kit import chao, chao_blender  # noqa: E402
+
+# Chão por classes (kit/chao.py, dados/chao.json): cor média de cada classe tirada das fotografias e do Street View
+# (25 nov. 2026). O granito de Guimarães é cinzento-claro e frio: cubos e lajes mais cinzentos que em Penela; o saibro
+# dos carreiros do parque é claro e amarelado; a relva do parque é rasa, verde-amarelada no verão.
+PALETA_CHAO = {
+    "asfalto": {"cor": (0.43, 0.43, 0.44)},
+    "calcada": {"cor": (0.62, 0.61, 0.58)},
+    "lajeado": {"cor": (0.70, 0.69, 0.65), "metros": 6.0},
+    "saibro": {"cor": (0.82, 0.77, 0.66)},
+    "terra": {"cor": (0.64, 0.56, 0.43)},
+    "relva": {"cor": (0.47, 0.53, 0.30)},
+    "erva": {"cor": (0.60, 0.59, 0.41)},
+    "mato": {"cor": (0.34, 0.38, 0.23)},
+    "rocha": {"cor": (0.66, 0.65, 0.60)},
+}
 
 AQUI = Path(__file__).resolve().parent
 RAIZ = AQUI.parents[2]
@@ -172,99 +188,28 @@ def fbm(x, y, escala, semente, oit=4):
     return s / tot
 
 
-_ORTO = []
-
-
-def ortofoto(x, y):
-    """Cor (sRGB 0-1) da ortofoto DGT 2025 recortada em dados/orto.jpg (norte em cima)."""
-    if not _ORTO:
-        img = bpy.data.images.load(str(AQUI / "dados" / "orto.jpg"))
-        w, h = img.size
-        px = np.empty(w * h * 4, np.float32)
-        img.pixels.foreach_get(px)
-        _ORTO.append(px.reshape(h, w, 4)[..., :3])  # o Blender guarda a linha 0 em baixo (sul)
-        bpy.data.images.remove(img)
-    a = _ORTO[0]
-    k = a.shape[0]
-    c = np.clip(np.round((np.asarray(x) + LMEIO) / (2 * LMEIO) * (k - 1)).astype(int), 0, k - 1)
-    r = np.clip(np.round((np.asarray(y) + LMEIO) / (2 * LMEIO) * (k - 1)).astype(int), 0, k - 1)
-    return a[r, c].astype(float)
-
-
 def construir_terreno():
     passo = 1.0
     n = int(2 * RAIO / passo) + 1
     xs = np.linspace(-RAIO, RAIO, n)
     X, Y = np.meshgrid(xs, xs)
     Z = cota(X, Y)
-    gy, gx = np.gradient(Z, passo)
-    decl = np.degrees(np.arctan(np.hypot(gx, gy)))
 
-    centro_in = np.hypot(X[:-1, :-1] + passo / 2, Y[:-1, :-1] + passo / 2) < RAIO - passo * 0.3
-    idx = -np.ones(X.shape, int)
-    usados = np.zeros(X.shape, bool)
-    usados[:-1, :-1] |= centro_in
-    usados[1:, :-1] |= centro_in
-    usados[:-1, 1:] |= centro_in
-    usados[1:, 1:] |= centro_in
-    idx[usados] = np.arange(usados.sum())
-    V = np.stack([X[usados], Y[usados], Z[usados]], 1)
-    I, J = np.nonzero(centro_in)
-    faces = np.stack([idx[I, J], idx[I, J + 1], idx[I + 1, J + 1], idx[I + 1, J]], 1)
-
-    # cores por vértice (sRGB): paleta de maqueta guiada pela ortofoto de 2025 (relva, terra,
-    # calçada e rocha onde de facto estão), com as sombras e o ruído da fotografia atenuados
-    xv, yv = V[:, 0], V[:, 1]
-    dv = decl[usados]
-    orto = ortofoto(xv, yv)
-    lum = orto.mean(1)
-    sat = orto.max(1) - orto.min(1)
-    verde = np.clip((orto[:, 1] - (orto[:, 0] + orto[:, 2]) / 2) * 8 + 0.3, 0, 1)
-    # debaixo das copas (nuvem de pontos) a ortofoto só mostra a árvore e a sombra: chão de mato
-    ci = np.clip(np.round((xv + LMEIO) / LPASSO).astype(int), 0, VEG.shape[1] - 1)
-    ri = np.clip(np.round((yv + LMEIO) / LPASSO).astype(int), 0, VEG.shape[0] - 1)
-    sob = np.zeros(len(xv))
-    for dr in (-2, 0, 2):
-        for dc in (-2, 0, 2):
-            sob += VEG[np.clip(ri + dr, 0, VEG.shape[0] - 1), np.clip(ci + dc, 0, VEG.shape[1] - 1)]
-    sob = np.clip(sob / 9 * 1.5, 0, 1)
-    verde = np.maximum(verde, sob * 0.85)
-    erva = np.array([0.52, 0.55, 0.35])
-    terra = np.array([0.76, 0.70, 0.57])
-    calcada = np.array([0.80, 0.78, 0.73])
-    cor = erva * verde[:, None] + terra * (1 - verde[:, None])
-    claro = np.clip((lum - 0.55) * 6, 0, 1) * np.clip((0.12 - sat) * 12, 0, 1) * (1 - sob)
-    cor = cor * (1 - claro[:, None]) + calcada * claro[:, None]
-    cor = cor * (0.94 + 0.12 * fbm(xv, yv, 6.0, 3))[:, None]
-    roc = np.array([0.76, 0.69, 0.55]) * (0.9 + 0.2 * fbm(xv, yv, 4.0, 5)[:, None])
-    tr = np.clip((dv - 38) / 12, 0, 1)[:, None]
-    cor = cor * (1 - tr) + roc * tr
-
-    me = bpy.data.meshes.new("terreno")
-    me.from_pydata(V.tolist(), [], faces.tolist())
-    me.update()
-    bm = bmesh.new()
-    bm.from_mesh(me)
-    bm.verts.ensure_lookup_table()
-    # borda circular exata
-    borda = [v for v in bm.verts if v.is_boundary]
-    for v in borda:
-        r = math.hypot(v.co.x, v.co.y)
-        v.co.x, v.co.y = v.co.x * RAIO / r, v.co.y * RAIO / r
-    bxy = np.array([[v.co.x, v.co.y] for v in borda])
-    bz = cota(bxy[:, 0], bxy[:, 1])
-    for v, z in zip(borda, bz):
-        v.co.z = float(z)
-    bm.to_mesh(me)
-    bm.free()
-    cor_lin = np.clip(cor, 0, 1) ** 2.2
-    ca = me.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
-    rgba = np.hstack([cor_lin, np.ones((len(V), 1))]).astype(np.float32)
-    ca.data.foreach_set("color", rgba.ravel())
-    me.color_attributes.active_color = ca
-    me.shade_smooth()
-    ob = novo_objeto("Terreno", me, "terreno")
-    uv_mundo(ob, 8.0)
+    # O chão já não se pinta com a cor da ortofoto (método "metro a metro", 25 nov. 2026): cada classe (asfalto,
+    # calçada, lajeado, saibro, relva, erva, mato) é um objeto com material nítido, a partir dos polígonos de
+    # dados/chao.json (chao.py: cor do LiDAR + classes + correções vistas no Street View).
+    classes = chao.ler(AQUI / "dados" / "chao.json")
+    # ruas, calçadas e lajes não ondulam com o ruído do MDT (carros, muretes): alisa-se o Z debaixo delas
+    Z = chao.aplanar(xs, Z, [classes.get(n) for n in ("asfalto", "calcada", "lajeado", "saibro")], sigma=1.2)
+    pecas = chao.malhas(classes, xs, Z, raio=RAIO)
+    obs = chao_blender.objetos(pecas, pai=GRUPOS["Terreno"], paleta=PALETA_CHAO)
+    for n in ("asfalto", "calcada", "lajeado", "saibro", "escadas"):
+        if n in obs:
+            obs[n]["elemento"] = "caminhos"
+    MEDIDAS["chao"] = {n: {"area_m2": round(float(classes[n].intersection(chao.disco(RAIO)).area), 1),
+                           "triangulos": int(len(f))} for n, (_v, f) in pecas.items()}
+    anel_d = chao.borda_disco(xs, Z, RAIO)
+    bxy, bz = anel_d[:, :2], anel_d[:, 2]
 
     # base de maqueta de museu: saia e fundo
     ang = np.arctan2(bxy[:, 1], bxy[:, 0])
@@ -1774,7 +1719,7 @@ print("terreno…")
 aplanar_terreiro()
 construir_terreno()
 for ob in bpy.data.objects:
-    if ob.name in ("Terreno", "Base"):
+    if ob.name in ("Terreno", "Base") or ob.name.startswith("Chao_"):
         ob.parent = GRUPOS["Terreno"]
 
 print("muralhas…")
@@ -2183,16 +2128,15 @@ m.objeto("Edificios_Vila", "vila", ["cinza_viz", "cinza_viz"], GRUPOS["Vila"], u
 MEDIDAS["vila"] = {"edificios": len(pegadas), "do_osm": n_osm, "do_lidar": len(pegadas) - n_osm, "medidos": n_med}
 
 print("caminhos…")
-LARG = {"primary": 7, "secondary": 7, "tertiary": 6, "residential": 5, "unclassified": 4.5, "service": 3.5,
-        "living_street": 4, "pedestrian": 4, "track": 3, "footway": 1.8, "path": 1.6, "steps": 1.8}
-m = Malha()
+# As ruas, os passeios e os carreiros são agora classes do chão (chao.py -> objetos Chao_<classe>), assentes no próprio
+# terreno: já não há fitas por cima dele. Ficam só os eixos das ruas de automóveis do OSM, para tirar da faixa os
+# troncos das árvores de arruamento (vegetação, abaixo).
+LARG = {"primary": 7, "secondary": 7, "tertiary": 6, "residential": 5, "unclassified": 4.5, "service": 3.5}
 RUAS = []  # troços de asfalto (eixo, largura): nenhuma árvore fica com o tronco na faixa
 for f in F["caminhos"]:
-    if f["subtipo"] != "road" or f["geometria"]["type"] != "LineString":
+    if f["subtipo"] != "road" or f["geometria"]["type"] != "LineString" or f["classe"] not in LARG:
         continue
-    lw = LARG.get(f["classe"] or "", 3)
-    # ruas e estradas asfaltadas; passeios, escadas e caminhos do monte em lajeado de granito
-    mat_ = 0 if f["classe"] in ("primary", "secondary", "tertiary", "residential", "unclassified", "service") else 1
+    lw = LARG[f["classe"]]
     linha = geom(f)
     pts = [linha[0]]
     for a, b in zip(linha[:-1], linha[1:]):
@@ -2202,35 +2146,14 @@ for f in F["caminhos"]:
     ok = np.hypot(*pts.T) < RAIO - 1.5
     for z in evitar:
         ok &= ~dentro(pts[:, 0], pts[:, 1], z) & (distancia(pts[:, 0], pts[:, 1], z, True)[0] > lw / 2 + 0.8)
-    e_ = 1.0
-    inc = np.hypot(cota(pts[:, 0] + e_, pts[:, 1]) - cota(pts[:, 0] - e_, pts[:, 1]),
-                   cota(pts[:, 0], pts[:, 1] + e_) - cota(pts[:, 0], pts[:, 1] - e_)) / (2 * e_)
-    ok &= inc < 0.6
     troco = []
     for i, (p, k) in enumerate(zip(pts, ok)):
         if k:
             troco.append(p)
         if (not k or i == len(pts) - 1) and len(troco) > 1:
-            t = np.array(troco)
-            if mat_ == 0:
-                RUAS.append((t, lw))
-            L_ = desvio(t, lw / 2)
-            R_ = desvio(t, -lw / 2)
-            zl = cota(L_[:, 0], L_[:, 1]) + 0.12
-            zr = cota(R_[:, 0], R_[:, 1]) + 0.12
-            for j in range(len(t) - 1):
-                m.face([(*R_[j], zr[j]), (*R_[j + 1], zr[j + 1]), (*L_[j + 1], zl[j + 1]), (*L_[j], zl[j])], mat_)
-            if mat_ == 0:  # lancis de granito nas ruas de automóveis
-                for lado_ in (1, -1):
-                    A_ = desvio(t, lado_ * lw / 2)
-                    B_ = desvio(t, lado_ * (lw / 2 + 0.45))
-                    za = cota(A_[:, 0], A_[:, 1]) + 0.2
-                    zb = cota(B_[:, 0], B_[:, 1]) + 0.2
-                    for j in range(len(t) - 1):
-                        m.face([(*A_[j], za[j]), (*A_[j + 1], za[j + 1]), (*B_[j + 1], zb[j + 1]), (*B_[j], zb[j])], 2)
+            RUAS.append((np.array(troco), lw))
         if not k:
             troco = []
-m.objeto("Caminhos", "caminhos", ["asfalto", "lajeado", "lancil"], GRUPOS["Caminhos"], uv=None, liso=True)
 
 print("vegetação…")
 print("vegetação…")
@@ -2291,7 +2214,7 @@ def plantar(x, y, z, raio, alt, copa_cor, tronco=1.0, oliveira=False):
 # Copas medidas no LiDAR (lidar.py): posição, topo e raio de cada árvore; a forma é esquemática.
 ARV = LID["arvores"]
 n_arv = 0
-OBRA = Obra(excluir=("Terreno", "Base", "Vegetacao", "Caminhos"))  # copas fora de muros, casas e paço
+OBRA = Obra(excluir=("Terreno", "Base", "Vegetacao", "Caminhos", "Chao_"))  # copas fora de muros, casas e paço
 n_rua = 0
 for x, y, topo, _, r in ARV:
     if np.hypot(x, y) > RAIO - 2:

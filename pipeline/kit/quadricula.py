@@ -104,7 +104,8 @@ def main():
     pasta = Path(__file__).resolve().parents[1] / "maquetas" / a.maqueta
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     meta = json.loads((pasta / "dados" / "orto.json").read_text()) if (pasta / "dados" / "orto.json").exists() else {}
-    meio = meta.get("meio", 160.0)
+    meio = meta.get("meio") or (float(np.load(pasta / "dados" / "lidar.npz")["meio"])
+                                if (pasta / "dados" / "lidar.npz").exists() else 160.0)
     orto = Imagem(Image.open(pasta / "dados" / "orto.jpg"), meio, tuple(meta.get("centro", (0.0, 0.0))))
     planta = None
     if a.planta:
