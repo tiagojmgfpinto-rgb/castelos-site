@@ -18,8 +18,6 @@ from pathlib import Path
 
 import numpy as np
 import shapely
-from PIL import Image
-from scipy import ndimage as ndi
 
 AQUI = Path(__file__).resolve().parent
 sys.path.insert(0, str(AQUI.parents[1]))
@@ -32,56 +30,10 @@ KX = 111320 * math.cos(math.radians(LAT0))
 KY = 110574
 CENTRO = np.array([-40.0, 0.0])
 
-LID = np.load(AQUI / "dados" / "lidar.npz")
-PASSO, MEIO = float(LID["passo"]), float(LID["meio"])
-MDT = LID["mdt"] / 100.0
-MDS = LID["mds"] / 100.0
-CLS = LID["classe"]
-N = MDT.shape[0]
-XS = np.linspace(-MEIO, MEIO, N)
-X, Y = np.meshgrid(XS, XS)  # linha 0 = sul
-
-NOMES = ["asfalto", "calcada", "terra", "relva", "mato", "rocha", "erva", "saibro"]  # (asfalto e calçada só por correção)
-IX = {n: i for i, n in enumerate(NOMES)}
 
 
 def ll(c):
     return np.array([(c[0] - LON0) * KX, (c[1] - LAT0) * KY]) - CENTRO
-
-
-def orto_05():
-    """Ortofoto reamostrada para a grelha de 0,5 m do LiDAR (linha 0 = sul), em 0-1."""
-    im = Image.open(AQUI / "dados" / "orto.jpg").convert("RGB")
-    a = np.asarray(im.resize((N, N), Image.BOX), float) / 255.0
-    return a[::-1]
-
-
-def proposta():
-    o = orto_05()
-    lum = o.mean(2)
-    sat = o.max(2) - o.min(2)
-    verde = o[..., 1] - (o[..., 0] + o[..., 2]) / 2
-    gy, gx = np.gradient(MDT, PASSO)
-    decl = np.degrees(np.arctan(np.hypot(gx, gy)))
-    copa = (CLS >= 3) & (CLS <= 5) & (MDS - MDT > 1.2)
-    edif = CLS == 6
-
-    # o chão que não é verde nem copa é erva rasa (seca no verão da ortofoto de 2025; verde nas fotografias de
-    # primavera); terra nua só por correção
-    rot = np.full(lum.shape, IX["erva"])
-    rot[verde > 0.025] = IX["relva"]
-    # calçada e asfalto não se adivinham pela cor (as sombras e os telhados enganam): só pelas correções
-    perto_casa = ndi.binary_dilation(edif, iterations=8)  # telhados e pátios claros enganam: 4 m à volta das casas
-    rot[(lum > 0.58) & (sat < 0.09) & (decl < 30) & ~perto_casa] = IX["saibro"]  # pó de calcário dos carreiros e terreiros
-    rot[(decl > 48) & ~copa] = IX["rocha"]
-    rot[copa] = IX["mato"]
-    # debaixo dos edifícios não se vê o chão: fica a classe vizinha mais próxima (os volumes tapam-no)
-    if edif.any():
-        _, (ri, ci) = ndi.distance_transform_edt(edif, return_indices=True)
-        rot = rot[ri, ci]
-    rot = chao.maioria(rot, len(NOMES), raio=3)
-    rot = chao.maioria(rot, len(NOMES), raio=1)
-    return chao.raster_para_poligonos(rot, -MEIO, -MEIO, PASSO, NOMES, area_min=8.0, simplificar=0.5, alisar=1.0)
 
 
 # ---------------------------------------------------------------- correções à mão (quadrícula a quadrícula)
@@ -132,13 +84,8 @@ CORRECOES = [
 
 
 def main():
-    cl = proposta()
-    for classe, g, _nota in CORRECOES:
-        for n in list(cl):
-            cl[n] = cl[n].difference(g)
-        cl[classe] = cl.get(classe, shapely.Polygon()).union(g)
-    cl = chao.resolver(cl, dentro=chao.disco(MEIO - 1))
-    cl = chao.preencher(cl, chao.disco(MEIO - 1))
+    cl, meio = chao.proposta(AQUI)
+    cl = chao.aplicar(cl, CORRECOES, meio)
     chao.gravar(AQUI / "dados" / "chao.json", cl, {"fonte": "ortofoto DGT 2025 + LiDAR DGT 2024 + correções à mão",
                                                     "correcoes": [c[2] for c in CORRECOES]})
     for n, g in cl.items():

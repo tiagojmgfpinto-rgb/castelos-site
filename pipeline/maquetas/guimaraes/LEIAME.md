@@ -1,6 +1,6 @@
 # Maqueta 3D do Castelo de Guimarães (estado atual)
 
-Versão 0.3, **provisória**. Gerada por código, à escala 1:1 e georreferenciada (origem no centro da torre de menagem, 41.447926, −8.290429; x para este, y para norte; no visor, −z é o norte). Inclui o castelo, a Igreja de São Miguel do Castelo, o Paço dos Duques de Bragança e a estátua de D. Afonso Henriques. O relevo, as plantas das torres, as cotas e as alturas são medidos no LiDAR da DGT de 2025.
+Versão 0.10, **provisória**. Gerada por código, à escala 1:1 e georreferenciada (origem no centro da torre de menagem, 41.447926, −8.290429; x para este, y para norte; no visor, −z é o norte). Inclui o castelo, a Igreja de São Miguel do Castelo, o Paço dos Duques de Bragança e a estátua de D. Afonso Henriques. O relevo, as plantas das torres, as cotas e as alturas são medidos no LiDAR da DGT de 2025.
 
 ## Como reconstruir
 
@@ -16,7 +16,11 @@ python pipeline/maquetas/guimaraes/recolher.py
 pip install rasterio pyproj scipy pillow "laspy[lazrs]" numpy
 python pipeline/maquetas/guimaraes/lidar.py PASTA
 
-# 3. maqueta em Blender (módulo bpy) -> public/maquetas/guimaraes/guimaraes.glb (Draco) e capa.jpg
+# 3. classes do chão (proposta automática + correções à mão) -> dados/chao.json
+python pipeline/maquetas/guimaraes/chao.py
+python pipeline/kit/quadricula.py guimaraes --classes   # conferir quadrícula a quadrícula (vistas/quadriculas/)
+
+# 4. maqueta em Blender (módulo bpy) -> public/maquetas/guimaraes/guimaraes.glb (Draco) e capa.jpg
 pip install bpy==5.2.3 numpy rasterio shapely scikit-image   # Python 3.13
 python pipeline/maquetas/guimaraes/construir.py --vistas
 ```
@@ -28,13 +32,14 @@ O `bpy` do PyPI não traz o Draco, por isso o script comprime o GLB com `npx @gl
 
 ## O que se mede no LiDAR e o que é estimativa
 
-- **Terreno**: MDT de 50 cm amostrado a 1 m, sem retoques.
+- **Terreno**: MDT de 50 cm amostrado a 1 m, alisado só debaixo das ruas, calçadas e lajes (`chao.aplanar`).
+- **Chão** (`chao.py`, 25 nov. 2026): classes nítidas, um objeto `Chao_<classe>` cada (kit/chao.py, kit/chao_blender.py). A proposta automática (cor do LiDAR, classes e declive) dá a relva, a erva rasa, o mato debaixo das copas e o saibro claro dos carreiros; as correções à mão, cada uma com a nota do que se viu, dão o asfalto da vila (o chão sem verde fora do parque), os cubos de granito da Rua Conde Dom Henrique, do Largo Martins Sarmento e do adro do Paço, e as lajes à volta da igreja e no pátio do Paço (Street View). A cor do LiDAR só decide as fronteiras: nunca vai para o chão.
 - **Torres de canto e torre de menagem**: planta tirada do MDS (retângulo mínimo das células acima do topo da muralha, à volta de um ponto escolhido), topo dentro da planta, pé no anel exterior. O OSM só tem o contorno exterior, desviado c. 1 m para oeste (corrigido com `DESVIO_OSM`).
 - **Torres das portas e eixo dos panos**: desenhados à mão sobre o MDS e a ortoimagem (`PANOS`, `torres` no `construir.py`).
 - **Muralhas**: topo dos merlões medido ao longo do eixo de 2 em 2 m, sem os pontos a menos de 1,9 m das torres (o círculo de medida apanhava o topo delas e fazia rampas no adarve); pé exterior e chão interior no MDT. Merlões altos e pontiagudos (1,45 m mais 0,75 m de ponta), como nas fotografias do pátio. Cada torre tem uma porta de volta perfeita, com aduelas, onde o adarve chega.
 - **Muro com arco**: troço de muro que sai da torre noroeste, sobe para norte e vira para poente, lido no LiDAR na faixa de hera que o cobre (classe vegetação, 4 a 6 m acima do chão), com o arco vazado onde o caminho do OSM o atravessa (fotografia do Street View).
 - **Paço**: planta do OSM (anel exterior e pátio); altura das fachadas medida em três profundidades. Os corpos de telhado e as paredes ameadas entre eles foram lidos no MDS rodado para o referencial do edifício (`PACO_CORPOS`, `PACO_PAREDES`), e cada corpo tem um telhado de quatro águas com o cume medido. A galeria do pátio tem telhado de uma água entre o beirado e a parede das alas, ambos medidos. Chaminés nos picos do MDS mais de 1,2 m acima da vizinhança, com o topo medido; o desenho (fuste cilíndrico de tijolo claro com c. 0,8 m de diâmetro, anel de granito e cúpula de granito no topo) segue as fotografias aéreas. A capela tem o alpendre de madeira em arco quebrado e o portal, pela fotografia do pátio.
-- **Ruas**: o OSM não traz o pavimento; as ruas de automóveis vão em asfalto com lancis e os passeios, escadas e caminhos em lajeado de granito.
+- **Ruas**: são classes do chão, assentes no terreno (já não há fitas por cima). Os eixos das ruas de automóveis do OSM ficam só para tirar os troncos das árvores de arruamento da faixa.
 - **Igreja**: nave e capela-mor tiradas das células de classe edifício, com cumeeiras e beirados medidos.
 - **Estátua**: posição do OSM, altura total medida na nuvem de pontos. A figura segue as fotografias do Tiago: rochedo, cota de escamas (textura `textura_escamas()`), manto com pregas, elmo com nasal, barba, escudo de amêndoa e espada longa de ponta para cima, com a bainha na base. Fica de lado para o Paço, com a esquerda virada para a fachada poente, como no local.
 - **Portas e escadas (SIPA)**: a porta principal tem arco quebrado por fora e de volta perfeita por dentro, e a da Traição arco quebrado; ambas com aduelas e ombreiras de cantaria (`aduelas()`). Junto à porta principal, duas escadas estreitas e divergentes sobem ao caminho de ronda, encostadas aos panos nascente; os degraus partem do chão medido e acabam à cota do adarve medida. Um merlão em cada três tem seteira.

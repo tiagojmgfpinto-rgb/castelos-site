@@ -125,6 +125,113 @@ def faixa(pts, largura, pontas="flat"):
     return shapely.LineString(pts).buffer(largura / 2, cap_style=cap, join_style="round")
 
 
+# ---------------------------------------------------------------- proposta automática (chão natural)
+
+NATURAIS = ["asfalto", "calcada", "terra", "relva", "mato", "rocha", "erva", "saibro"]  # (asfalto e calçada só por correção)
+
+
+def proposta(pasta, verde_min=0.025, claro=(0.58, 0.09), rocha_decl=48.0, saibro=True, maioria_raio=3,
+             area_min=8.0, simplificar=0.5, alisar=1.0, casa_folga=4.0, sombra=None, copa="mato"):
+    """Proposta automática para o chão natural, a partir de dados/lidar.npz (MDT, MDS e classes a `passo` m, linha
+    0 = sul, ±meio m à volta da origem da cena) e de dados/orto.jpg (a mesma área, norte em cima).
+
+    O que não é verde nem copa é erva rasa; verde = relva; copas (classes 3–5 a mais de 1,2 m) = mato; declive acima de
+    `rocha_decl` sem copa = rocha; claro e neutro, plano e longe das casas = saibro (pó dos carreiros e terreiros).
+    Debaixo dos edifícios fica a classe vizinha. Calçada e asfalto não se adivinham pela cor (sombras e telhados
+    enganam): ficam para as correções à mão. casa_folga: metros à volta dos edifícios do LiDAR onde o claro não é
+    saibro (telhados deslocados na ortofoto). sombra: luminância abaixo da qual (fora das copas) o píxel é sombra e
+    fica com a classe do vizinho iluminado mais próximo. copa: classe do chão debaixo das copas ("mato" no monte; None
+    num parque de relva aparada, onde o chão debaixo das árvores é o do vizinho ao sol). Devolve ({classe: polígono}, meio)."""
+    from PIL import Image
+    pasta = Path(pasta)
+    lid = np.load(pasta / "dados" / "lidar.npz")
+    passo = float(lid["passo"])
+    meio = float(lid["meio"])
+    mdt, mds, cls = lid["mdt"] / 100.0, lid["mds"] / 100.0, lid["classe"]
+    n = mdt.shape[0]
+    im = Image.open(pasta / "dados" / "orto.jpg").convert("RGB")
+    o = (np.asarray(im.resize((n, n), Image.BOX), float) / 255.0)[::-1]
+    lum = o.mean(2)
+    sat = o.max(2) - o.min(2)
+    verde = o[..., 1] - (o[..., 0] + o[..., 2]) / 2
+    gy, gx = np.gradient(mdt, passo)
+    decl = np.degrees(np.arctan(np.hypot(gx, gy)))
+    sob_copa = (cls >= 3) & (cls <= 5) & (mds - mdt > 1.2)
+    edif = cls == 6
+    ix = {k: i for i, k in enumerate(NATURAIS)}
+    rot = np.full(lum.shape, ix["erva"])
+    rot[verde > verde_min] = ix["relva"]
+    if saibro:
+        perto_casa = ndi.binary_dilation(edif, iterations=max(1, int(round(casa_folga / passo))))
+        rot[(lum > claro[0]) & (sat < claro[1]) & (decl < 30) & ~perto_casa] = ix["saibro"]
+    rot[(decl > rocha_decl) & ~sob_copa] = ix["rocha"]
+    if sombra is not None:
+        esc = (lum < sombra) & ~sob_copa & ~edif
+        if esc.any() and not esc.all():
+            _, (ri, ci) = ndi.distance_transform_edt(esc | sob_copa, return_indices=True)
+            rot = rot[ri, ci]
+    if copa:
+        rot[sob_copa] = ix[copa]
+    elif sob_copa.any() and not sob_copa.all():
+        _, (ri, ci) = ndi.distance_transform_edt(sob_copa, return_indices=True)
+        rot = rot[ri, ci]
+    if edif.any():
+        _, (ri, ci) = ndi.distance_transform_edt(edif, return_indices=True)
+        rot = rot[ri, ci]
+    rot = maioria(rot, len(NATURAIS), raio=maioria_raio)
+    rot = maioria(rot, len(NATURAIS), raio=1)
+    return raster_para_poligonos(rot, -meio, -meio, passo, NATURAIS, area_min=area_min, simplificar=simplificar,
+                                 alisar=alisar), meio
+
+
+def aplicar(classes, correcoes, meio):
+    """Aplica as correções à mão por ordem (cada uma manda sobre o que já lá estava), resolve as sobreposições e tapa
+    as frestas, dentro do disco de raio meio − 1. O polígono de uma correção pode ser uma função das classes que já
+    lá estão (por exemplo `pela_classe(zona, "erva", "saibro")`: o chão não verde de uma zona passa a calçada)."""
+    cl = dict(classes)
+    for classe, g, _nota in correcoes:
+        if callable(g):
+            g = g(cl)
+        for k in list(cl):
+            cl[k] = cl[k].difference(g)
+        cl[classe] = cl.get(classe, shapely.Polygon()).union(g)
+    d = disco(meio - 1)
+    return preencher(resolver(cl, dentro=d), d)
+
+
+def pela_cor(pasta, zona, lum_min=0.6, sat_max=0.16, verde_max=0.03, fechar=1, area_min=3.0, alisar=0.5):
+    """Para as correções: os píxeis da ortofoto (dados/orto.jpg, à resolução do LiDAR) dentro da `zona` que são claros,
+    pouco saturados e sem verde, fora das copas. Serve para os carreiros estreitos (2–3 m) que o filtro de maioria da
+    proposta apaga: a zona diz onde há carreiro (um corredor à volta do traçado do OSM) e a cor diz a forma exata."""
+    from PIL import Image
+    from rasterio import features
+    from rasterio.transform import Affine
+    pasta = Path(pasta)
+    lid = np.load(pasta / "dados" / "lidar.npz")
+    passo, meio = float(lid["passo"]), float(lid["meio"])
+    n = lid["mdt"].shape[0]
+    o = np.asarray(Image.open(pasta / "dados" / "orto.jpg").convert("RGB").resize((n, n), Image.BOX), float)[::-1] / 255
+    copa = (lid["classe"] >= 3) & (lid["classe"] <= 5) & (lid["mds"] - lid["mdt"] > 120)
+    xs = -meio + passo * np.arange(n)  # centros das células, como em raster_para_poligonos
+    X, Y = np.meshgrid(xs, xs)
+    m = (o.mean(2) > lum_min) & (o.max(2) - o.min(2) < sat_max) & (o[..., 1] - (o[..., 0] + o[..., 2]) / 2 < verde_max)
+    m &= ~copa & shapely.contains_xy(zona, X, Y)
+    if fechar:
+        m = ndi.binary_opening(ndi.binary_closing(m, iterations=fechar), iterations=1)
+    tr = Affine(passo, 0, -meio - passo / 2, 0, passo, -meio - passo / 2)
+    g = [shapely.geometry.shape(gj) for gj, v in features.shapes(m.astype(np.uint8), mask=m, transform=tr) if v == 1]
+    g = shapely.union_all(g).buffer(alisar).buffer(-alisar).simplify(0.25) if g else shapely.Polygon()
+    return shapely.union_all([p for p in shapely.get_parts(g) if p.area >= area_min]).intersection(zona)
+
+
+def pela_classe(zona, *nomes):
+    """Para as correções: a parte da `zona` que a proposta (ou as correções anteriores) deu como `nomes`. Serve para
+    trocar o chão não verde de uma zona (erva, saibro) por calçada ou asfalto, com a fronteira da ortofoto."""
+    def f(cl):
+        return zona.intersection(shapely.union_all([cl[n] for n in nomes if n in cl]))
+    return f
+
+
 # ---------------------------------------------------------------- malhas
 
 def _bilinear(xs, Z, x, y):

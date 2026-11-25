@@ -26,7 +26,11 @@ O chão deixa de ser uma malha pintada ponto a ponto com a cor da ortofoto (manc
 3. **Malhas** (`kit.chao.malhas(classes, xs, Z, raio, recorte)`): uma malha por classe sobre a grelha Z do terreno. Células inteiras ficam dois triângulos; as que uma fronteira corta são recortadas e trianguladas (Delaunay restrito), por isso a fronteira é exata. O Z interpola-se bilinearmente na grelha, que é linear nas arestas das células: não há fendas entre classes. `kit.chao.aplanar` alisa o Z debaixo das classes pavimentadas (uma calçada não ondula com o ruído do MDT). `recorte` tira o que tem objeto próprio (falésias, chão de uma porta).
 4. **Objetos** (`kit.chao_blender.objetos(pecas, pai, paleta)`): `Chao_<classe>` com material nítido e periódico (sem costuras): cubos de calçada, lajes, grão de asfalto, saibro, terra, relva, erva e mato, multiplicados por uma variação larga e suave (±5 %) por vértice. A `paleta` de cada maqueta dá a cor média medida nas fotografias do sítio. 1024 px só para cubos e lajes; o resto 512 px.
 
-Primeira maqueta feita assim: Penela 0.8 (ver `pipeline/maquetas/penela/chao.py`).
+Primeira maqueta feita assim: Penela 0.8 (ver `pipeline/maquetas/penela/chao.py`). A seguir, Guimarães 0.10 (`pipeline/maquetas/guimaraes/chao.py`), que juntou ao kit:
+
+- `chao.proposta(pasta, ...)` e `chao.aplicar(classes, CORRECOES, meio)`: a proposta e a aplicação das correções saíram dos `chao.py` (Penela fica igual byte a byte). Opções da proposta: `claro` (limiar do saibro), `casa_folga` (metros à volta dos edifícios onde o claro não conta), `sombra` (as sombras ficam com a classe do vizinho ao sol), `copa` (`"mato"` no monte; `None` num parque de relva aparada, onde o chão debaixo das árvores é o do vizinho) e `maioria_raio` (2 para não apagar carreiros de 2–3 m).
+- O polígono de uma correção pode ser uma função das classes: `chao.pela_classe(zona, "erva", "saibro")` dá a parte não verde de uma zona (a vila fora do parque passa a asfalto, o adro a calçada, com a fronteira da cor); `chao.pela_cor(pasta, zona, ...)` dá os píxeis claros e sem verde de um corredor à volta do traçado do OSM (os carreiros com a forma exata, mesmo com o OSM 3 m fora).
+- A semântica (cubos, lajes, saibro, asfalto) confirma-se no Street View, ponto a ponto, e fica na nota da correção.
 
 ### Padrão das maquetas (12 nov. 2026)
 
