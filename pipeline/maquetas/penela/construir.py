@@ -20,6 +20,7 @@ from pathlib import Path
 
 import bpy  # noqa: I001 (o bpy tem de vir antes do bmesh)
 import bmesh
+import mathutils
 import numpy as np
 import shapely
 from scipy import ndimage as ndi
@@ -30,7 +31,7 @@ from kit.texturas import imagem  # noqa: E402
 from kit.cena import limpar, arvore_modelo  # noqa: E402
 from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
 from kit.materiais import material as material_kit  # noqa: E402  (com mapa de normais)
-from kit.arquitetura import piramide, barra  # noqa: E402
+from kit.arquitetura import piramide, barra, merlao_rustico  # noqa: E402
 from kit import passagens  # noqa: E402
 from kit import chao, chao_blender  # noqa: E402
 
@@ -63,6 +64,7 @@ CENTRO = np.array([-40.0, 0.0])
 RAIO = 150.0
 ZREF = 250.0  # cota que fica em z = 0
 rng = np.random.default_rng(1064)
+RNG_MERLAO = np.random.default_rng(2025)  # gerador próprio: não mexe na sequência de `rng` (árvores, casas)
 
 MUR = CFG["muralha"]
 PARAPEITO, MERLAO = MUR["parapeito"], MUR["merlao"]
@@ -548,7 +550,8 @@ def ameias_ao_longo(m, linha, z, fechada=False, mat=0, prof=0.6):
         c = pts[j] + (pts[j + 1] - pts[j]) * t
         zc = zs[j] + (zs[j + 1] - zs[j]) * t
         u = unit(pts[j + 1] - pts[j])
-        m.caixa(c, u, MERLAO["largura"], prof, zc, zc + MERLAO["altura"], mat)
+        # 0.9: merlões de alvenaria gasta, desiguais (fotografia do adarve, Tiago 26 out.), em vez de caixas iguais
+        merlao_rustico(m, c, u, MERLAO["largura"], prof, zc, zc + MERLAO["altura"], mat, RNG_MERLAO)
 
 
 def torre(m, base, pe, topo, mat=0):
@@ -861,10 +864,10 @@ for g in ["Terreno", "Muralhas", "Castelejo", "Torreoes", "Porta_Vila", "Porta_T
 # Pedra fotografada (kit.fotos, foto CC0 da Poly Haven; créditos em medidas.json "texturas_foto"): alvenaria
 # irregular em fiadas baixas, recolorida para o calcário/arenito ocre-bege das fotografias de Penela (3 m por
 # imagem, o que os UV de 3 m cobrem), com relevo nas juntas.
-# Desde a 0.9 (modelo do castillos.site): a imagem cobre 7,2 m (142 px/m) e é um mosaico de recortes da foto em
+# Desde a 0.9 (modelo do castillos.site): a imagem cobre 7,2 m (2048 px, 284 px/m: de perto, 1024 ficava mole) e é um mosaico de recortes da foto em
 # células de 1,2 m, para a mesma pedra não voltar a aparecer a cada 3 m; as pedras ficam com o tamanho real.
 M_PEDRA = 7.2
-_TEX_P, _ALT_P = textura_foto("old_stone_wall", n=1024, metros=M_PEDRA, cor=(0.72, 0.64, 0.51), contraste=0.9,
+_TEX_P, _ALT_P = textura_foto("old_stone_wall", n=2048, metros=M_PEDRA, cor=(0.72, 0.64, 0.51), contraste=0.9,
                               metros_foto=3.0, saturacao=0.7, liquen=0.04, semente=71, mosaico=1.2, variacao=0.16)
 pedra = imagem("pedra", _TEX_P)
 grao = imagem("grao", textura_grao())
@@ -1530,15 +1533,32 @@ novo_objeto("Vegetacao", me, "vegetacao", mat="arvore", pai=GRUPOS["Vegetacao"])
 # partem-se em faixas de 1,2 m para a faixa do pé não se esticar até ao topo.
 
 
-def sujidade(ob):
+def sujidade(ob, passo=0.6, amp=0.04):
+    """Rugosidade e sujidade dos panos (0.9, modelo do castillos.site). As faces partem-se numa grelha de c. 0,6 m e
+    cada vértice sai ou entra até ±4 cm ao longo da normal (ruído no mundo, com períodos de 1,5–3 m e de 0,4 m):
+    a alvenaria de Penela não é plana (fotografia do adarve e aéreas). Depois, a cor por vértice."""
     me = ob.data
     bm = bmesh.new()
     bm.from_mesh(me)
-    longas = [e for e in bm.edges if abs(e.verts[0].co.z - e.verts[1].co.z) > 1.2]
-    for k in sorted({int(np.ceil(abs(e.verts[0].co.z - e.verts[1].co.z) / 1.2)) - 1 for e in longas}):
-        grupo = [e for e in longas if int(np.ceil(abs(e.verts[0].co.z - e.verts[1].co.z) / 1.2)) - 1 == k and e.is_valid]
-        if grupo and k > 0:
-            bmesh.ops.subdivide_edges(bm, edges=grupo, cuts=min(k, 20), use_grid_fill=True)
+    for _ in range(2):
+        longas = [e for e in bm.edges if e.calc_length() > passo * 1.2]
+        grupos = {}
+        for e in longas:
+            grupos.setdefault(min(int(np.ceil(e.calc_length() / passo)) - 1, 24), []).append(e)
+        for k, grupo in sorted(grupos.items()):
+            grupo = [e for e in grupo if e.is_valid]
+            if grupo and k > 0:
+                bmesh.ops.subdivide_edges(bm, edges=grupo, cuts=k, use_grid_fill=True)
+    bmesh.ops.triangulate(bm, faces=[f for f in bm.faces if len(f.verts) > 4])
+    bm.normal_update()
+    V = np.array([v.co[:] for v in bm.verts])
+    N = np.array([v.normal[:] for v in bm.verts])
+    x, y, z = V.T
+    d = (amp * 0.7 * np.sin(x * 2.3 + 1.7 * np.sin(y * 1.9 + z * 1.3)) * np.sin(y * 2.1 + z * 2.7 + 0.4)
+         + amp * 0.3 * np.sin(x * 15.7 + y * 3.1 + z * 11.3) * np.sin(y * 13.9 - z * 9.7 + x * 2.9))
+    for v, dv, nv in zip(bm.verts, d, N):
+        v.co += mathutils.Vector(nv * dv)
+    bm.normal_update()
     bm.to_mesh(me)
     bm.free()
     co = np.empty(len(me.vertices) * 3)

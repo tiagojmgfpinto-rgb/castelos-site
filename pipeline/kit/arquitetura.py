@@ -6,7 +6,7 @@ import numpy as np
 import shapely
 from .geometria import _retangulo, _sd, arco_pts, area, ccw, orientar, quad, simplificar, unit
 
-__all__ = ["Quadro", "_vao_desloc", "aduelas", "altura_telhado", "barra", "contorno_vao", "corrimao", "cupula", "faixa_inclinada", "guarda", "guardas_corredor", "guarita", "merlao", "merlao_boleado", "oitavado", "painel", "parede", "passagem", "piramide", "porta_revelim", "porta_tunel", "telhado_4aguas", "telhado_generico", "tunel", "vao"]
+__all__ = ["Quadro", "_vao_desloc", "aduelas", "altura_telhado", "barra", "contorno_vao", "corrimao", "cupula", "faixa_inclinada", "guarda", "guardas_corredor", "guarita", "merlao", "merlao_boleado", "merlao_rustico", "oitavado", "painel", "parede", "passagem", "piramide", "porta_revelim", "porta_tunel", "telhado_4aguas", "telhado_generico", "tunel", "vao"]
 
 
 class Quadro:
@@ -601,3 +601,38 @@ def vao(m, f, sc, w, za, zb, prof, arco=True, mat_lado="cantaria_torre", mat_fun
         m.face([f.p(s1, d0, z1), f.p(s2, d0, z2), f.p(s2, d0 - prof, z2), f.p(s1, d0 - prof, z1)], mat_lado)
     m.face([f.p(s, d0 - prof, z) for s, z in contorno], mat_fundo)
     return contorno
+
+
+def merlao_rustico(m, c, u, largura, prof, z0, z1, mat, rng, chanfro=0.07, var=0.06):
+    """Merlão de alvenaria (modelo do castillos.site, 25 nov. 2026): caixa com as arestas de cima e as verticais
+    chanfradas (pedra gasta), e medidas e posição ligeiramente diferentes de merlão para merlão, como nas
+    fotografias (largura ±var, altura ±7 cm, recuo ±3 cm, rumo ±2°). c = centro da base, u = direção do pano."""
+    from scipy.spatial import ConvexHull
+    a = math.atan2(u[1], u[0]) + math.radians(rng.uniform(-2, 2))
+    u = np.array([math.cos(a), math.sin(a)])
+    w = np.array([-u[1], u[0]])
+    hl = largura * (1 + rng.uniform(-var, var)) / 2
+    hp = prof / 2
+    c = np.asarray(c, float) + w * rng.uniform(-0.03, 0.03)
+    z1 = z1 + rng.uniform(-0.07, 0.07)
+    k = min(chanfro, hl * 0.4, hp * 0.4, (z1 - z0) * 0.3)
+    pts = []
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            for dx, dy in ((k, 0), (0, k)):
+                xy = c + u * sx * (hl - dx) + w * sy * (hp - dy)
+                pts.append((*xy, z0))
+                pts.append((*xy, z1 - k))
+            xy = c + u * sx * (hl - k) + w * sy * (hp - k)
+            pts.append((*xy, z1))
+    P = np.array(pts)
+    h = ConvexHull(P)
+    cen = P.mean(0)
+    for tri in h.simplices:
+        q = P[tri]
+        nrm = np.cross(q[1] - q[0], q[2] - q[0])
+        if abs(nrm[2]) > 1e-9 and nrm[2] < 0 and q[:, 2].max() <= z0 + 1e-6:
+            continue  # o fundo assenta no parapeito
+        if np.dot(nrm, q.mean(0) - cen) < 0:
+            q = q[::-1]
+        m.face([tuple(p) for p in q], mat)
