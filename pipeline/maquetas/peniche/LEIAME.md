@@ -1,6 +1,6 @@
 # Maqueta 3D da Fortaleza de Peniche (estado atual)
 
-Versão 0.3, **provisória**. Gerada por código, à escala 1:1 e georreferenciada (origem num ponto do recinto, 39.353123, −9.381143, PT-TM06 −107575, −34245; x para este, y para norte; no visor, −z é o norte; as cotas são altitudes). Abrange a fortaleza, as arribas, o mar à volta e o princípio da vila (11,6 ha). O relevo, as plataformas, os parapeitos, as cotas, as alturas e as pegadas são medidos no LiDAR da DGT de 2024.
+Versão 0.8, **provisória** (chão por classes nítidas, metro a metro, sem a ortoimagem drapeada). Gerada por código, à escala 1:1 e georreferenciada (origem num ponto do recinto, 39.353123, −9.381143, PT-TM06 −107575, −34245; x para este, y para norte; no visor, −z é o norte; as cotas são altitudes). Abrange a fortaleza, as arribas, o mar à volta e o princípio da vila (11,6 ha). O relevo, as plataformas, os parapeitos, as cotas, as alturas e as pegadas são medidos no LiDAR da DGT de 2024.
 
 ## Como reconstruir
 
@@ -18,6 +18,9 @@ python pipeline/maquetas/peniche/lidar.py PASTA
 # 3. plataformas (terraplenos e edifícios) e parapeitos -> dados/plataformas.json
 pip install scikit-image
 python pipeline/maquetas/peniche/plataformas.py
+
+# 3b. classes do chão (precisa das plataformas) -> dados/chao.json
+python pipeline/maquetas/peniche/chao.py
 
 # 4. maqueta em Blender (módulo bpy) -> public/maquetas/peniche/peniche.glb (Draco) e capa.jpg
 pip install bpy==5.2.3 numpy scipy shapely   # Python 3.13
@@ -44,7 +47,7 @@ Opções do `construir.py`: `--sem-glb` (só a cena), `--vistas` (capa e vistas 
 - **Ponte, porta e túnel**: tabuleiro a 10,75 m e extremos no LiDAR; quatro arcos (vãos de 4,6 a 5,4 m), nichos nos pilares e guardas pela fotografia; debaixo do tabuleiro o chão desce até c. 3,2 m para os vãos ficarem abertos, e o fosso (polígono GULLY) tem textura de rocha; porta com guarita por cima.
 - **Túnel da água do mar**: leva a água da baía (a sul) ao fosso da ponte, o charco junto à entrada. As bocas estão nos entalhes que o MDT mostra nas duas margens: na baía em (72; 20,3), ao pé da escarpa do parapeito da costa, e no fosso em (82,5; 44,2), na face do pano em talude, onde as fotografias mostram o arco com água dentro. Cada boca tem paramento de alvenaria, arco de aduelas e pés-direitos de cantaria; o canal à frente desce abaixo da água e os rochedos ficam afastados. Por dentro, abóbada de berço de 3,8 m de vão com o fecho a 3,2 m e água à cota do mar, numa reta entre as bocas (c. 25 m). O traçado por dentro e as medidas da abóbada são estimativa.
 - **Mar**: plano a 0,4 m; água onde o MDT está abaixo desse nível, em manchas de mais de 150 m² (o mar aberto, o porto e o fosso da ponte). O fundo desce com a distância à costa; cor turquesa nos baixios e azul-petróleo no fundo, espuma a menos de 1,6 m da costa, ondulação em mapa de normais. Rochedos à tona tirados da nuvem de pontos, com banda molhada.
-- **Terreno**: MDT de 50 cm simplificado para 320 mil triângulos; as faces muito inclinadas fora das plataformas levam a textura fotográfica de calcário das arribas. Cor da ortoimagem da nuvem de pontos, escurecida e aquecida.
+- **Terreno e chão** (`chao.py` -> `dados/chao.json`, `kit/chao.py`, `kit/chao_blender.py`; método "metro a metro" de 25 nov. 2026): a ortoimagem já não é drapeada. A proposta é própria de Peniche, porque a fortaleza vem toda na classe 6 e o mar não tem pontos: a 0,5 m, verde é relva, escuro e quente é erva seca, claro e áspero na faixa da costa (até 45 m do mar) ou a pique é rocha, claro e liso é saibro; debaixo das casas da vila fica a classe vizinha; o mar (MDT abaixo de 0,4 m em manchas grandes) é `agua`. Correções: as áreas pedonais do OSM (pátios, ruas e adarves da fortaleza) passam a lajeado; o claro dos relvados do OSM nos baluartes passa a erva; as ruas do OSM (que assentam bem na ortoimagem) a asfalto; o claro até 10 m das casas da vila a calçada e o cinzento médio dos parques a asfalto. O relevo é uma malha adaptativa única (`chao.malhas_adaptativas`), um objeto por classe; as faces a pique (mais de 50°) e o fosso da ponte fora das plataformas vão para `Chao_arriba`, com a textura fotográfica de calcário e UV de caixa. O topo das plataformas e o terrapleno do Fortim também são chão por classes (`chao_blender.separar_faces`: cada face fica com a classe do seu centro).
 - **Relvados**: polígonos desenhados a partir das fotografias (em frente do Fortim e ao longo da muralha da costa), relva 6 cm acima do terreno e lancil branco de 0,2 × 0,12 m.
 - **Vila**: edifícios do OSM fora da fortaleza, volumes simples com altura do MDS. Árvores nas posições da nuvem de pontos; quatro palmeiras pelas fotografias.
 - **Estimativas**: perfil e espessura dos panos, merlões, guaritas, portal e sineira do Fortim, janelas da prisão, arcos da ponte, cor das casas, forma das árvores e dos rochedos.

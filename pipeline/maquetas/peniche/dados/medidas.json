@@ -14,9 +14,47 @@
   "junto_capela": 7.0,
   "celulas_subidas": 2124
  },
+ "chao": {
+  "agua": {
+   "area_m2": 40933.7,
+   "triangulos": 11952
+  },
+  "asfalto": {
+   "area_m2": 5229.3,
+   "triangulos": 3638
+  },
+  "calcada": {
+   "area_m2": 8894.9,
+   "triangulos": 14924
+  },
+  "lajeado": {
+   "area_m2": 11370.1,
+   "triangulos": 9436
+  },
+  "saibro": {
+   "area_m2": 26550.5,
+   "triangulos": 19666
+  },
+  "rocha": {
+   "area_m2": 8509.3,
+   "triangulos": 15112
+  },
+  "relva": {
+   "area_m2": 704.7,
+   "triangulos": 857
+  },
+  "erva": {
+   "area_m2": 12845.1,
+   "triangulos": 13663
+  },
+  "mato": {
+   "area_m2": 962.1,
+   "triangulos": 748
+  }
+ },
  "terreno": {
-  "triangulos": 319999,
-  "rocha": 26585,
+  "triangulos": 104277,
+  "rocha": 14281,
   "area_ha": 11.6
  },
  "muralhas": {

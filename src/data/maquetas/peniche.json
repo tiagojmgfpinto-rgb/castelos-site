@@ -2,8 +2,8 @@
   "monumento": "peniche",
   "titulo": "Fortaleza de Peniche",
   "variante": "estado-atual",
-  "versao": "0.7 provisória",
-  "data": "2026-11-16",
+  "versao": "0.8 provisória",
+  "data": "2026-11-25",
   "origem": {
     "lat": 39.353123,
     "lon": -9.381143,
@@ -15,7 +15,7 @@
       "url": "https://cdd.dgterritorio.gov.pt"
     },
     "orto": {
-      "titulo": "Ortoimagem de 50 cm feita com a cor dos pontos do LiDAR 2024 da DGT (CC BY 4.0). Cor do chão, dos terraplenos e das arribas.",
+      "titulo": "Ortoimagem de 50 cm feita com a cor dos pontos do LiDAR 2024 da DGT (CC BY 4.0). Fronteiras das classes do chão (lajeado, calçada, saibro, erva, relva, rocha) no terreno e no topo dos terraplenos.",
       "url": "https://cdd.dgterritorio.gov.pt"
     },
     "osm": {
@@ -55,7 +55,7 @@
     "Os pavilhões da prisão (o atual museu) e a torre branca têm a pegada e a altura medidas no MDS. As janelas (vãos abertos na parede, com grades), a platibanda e o topo amarelo são tipos lidos nas fotografias, não um levantamento de cada fachada. A fachada amarela da capela de Santa Bárbara tem a janela em arco, o nicho sineiro, a porta de madeira e a janela gradeada da fotografia, em posições aproximadas; as casamatas e os quartéis do lado da vila não são peças próprias.",
     "O mar é um plano a 0,4 m de altitude (nível médio), com o fundo rebaixado para dar a cor da água mais funda; a espuma marca a linha da costa. As marés, as ondas e os rochedos submersos não estão medidos; os rochedos à tona vêm da nuvem de pontos e têm forma esquemática.",
     "Os relvados com lancil branco em frente do Fortim e ao longo da muralha da costa seguem as fotografias (na ortoimagem de junho de 2024 a relva está seca); a forma é aproximada.",
-    "O casario da vila é feito de volumes simples a partir do OpenStreetMap, com a altura medida no MDS. O terreno é o MDT simplificado para 320 mil triângulos, com as arribas a textura de calcário em estratos. As árvores e as palmeiras estão nas posições medidas, com forma esquemática.",
+    "O casario da vila é feito de volumes simples a partir do OpenStreetMap, com a altura medida no MDS. O terreno é o MDT numa malha adaptativa (mais densa onde o relevo muda), com as arribas a pique na textura fotográfica de calcário. O chão, no terreno e no topo dos terraplenos e dos pátios, já não é a ortoimagem drapeada: é desenhado por classes nítidas, cada uma com a sua cor (lajeado de calcário nos pátios, ruas e adarves da fortaleza, que são as áreas pedonais do OSM; erva seca e rapada nos baluartes; rocha calcária na faixa da costa; saibro no terreiro do Campo da República; calçada e asfalto na vila; o fundo do mar debaixo da água), metro a metro a 50 cm pela cor e pela textura da nuvem de pontos. As árvores e as palmeiras estão nas posições medidas, com forma esquemática.",
     "O túnel da água do mar tem as duas bocas nos entalhes que o MDT mostra na baía e no fosso, e o arco da boca do fosso segue as fotografias. O traçado por dentro (uma reta entre as bocas), a largura (3,8 m) e a altura da abóbada são estimativas: a nuvem de pontos não vê por baixo da muralha."
   ],
   "distancia": 700,
@@ -258,7 +258,7 @@
       "grupo": "Envolvente",
       "estado": "estado-atual",
       "confianca": "alta",
-      "descricao": "Terreno do LiDAR com a cor da nuvem de pontos; as arribas de calcário com textura fotográfica de rocha em camadas partidas, no cinzento das fotografias.",
+      "descricao": "Terreno do LiDAR com o chão por classes nítidas (lajeado, calçada, saibro, erva seca, relva, rocha, fundo do mar); as arribas a pique com textura fotográfica de calcário em camadas partidas, no cinzento das fotografias.",
       "medidas": "11.6 ha; 319 mil triângulos.",
       "fontes": [
         "lidar",

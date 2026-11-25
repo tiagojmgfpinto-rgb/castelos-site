@@ -8,7 +8,8 @@ Corre com o módulo bpy (Blender 5.2) instalado em Python 3.13:
 
 Dados: dados/fontes.json (recolher.py: OSM via Overture), dados/lidar.npz e dados/orto.jpg (lidar.py: MDT, MDS,
 classes e cor da nuvem de pontos do LiDAR 2024 da DGT), dados/plataformas.json (plataformas.py: a massa
-construída partida em plataformas) e src/data/maquetas/peniche.json, com a leitura das fontes.
+construída partida em plataformas), dados/chao.json (chao.py: as classes do chão, metro a metro) e
+src/data/maquetas/peniche.json, com a leitura das fontes.
 
 A fortaleza assenta num promontório de calcário sobre o mar. Na nuvem de pontos da DGT as muralhas, os
 terraplenos e os edifícios da antiga prisão vêm todos como "edifício" (classe 6), por isso o MDT passa por
@@ -17,6 +18,8 @@ das plataformas do MDS: cada uma é levantada com o topo medido e panos de alven
 edifícios) até ao chão. Por cima vão os parapeitos com merlões, as guaritas, o Baluarte Redondo, a ponte de
 arcos, a porta e os edifícios com janelas, pelas fotografias. O mar é um plano à cota 0,4 m, com a cor pela
 fundura, espuma junto às rochas e rochedos soltos na linha de água.
+O chão (no terreno e no topo das plataformas) é feito de classes nítidas, cada uma com a sua cor: lajeado de
+calcário, calçada, saibro, erva seca, relva, rocha e o fundo do mar; a ortoimagem só decide as fronteiras.
 Coordenadas da cena: x para este, y para norte, z para cima, em metros (1:1). O glTF converte para y para
 cima (-z é o norte no visor).
 """
@@ -36,6 +39,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # pipeline/, para 
 from kit.geometria import unit, area, densificar, dentro, simplificar, mediana_movel, partir, _retangulo, _ang  # noqa: E402
 from kit.texturas import ruido, fbm, textura_grao, imagem  # noqa: E402
 from kit.cena import arvore_modelo  # noqa: E402
+from kit import chao, chao_blender  # noqa: E402
 from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
 from kit.arquitetura import Quadro, _vao_desloc, altura_telhado, barra, cupula, faixa_inclinada, guarita, oitavado, porta_revelim, telhado_4aguas, telhado_generico  # noqa: E402
 
@@ -665,6 +669,22 @@ def varrer(m, linha, perfil, mat, fechar=True):
 
 # ================================================================ Peniche
 
+# Chão por classes (chao.py -> dados/chao.json, método "metro a metro" de novembro de 2026): cor média de cada classe
+# pela ortoimagem e pelas fotografias. Calcário claro nas lajes dos pátios e adarves, calçada na vila, saibro no
+# terreiro do Campo da República, erva seca e rapada nos baluartes, fundo do mar esverdeado debaixo da água.
+PALETA_CHAO = {
+    "asfalto": {"cor": (0.40, 0.40, 0.41)},
+    "calcada": {"cor": (0.72, 0.70, 0.66)},
+    "lajeado": {"cor": (0.78, 0.75, 0.68)},
+    "saibro": {"cor": (0.80, 0.76, 0.67)},
+    "terra": {"cor": (0.68, 0.60, 0.47)},
+    "relva": {"cor": (0.45, 0.52, 0.30)},
+    "erva": {"cor": (0.62, 0.57, 0.42)},
+    "mato": {"cor": (0.33, 0.37, 0.22)},
+    "rocha": {"cor": (0.66, 0.64, 0.58)},
+    "agua": {"cor": (0.45, 0.47, 0.40)},
+    "arriba": {"cor": (0.66, 0.64, 0.58), "metros": 8.0},  # faces a pique: trocado pelo material "rocha" (fotografia)
+}
 NIVEL = 0.4  # nível do mar na maqueta (m): as rochas e o fundo do fosso abaixo dele ficam debaixo de água
 CONTORNO = shapely.box(-200.0, -140.0, 200.0, 150.0)
 CONT_XY = np.array(CONTORNO.exterior.coords)[:-1]
@@ -794,32 +814,6 @@ def textura_lajes(n=256, metros=3.0):
 
 
 # ---------------------------------------------------------------- UV mistas
-
-def uv_misto(ob, escala, planta=()):
-    """UV em metros (como uv_mundo); as faces dos materiais em `planta` levam a UV da ortoimagem (a mesma
-    textura do chão), para os adarves, os terraplenos e os pátios mostrarem o lajeado e a relva medidos."""
-    uv_mundo(ob, escala)
-    if not planta:
-        return
-    me = ob.data
-    co = np.empty(len(me.vertices) * 3)
-    me.vertices.foreach_get("co", co)
-    co = co.reshape(-1, 3)
-    vi = np.empty(len(me.loops), int)
-    me.loops.foreach_get("vertex_index", vi)
-    lt = np.empty(len(me.polygons), int)
-    me.polygons.foreach_get("loop_total", lt)
-    mi = np.empty(len(me.polygons), int)
-    me.polygons.foreach_get("material_index", mi)
-    sel = np.repeat(np.isin(mi, planta), lt)
-    uv = np.empty(len(me.loops) * 2, np.float32)
-    me.uv_layers.active.data.foreach_get("uv", uv)
-    uv = uv.reshape(-1, 2)
-    p = co[vi]
-    uv[sel, 0] = (p[sel, 0] - LXS[0]) / (LXS[-1] - LXS[0])
-    uv[sel, 1] = (p[sel, 1] - LYS[0]) / (LYS[-1] - LYS[0])
-    me.uv_layers.active.data.foreach_set("uv", uv.ravel())
-
 
 # ---------------------------------------------------------------- plataformas (muralhas e edifícios)
 
@@ -1869,42 +1863,6 @@ def construir_mar():
 
 # ---------------------------------------------------------------- terreno
 
-def textura_terreno():
-    from PIL import Image
-    img = np.asarray(Image.open(AQUI / "dados" / "orto.jpg"), float) / 255.0
-    H = MDS - MDT
-    tapa = ((CLS == 6) & (H > 1.5) & ~_dentro_plat) | (VEG & (H > 1.8)) | ((CLS == 0) & ~AGUA)
-    tc = (tapa[:-1, :-1] | tapa[1:, :-1] | tapa[:-1, 1:] | tapa[1:, 1:])[::-1]
-    tc = ndi.binary_dilation(tc, iterations=1)
-    # As sombras do voo (ao pé dos muros, dos edifícios e das palmeiras) também se tapam: a maqueta faz as suas
-    # sombras (auditoria de novembro de 2026: sombras carimbadas no chão). A água fica como está.
-    lum = img.mean(-1)
-    azul = img[..., 2] - (img[..., 0] + img[..., 1]) / 2
-    sombra = ((lum < 0.72 * ndi.median_filter(lum, size=31)) & (lum < 0.42)) | ((azul > 0.0) & (lum < 0.40))
-    sombra = ndi.binary_dilation(ndi.binary_opening(sombra, iterations=1), iterations=2)
-    sombra &= ~(AGUA[:-1, :-1] | AGUA[1:, 1:])[::-1][:sombra.shape[0], :sombra.shape[1]]
-    tc |= sombra[:tc.shape[0], :tc.shape[1]]
-    bom = (~tc).astype(float)
-    out = img.copy()
-    falta = tc.copy()
-    for sg in (1.5, 3, 6, 12, 24, 48):
-        num = np.stack([ndi.gaussian_filter(img[..., k] * bom, sg) for k in range(3)], -1)
-        den = ndi.gaussian_filter(bom, sg)[..., None]
-        ok = (den[..., 0] > 0.15) & falta
-        out[ok] = (num / np.maximum(den, 1e-6))[ok]
-        falta &= ~ok
-    out = np.stack([ndi.gaussian_filter(out[..., k], 0.6) for k in range(3)], -1)
-    # debaixo de água: areia e rocha esverdeadas (só se vê junto à costa, pela espuma)
-    ag = (AGUA[:-1, :-1] & AGUA[1:, 1:])[::-1]
-    out[ag] = np.array([0.45, 0.47, 0.40])
-    verde = np.clip((out[..., 1] - (out[..., 0] + out[..., 2]) / 2) * 8, 0, 1)[..., None]
-    out = out * (1 - 0.3 * verde) + (out * np.array([0.9, 1.1, 0.82])) * 0.3 * verde
-    cinza = out.mean(-1, keepdims=True)
-    out = cinza + (out - cinza) * 1.35
-    out = out * np.array([1.0, 0.985, 0.95])
-    return np.clip(out * 0.86, 0, 1)
-
-
 def construir_terreno():
     X, Y = XG, YG
     Z = MDT.copy()
@@ -1996,68 +1954,49 @@ def construir_terreno():
             blk[k_] = np.maximum(blk[k_], zp)
     MEDIDAS["arriba"] = {"alvenaria_max": ALV_MAX, "junto_capela": ALV_MAX_CAPELA, "celulas_subidas": n_sub}
     ZTER[:] = [Z]
-    dentro_ = shapely.contains_xy(CONTORNO, X + LPASSO / 2, Y + LPASSO / 2)[:-1, :-1]
-    usados = np.zeros(X.shape, bool)
-    usados[:-1, :-1] |= dentro_
-    usados[1:, :-1] |= dentro_
-    usados[:-1, 1:] |= dentro_
-    usados[1:, 1:] |= dentro_
-    idx = -np.ones(X.shape, int)
-    idx[usados] = np.arange(usados.sum())
-    V = np.stack([X[usados], Y[usados], Z[usados]], 1)
-    I, J = np.nonzero(dentro_)
-    Fq = np.stack([idx[I, J], idx[I, J + 1], idx[I + 1, J + 1], idx[I + 1, J]], 1)
-    ob = malha_rapida("Terreno", V, Fq, "terreno", GRUPOS["Terreno"], "terreno")
-    bpy.context.view_layer.objects.active = ob
-    mod = ob.modifiers.new("dec", "DECIMATE")
-    mod.decimate_type = "COLLAPSE"
-    mod.ratio = min(1.0, 320000 / (2 * len(Fq)))
-    mod.use_collapse_triangulate = True
-    dg = bpy.context.evaluated_depsgraph_get()
-    me2 = bpy.data.meshes.new_from_object(ob.evaluated_get(dg))
-    ob.modifiers.clear()
-    # as faces íngremes das arribas (mais de 50°) passam para um objeto de rocha, com textura de estratos
-    co = np.empty(len(me2.vertices) * 3)
-    me2.vertices.foreach_get("co", co)
-    co = co.reshape(-1, 3)
-    nrm = np.empty(len(me2.polygons) * 3)
-    me2.polygons.foreach_get("normal", nrm)
-    nrm = nrm.reshape(-1, 3)
-    faces = [list(p.vertices) for p in me2.polygons]
-    cen = np.array([co[f].mean(0) for f in faces])
-    em_plat = shapely.contains_xy(PLAT_UNIAO, cen[:, 0], cen[:, 1]) if PLAT_UNIAO is not None else np.zeros(len(faces), bool)
-    ingreme = ((nrm[:, 2] < 0.64) | shapely.contains_xy(GULLY, cen[:, 0], cen[:, 1])) & ~em_plat
-    for nome, sel, mat in (("Terreno", ~ingreme, "terreno"), ("Terreno_rocha", ingreme, "rocha")):
-        fs = [faces[i] for i in np.nonzero(sel)[0]]
-        usa = np.unique(np.concatenate(fs))
-        mapa = -np.ones(len(co), int)
-        mapa[usa] = np.arange(len(usa))
-        me = bpy.data.meshes.new(nome)
-        me.from_pydata(co[usa].tolist(), [], [[int(mapa[v]) for v in f] for f in fs])
-        me.update()
-        me.materials.append(MATS[mat])
-        me.shade_smooth()
-        if nome == "Terreno":
-            ob.data = me
-            o2 = ob
-        else:
-            o2 = bpy.data.objects.new(nome, me)
-            bpy.context.scene.collection.objects.link(o2)
-            o2["elemento"] = "terreno"
-            o2.parent = GRUPOS["Terreno"]
-        if mat == "terreno":
-            me.uv_layers.new(name="UVMap")
-            c2 = np.empty(len(me.vertices) * 3)
-            me.vertices.foreach_get("co", c2)
-            c2 = c2.reshape(-1, 3)
-            vi = np.empty(len(me.loops), int)
-            me.loops.foreach_get("vertex_index", vi)
-            uu = (c2[vi, 0] - LXS[0]) / (LXS[-1] - LXS[0])
-            vv = (c2[vi, 1] - LYS[0]) / (LYS[-1] - LYS[0])
-            me.uv_layers.active.data.foreach_set("uv", np.stack([uu, vv], 1).ravel().astype(np.float32))
-        else:
+    # O chão já não é a ortoimagem drapeada como textura (método "metro a metro", 25 nov. 2026): cada classe de
+    # dados/chao.json (chao.py) é um objeto com o seu material nítido, numa só malha adaptativa (Delaunay com as
+    # fronteiras das classes como arestas, mais densa onde o relevo muda). As faces a pique (mais de 50°) e o fosso da
+    # ponte, fora das plataformas, passam a rocha, com o calcário fotografado das arribas.
+    classes = chao.ler(AQUI / "dados" / "chao.json")
+    pecas = chao.malhas_adaptativas(classes, LXS, LYS, Z, CONTORNO)
+    rocha_v, rocha_f = [], []
+    n_rocha = 0
+    # declive do relevo alisado (1,5 m): a malha adaptativa guarda a aspereza dos penedos, e cada facetinha a pique
+    # num chão de rocha ia para a arriba (riscas da fotografia de estratos vistas de cima)
+    gy_, gx_ = np.gradient(ndi.gaussian_filter(Z, 3.0), LPASSO)
+    NZ_S = 1.0 / np.sqrt(1.0 + gx_ ** 2 + gy_ ** 2)
+    for nome in list(pecas):
+        V, Fc = pecas[nome]
+        if nome == "agua" or not len(Fc):
+            continue
+        a_, b_, c_ = V[Fc[:, 0]], V[Fc[:, 1]], V[Fc[:, 2]]
+        nrm = np.cross(b_ - a_, c_ - a_)
+        nz = nrm[:, 2] / np.maximum(np.linalg.norm(nrm, axis=1), 1e-12)
+        cen = (a_ + b_ + c_) / 3
+        em_plat = shapely.contains_xy(PLAT_UNIAO, cen[:, 0], cen[:, 1]) if PLAT_UNIAO is not None else np.zeros(len(Fc), bool)
+        ing = (((nz < 0.64) & (amostra(NZ_S, cen[:, 0], cen[:, 1]) < 0.70))
+               | shapely.contains_xy(GULLY, cen[:, 0], cen[:, 1])) & ~em_plat
+        if ing.any():
+            rocha_v.append(V)
+            rocha_f.append(Fc[ing])
+            n_rocha += int(ing.sum())
+            pecas[nome] = (V, Fc[~ing])
+    if rocha_f:
+        desl = np.cumsum([0] + [len(v) for v in rocha_v[:-1]])
+        pecas["arriba"] = (np.vstack(rocha_v), np.vstack([f + d for f, d in zip(rocha_f, desl)]))
+    pecas = {k: v for k, v in pecas.items() if len(v[1])}
+    obs = chao_blender.objetos(pecas, pai=GRUPOS["Terreno"], paleta=PALETA_CHAO)
+    for nome, o2 in obs.items():
+        if nome in ("asfalto", "calcada", "lajeado", "saibro"):
+            o2["elemento"] = "caminhos"
+        if nome == "arriba":  # as faces a pique: o calcário fotografado, com UV de caixa (a rocha chã é a da classe)
+            o2.data.materials[0] = MATS["rocha"]
             uv_mundo(o2, 8.0)
-    MEDIDAS["terreno"] = {"triangulos": len(faces), "rocha": int(ingreme.sum()), "area_ha": round(CONTORNO.area / 1e4, 1)}
+    MEDIDAS["chao"] = {k: {"area_m2": round(float(g.area), 1), "triangulos": int(len(pecas[k][1])) if k in pecas else 0}
+                       for k, g in classes.items()}
+    faces = np.concatenate([f for _, f in pecas.values()])
+    MEDIDAS["terreno"] = {"triangulos": len(faces), "rocha": n_rocha, "area_ha": round(CONTORNO.area / 1e4, 1)}
     # base de maqueta de museu (saia e fundo), com o mar à cota do nível
     bxy = densificar(CONT_XY, 1.0, True)
     bz = np.maximum(amostra(Z, bxy[:, 0], bxy[:, 1]), NIVEL) - 0.05
@@ -2144,17 +2083,16 @@ material("vidro", (0.18, 0.22, 0.28), 0.25)
 material("cinza_viz", (0.74, 0.74, 0.73), 0.9)
 material("base", (0.33, 0.26, 0.20), 0.95)
 material("agua_tunel", (0.05, 0.16, 0.17), 0.15)  # água à sombra, dentro do túnel
-material("terreno", (1, 1, 1), 0.95)
 material("arvore", (1, 1, 1), 0.9, None, vcor=True)
 material("pedra_vc", (1, 1, 1), 0.92, None, vcor=True)
 material("mar", (1, 1, 1), 0.12, None, vcor=True, normal=imagem("ondas_normal", normais(textura_ondas(), 1.2)), forca=0.35)
-img_chao = imagem("chao_orto", np.zeros((4, 4, 3)))  # substituída depois do terreno
 
 CAL, CAN, TEL, SOM, MAD, FER, BRO, VID, LOU, LIS, OCR, OGA, CHAO_P, MDE = range(14)
 MAT_P = ["cal", "cantaria", "telha", "sombra", "madeira_verde", "ferro", "bronze", "vidro", "lousa", "cantaria_lisa",
          "ocre", "ocre_gasto", "chao", "madeira_escura"]
 MEDIDAS = {}
 
+CLASSES_CHAO = chao.ler(AQUI / "dados" / "chao.json")
 print("plataformas…")
 m = Malha()
 MUROS = PLAT["muros"]
@@ -2168,7 +2106,9 @@ n_merl, cands = parapeitos(mq)
 print("terreno…")
 construir_terreno()
 ob = m.objeto("Muralhas", "muralhas", MAT_PLAT, GRUPOS["Muralhas"], uv=None, recalc=False)
-uv_misto(ob, 4.0, planta=(CHAO_,))
+# o topo dos terraplenos, dos adarves e dos pátios: o chão por classes (lajeado, erva, saibro...), como no terreno
+chao_blender.separar_faces(ob, (CHAO_,), CLASSES_CHAO, paleta=PALETA_CHAO, prefixo="Chao_topo")
+uv_mundo(ob, 4.0)
 
 print("guaritas…")
 mq.objeto("Parapeitos", "muralhas", ["alvenaria", "ocre_gasto", "cantaria", "ocre"], GRUPOS["Muralhas"], uv=3.0)
@@ -2191,7 +2131,8 @@ print("fortim…")
 mf = Malha()
 fortim(mf)
 obf = mf.objeto("Fortim_Redondo", "fortim", MAT_P, GRUPOS["Fortim"], uv=2.5)
-uv_misto(obf, 2.5, planta=(CHAO_P,))
+chao_blender.separar_faces(obf, (CHAO_P,), CLASSES_CHAO, paleta=PALETA_CHAO, prefixo="Chao_fortim")
+uv_mundo(obf, 2.5)
 
 print("ponte e porta…")
 mp = Malha()
@@ -2207,14 +2148,6 @@ mg.objeto("Guaritas", "guaritas", ["cantaria_lisa", "cantaria", "sombra"], GRUPO
 
 print("mar…")
 construir_mar()
-img_t = imagem("chao", textura_terreno()[::-1])
-for nm_ in ("terreno", "chao"):
-    mt = MATS[nm_]
-    ti = mt.node_tree.nodes.new("ShaderNodeTexImage")
-    ti.image = img_t
-    ti.extension = "EXTEND"
-    mt.node_tree.links.new(ti.outputs["Color"], mt.node_tree.nodes["Principled BSDF"].inputs["Base Color"])
-# o terrapleno do fortim usa a mesma textura do chão (material "chao")
 
 print("relvados…")
 mr_ = Malha()
