@@ -23,6 +23,9 @@ pip install scikit-image
 python pipeline/maquetas/lindoso/tracar.py
 python pipeline/maquetas/lindoso/espigueiros.py
 
+# 4b. classes do chão (metro a metro) -> dados/chao.json
+python pipeline/maquetas/lindoso/chao.py
+
 # 5. maqueta em Blender (módulo bpy) -> public/maquetas/lindoso/lindoso.glb (Draco), capa.jpg e dados/medidas.json;
 #    vistas/ com --vistas
 pip install bpy==5.2.3 numpy scipy shapely rasterio   # Python 3.13
@@ -50,7 +53,7 @@ Os ficheiros de `dados/` estão no repositório. As constantes partilhadas (orig
 - **Guaritas**: no cunhal sueste da cerca (fotografia, com mísula e gárgula) e na ponta do baluarte poente (ao fundo na mesma fotografia); 1,25 m de diâmetro e 2,1 m de corpo, estimados.
 - **Museu**: plantas das duas alas e da galeria (LiDAR e satélite, em `comum.py`); cornija (percentil 15 numa faixa junto às paredes) e cume (percentil 97) do LiDAR; portas e janelas esquemáticas.
 - **Espigueiros**: plantas estreitas do OSM (65) e manchas do LiDAR sem par no OSM (`espigueiros.py`); comprimento, largura e orientação da planta, cume do MDS (só quando fica a 2,9–4,3 m do chão; acima disso há uma árvore por cima e o cume vai para 3,55 m; plantas com menos de 3,4 m de comprido são arrumos). Pés e mesas aos pares (c. 1,7 m entre pares), soleira, esteios de granito a cada c. 0,95 m com grades de ripas de madeira, padieira, empenas de granito, porta em arco num topo, telhado de lajes a 27° com beiral, cumeeira, cruz e pináculo (fotografias). A largura do corpo é a da planta menos 0,7 m (a planta é a do telhado).
-- **Chão**: MDT de 50 cm; os terraplenos que o MDT não tem como chão vêm do MDS; junto aos muros o chão baixa até 1,2 m na faixa de 1,25 m onde o MDT sobe para o topo por interpolação. Junto aos muros e por baixo dos muros finos o chão fica no mais baixo das células à volta (sem isto o LiDAR do topo fazia dentes de erva pelas faces). Pátio relvado; no monte, erva verde com manchas amareladas (Street View), relvado onde o ortofotomapa é verde e afloramentos só onde o relevo local do MDT passa de 0,22 m ou a pedra é cinzenta no ortofotomapa; ruas do OSM.
+- **Chão**: MDT de 50 cm; os terraplenos que o MDT não tem como chão vêm do MDS; junto aos muros o chão baixa até 1,2 m na faixa de 1,25 m onde o MDT sobe para o topo por interpolação. Junto aos muros e por baixo dos muros finos o chão fica no mais baixo das células à volta (sem isto o LiDAR do topo fazia dentes de erva pelas faces). Desde a 0.10 (25 nov. 2026, método "metro a metro") o chão já não é a grelha de 50 cm com o material escolhido face a face (saía aos quadrados): `chao.py` grava `dados/chao.json` com polígonos de classe (proposta automática do kit pela cor do ortofotomapa e pelo LiDAR, mais as correções à mão com nota: afloramentos de granito onde o relevo local do MDT passa de 0,22 m ou a pedra é cinzenta com algum relevo, a laje da eira traçada à mão, pátio relvado, carreiros do OSM em terra, ruas da aldeia em calçada de granito com o traçado do OSM assente na faixa clara do ortofotomapa, a estrada nacional em asfalto, o claro junto às ruas e às casas em calçada). O `construir.py` faz uma só malha adaptativa (erro de 10 cm) com um objeto `Chao_<classe>` por classe; a erva fica verde apagado (o Tiago achou o monte "verde seco" na 0.2).
 - **Envolvente**: plantas do OSM e, onde faltam, manchas de edifícios do LiDAR (classe 6), sem as plantas dos espigueiros; cornija e cume do MDS (no máximo 4 m de telhado; arrumos com menos de 20 m² até 4 m do chão, porque debaixo de uma árvore o MDS dá a copa). Árvores nas posições do LiDAR, sem as que caíam sobre o castelo ou os espigueiros.
 
 ## Fontes de conferência
@@ -60,7 +63,7 @@ Os ficheiros de `dados/` estão no repositório. As constantes partilhadas (orig
 
 ## Visor
 
-O visor procura o grupo `Muralhas_grupo` para enquadrar e o objeto `Terreno` para a caixa do chão; os elementos têm `userData.elemento` (`torre`, `cerca`, `baluartes`, `porta_sul`, `porta_norte`, `postigo`, `guaritas`, `museu`, `espigueiros`, `terreno`, `envolvente`, `vegetacao`). As âncoras das placas e os pontos de vista são calculados no `construir.py` e gravados em `dados/medidas.json`; o `visor.py` lê-os.
+O visor procura o grupo `Muralhas_grupo` para enquadrar e os objetos `Chao_*` (desde a 0.10 não há objeto `Terreno`; a caixa do chão é a da cena); os elementos têm `userData.elemento` (`torre`, `cerca`, `baluartes`, `porta_sul`, `porta_norte`, `postigo`, `guaritas`, `museu`, `espigueiros`, `terreno`, `envolvente`, `vegetacao`). As âncoras das placas e os pontos de vista são calculados no `construir.py` e gravados em `dados/medidas.json`; o `visor.py` lê-os.
 
 ## Vistas de verificação
 
