@@ -45,6 +45,13 @@ O JSON do visor (`src/data/maquetas/sao-sebastiao-angra.json`) é escrito à mã
 - **Edifícios (0.2)**: a Pousada e a casa da guarda saem do MDS de 25 cm (mediana 5×5): células mais de 1,8 m
   acima do MDT, partidas em patamares de 0,6 m, cada patamar um polígono (rasterio `shapes`, simplificado a 0,3 m)
   extrudido do solo à cota mediana, com janelas a passo de 2,6 m nas faces livres. A superfície fica com o MDT por baixo.
+- **Pousada, ala poente e bloco noroeste (0.5)**: a segmentação automática dava contornos tortos, por isso estão
+  desenhados à mão (`PO_ALAS`, `PO_NORTE`) no referencial da ala poente, rodado 8,7° (u para nascente, v para norte),
+  com a grelha de 1 m do MDS lida nesse referencial. Ala poente a 31,6 m (pátio a 25,3 m), ala estreita a 31,2 m a
+  continuá-la para norte (u −37,5..−34), cobertura grande a 32,8 m encostada ao adarve norte, corpo a 33,4 m
+  (u −30,5..−17,5, v 16,5..22,5) com faixa a 32,8 m a sul, caixa de escadas a 33,8 m e o terraço claro do restaurante
+  a 30,2 m com o rebordo curvo para sudeste. A ortofoto confirma as formas (platibandas brancas), mas tem deslocamento
+  de relevo de 1–2 m para norte, por isso as posições vêm do LiDAR. A segmentação fica só para o resto da Pousada.
 - **Casa do Governador (0.2)**: referencial u (azimute 37°) / v a partir de (18,6; −6,9). Corpo A u 0–23,6, v 0–6,1;
   corpo B u 0–13, v 6,1–11,85; telhados de quatro águas, beirado 32,1 m, cume 33,45 m; pátio u 13–17 (chão a 26,8 m)
   com muro e portão em arco; ala baixa C u 17–23,4, v 6,1–12,4. Revisto na 0.5 pela grelha de 1 m do MDS em u/v: C é

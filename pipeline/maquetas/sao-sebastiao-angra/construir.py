@@ -316,6 +316,7 @@ material("ocre_casa", (0.93, 0.80, 0.47), 0.82)       # Casa do Governador (foto
 material("moldura_branca", (0.94, 0.93, 0.90), 0.7)   # cunhais, cornijas e molduras dos vãos da Casa do Governador
 material("cobertura", (0.13, 0.145, 0.13), 0.9)   # coberturas planas da Pousada: ortofoto c. 0,28/0,31/0,27 sRGB        # terraços e coberturas planas da Pousada
 material("terraco", (0.34, 0.36, 0.32), 0.9)   # terraços da Casa do Governador (ortofoto sem sombra c. 0,33/0,37/0,31)
+material("terraco_claro", (0.58, 0.60, 0.57), 0.9)   # terraço do restaurante da Pousada, lajeado claro (ortofoto)
 material("soco", (0.13, 0.13, 0.13), 0.85)            # soco de basalto pintado de negro (fotografia da Casa do Governador)
 TEX, ALT = textura_foto("roof_09", n=512, metros=4.0, cor=(0.52, 0.36, 0.27), contraste=1.1, saturacao=0.4, variacao=0.10,
                         semente=44)
@@ -815,6 +816,90 @@ PN_PL = shapely.Polygon(PN)
 PN_TOPO = 34.7
 CASA_PL = shapely.Polygon([CASA_O + CASA_U * u + CASA_V * v for u, v in ((-0.6, -0.6), (23.9, -0.6), (23.9, 13.0), (-0.6, 13.0))])
 CHAO_LOCAL = ndi.grey_opening(SUP, size=(41, 41))
+# Ala poente da Pousada, desenhada à parte (0.5): os rebordos brancos das platibandas na ortofoto e o salto do MDS
+# para o pátio (25,3 m) dão a fachada nascente a 8,7° do norte, de (-25,3; 8,1) a (-30,9; -28,3); o bloco norte
+# (platibanda de -34,7 a -38,9 a poente) e o bloco sul, mais largo, separados pelo rebordo de y ≈ -20. Cobertura plana
+# a 31,6 m, à altura do terrapleno poente onde encosta. A segmentação automática fazia aqui contornos tortos.
+PO_ALAS = [
+    [(-34.7, 9.3), (-25.3, 8.1), (-29.6, -19.8), (-38.9, -18.4)],
+    [(-40.6, -18.1), (-29.6, -19.8), (-30.9, -28.3), (-42.4, -27.0)],
+]
+PO_ALAS_PL = [shapely.Polygon(a) for a in PO_ALAS]
+PO_ALAS_TOPO, PO_ALAS_CHAO = 31.6, 25.3
+# Bloco norte da Pousada (0.5), lido no MDS em quadrícula de 1 m no referencial da ala poente (u para nascente, v para
+# norte, rodado 8,7°): ali tudo é retangular. Cobertura grande a 32,8 m encostada ao adarve da cortina norte; corpo
+# a 33,4 m (u -30,5..-17,5, v 16,5..22,5) com uma faixa a 32,8 m a sul; o terraço claro do restaurante a 30,2 m, de
+# rebordo curvo para sudeste e com uma perna a nascente até v 20,5; a ala estreita a 31,2 m que continua a ala
+# poente para norte; e a caixa de escadas a 33,8 m. Pátio a 26,8 m.
+_PC, _PS = math.cos(math.radians(-8.7)), math.sin(math.radians(-8.7))
+
+
+def _uv(pts):
+    return [(u * _PC - v * _PS, u * _PS + v * _PC) for u, v in pts]
+
+
+def _ret(u0, u1, v0, v1):
+    return [(u0, v0), (u1, v0), (u1, v1), (u0, v1)]
+
+
+PO_NORTE = [
+    dict(pts=[(-34, 18.5), (-30.5, 18.5), (-30.5, 22.5), (-12.5, 22.5), (-12.5, 25.6), (-18.5, 27.0), (-24.5, 28.3),
+              (-28.5, 29.4), (-34.5, 29.4), (-37.0, 28.0), (-37.0, 23.5), (-34, 23.5)], zt=32.8, zb=26.8, topo="cobertura"),
+    dict(pts=_ret(-30.5, -17.5, 16.5, 22.5), zt=33.4, zb=26.8, topo="cobertura"),
+    dict(pts=_ret(-30.5, -17.5, 14.5, 16.5), zt=32.8, zb=26.8, topo="cobertura"),
+    dict(pts=[(-34, 9.5), (-27, 9.5), (-24.5, 9.8), (-22.3, 10.4), (-20.4, 11.3), (-18.8, 12.3), (-17.4, 13.6),
+              (-16.3, 15.1), (-15.4, 16.8), (-15.0, 18.5), (-15.0, 20.5), (-17.5, 20.5), (-17.5, 14.5), (-30.5, 14.5),
+              (-30.5, 18.5), (-34, 18.5)], zt=30.2, zb=26.8, topo="terraco_claro"),
+    dict(pts=_ret(-37.5, -34, 4.2, 23.5), zt=31.2, zb=26.8, topo="cobertura"),
+    dict(pts=_ret(-35, -32.5, 23.5, 26.5), zt=33.8, zb=32.6, topo="moldura_branca"),
+]
+for _e in PO_NORTE:
+    _e["pol"] = shapely.Polygon(_uv(_e["pts"]))
+PO_NORTE_ZONA = shapely.Polygon(_uv(_ret(-42.0, -12.5, 4.2, 30.5)))
+
+
+def regularizar(pol, ang, tol=15.0):
+    """Contorno em ângulos retos no referencial do edifício (rodado de ang graus): cada aresta a menos de tol graus de
+    um eixo fica paralela a ele (à média ponderada das suas pontas) e os vértices passam a ser as interseções. As
+    arestas oblíquas (a fachada curva do restaurante) ficam como estão."""
+    from shapely import affinity
+    q = affinity.rotate(pol, -ang, origin=(0, 0)).simplify(0.45)
+    if q.geom_type != "Polygon" or len(q.exterior.coords) < 5:
+        return pol
+    v = np.array(q.exterior.coords)[:-1]
+    n = len(v)
+    tipos, vals = [], []
+    for i in range(n):
+        a, b = v[i], v[(i + 1) % n]
+        d = b - a
+        ang_ = math.degrees(math.atan2(d[1], d[0])) % 180
+        if min(ang_, 180 - ang_) < tol:
+            tipos.append("H"); vals.append((a[1] + b[1]) / 2)
+        elif abs(ang_ - 90) < tol:
+            tipos.append("V"); vals.append((a[0] + b[0]) / 2)
+        else:
+            tipos.append("D"); vals.append(None)
+    novos = []
+    for i in range(n):
+        t0, t1 = tipos[i - 1], tipos[i]     # aresta que chega e aresta que sai do vértice i
+        x, y = v[i]
+        if t0 == "H" and t1 == "V":
+            x, y = vals[i], vals[i - 1]
+        elif t0 == "V" and t1 == "H":
+            x, y = vals[i - 1], vals[i]
+        elif t0 == t1 == "H":
+            y = (vals[i - 1] + vals[i]) / 2
+        elif t0 == t1 == "V":
+            x = (vals[i - 1] + vals[i]) / 2
+        elif t1 == "H" or t0 == "H":
+            y = vals[i] if t1 == "H" else vals[i - 1]
+        elif t1 == "V" or t0 == "V":
+            x = vals[i] if t1 == "V" else vals[i - 1]
+        novos.append((x, y))
+    r = shapely.Polygon(novos).buffer(0)
+    if r.geom_type != "Polygon" or not (0.85 < r.area / max(q.area, 1e-6) < 1.15):
+        return pol
+    return affinity.rotate(r.simplify(0.05), ang, origin=(0, 0))
 
 
 def segmentar_edificios():
@@ -828,7 +913,7 @@ def segmentar_edificios():
     yy, xx = np.mgrid[i0:i1, j0:j1]
     X, Y = SX0 + xx * SP, SY0 + yy * SP
     ch = cota(X, Y)   # MDT: o solo do LiDAR, interpolado por baixo dos edifícios (classe 6)
-    fora_ = shapely.union_all([CASA_PL.buffer(0.3), GU_PL.buffer(2.5), PN_PL.buffer(0.3)])
+    fora_ = shapely.union_all([CASA_PL.buffer(0.3), GU_PL.buffer(2.5), PN_PL.buffer(0.3)] + [a.buffer(2.0) for a in PO_ALAS_PL] + [PO_NORTE_ZONA])
     dentro = shapely.contains_xy(zona, X, Y) & ~shapely.contains_xy(fora_, X, Y)
     alto = dentro & (zq - ch > 1.8)
     alto = ndi.binary_opening(alto, iterations=2)
@@ -858,6 +943,9 @@ def segmentar_edificios():
         pol = max(pols, key=lambda p: p.area).buffer(0.05).buffer(-0.05).simplify(0.3)
         if pol.is_empty or pol.area < 4.0 or pol.geom_type != "Polygon":
             continue
+        pol = regularizar(pol, 8.7)   # a Pousada segue o eixo da ala poente (fachada a 8,7° do norte)
+        if pol.geom_type != "Polygon" or pol.area < 4.0:
+            continue
         zt = float(np.median(zq[msk]))
         zb = float(np.percentile(ch[msk], 30))
         cx_, cy_ = X[msk], Y[msk]
@@ -865,6 +953,12 @@ def segmentar_edificios():
                np.clip(np.round((cx_ - OX0) / OP).astype(int), 0, ORTO.shape[1] - 1)].mean(0)
         telha = oc[0] > oc[1] * 1.12 and oc[0] > oc[2] * 1.2
         res.append(dict(pol=pol, zt=zt, zb=zb, telha=bool(telha), guarda=bool(GUARDA.contains(pol.centroid))))
+    for a in PO_ALAS_PL:
+        res.append(dict(pol=a, zt=PO_ALAS_TOPO, zb=PO_ALAS_CHAO, telha=False, guarda=False))
+        alto |= shapely.contains_xy(a.buffer(0.3), X, Y)
+    for e in PO_NORTE:
+        res.append(dict(pol=e["pol"], zt=e["zt"], zb=e["zb"], telha=False, guarda=False, topo=e["topo"]))
+        alto |= shapely.contains_xy(e["pol"].buffer(0.3), X, Y)
     return res, alto, (i0, i1, j0, j1)
 
 
@@ -2013,7 +2107,7 @@ def casa_governador():
 def construir_edificios():
     """Pousada e casa da guarda: volumes direitos dos patamares do LiDAR, paredes brancas, coberturas planas (ou telha
     onde a ortoimagem é vermelha) e janelas nas faces livres com mais de 2,8 m."""
-    m = Malha(["reboco_branco", "cobertura", "telha", "vidro", "sombra", "moldura_branca", "ocre_casa"])
+    m = Malha(["reboco_branco", "cobertura", "telha", "vidro", "sombra", "moldura_branca", "ocre_casa", "terraco_claro"])
     n_jan = 0
     for e in EDIF:
         pol, zt, zb = e["pol"], e["zt"], e["zb"]
@@ -2023,13 +2117,14 @@ def construir_edificios():
         e["telha"] = e["telha"] or e["guarda"]
         m.prisma(base, zb - 0.4, zt, parede, topo=True, mat_topo="telha" if e["telha"] else "moldura_branca")
         # capeamento branco da platibanda (o rebordo claro da ortofoto) e a cobertura cinzenta-escura por dentro
-        if not e["telha"]:
+        topo_ = e.get("topo", "cobertura")
+        if not e["telha"] and topo_ != "moldura_branca":
             interior = pol.buffer(-0.3)
             if interior.geom_type == "Polygon" and not interior.is_empty:
                 bi = list(interior.exterior.coords)[:-1]
-                m.prisma(bi, zt, zt + 0.02, "cobertura", topo=True)
+                m.prisma(bi, zt, zt + 0.02, topo_, topo=True)
             else:
-                m.prisma(base, zt, zt + 0.02, "cobertura", topo=True)
+                m.prisma(base, zt, zt + 0.02, topo_, topo=True)
         # janelas nas faces livres
         for a, b in zip(base, base[1:] + base[:1]):
             a, b = np.asarray(a), np.asarray(b)
@@ -2184,6 +2279,8 @@ if "--vistas" in sys.argv:
         vista("bateria", (-5, -118), 38, (-38, -82), 14, lente=30, res=(1200, 800))
         vista("norte_fora", (10, 70), 34, (-25, 48), 33, lente=30, res=(1200, 800))
         vista("pousada_sul", (4.6, -1.6), 28.2, (8.0, 16.0), 30.6, lente=24, res=(1200, 900), sem_veg=True)  # sem a araucária
+        vista("pousada_alto", (25, -45), 75, (-22, 2), 27, lente=34, res=(1200, 900), sem_veg=True)  # coberturas da Pousada
+        vista("pousada_poente", (-75, -30), 55, (-25, 0), 27, lente=34, res=(1200, 900), sem_veg=True)
         vista("casa_no", (-16.0, 15.5), 36.5, (16.0, 4.0), 29.5, lente=40, res=(1000, 1200))
         vista("frente_poente", (-112, 52), 16, (-46, 12), 28, lente=30, res=(1400, 700))
         vista("espadana", (-72, -2), 42, (-55, -19.9), 33, lente=45, res=(1000, 800))
