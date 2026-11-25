@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<title>Vitrina de testes</title>
+<!--
+  Vitrina de testes das maquetas: a MESMA luz do visor do site (src/data/luz.json, lida como em
+  src/components/maqueta/Luz.tsx e Maqueta.tsx): hemisfério, RoomEnvironment filtrado (PMREM), sol com sombras
+  PCF na caixa do terreno, tone mapping e exposição, oclusão ambiental GTAO com os mesmos parâmetros e o mesmo
+  fundo (gradiente de .maqueta-palco em global.css). As cores medem-se aqui, nunca com outra luz.
+  Conduzida por vitrina.mjs (Playwright). Se Luz.tsx mudar, mudar aqui também (o teste vitrina.test.ts compara).
+-->
+<style>
+  html, body { margin: 0; overflow: hidden; }
+  body { background: radial-gradient(ellipse at 50% 42%, #f1ebde 0%, #e2d9c6 55%, #cfc3aa 100%); }
+  body.mascara { background: #000; }
+  canvas { display: block; }
+</style>
+<script type="importmap">{"imports":{"three":"/three/build/three.module.js","three/addons/":"/three/examples/jsm/"}}</script>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+
+const q = new URLSearchParams(location.search);
+const W = +q.get('w') || 1200, H = +q.get('h') || 800;
+const LUZ = await (await fetch('/luz.json')).json();
+const TONS = { AgX: THREE.AgXToneMapping, Neutral: THREE.NeutralToneMapping, ACES: THREE.ACESFilmicToneMapping, Nenhum: THREE.NoToneMapping };
+// Grupos fora do enquadramento (igual a FORA_DO_ENQUADRAMENTO em Maqueta.tsx)
+const FORA = /^(Terreno|Vegetacao|Envolvente|Vila|Caminhos|Afloramentos|Rochedos|Edificios|Espigueiros|Santuario|Muralha_vila)_grupo$/;
+// O que não é obra na máscara (silhueta) e no contorno
+const NAO_OBRA = /terreno|base|chao_|vegeta|arvores|envolvente|casario|edificios|caminhos|rio_|mar_|rochedos|afloramentos|relvados|vila_grupo/;
+const nomes = (o) => { let s = ''; while (o) { s += ' ' + o.name.toLowerCase() + ' '; o = o.parent; } return s; };
+
+const r = new THREE.WebGLRenderer({ antialias: false, alpha: true, preserveDrawingBuffer: true });
+r.setPixelRatio(+q.get('dpr') || 1);
+r.setSize(W, H);
+r.toneMapping = TONS[LUZ.tom] ?? THREE.AgXToneMapping;
+r.toneMappingExposure = LUZ.exposicao;
+r.shadowMap.enabled = true;
+r.shadowMap.type = THREE.PCFShadowMap;
+document.body.appendChild(r.domElement);
+
+const sc = new THREE.Scene();
+const pm = new THREE.PMREMGenerator(r);
+const sala = new RoomEnvironment();
+sc.environment = pm.fromScene(sala, LUZ.ambiente.sigma).texture;
+sc.environmentIntensity = LUZ.ambiente.intensidade;
+sc.add(new THREE.HemisphereLight(LUZ.hemisferio.ceu, LUZ.hemisferio.chao, LUZ.hemisferio.intensidade));
+const sol = new THREE.DirectionalLight(LUZ.sol.cor, LUZ.sol.intensidade);
+sol.castShadow = true;
+sc.add(sol, sol.target);
+const cam = new THREE.PerspectiveCamera(32, W / H, 1, 4000);
+
+// Composer como em Desenho (Luz.tsx), sem baixar a qualidade
+const alvoRT = new THREE.WebGLRenderTarget(W, H, { samples: 4, type: THREE.HalfFloatType });
+const composer = new EffectComposer(r, alvoRT);
+composer.setPixelRatio(r.getPixelRatio());
+composer.setSize(W, H);
+composer.addPass(new RenderPass(sc, cam));
+const ao = new GTAOPass(sc, cam, W, H);
+{ // correção do NaN da GTAO (corrigirGtao em Luz.tsx)
+  const m = ao.gtaoMaterial;
+  m.fragmentShader = m.fragmentShader
+    .replace('vec2 sinHorizons = sqrt(1. - cosHorizons * cosHorizons);', 'cosHorizons = clamp(cosHorizons, -1., 1.);\n\t\t\t\tvec2 sinHorizons = sqrt(max(vec2(0.), 1. - cosHorizons * cosHorizons));')
+    .replace('ao = clamp(ao / float(DIRECTIONS), 0., 1.);', 'ao = ao / float(DIRECTIONS);\n\t\t\tao = (ao == ao) ? clamp(ao, 0., 1.) : 1.;');
+  m.needsUpdate = true;
+}
+ao.blendIntensity = LUZ.oclusao.intensidade;
+ao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 5, radiusExponent: 1.4, rings: 2, samples: 12 });
+composer.addPass(ao);
+composer.addPass(new OutputPass());
+
+const branco = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+const preto = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide });
+let cena = null;
+
+function preparar(scene, solDados) {
+  scene.updateMatrixWorld(true);
+  scene.traverse((o) => {
+    if (!o.isMesh) return;
+    const terrenoBase = /terreno|base/i.test(o.name) || /^(Terreno|Base)$/.test(o.parent?.name ?? '');
+    o.castShadow = !terrenoBase;
+    o.receiveShadow = true;
+  });
+  const monumento = new THREE.Box3();
+  scene.traverse((o) => {
+    if (!/_grupo$/.test(o.name) || FORA.test(o.name) || /_grupo$/.test(o.parent?.name ?? '')) return;
+    monumento.expandByObject(o);
+  });
+  if (monumento.isEmpty()) monumento.setFromObject(scene);
+  const centro = monumento.getCenter(new THREE.Vector3());
+  const area = new THREE.Box3().setFromObject(scene.getObjectByName('Terreno') ?? scene);
+  const solC = area.getCenter(new THREE.Vector3());
+  const solD = solDados ? new THREE.Vector3(...solDados).normalize().multiplyScalar(300) : new THREE.Vector3(...LUZ.sol.direcao);
+  const meia = Math.max(area.max.x - area.min.x, area.max.z - area.min.z) / 2 + 5;
+  const mapa = Math.min(LUZ.sombra.mapa, r.capabilities.maxTextureSize);
+  sol.position.set(solC.x + solD.x, centro.y + solD.y, solC.z + solD.z);
+  sol.target.position.set(solC.x, centro.y, solC.z);
+  Object.assign(sol.shadow.camera, { left: -meia, right: meia, top: meia, bottom: -meia, near: 10, far: Math.max(700, 400 + 2 * meia) });
+  sol.shadow.camera.updateProjectionMatrix();
+  sol.shadow.mapSize.set(mapa, mapa);
+  sol.shadow.bias = LUZ.sombra.bias;
+  sol.shadow.normalBias = Math.max(0.15, (2 * meia / mapa) * 2.2);
+  sol.shadow.radius = LUZ.sombra.raio;
+  const o = LUZ.oclusao;
+  ao.updateGtaoMaterial({ radius: THREE.MathUtils.clamp(meia * o.fator, o.raioMin, o.raioMax) || o.raio, distanceExponent: 1.3, thickness: o.espessura, scale: o.escala, samples: o.amostras, distanceFallOff: 1, screenSpaceRadius: false });
+  const obra = new THREE.Box3();
+  scene.traverse((m) => { if (m.isMesh && !NAO_OBRA.test(nomes(m))) obra.expandByObject(m); });
+  const cx = obra.isEmpty() ? monumento : obra;
+  window.caixaObra = [cx.min.toArray(), cx.max.toArray()];
+  window.centroMonumento = centro.toArray();
+  window.areaTerreno = [area.min.toArray(), area.max.toArray()];
+}
+
+/**
+ * Desenha uma vista. v = { pos:[x,y,z], alvo:[x,y,z], fov, ocultar:[partes do nome], modo:'normal'|'mascara' }.
+ * Eixos do GLB: x este, y altitude, z sul (−z é o norte).
+ * Modo 'mascara': a obra em branco sobre preto (para o contorno sobre a foto). O terreno e as casas ficam pretos mas
+ * tapam a obra como na fotografia; a vegetação some (nas fotos as árvores mudam de estação para estação).
+ */
+window.render = (v) => {
+  cam.fov = v.fov || 32;
+  cam.updateProjectionMatrix();
+  cam.position.set(...v.pos);
+  cam.lookAt(...v.alvo);
+  const mascara = v.modo === 'mascara';
+  document.body.classList.toggle('mascara', mascara);
+  const trocados = [];
+  cena.traverse((o) => {
+    if (!o.isMesh) return;
+    const n = nomes(o);
+    o.visible = !(v.ocultar && v.ocultar.some((p) => n.includes(p.toLowerCase())));
+    if (!mascara) return;
+    if (/vegeta|arvores/.test(n)) o.visible = false;
+    trocados.push([o, o.material]);
+    o.material = NAO_OBRA.test(n) ? preto : branco;
+  });
+  if (mascara) {
+    r.setClearColor(0x000000, 1);
+    r.toneMapping = THREE.NoToneMapping;
+    r.render(sc, cam);
+    for (const [o, m] of trocados) o.material = m;
+    r.setClearColor(0x000000, 0);
+    r.toneMapping = TONS[LUZ.tom] ?? THREE.AgXToneMapping;
+  } else {
+    composer.render();
+  }
+  return true;
+};
+
+/** Altura do terreno em (x, z), ou null. */
+window.chao = (x, z) => {
+  const rc = new THREE.Raycaster(new THREE.Vector3(x, 3000, z), new THREE.Vector3(0, -1, 0));
+  const h = rc.intersectObject(cena, true).filter((i) => /terreno|chao_/.test(nomes(i.object)));
+  return h.length ? h[0].point.y : null;
+};
+
+/** Ponto 3D da obra visto no píxel (px, py) da vista atual (para afinar câmaras e pôr cotas nas láminas). */
+window.pick = (px, py) => {
+  const rc = new THREE.Raycaster();
+  rc.setFromCamera(new THREE.Vector2((px / W) * 2 - 1, -(py / H) * 2 + 1), cam);
+  const h = rc.intersectObject(cena, true).filter((i) => i.object.visible);
+  return h.length ? { p: h[0].point.toArray(), objeto: h[0].object.name, material: h[0].object.material?.name } : null;
+};
+
+/** Contagens da cena (triângulos, materiais, objetos) por grupo de topo. */
+window.contagens = () => {
+  const out = { triangulos: 0, materiais: new Set(), grupos: {} };
+  cena.traverse((o) => {
+    if (!o.isMesh) return;
+    const g = o.geometry; const t = (g.index ? g.index.count : g.attributes.position.count) / 3 * (o.isInstancedMesh ? o.count : 1);
+    let top = o; while (top.parent && top.parent !== cena) top = top.parent;
+    out.triangulos += t; out.grupos[top.name] = (out.grupos[top.name] || 0) + t;
+    (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => out.materiais.add(m.name));
+  });
+  out.materiais = [...out.materiais].sort();
+  return out;
+};
+
+/** GLB sem Draco (para as comprovações técnicas em Python, que não leem Draco). Devolve base64. */
+window.exportarBruto = async () => {
+  const ab = await new GLTFExporter().parseAsync(cena, { binary: true });
+  let s = ''; const b = new Uint8Array(ab);
+  for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+  return btoa(s);
+};
+
+const L = new GLTFLoader();
+const D = new DRACOLoader();
+D.setDecoderPath('/draco/');
+L.setDRACOLoader(D);
+L.load('/glb/' + encodeURIComponent(q.get('m')), (g) => {
+  cena = g.scene;
+  window.cena = cena;
+  sc.add(cena);
+  preparar(cena, q.get('sol') ? q.get('sol').split(',').map(Number) : null);
+  window.pronto = true;
+}, undefined, (e) => { window.erro = String(e); });
+</script>
+</body>
+</html>
