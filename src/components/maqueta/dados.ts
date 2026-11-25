@@ -55,6 +55,8 @@ export interface DadosMaqueta {
   sol?: [number, number, number];
   /** Distância mínima da câmara ao alvo, em metros (por omissão 22); menor nas maquetas pequenas. */
   distanciaMinima?: number;
+  /** Grão de pormenor no chão natural (modelo do castillos.site): true ou { escalas, forca, fade }. */
+  detalheChao?: boolean | { escalas?: [number, number]; forca?: number; fade?: [number, number] };
   elementos: ElementoMaqueta[];
   /** Épocas históricas, da mais antiga para a mais recente; a época atual ("Hoje") é implícita. */
   epocas?: EpocaMaqueta[];

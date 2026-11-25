@@ -2,8 +2,9 @@
   "monumento": "penela",
   "titulo": "Castelo de Penela",
   "variante": "estado-atual",
-  "versao": "0.8 provisória",
+  "versao": "0.9 provisória",
   "data": "2026-11-25",
+  "detalheChao": true,
   "origem": {
     "lat": 40.031162,
     "lon": -8.389862,

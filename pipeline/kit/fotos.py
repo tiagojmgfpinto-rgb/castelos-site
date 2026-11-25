@@ -52,8 +52,34 @@ def _fbm_periodico(n, semente, base=4, oit=4):
     return s / tot
 
 
+def _mosaico(f, r, n, m, borda, semente, vertical=True):
+    """Imagem n x n, periódica, feita de m x m recortes da foto f (lado x lado, periódica) tirados de pontos ao acaso;
+    cada recorte entra com uma janela que cai a zero numa orla de `borda` px, sobreposta à dos vizinhos."""
+    rng = np.random.default_rng(semente + 101)
+    lado = f.shape[0]
+    cp = n / m
+    F, R, W = np.zeros((n, n, f.shape[2])), np.zeros((n, n)), np.zeros((n, n))
+    t = np.arange(int(np.ceil(cp)) + 2 * borda)
+    rampa = np.clip(np.minimum(t + 0.5, len(t) - t - 0.5) / max(2 * borda, 1), 0, 1)
+    rampa = rampa * rampa * (3 - 2 * rampa)
+    jan = np.maximum(np.outer(rampa, rampa), 1e-4)
+    for i in range(m):
+        oy0 = 0
+        for j in range(m):
+            oy = oy0 if not vertical else rng.integers(lado)
+            ox = rng.integers(lado)
+            y0, x0 = int(round(i * cp)) - borda, int(round(j * cp)) - borda
+            ys, xs = (y0 + t) % n, (x0 + t) % n
+            sy, sx = (y0 + t + oy) % lado, (x0 + t + ox) % lado
+            F[np.ix_(ys, xs)] += f[np.ix_(sy, sx)] * jan[..., None]
+            R[np.ix_(ys, xs)] += r[np.ix_(sy, sx)] * jan
+            W[np.ix_(ys, xs)] += jan
+    return F / W[..., None], R / W
+
+
 def textura_foto(tid, n=1024, metros=6.0, cor=(0.60, 0.58, 0.54), contraste=1.0, saturacao=0.5, metros_foto=None,
-                 variacao=0.10, liquen=0.0, liquen_cor=(0.84, 0.84, 0.80), semente=7, rodar=False):
+                 variacao=0.10, liquen=0.0, liquen_cor=(0.84, 0.84, 0.80), semente=7, rodar=False,
+                 mosaico=None, mosaico_vertical=True, mosaico_borda=0.08):
     """Foto `tid` repetida em n x n px = `metros` x `metros` (o que a imagem cobre de facto na maqueta: UV e
     KHR_texture_transform incluídos), recolorida para a cor média `cor` (sRGB 0..1).
 
@@ -62,7 +88,11 @@ def textura_foto(tid, n=1024, metros=6.0, cor=(0.60, 0.58, 0.54), contraste=1.0,
     saturacao: quanto da cor própria de cada pedra (desvio à média) se mantém (0 = só a cor dada).
     variacao: amplitude das manchas largas de tom (pedra mais clara ou mais escura por zonas).
     liquen: fração aproximada da superfície com manchas claras de líquen (0 = nenhuma).
-    rodar: roda a foto 90° (fiadas verticais passam a horizontais)."""
+    rodar: roda a foto 90° (fiadas verticais passam a horizontais).
+    mosaico: lado (m) das células de um mosaico de recortes da foto, cada um tirado de um ponto ao acaso e
+    fundido com os vizinhos numa orla de `mosaico_borda` m (modelo do castillos.site, 25 nov. 2026: uma imagem de
+    6–8 m por repetição, onde a mesma pedra não volta a aparecer ao lado). mosaico_vertical=False só desloca os
+    recortes na horizontal (silhares em fiadas regulares: as fiadas continuam à mesma cota)."""
     USADAS.add(tid)
     foto, rel = _ler(tid)
     if rodar:
@@ -73,10 +103,14 @@ def textura_foto(tid, n=1024, metros=6.0, cor=(0.60, 0.58, 0.54), contraste=1.0,
     f = np.asarray(Image.fromarray((foto ** (1 / 2.2) * 255).astype(np.uint8)).resize((lado, lado), Image.LANCZOS), float) / 255.0
     f = f ** 2.2
     r = np.asarray(Image.fromarray((rel * 255).astype(np.uint8)).resize((lado, lado), Image.LANCZOS), float) / 255.0
+    f0, r0 = f, r
     f, r = np.tile(f, (k, k, 1)), np.tile(r, (k, k))
     if k * lado != n:  # n não divisível por k: estica 1–2 px para a imagem repetir sem costura
         f = ndi.zoom(f, (n / f.shape[0], n / f.shape[1], 1), order=1, mode="grid-wrap")
         r = ndi.zoom(r, n / r.shape[0], order=1, mode="grid-wrap")
+    if mosaico:
+        f, r = _mosaico(f0, r0, n, max(2, int(round(metros / mosaico))),
+                        int(round(mosaico_borda / metros * n)), semente, mosaico_vertical)
     # luminância e cor própria de cada pixel, relativas à média da foto
     lum = f @ np.array([0.2126, 0.7152, 0.0722])
     # tira os defeitos da foto que se notariam a repetir (buracos negros, uma pedra branca, etiquetas):
