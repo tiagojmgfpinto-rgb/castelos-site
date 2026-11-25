@@ -1,6 +1,6 @@
 # Maqueta 3D do Castelo de Penela (estado atual)
 
-Versão 0.3, **provisória**. Gerada por código, à escala 1:1 e georreferenciada (origem nas coordenadas oficiais 40.031162, −8.389862; x para este, y para norte; no visor, −z é o norte). Desde a 0.2 o relevo, as cotas e as alturas são medidos no LiDAR da DGT de 2024 e o traçado é conferido na ortofoto de 2025.
+Versão 0.8, **provisória**. Gerada por código, à escala 1:1 e georreferenciada (origem nas coordenadas oficiais 40.031162, −8.389862; x para este, y para norte; no visor, −z é o norte). Desde a 0.2 o relevo, as cotas e as alturas são medidos no LiDAR da DGT de 2024 e o traçado é conferido na ortofoto de 2025.
 
 ## Como reconstruir
 
@@ -16,19 +16,24 @@ python pipeline/maquetas/penela/recolher.py
 pip install rasterio pyproj scipy pillow "laspy[lazrs]" numpy
 python pipeline/maquetas/penela/lidar.py PASTA
 
-# 3. maqueta em Blender (módulo bpy) -> public/maquetas/penela/penela.glb (Draco) e capa.jpg
+# 3. classes do chão (ortofoto + LiDAR + correções à mão) -> dados/chao.json
+python pipeline/maquetas/penela/chao.py
+
+# 4. maqueta em Blender (módulo bpy) -> public/maquetas/penela/penela.glb (Draco) e capa.jpg
 pip install bpy==5.2.3 numpy          # Python 3.13
 python pipeline/maquetas/penela/construir.py --vistas
 ```
 
 O `lidar.npz`, o `casas.json` e o `orto.jpg` estão no repositório (c. 1,7 MB), por isso o passo 2 só é preciso para refazer as medições com outras folhas.
 O `bpy` do PyPI não traz o Draco, por isso o script comprime o GLB com `npx @gltf-transform/cli draco` (é preciso Node).
-`--vistas` grava a capa e as vistas de verificação em `vistas/` (topo, norte, sul, nascente, poente, duas oblíquas como as fotografias aéreas 1 e 2, o pano poente e a fachada da igreja).
+`--vistas` grava a capa e as vistas de verificação em `vistas/` (topo, norte, sul, nascente, poente, duas oblíquas como as fotografias aéreas 1 e 2, o pano poente, a fachada da igreja e, desde a 0.8, as duas fotografias do Google Maps usadas para o chão: do alto da torre quinária para norte e da subida calcetada para a Brecha).
 Cada construção grava em `dados/medidas.json` o que se mediu (cotas absolutas em metros), que é a base das medidas citadas no `penela.json`.
 
 ## O que se mede no LiDAR e o que é estimativa
 
-- **Terreno**: MDT de 50 cm amostrado a 1 m, sem retoques. As escarpas são as reais.
+- **Terreno**: MDT de 50 cm amostrado a 1 m. As escarpas são as reais. Debaixo das ruas, calçadas e lajes o MDT é alisado (gaussiano de 1,2 m), porque o ruído de pedras, carros e muretes não é relevo.
+- **Chão (desde a 0.8, "metro a metro")**: cada tipo de chão é um polígono de `dados/chao.json`, com material nítido, e não a cor da ortofoto pintada ponto a ponto. O `chao.py` faz uma proposta automática para o chão natural (erva, relva, mato, rocha, saibro: cor da ortofoto de 2025, classes do LiDAR e declive, com filtro de maioria) e por cima as correções traçadas à mão nas quadrículas de 40 m, que mandam sempre. Traçado à mão: a rua larga e o largo ao pé do castelo (o OSM estava 3 a 6 m desviado), o penedo de calcário por baixo da torre quinária, a subida calcetada sobre o penedo até à Brecha e daí até à igreja (calçada de cubos na fotografia do Google Maps), o adro lajeado a poente da igreja, o caminho de saibro poente dentro da cerca, os patamares e o pátio nascente em relva, a Rua do Sol (asfalto com linhas brancas) e os carreiros da encosta. Longe do castelo as ruas seguem o OSM com 5 m. A erva aparece verde-amarelada, como nas fotografias de primavera.
+- **Muro do pátio (0.8)**: o muro ameado entre a rampa e o pátio nascente faltava; vê-se na fotografia do alto da torre quinária e no LiDAR (faixa de c. 2,2 m acima do MDT e 3 m de largura, de y ≈ −46 a −22). Desenha-se só onde o LiDAR o mostra.
 - **Traçado**: OSM densificado de 2 em 2 m e encostado à crista da muralha no MDS, até 4,5 m para cada lado, só onde a crista está claramente acima da linha.
 - **Muralhas e castelejo**: topo dos merlões medido em cada vértice (percentil 95 do MDS num raio de 1,6 m, sem células de vegetação, mediana móvel ao longo do pano). Pé exterior e chão interior no MDT.
 - **Torres e cubelo**: topo dentro da planta e pé no anel exterior.

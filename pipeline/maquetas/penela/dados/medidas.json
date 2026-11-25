@@ -5,6 +5,44 @@
   "celulas_subidas": 3418,
   "chao_castelejo": 301.2
  },
+ "chao": {
+  "asfalto": {
+   "area_m2": 6511.7,
+   "triangulos": 16636
+  },
+  "calcada": {
+   "area_m2": 2188.2,
+   "triangulos": 4886
+  },
+  "lajeado": {
+   "area_m2": 337.5,
+   "triangulos": 760
+  },
+  "saibro": {
+   "area_m2": 1840.1,
+   "triangulos": 4937
+  },
+  "terra": {
+   "area_m2": 701.7,
+   "triangulos": 2955
+  },
+  "rocha": {
+   "area_m2": 1183.8,
+   "triangulos": 2477
+  },
+  "relva": {
+   "area_m2": 4867.2,
+   "triangulos": 11492
+  },
+  "erva": {
+   "area_m2": 24418.2,
+   "triangulos": 59429
+  },
+  "mato": {
+   "area_m2": 28634.2,
+   "triangulos": 63497
+  }
+ },
  "pano_norte": {
   "topo": [
    291.5,
@@ -168,6 +206,21 @@
   "desnivel_max": 5.6,
   "comprimento": 38.0
  },
+ "muro_patio": {
+  "topo": [
+   291.6,
+   294.1
+  ],
+  "rampa": [
+   287.8,
+   289.3
+  ],
+  "patio": [
+   289.6,
+   292.2
+  ],
+  "comprimento": 26.0
+ },
  "vila": {
   "edificios": 62,
   "do_osm": 28,
@@ -177,7 +230,7 @@
  "ciprestes": 3,
  "vegetacao": {
   "arvores": 560,
-  "encolhidas": 42,
+  "encolhidas": 31,
   "retiradas": 76
  },
  "texturas_foto": {

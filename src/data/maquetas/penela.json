@@ -2,8 +2,8 @@
   "monumento": "penela",
   "titulo": "Castelo de Penela",
   "variante": "estado-atual",
-  "versao": "0.7 provisória",
-  "data": "2026-11-16",
+  "versao": "0.8 provisória",
+  "data": "2026-11-25",
   "origem": {
     "lat": 40.031162,
     "lon": -8.389862,
@@ -57,7 +57,8 @@
     "As seteiras e troneiras não estão representadas: as fotografias disponíveis não permitem situá-las uma a uma.",
     "A cisterna (planta quadrangular, escavada na rocha) não está representada porque a sua localização não foi confirmada.",
     "A Igreja de São Miguel tem as cumeeiras, os beirados, a cornija da torre (306,1 m) e o vértice do coruchéu (311,3 m) medidos. A porta, a janela, o friso, as sineiras, o relógio, os pináculos e o cata-vento seguem a fotografia da fachada, com medidas aproximadas.",
-    "Os edifícios da vila são volumes simplificados: 28 plantas do OpenStreetMap e 32 tiradas da nuvem de pontos LiDAR (classe edifício), onde o OpenStreetMap não tem casas. As casas geminadas separam-se pelos degraus dos telhados, por isso alguns quarteirões aparecem como um só volume. O cume de 58 das 60 casas é medido no LiDAR. As árvores estão nas posições e com as alturas e copas medidas na nuvem de pontos, com uma forma esquemática."
+    "Os edifícios da vila são volumes simplificados: 28 plantas do OpenStreetMap e 32 tiradas da nuvem de pontos LiDAR (classe edifício), onde o OpenStreetMap não tem casas. As casas geminadas separam-se pelos degraus dos telhados, por isso alguns quarteirões aparecem como um só volume. O cume de 58 das 60 casas é medido no LiDAR. As árvores estão nas posições e com as alturas e copas medidas na nuvem de pontos, com uma forma esquemática.",
+    "Chão (revisão \"metro a metro\", novembro de 2026): cada tipo de chão (asfalto, calçada, lajes, saibro, terra, relva, erva, mato, rocha) é um polígono traçado sobre a ortofoto de 2025 e o LiDAR, com material nítido, em vez da cor da ortofoto pintada ponto a ponto. As ruas e caminhos dentro e à volta da cerca foram traçados à mão (o OSM estava 3 a 6 m desviado ao pé do castelo); longe do castelo as ruas seguem o OSM com largura uniforme e o resto é uma classificação automática da ortofoto e do LiDAR, filtrada. A erva aparece verde-amarelada, como nas fotografias de primavera; na ortofoto de verão está seca."
   ],
   "muralha": {
     "espessura": 2.2,
@@ -367,6 +368,20 @@
       "confianca": "média",
       "descricao": "Muro que sustenta o terreiro da igreja acima do pátio inferior, visível na fotografia aérea 1 e confirmado pelo degrau no MDT.",
       "medidas": "Degrau medido no MDT em c. 38 m de comprimento, até 5,5 m de desnível. Onde o MDT não mostra degrau o muro não é desenhado.",
+      "fontes": [
+        "lidar",
+        "orto",
+        "fotos"
+      ]
+    },
+    {
+      "id": "muro_patio",
+      "nome": "Muro ameado do pátio nascente",
+      "grupo": "Recinto",
+      "estado": "estado-atual",
+      "confianca": "média",
+      "descricao": "Muro de suporte com merlões entre a rampa calcetada (a poente, mais baixa) e o pátio nascente, da torre quinária para norte. Acrescentado na revisão de novembro de 2026: vê-se na fotografia tirada do alto da torre quinária e no LiDAR.",
+      "medidas": "c. 26 m de comprimento e 3 m de largura no LiDAR 2024 (faixa de c. 2,2 m acima do MDT, de y ≈ −46 a −22 m). A rampa fica c. 2,5 m abaixo do topo; o pátio quase à altura do adarve. Espessura (1,4 m) e desenho dos merlões estimados.",
       "fontes": [
         "lidar",
         "orto",

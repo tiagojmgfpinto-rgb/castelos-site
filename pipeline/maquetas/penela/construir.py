@@ -32,6 +32,21 @@ from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
 from kit.materiais import material as material_kit  # noqa: E402  (com mapa de normais)
 from kit.arquitetura import piramide, barra  # noqa: E402
 from kit import passagens  # noqa: E402
+from kit import chao, chao_blender  # noqa: E402
+
+# cores médias do chão, por classe, medidas nas fotografias de Penela (Google Maps, mai. 2022 e 2023): calçada e
+# lajes de calcário claro, saibro bege-claro, relva de primavera verde-amarelada
+PALETA_CHAO = {
+    "asfalto": {"cor": (0.40, 0.40, 0.41)},
+    "calcada": {"cor": (0.72, 0.70, 0.65)},
+    "lajeado": {"cor": (0.78, 0.75, 0.68), "metros": 6.0},
+    "saibro": {"cor": (0.80, 0.76, 0.66)},
+    "terra": {"cor": (0.64, 0.56, 0.43)},
+    "relva": {"cor": (0.46, 0.52, 0.29)},
+    "erva": {"cor": (0.60, 0.58, 0.40)},
+    "mato": {"cor": (0.33, 0.37, 0.22)},
+    "rocha": {"cor": (0.72, 0.68, 0.58)},
+}
 
 AQUI = Path(__file__).resolve().parent
 RAIZ = AQUI.parents[2]
@@ -240,25 +255,6 @@ def fbm(x, y, escala, semente, oit=4):
     return s / tot
 
 
-_ORTO = []
-
-
-def ortofoto(x, y):
-    """Cor (sRGB 0-1) da ortofoto DGT 2025 recortada em dados/orto.jpg (norte em cima)."""
-    if not _ORTO:
-        img = bpy.data.images.load(str(AQUI / "dados" / "orto.jpg"))
-        w, h = img.size
-        px = np.empty(w * h * 4, np.float32)
-        img.pixels.foreach_get(px)
-        _ORTO.append(px.reshape(h, w, 4)[..., :3])  # o Blender guarda a linha 0 em baixo (sul)
-        bpy.data.images.remove(img)
-    a = _ORTO[0]
-    k = a.shape[0]
-    c = np.clip(np.round((np.asarray(x) + LMEIO) / (2 * LMEIO) * (k - 1)).astype(int), 0, k - 1)
-    r = np.clip(np.round((np.asarray(y) + LMEIO) / (2 * LMEIO) * (k - 1)).astype(int), 0, k - 1)
-    return a[r, c].astype(float)
-
-
 def construir_terreno():
     passo = 1.0
     n = int(2 * RAIO / passo) + 1
@@ -284,36 +280,11 @@ def construir_terreno():
     I, J = np.nonzero(centro_in)
     faces = np.stack([idx[I, J], idx[I, J + 1], idx[I + 1, J + 1], idx[I + 1, J]], 1)
 
-    # cores por vértice (sRGB): paleta de maqueta guiada pela ortofoto de 2025 (relva, terra,
-    # calçada e rocha onde de facto estão), com as sombras e o ruído da fotografia atenuados
+    # O chão já não se pinta com a cor da ortofoto (método "metro a metro", 24 nov. 2026): cada classe (asfalto,
+    # calçada, lajeado, saibro, terra, relva, mato, rocha) é um objeto com material nítido, a partir dos polígonos de
+    # dados/chao.json (chao.py: ortofoto + LiDAR + correções traçadas à mão). Aqui só ficam as falésias junto às
+    # muralhas, que têm objeto próprio com a pedra fotografada.
     xv, yv = V[:, 0], V[:, 1]
-    dv = decl[usados]
-    orto = ortofoto(xv, yv)
-    lum = orto.mean(1)
-    sat = orto.max(1) - orto.min(1)
-    verde = np.clip((orto[:, 1] - (orto[:, 0] + orto[:, 2]) / 2) * 8 + 0.3, 0, 1)
-    # debaixo das copas (nuvem de pontos) a ortofoto só mostra a árvore e a sombra: chão de mato
-    ci = np.clip(np.round((xv + LMEIO) / LPASSO).astype(int), 0, VEG.shape[1] - 1)
-    ri = np.clip(np.round((yv + LMEIO) / LPASSO).astype(int), 0, VEG.shape[0] - 1)
-    sob = np.zeros(len(xv))
-    for dr in (-2, 0, 2):
-        for dc in (-2, 0, 2):
-            sob += VEG[np.clip(ri + dr, 0, VEG.shape[0] - 1), np.clip(ci + dc, 0, VEG.shape[1] - 1)]
-    sob = np.clip(sob / 9 * 1.5, 0, 1)
-    verde = np.maximum(verde, sob * 0.85)
-    erva = np.array([0.52, 0.55, 0.35])
-    terra = np.array([0.76, 0.70, 0.57])
-    calcada = np.array([0.80, 0.78, 0.73])
-    cor = erva * verde[:, None] + terra * (1 - verde[:, None])
-    claro = np.clip((lum - 0.55) * 6, 0, 1) * np.clip((0.12 - sat) * 12, 0, 1) * (1 - sob)
-    cor = cor * (1 - claro[:, None]) + calcada * claro[:, None]
-    cor = cor * (0.94 + 0.12 * fbm(xv, yv, 6.0, 3))[:, None]
-    # penedos de calcário onde assentam as muralhas (canto sudoeste, debaixo das torres): cinzento
-    # claro, como na fotografia aérea, a partir de c. 40° de declive e só fora do mato (antes bege, igual à
-    # terra); debaixo das copas a encosta continua de terra e erva
-    roc = np.array([0.70, 0.69, 0.65]) * (0.82 + 0.3 * fbm(xv, yv, 3.0, 5)[:, None])
-    tr = (np.clip((dv - 38) / 10, 0, 1) * (1 - sob))[:, None]
-    cor = cor * (1 - tr) + roc * tr
 
     # faces íngremes (mais de 50°): falésias de rocha, objeto à parte com a pedra fotografada e a cor da rocha
     # (ocre; cinzenta à volta do castelejo, revisão do perito P1-1)
@@ -334,6 +305,7 @@ def construir_terreno():
     cinza = np.array([0.62, 0.61, 0.56]) * (0.9 + 0.2 * fbm(xv, yv, 4.0, 9)[:, None])
     g_ = np.clip((np.hypot(xv - castelejo[:, 0].mean(), yv - castelejo[:, 1].mean()) - 14.0) / 6.0, 0, 1)[:, None]
     cor_roc = cinza * (1 - g_) + ocre * g_
+    ingreme_cel = ingreme.copy()
     fr = faces[ingreme]
     usa = np.unique(fr)
     mapa = -np.ones(len(V), int)
@@ -349,31 +321,32 @@ def construir_terreno():
     uv_mundo(obr, 4.0)
     faces = faces[~ingreme]
 
-    me = bpy.data.meshes.new("terreno")
-    me.from_pydata(V.tolist(), [], faces.tolist())
-    me.update()
-    bm = bmesh.new()
-    bm.from_mesh(me)
-    bm.verts.ensure_lookup_table()
-    # borda circular exata
-    borda = [v for v in bm.verts if v.is_boundary and math.hypot(v.co.x, v.co.y) > RAIO - 3 * passo]  # (não os bordos das falésias)
-    for v in borda:
-        r = math.hypot(v.co.x, v.co.y)
-        v.co.x, v.co.y = v.co.x * RAIO / r, v.co.y * RAIO / r
-    bxy = np.array([[v.co.x, v.co.y] for v in borda])
-    bz = cota(bxy[:, 0], bxy[:, 1])
-    for v, z in zip(borda, bz):
-        v.co.z = float(z)
-    bm.to_mesh(me)
-    bm.free()
-    cor_lin = np.clip(cor, 0, 1) ** 2.2
-    ca = me.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
-    rgba = np.hstack([cor_lin, np.ones((len(V), 1))]).astype(np.float32)
-    ca.data.foreach_set("color", rgba.ravel())
-    me.color_attributes.active_color = ca
-    me.shade_smooth()
-    ob = novo_objeto("Terreno", me, "terreno")
-    uv_mundo(ob, 8.0)
+    # chão por classes, recortado onde ficam as falésias (as mesmas células, para não haver fendas)
+    falesia = shapely.union_all(shapely.box(X[I[ingreme_cel], J[ingreme_cel]], Y[I[ingreme_cel], J[ingreme_cel]],
+                                            X[I[ingreme_cel], J[ingreme_cel]] + passo, Y[I[ingreme_cel], J[ingreme_cel]] + passo))
+    classes = chao.ler(AQUI / "dados" / "chao.json")
+    # ruas, calçadas e lajes não ondulam com o ruído do MDT (pedras, carros, muretes): alisa-se o Z debaixo delas
+    Z = chao.aplanar(xs, Z, [classes.get(n) for n in ("asfalto", "calcada", "lajeado", "saibro")], sigma=1.2)
+    # o chão da Brecha das Desaparecidas é calçada como a rampa, mas fica num objeto próprio (placa "brecha")
+    a_, b_ = SECTORES["pano_sul"][-1], sueste[0]
+    u_ = unit(b_ - a_)
+    w_ = np.array([-u_[1], u_[0]])
+    c_ = (a_ + b_) / 2
+    L_ = np.linalg.norm(b_ - a_)
+    BRECHA_Q = shapely.Polygon([c_ - u_ * L_ / 2 - w_ * 5, c_ + u_ * L_ / 2 - w_ * 5, c_ + u_ * L_ / 2 + w_ * 5,
+                                c_ - u_ * L_ / 2 + w_ * 5])
+    pecas = chao.malhas(classes, xs, Z, raio=RAIO, recorte=falesia.union(BRECHA_Q))
+    obs = chao_blender.objetos(pecas, pai=GRUPOS["Terreno"], paleta=PALETA_CHAO)
+    ob_b = chao_blender.objetos(chao.malhas({"calcada": BRECHA_Q}, xs, Z, recorte=falesia), pai=GRUPOS["Brecha_Desaparecidas"],
+                                elemento="brecha", paleta=PALETA_CHAO)["calcada"]
+    ob_b.name = "Brecha_Desaparecidas"
+    for n in ("asfalto", "calcada", "lajeado", "saibro", "escadas"):
+        if n in obs:
+            obs[n]["elemento"] = "caminhos"
+    MEDIDAS["chao"] = {n: {"area_m2": round(float(classes[n].intersection(chao.disco(RAIO)).area), 1),
+                           "triangulos": int(len(f))} for n, (_v, f) in pecas.items()}
+    anel_d = chao.borda_disco(xs, Z, RAIO)
+    bxy, bz = anel_d[:, :2], anel_d[:, 2]
 
     # base de maqueta de museu: saia e fundo
     ang = np.arctan2(bxy[:, 1], bxy[:, 0])
@@ -998,7 +971,7 @@ assentar_na_rocha()
 print("terreno…")
 construir_terreno()
 for ob in bpy.data.objects:
-    if ob.name in ("Terreno", "Base"):
+    if ob.name in ("Terreno", "Base") or ob.name.startswith("Chao_"):
         ob.parent = GRUPOS["Terreno"]
 
 def cortar_na_porta(lin, *vals, folga=0.6):
@@ -1259,18 +1232,11 @@ MEDIDAS["porta_vila"] = {"soleira": SOLEIRA_VILA + ZREF, "chao_interior": PV_CHA
                          "fecho": float(max(z for _, z in pv_arco(0.0))), "fundo_passagem": float(fundo_pv),
                          "topo_torre": topo_pv + ZREF, "topo_corpo_direito": topo_d + ZREF, "topo_muro_suporte": topo_s + ZREF, "cruzeiro": zc + ZREF}
 
-# Brecha: chão do acesso atual entre o pano sul e a torre quinária
-m = Malha()
+# Brecha: o chão (calçada) já está feito com o terreno, em construir_terreno (objeto Brecha_Desaparecidas)
 a_ = SECTORES["pano_sul"][-1]
 b_ = sueste[0]
-u = unit(b_ - a_)
-w = np.array([-u[1], u[0]])
 c = (a_ + b_) / 2
 L = np.linalg.norm(b_ - a_)
-q = [c - u * L / 2 - w * 5, c + u * L / 2 - w * 5, c + u * L / 2 + w * 5, c - u * L / 2 + w * 5]
-zq = cota(np.array([p[0] for p in q]), np.array([p[1] for p in q]))
-m.prisma(q, zq - 0.5, zq + 0.08, 0)
-m.objeto("Brecha_Desaparecidas", "brecha", ["caminho"], GRUPOS["Brecha_Desaparecidas"], uv=None)
 MEDIDAS["brecha"] = {"chao": float(cota(*c)) + ZREF, "abertura": float(L)}
 
 print("igreja e recinto…")
@@ -1355,6 +1321,25 @@ m.objeto("Muro_Terreiro", "muro_terreiro", ["pedra"], GRUPOS["Recinto"])
 PERFIS["muro_terreiro"] = np.stack([lin[:, 0], lin[:, 1], dentro_ - fora], 1)
 MEDIDAS["muro_terreiro"] = {"desnivel_max": float((dentro_ - fora).max()), "comprimento": float(degrau.sum() * 2.0)}
 
+# Muro ameado entre a rampa calcetada e o pátio nascente (revisão "metro a metro", nov. 2026). Faltava na maqueta:
+# vê-se na fotografia do alto da torre quinária para norte (Google Maps, mai. 2022: merlões e adarve do lado do pátio)
+# e no LiDAR 2024 como uma faixa de c. 2,2 m acima do MDT e 3 m de largura, de y ≈ −46 a −22 (x ≈ 13–16); a ortofoto
+# mostra-o como linha escura com sombra para nascente. É muro de suporte: a rampa fica 2,5 m abaixo e o pátio quase à
+# altura do adarve. A norte de y ≈ −20 o LiDAR já não o mostra, por isso não se desenha.
+m = Malha()
+lin_mp = densificar(np.array([[14.2, -21.0], [14.4, -30.0], [14.6, -40.0], [14.8, -47.0]]), 1.5)
+fora_mp = cota(*desvio(lin_mp, -2.2).T)  # rampa (poente: exterior, à direita de quem vai para sul)
+dentro_mp = cota(*desvio(lin_mp, 2.2).T)  # pátio
+topo_mp = mediana_movel(np.array([medir(centro=p_, raio=1.4, q=95) for p_ in lin_mp]), 3)
+topo_mp = np.where(np.isnan(topo_mp), np.nanmedian(topo_mp), topo_mp)
+topo_mp = np.maximum(topo_mp, dentro_mp + PARAPEITO + MERLAO["altura"])
+muralha(m, lin_mp, 1.4, topo_mp, fora_mp, dentro_mp, ameias=True)
+m.objeto("Muro_Patio", "muro_patio", ["pedra"], GRUPOS["Recinto"])
+MEDIDAS["muro_patio"] = {"topo": [round(float(topo_mp.min()) + ZREF, 2), round(float(topo_mp.max()) + ZREF, 2)],
+                         "rampa": [round(float(fora_mp.min()) + ZREF, 2), round(float(fora_mp.max()) + ZREF, 2)],
+                         "patio": [round(float(dentro_mp.min()) + ZREF, 2), round(float(dentro_mp.max()) + ZREF, 2)],
+                         "comprimento": round(float(np.linalg.norm(np.diff(lin_mp, axis=0), axis=1).sum()), 1)}
+
 print("vila…")
 proprios = {"3904babc", "69a1ea12", "9ed07352", "dc7a9b83", "0de35856"}
 m = Malha()
@@ -1393,43 +1378,7 @@ for c_ in json.loads((AQUI / "dados" / "casas.json").read_text()):
 m.objeto("Edificios_Vila", "vila", ["cinza_viz", "cinza_viz"], GRUPOS["Vila"], uv=None)
 MEDIDAS["vila"] = {"edificios": len(pegadas), "do_osm": n_osm, "do_lidar": len(pegadas) - n_osm, "medidos": n_med}
 
-print("caminhos…")
-LARG = {"primary": 7, "secondary": 7, "tertiary": 6, "residential": 5, "unclassified": 4.5, "service": 3.5,
-        "living_street": 4, "pedestrian": 4, "track": 3, "footway": 1.6, "path": 1.4, "steps": 1.6}
-m = Malha()
-for f in F["caminhos"]:
-    if f["subtipo"] != "road":
-        continue
-    lw = LARG.get(f["classe"] or "", 3)
-    linha = geom(f)
-    # densificar
-    pts = [linha[0]]
-    for a, b in zip(linha[:-1], linha[1:]):
-        k = max(1, int(np.linalg.norm(b - a) / 2.0))
-        pts += [a + (b - a) * t for t in np.linspace(0, 1, k + 1)[1:]]
-    pts = np.array(pts)
-    ok = (np.hypot(*pts.T) < RAIO - 1.5) & ~dentro(pts[:, 0], pts[:, 1], perimetro)
-    folga = 6.0 if lw < 2.5 else 1.2
-    ok &= distancia(pts[:, 0], pts[:, 1], perimetro, True)[0] > lw / 2 + folga
-    e_ = 1.0
-    inc = np.hypot(cota(pts[:, 0] + e_, pts[:, 1]) - cota(pts[:, 0] - e_, pts[:, 1]),
-                   cota(pts[:, 0], pts[:, 1] + e_) - cota(pts[:, 0], pts[:, 1] - e_)) / (2 * e_)
-    ok &= inc < 0.6
-    troco = []
-    for p, k in zip(pts, ok):
-        if k:
-            troco.append(p)
-        if (not k or p is pts[-1]) and len(troco) > 1:
-            t = np.array(troco)
-            L_ = desvio(t, lw / 2)
-            R_ = desvio(t, -lw / 2)
-            zl = cota(L_[:, 0], L_[:, 1]) + 0.15
-            zr = cota(R_[:, 0], R_[:, 1]) + 0.15
-            for i in range(len(t) - 1):
-                m.face([(*R_[i], zr[i]), (*R_[i + 1], zr[i + 1]), (*L_[i + 1], zl[i + 1]), (*L_[i], zl[i])])
-        if not k:
-            troco = []
-m.objeto("Caminhos", "caminhos", ["caminho"], GRUPOS["Caminhos"], uv=None, liso=True)
+# (as ruas e os caminhos já não são fitas a 15 cm do chão: são as classes asfalto, calçada, saibro e terra do chão)
 
 print("vegetação…")
 
@@ -1498,7 +1447,7 @@ from mathutils import Vector  # noqa: E402
 from mathutils.bvhtree import BVHTree  # noqa: E402
 _ov, _of = [], []
 for _ob in bpy.data.objects:
-    if _ob.type != "MESH" or _ob.name in ("Terreno", "Base"):
+    if _ob.type != "MESH" or _ob.name in ("Terreno", "Base") or _ob.name.startswith("Chao_"):
         continue
     _mw = _ob.matrix_world
     _b = len(_ov)
@@ -1671,3 +1620,28 @@ if "--vistas" in sys.argv:
         vista("obliqua_foto2", 312, 32, 230, lente=50)
         vista("muro_poente", 262, 12, 120, lente=40)
         vista("igreja_fachada", 228, 14, 48, lente=35, alvo_xy=tuple(P(-30, 10)), alvo_z=float(cota(*P(-30, 10))) + 8)
+
+    def camara(nome, pos, alvo_, lente=24, res=(1200, 900)):
+        """Vista com a câmara num ponto dado (para repetir o enquadramento de uma fotografia)."""
+        co.location = Vector(pos)
+        co.rotation_euler = (Vector(alvo_) - Vector(pos)).to_track_quat("-Z", "Y").to_euler()
+        cam.type = "PERSP"
+        cam.lens = lente
+        cam.clip_end = 5000
+        sc.render.resolution_x, sc.render.resolution_y = res
+        sc.render.filepath = str(pasta / f"{nome}.jpg")
+        bpy.ops.render.render(write_still=True)
+        print("vista", nome)
+
+    if not so_capa:
+        # as duas fotografias do Google Maps usadas para o chão: do castelejo para noroeste (igreja e pátio com o
+        # trabuco) e da rampa calcetada para norte (torre quinária à direita)
+        _c = castelejo.mean(0)
+        _zc = MEDIDAS["castelejo"]["topo"][1] - ZREF + 1.7
+        # (a fotografia "do castelejo" é afinal do alto da torre quinária, para norte: igreja ao fundo à esquerda)
+        _tq = bpy.data.objects["Torre_Quinaria"]
+        _vt = np.array([_tq.matrix_world @ v.co for v in _tq.data.vertices])
+        _pt = (*_vt[:, :2].mean(0), float(_vt[:, 2].max()) + 1.7)
+        camara("foto_torre_quinaria_n", _pt, (8.0, 0.0, _pt[2] - 22), lente=20)
+        _z0 = float(cota(5.0, -66.0)) + 1.6
+        camara("foto_rampa", (5.0, -66.0, _z0), (20.0, -45.0, _z0 + 2.0), lente=26)
