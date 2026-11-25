@@ -35,7 +35,22 @@ from kit.geometria import unit, area, densificar, dentro, simplificar, mediana_m
 from kit.texturas import ruido, fbm, textura_grao, imagem  # noqa: E402
 from kit.cena import arvore_modelo  # noqa: E402
 from kit.fotos import textura_foto, fontes_fotos  # noqa: E402
+from kit import chao, chao_blender  # noqa: E402
 from kit.arquitetura import Quadro, _vao_desloc, altura_telhado, barra, cupula, faixa_inclinada, guardas_corredor, guarita, oitavado, porta_revelim, porta_tunel, telhado_4aguas, telhado_generico  # noqa: E402
+
+# Chão por classes (kit/chao.py, dados/chao.json, método "metro a metro" de novembro de 2026): cor média de cada
+# classe pela ortofoto e pelas fotografias. A erva seca das esplanadas e dos terraplenos é dourada no verão; a
+# calçada das vilas é de granito cinzento-claro; o saibro dos terreiros é claro e amarelado.
+PALETA_CHAO = {
+    "asfalto": {"cor": (0.42, 0.42, 0.43)},
+    "calcada": {"cor": (0.64, 0.62, 0.58)},
+    "saibro": {"cor": (0.80, 0.75, 0.64)},
+    "terra": {"cor": (0.66, 0.58, 0.45)},
+    "relva": {"cor": (0.50, 0.55, 0.32)},
+    "erva": {"cor": (0.70, 0.64, 0.45)},
+    "mato": {"cor": (0.34, 0.38, 0.23)},
+    "rocha": {"cor": (0.62, 0.60, 0.55)},
+}
 
 AQUI = Path(__file__).resolve().parent
 RAIZ = AQUI.parents[2]
@@ -662,43 +677,6 @@ def escarpa(e, m, mq):
 
 # ---------------------------------------------------------------- terreno
 
-def textura_terreno():
-    """Cor do chão: a ortoimagem da nuvem de pontos (cor do ponto mais alto de cada célula de 50 cm),
-    sem os telhados nem as copas, que se preenchem com a cor do chão à volta (convolução normalizada a
-    várias escalas), um pouco suavizada para a escala de maqueta. Norte em cima, como o orto.jpg."""
-    from PIL import Image
-    img = np.asarray(Image.open(AQUI / "dados" / "orto.jpg"), float) / 255.0
-    ky, kx = img.shape[:2]
-    H = MDS - MDT
-    tapa = ((CLS == 6) & (H > 1.5)) | (VEG & (H > 1.8)) | (CLS == 0)
-    # nós da grelha (linha 0 = sul) -> células da imagem (linha 0 = norte)
-    tc = (tapa[:-1, :-1] | tapa[1:, :-1] | tapa[:-1, 1:] | tapa[1:, 1:])[::-1]
-    tc = ndi.binary_dilation(tc, iterations=1)
-    # As sombras do voo (faixas escuras e azuladas ao pé das muralhas e das árvores) também se tapam: na
-    # maqueta a luz é a do visor e as sombras carimbadas no chão saíam azuis (auditoria de novembro de 2026).
-    lum = img.mean(-1)
-    azul = img[..., 2] - (img[..., 0] + img[..., 1]) / 2
-    sombra = ((lum < 0.72 * ndi.median_filter(lum, size=31)) & (lum < 0.42)) | ((azul > 0.0) & (lum < 0.40))
-    sombra = ndi.binary_dilation(ndi.binary_opening(sombra, iterations=1), iterations=2)
-    tc |= sombra[:tc.shape[0], :tc.shape[1]]
-    bom = (~tc).astype(float)
-    out = img.copy()
-    falta = tc.copy()
-    for sg in (1.5, 3, 6, 12, 24, 48):
-        num = np.stack([ndi.gaussian_filter(img[..., k] * bom, sg) for k in range(3)], -1)
-        den = ndi.gaussian_filter(bom, sg)[..., None]
-        ok = (den[..., 0] > 0.15) & falta
-        out[ok] = (num / np.maximum(den, 1e-6))[ok]
-        falta &= ~ok
-    out = np.stack([ndi.gaussian_filter(out[..., k], 0.6) for k in range(3)], -1)
-    # relva um pouco mais verde e viva, como na maqueta de museu; o resto quase como está
-    verde = np.clip((out[..., 1] - (out[..., 0] + out[..., 2]) / 2) * 8, 0, 1)[..., None]
-    out = out * (1 - 0.25 * verde) + (out * np.array([0.92, 1.08, 0.86])) * 0.25 * verde
-    cinza = out.mean(-1, keepdims=True)
-    out = cinza + (out - cinza) * 1.3  # um pouco mais de cor: a ortoimagem do LiDAR é desmaiada
-    return np.clip(out * 0.94, 0, 1)
-
-
 def construir_terreno():
     nx, ny = len(LXS), len(LYS)
     X, Y = np.meshgrid(LXS, LYS)
@@ -817,45 +795,29 @@ def construir_terreno():
         BORDA[tid] = borda
     ZTER[:] = [Z]
 
-    dentro_ = shapely.contains_xy(CONTORNO, X + LPASSO / 2, Y + LPASSO / 2)[:-1, :-1] & ~BURACO[:-1, :-1]
-    usados = np.zeros(X.shape, bool)
-    usados[:-1, :-1] |= dentro_
-    usados[1:, :-1] |= dentro_
-    usados[:-1, 1:] |= dentro_
-    usados[1:, 1:] |= dentro_
-    idx = -np.ones(X.shape, int)
-    idx[usados] = np.arange(usados.sum())
-    V = np.stack([X[usados], Y[usados], Z[usados]], 1)
-    I, J = np.nonzero(dentro_)
-    Fq = np.stack([idx[I, J], idx[I, J + 1], idx[I + 1, J + 1], idx[I + 1, J]], 1)
-    ob = malha_rapida("Terreno", V, Fq, "terreno", GRUPOS["Terreno"], "terreno")
-    print("  terreno bruto:", len(V), "vértices", len(Fq), "quadriláteros")
-    # simplificação (colapso de arestas por erro quadrático): fica com c. 300 mil triângulos
-    bpy.context.view_layer.objects.active = ob
-    mod = ob.modifiers.new("dec", "DECIMATE")
-    mod.decimate_type = "COLLAPSE"
-    mod.ratio = min(1.0, 300000 / (2 * len(Fq)))
-    mod.use_collapse_triangulate = True
-    dg = bpy.context.evaluated_depsgraph_get()
-    me2 = bpy.data.meshes.new_from_object(ob.evaluated_get(dg))
-    ob.modifiers.clear()
-    ob.data = me2
-    me2.materials.clear()
-    me2.materials.append(MATS["terreno"])
-    me2.shade_smooth()
-    # UV em planta sobre a textura do chão (a ortoimagem cobre a grelha toda)
-    me2.uv_layers.new(name="UVMap")
-    co = np.empty(len(me2.vertices) * 3)
-    me2.vertices.foreach_get("co", co)
-    co = co.reshape(-1, 3)
-    vi = np.empty(len(me2.loops), int)
-    me2.loops.foreach_get("vertex_index", vi)
-    u = (co[vi, 0] - LXS[0]) / (LXS[-1] - LXS[0])
-    v = (co[vi, 1] - LYS[0]) / (LYS[-1] - LYS[0])
-    me2.uv_layers.active.data.foreach_set("uv", np.stack([u, v], 1).ravel().astype(np.float32))
-    MEDIDAS["terreno"] = {"vertices": int(len(me2.vertices)), "triangulos": int(len(me2.polygons)),
+    # O chão já não é a ortofoto drapeada como textura (método "metro a metro", 25 nov. 2026): cada classe (asfalto,
+    # calçada, saibro, relva, erva, mato, rocha) é um objeto com material nítido, a partir dos polígonos de
+    # dados/chao.json (chao.py: cor do LiDAR + classes + correções). Para 31 ha a malha é adaptativa (uma só
+    # triangulação restrita: pontos a 8 m no plano e a 0,5 m nas escarpas e nos taludes, fronteiras exatas).
+    from rasterio import features
+    from rasterio.transform import Affine
+    bur = BURACO[:-1, :-1]
+    buracos = shapely.union_all([shapely.geometry.shape(g) for g, v in features.shapes(
+        bur.astype(np.uint8), mask=bur, transform=Affine(LPASSO, 0, LXS[0], 0, LPASSO, LYS[0])) if v == 1]) \
+        if bur.any() else shapely.Polygon()
+    dominio = CONTORNO.difference(buracos)
+    classes = chao.ler(AQUI / "dados" / "chao.json")
+    pecas = chao.malhas_adaptativas(classes, LXS, LYS, Z, dominio)
+    obs = chao_blender.objetos(pecas, pai=GRUPOS["Terreno"], paleta=PALETA_CHAO)
+    for n in ("asfalto", "calcada", "saibro"):
+        if n in obs:
+            obs[n]["elemento"] = "caminhos"
+    MEDIDAS["chao"] = {n: {"area_m2": round(float(classes[n].intersection(dominio).area), 1),
+                           "triangulos": int(len(f))} for n, (_v, f) in pecas.items()}
+    MEDIDAS["terreno"] = {"vertices": int(sum(len(v) for v, _f in pecas.values())),
+                          "triangulos": int(sum(len(f) for _v, f in pecas.values())),
                           "area_ha": round(CONTORNO.area / 1e4, 1)}
-    print("  terreno simplificado:", len(me2.polygons), "triângulos")
+    print("  chão:", MEDIDAS["terreno"]["triangulos"], "triângulos em", len(pecas), "classes")
 
     # base de maqueta de museu (saia e fundo) pelo contorno
     bxy = densificar(CONT_XY, 1.0, True)
@@ -1844,7 +1806,6 @@ material("vidro", (0.20, 0.24, 0.32), 0.25)
 # casas da vila: um só cinzento claro, paredes e telhados, para o destaque ficar nas muralhas, portas e igrejas
 material("cinza_viz", (0.74, 0.74, 0.73), 0.9)
 material("base", (0.33, 0.26, 0.20), 0.95)
-material("terreno", (1, 1, 1), 0.95)
 material("arvore", (1, 1, 1), 0.9, None, vcor=True)
 
 MEDIDAS = {}
@@ -1937,12 +1898,6 @@ MEDIDAS["guaritas"] = len(GUARITAS)
 
 print("terreno…")
 construir_terreno()
-img_t = imagem("chao", textura_terreno()[::-1])  # o Blender guarda a linha 0 em baixo (sul)
-mt = MATS["terreno"]
-ti = mt.node_tree.nodes.new("ShaderNodeTexImage")
-ti.image = img_t
-ti.extension = "EXTEND"
-mt.node_tree.links.new(ti.outputs["Color"], mt.node_tree.nodes["Principled BSDF"].inputs["Base Color"])
 
 PROPRIOS = set()  # plantas do OSM que são modeladas à parte (igrejas, capelas)
 # 6951d651: o OSM desenha como "edifício" o patamar lajeado por cima da Porta da Coroada (ortoimagem); partido

@@ -32,6 +32,12 @@ Primeira maqueta feita assim: Penela 0.8 (ver `pipeline/maquetas/penela/chao.py`
 - O polígono de uma correção pode ser uma função das classes: `chao.pela_classe(zona, "erva", "saibro")` dá a parte não verde de uma zona (a vila fora do parque passa a asfalto, o adro a calçada, com a fronteira da cor); `chao.pela_cor(pasta, zona, ...)` dá os píxeis claros e sem verde de um corredor à volta do traçado do OSM (os carreiros com a forma exata, mesmo com o OSM 3 m fora).
 - A semântica (cubos, lajes, saibro, asfalto) confirma-se no Street View, ponto a ponto, e fica na nota da correção.
 
+Valença 0.7 (`pipeline/maquetas/valenca/chao.py`) trouxe as maquetas grandes e retangulares, que tinham a ortofoto drapeada como textura:
+
+- `chao.grelha(lid)` dá os centros (xs, ys) das células de um `lidar.npz` quadrado (`meio`) ou retangular (`meiox`, `meioy`); `proposta`, `pela_cor` e `aplicar` servem os dois. Nas grelhas retangulares a `proposta` devolve como domínio o retângulo da grelha, e `aplicar` aceita um polígono no lugar do raio do disco.
+- `chao.malhas_adaptativas(classes, xs, ys, Z, dominio)`: para dezenas de hectares, uma só triangulação de Delaunay restrita (`mathutils.geometry.delaunay_2d_cdt`). Os pontos do relevo vêm de uma árvore quaternária (`chao.pontos_quadtree`: blocos de até 8 m enquanto a interpolação dos cantos não se afastar mais de 15 cm do MDT, medido no Z alisado para o ruído não partir os blocos planos), e as fronteiras das classes, do contorno e dos buracos (passagens das portas) são arestas obrigatórias. Cada triângulo fica com a classe do seu centro. Sem fendas e com o número de triângulos contido.
+- `chao.alinhar_osm(linha, chao.mascara_asfalto(pasta))`: em Valença o traçado das estradas do OSM chega a estar 10–20 m ao lado da faixa da ortofoto, e não sempre para o mesmo lado. Cada troço de 40 m procura o deslocamento com mais píxeis de asfalto ao sol (cinzentos, sem verde, não escuros: as sombras das muralhas também são cinzentas) e os deslocamentos alisam-se ao longo da linha. `pela_cor` ganhou `lum_max` e `abrir`.
+
 ### Padrão das maquetas (12 nov. 2026)
 
 - Pedra, telha e rocha dos monumentos com `textura_foto`: `stone_brick_wall_001` para silhares (torres, portas), `old_stone_wall` para alvenaria (cercas, muralhas), `castle_wall_slates` para xisto, `roof_09` para telha, `rock_01` para granito à vista. Fiadas com o tamanho das fotos do monumento (c. 0,3–0,5 m).

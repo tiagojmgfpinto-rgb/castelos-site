@@ -7,9 +7,39 @@
   "altura_max": 17.1
  },
  "guaritas": 37,
+ "chao": {
+  "asfalto": {
+   "area_m2": 7439.2,
+   "triangulos": 8795
+  },
+  "calcada": {
+   "area_m2": 65675.2,
+   "triangulos": 45816
+  },
+  "saibro": {
+   "area_m2": 16396.5,
+   "triangulos": 15746
+  },
+  "rocha": {
+   "area_m2": 8797.8,
+   "triangulos": 26755
+  },
+  "relva": {
+   "area_m2": 82835.7,
+   "triangulos": 171863
+  },
+  "erva": {
+   "area_m2": 96005.3,
+   "triangulos": 118462
+  },
+  "mato": {
+   "area_m2": 30728.9,
+   "triangulos": 40889
+  }
+ },
  "terreno": {
-  "vertices": 152508,
-  "triangulos": 300000,
+  "vertices": 245714,
+  "triangulos": 428326,
   "area_ha": 30.8
  },
  "porta_coroada": {
