@@ -129,11 +129,13 @@ def faixa(pts, largura, pontas="flat"):
 
 def grelha(lid):
     """Centros (xs, ys) das células de um dados/lidar.npz e o passo: ±meio m (grelha quadrada) ou ±meiox × ±meioy
-    (as maquetas retangulares: Valença, Monção, Peniche, Almeida). Linha 0 = sul."""
+    (as maquetas retangulares: Valença, Monção, Peniche, Almeida) ou x0, y0 (Melgaço). Linha 0 = sul."""
     passo = float(lid["passo"])
     ny, nx = lid["mdt"].shape
     if "meiox" in lid.files:
         x0, y0 = -float(lid["meiox"]), -float(lid["meioy"])
+    elif "x0" in lid.files:  # grelha fora do centro (Melgaço): x0, y0 = centro da primeira célula
+        x0, y0 = float(lid["x0"]), float(lid["y0"])
     else:
         x0 = y0 = -float(lid["meio"])
     return x0 + passo * np.arange(nx), y0 + passo * np.arange(ny), passo

@@ -21,6 +21,9 @@ python pipeline/maquetas/melgaco/ortofoto.py
 # 4. estações da cerca e da muralha da vila -> dados/muralhas.json
 python pipeline/maquetas/melgaco/tracar.py
 
+# 4b. classes do chão (metro a metro) -> dados/chao.json
+python pipeline/maquetas/melgaco/chao.py
+
 # 5. maqueta em Blender (módulo bpy) -> public/maquetas/melgaco/melgaco.glb (Draco), capa.jpg e dados/medidas.json;
 #    vistas/ com --vistas
 pip install bpy==5.2.3 numpy scipy shapely rasterio   # Python 3.13
@@ -47,12 +50,12 @@ Os ficheiros de `dados/` estão no repositório. Opções do `construir.py`: `--
 - **Porta de Baixo**: posição e topo (184,4 m, chão de fora a 177,4 m) do LiDAR; o resto pela fotografia de frente, à escala da altura do LiDAR: vão de 2,3 × 3,7 m em arco de volta perfeita, arquivolta exterior de 2,9 × 4,0 m recuada 0,3 m, impostas salientes, cinco mísulas de matacão e passagem coberta de 4,5 m. O chão em frente foi aplanado (o MDT tinha pontos do muro classificados como solo). As fotografias sugerem que a muralha a norte da porta é mais baixa do que o bloco da porta; o LiDAR dá c. 184,5 m aos dois e ficou o LiDAR.
 - **Porta da Rua do Carvalho**: só vem do OSM; o arco (2,6 × 3,4 m) é estimativa.
 - **Pedra** (desde 12 nov. 2026): texturas fotográficas do kit (`kit/fotos.py`, fotos CC0 da Poly Haven), recoloridas com o tom medido nas fotografias de Melgaço: silhares rústicos (`stone_brick_wall_001`) na torre, cinzento-dourado claro, e na Porta de Baixo, mais escura e manchada; alvenaria irregular (`old_stone_wall`) na cerca e na muralha, cinzenta e com pintas de líquen; telha (`roof_09`) e afloramentos de granito (`rock_01`). Cada imagem cobre 4 m de parede, para as fiadas terem c. 0,4–0,5 m como nas fotos. Créditos em `dados/medidas.json` (`texturas_foto`) e `pipeline/kit/fotos/fontes.json`.
-- **Chão**: relvado e afloramentos de granito no pátio pelo relevo do MDT; ruas do OSM em calçada; verdes do ortofotomapa.
+- **Chão** (0.5, 25 nov. 2026, método "metro a metro"): já não é a grelha de 50 cm com o material escolhido face a face (saía aos quadrados). `chao.py` grava `dados/chao.json` com polígonos de classe: a proposta automática do kit (relva, erva, mato debaixo das copas, saibro, rocha) pela cor do ortofotomapa e pelo LiDAR, e as correções à mão, cada uma com a sua nota: pátio relvado com os afloramentos de granito onde o MDT sobressai do relevo à volta, carreiro de lajes e pátio da barbacã, ruas do OSM em calçada de granito, chão sem verde até 6 m das casas (OSM e classe 6 do LiDAR) em calçada, o quintal murado a sul da Rua Direita em arvoredo, a rua da Porta de Baixo em calçada. O `construir.py` faz uma só malha adaptativa (`kit/chao.malhas_adaptativas`) com um objeto `Chao_<classe>` por classe e material nítido (`kit/chao_blender`).
 - **Envolvente**: plantas do OSM e, onde faltam, manchas de edifícios do LiDAR (classe 6); cornija e cume do MDS; telhados por recuo da planta, ou planos quando a planta é irregular. Árvores nas posições do LiDAR, sem as que caíam sobre o monumento.
 
 ## Visor
 
-O visor procura o grupo `Muralhas_grupo` para enquadrar e o objeto `Terreno` para a caixa do chão; os elementos têm `userData.elemento`. As âncoras das placas e os pontos de vista são calculados no `construir.py` e gravados em `dados/medidas.json`; o `visor.py` lê-os.
+O visor procura o grupo `Muralhas_grupo` para enquadrar e os objetos `Chao_*` (desde a 0.5 não há objeto `Terreno`; a caixa do chão é a da cena, que a base recorta); os elementos têm `userData.elemento`. As âncoras das placas e os pontos de vista são calculados no `construir.py` e gravados em `dados/medidas.json`; o `visor.py` lê-os.
 
 ## Vistas de verificação
 
