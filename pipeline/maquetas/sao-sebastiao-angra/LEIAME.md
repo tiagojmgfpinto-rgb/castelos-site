@@ -10,6 +10,9 @@ com o forte, a bateria baixa, a costa e o mar numa base redonda (centro x 0, y �
 python3 pipeline/maquetas/sao-sebastiao-angra/lidar.py 2024_TER_ANG_24-4-2-5_CCL_RGBI.laz …_01_MDE.tif
 # 2. magistral do forte e da bateria baixa -> dados/planta.json
 python3 pipeline/maquetas/sao-sebastiao-angra/tracar.py
+# 2b. classes do chão (traços à mão em dados/chao_tracos.json + LiDAR + ortofoto) -> dados/chao_classes.png, chao_tinta.png
+#     (construir.py faz a textura com textura_chao.py: materiais nítidos, nenhum píxel de fotografia)
+python3 pipeline/maquetas/sao-sebastiao-angra/chao.py
 # 3. maqueta (bpy) -> public/maquetas/sao-sebastiao-angra/sao-sebastiao-angra.glb (Draco + WebP), capa.jpg,
 #    dados/medidas.json; vistas/ com --vistas; --diag imprime os perfis medidos
 python3 pipeline/maquetas/sao-sebastiao-angra/construir.py --vistas
@@ -42,9 +45,18 @@ O JSON do visor (`src/data/maquetas/sao-sebastiao-angra.json`) é escrito à mã
 - **Edifícios (0.2)**: a Pousada e a casa da guarda saem do MDS de 25 cm (mediana 5×5): células mais de 1,8 m
   acima do MDT, partidas em patamares de 0,6 m, cada patamar um polígono (rasterio `shapes`, simplificado a 0,3 m)
   extrudido do solo à cota mediana, com janelas a passo de 2,6 m nas faces livres. A superfície fica com o MDT por baixo.
+- **Pousada, ala poente e bloco noroeste (0.5)**: a segmentação automática dava contornos tortos, por isso estão
+  desenhados à mão (`PO_ALAS`, `PO_NORTE`) no referencial da ala poente, rodado 8,7° (u para nascente, v para norte),
+  com a grelha de 1 m do MDS lida nesse referencial. Ala poente a 31,6 m (pátio a 25,3 m), ala estreita a 31,2 m a
+  continuá-la para norte (u −37,5..−34), cobertura grande a 32,8 m encostada ao adarve norte, corpo a 33,4 m
+  (u −30,5..−17,5, v 16,5..22,5) com faixa a 32,8 m a sul, caixa de escadas a 33,8 m e o terraço claro do restaurante
+  a 30,2 m com o rebordo curvo para sudeste. A ortofoto confirma as formas (platibandas brancas), mas tem deslocamento
+  de relevo de 1–2 m para norte, por isso as posições vêm do LiDAR. A segmentação fica só para o resto da Pousada.
 - **Casa do Governador (0.2)**: referencial u (azimute 37°) / v a partir de (18,6; −6,9). Corpo A u 0–23,6, v 0–6,1;
   corpo B u 0–13, v 6,1–11,85; telhados de quatro águas, beirado 32,1 m, cume 33,45 m; pátio u 13–17 (chão a 26,8 m)
-  com muro e portão em arco; ala baixa C u 17–23,4, v 6,1–12,4, telhado de uma água a 29,7–30,35 m. Vãos da fachada
+  com muro e portão em arco; ala baixa C u 17–23,4, v 6,1–12,4. Revisto na 0.5 pela grelha de 1 m do MDS em u/v: C é
+  terraço plano a 30,0 m (±0,1 m), entre B e C há uma faixa coberta plana a 29,4 m (u 13–17, v 6,1–8,7) e o cume de A
+  corre até ao topo nordeste, onde encosta ao prédio de 34–35 m (empena, sem tacaniça). Vãos da fachada
   noroeste de B pela fotografia «7181537601» de Vítor Oliveira: três janelas no andar com aventais recortados, duas
   portas por baixo das das pontas; topo sudoeste com três janelas por piso.
 - **Ala norte da Pousada (0.2)**: bloco de cobertura plana a 34,7 m entre a casa da guarda e a Casa (planta PN em
@@ -65,6 +77,26 @@ O JSON do visor (`src/data/maquetas/sao-sebastiao-angra.json`) é escrito à mã
   o parapeito baixa ao piso dentro do corpo e os merlões a menos de 3,2 m não passam do parapeito de 3–7 m.
 - **Estrada e telhados (0.3)**: a relva exige saturação (o asfalto cinzento-esverdeado deixou de passar por relva);
   asfalto e coberturas planas com a cor da ortofoto em linear; capeamento branco nas platibandas; telha mais castanha.
+- **Chão (0.5, refeito)**: a primeira 0.5 drapeava a ortofoto como textura do chão e ficava uma fotografia esborratada
+  (rejeitada pelo Tiago). Agora a ortofoto só diz o que é cada sítio. `chao.py` compensa as sombras do voo (sol a 271°,
+  44°) e tira os carros. Depois faz uma segmentação semeada (watershed sobre o gradiente Lab da ortofoto e do SUP),
+  para cada fronteira encostar à aresta real. As sementes são:
+  - traços à mão por zona (`dados/chao_tracos.json`), mais faixas de largura constante para passeios e caminhos;
+  - classes do LiDAR: 11 = estrada (só o meio; dentro do forte é o caminho de terra batida), 6 com mais de 3 m =
+    edifício, 4 e 5 = mato;
+  - relva muito verde e mar.
+  As fronteiras são alisadas a 0,75 m. As marcas brancas (passadeiras, linhas) são retângulos ajustados às manchas
+  finas dentro do asfalto, e as manchas redondas saem. `textura_chao.py` pinta cada classe com o seu material, repetido
+  à escala real: asfalto, asfalto gasto do parque, passeio, lajeado, relva com o tom seco/verde da ortofoto a 3 m, mato,
+  terra batida castanho-arroxeada, betão do estaleiro, rocha, tinta. A textura tem 4096 px (5,7 cm), com manchas largas
+  que não se repetem. Os lancis estão em volume (`construir_lancis`, c. 464 m, 15 × 13 cm, alisados a 1,2 m) onde o
+  asfalto encosta a passeio, relva ou terra. A rocha continua a ser a escarpa a pique, as faces a mais de c. 63° e o que
+  fica à cota do mar.
+- **Muros de fora (0.5)**: muro de suporte da estrada de poente, muro do parque de poente, muro alto do estaleiro e
+  muros em degraus do parque baixo a nordeste, traçados à mão na ortofoto (com um painel da altura sobre o chão local) e
+  assentes no LiDAR: o traço encosta à faixa branca do capeamento (±6 m) e depois à crista (maior salto entre o ponto e
+  o chão a 0,75 m de cada lado); topo e pé medidos no MDS de 25 cm; o terreno do lado baixo fica à cota do pé até 0,9 m
+  da face (as células do terreno no corredor saem e o muro leva o seu chão). Nenhum tem parapeito acima do lado alto. Faces em basalto: hipótese (não se veem de cima).
 - **Chão (0.2)**: classes pela cor dos pontos (relva por verde relativo, também na sombra; tijoleira; calçada; saibro),
   mediana de 5×5 células; no recinto (abaixo de 28 m) o saibro passa a bagacina vermelha.
 
