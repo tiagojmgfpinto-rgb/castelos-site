@@ -15,6 +15,19 @@ from kit.geometria import unit, area, densificar  # noqa: E402
 
 - `fotos.py` (novembro de 2026): texturas fotográficas. `textura_foto(id, metros=..., cor=...)` devolve o mesmo par (cor, relevo) que `textura_cantaria`, a partir de fotos CC0 da Poly Haven guardadas em `fotos/` (`obter_fotos.py` descarrega-as; autores, licença e tamanho real em `fotos/fontes.json`). A foto dá o desenho real das pedras e juntas; a cor média é a do monumento, medida nas fotografias dele. `metros` tem de ser o que a imagem cobre de facto na maqueta (UV do `uv_mundo` × `KHR_texture_transform`): com `uv=2.0` e `escala=0.5` são 4 m. `fontes_fotos()` dá os créditos das fotos usadas, para gravar em `medidas.json` (`texturas_foto`).
 
+- `chao.py`, `chao_blender.py`, `quadricula.py` e `planta.py` (novembro de 2026, método "metro a metro"): o chão por classes. Ver a secção abaixo.
+
+### Chão por classes, "metro a metro" (25 nov. 2026)
+
+O chão deixa de ser uma malha pintada ponto a ponto com a cor da ortofoto (manchas, sombras pintadas, estradas que viravam rocha). O Tiago pediu, a 24 nov. 2026, que se veja "metro a metro" o que é muro, estrada, relva e telhado, e que as maquetas se façam com scripts Python no Blender, à escala 1:1, a partir de plantas, ortofotos e fotografias. A ortofoto e as fotografias dizem **o que** é cada sítio; nunca entram como textura.
+
+1. **Classes** (`chao.py` de cada maqueta → `dados/chao.json`): polígonos em metros da cena por classe (`asfalto`, `calcada`, `lajeado`, `escadas`, `saibro`, `terra`, `rocha`, `relva`, `erva`, `mato`, `agua`). Uma proposta automática (cor da ortofoto + classes do LiDAR + declive, com filtro de maioria e passada a polígonos alisados por `kit.chao.raster_para_poligonos`) só decide o que é natural (erva, relva, mato, rocha, saibro); asfalto, calçada e lajes **só por correções traçadas à mão** (lista `CORRECOES`, cada uma com a nota do que se viu e onde). `kit.chao.resolver` torna os polígonos disjuntos pela ordem de `PRIORIDADE`, `kit.chao.preencher` tapa as frestas.
+2. **Ver quadrícula a quadrícula**: `python pipeline/kit/quadricula.py MAQUETA --classes --planta PLANTA.jpg:MEIO` grava folhas de 40 m com a grelha da cena (ortofoto | contornos das classes | planta da maqueta). A planta faz-se com `python pipeline/kit/planta.py FICHEIRO.blend cx cy lado px saida.jpg` (Cycles, câmara ORTHO) a partir do `.blend` que o `construir.py --blend` grava. Atenção: a ortofoto não é verdadeira-orto, os telhados aparecem deslocados uns metros na direção oposta ao avião.
+3. **Malhas** (`kit.chao.malhas(classes, xs, Z, raio, recorte)`): uma malha por classe sobre a grelha Z do terreno. Células inteiras ficam dois triângulos; as que uma fronteira corta são recortadas e trianguladas (Delaunay restrito), por isso a fronteira é exata. O Z interpola-se bilinearmente na grelha, que é linear nas arestas das células: não há fendas entre classes. `kit.chao.aplanar` alisa o Z debaixo das classes pavimentadas (uma calçada não ondula com o ruído do MDT). `recorte` tira o que tem objeto próprio (falésias, chão de uma porta).
+4. **Objetos** (`kit.chao_blender.objetos(pecas, pai, paleta)`): `Chao_<classe>` com material nítido e periódico (sem costuras): cubos de calçada, lajes, grão de asfalto, saibro, terra, relva, erva e mato, multiplicados por uma variação larga e suave (±5 %) por vértice. A `paleta` de cada maqueta dá a cor média medida nas fotografias do sítio. 1024 px só para cubos e lajes; o resto 512 px.
+
+Primeira maqueta feita assim: Penela 0.8 (ver `pipeline/maquetas/penela/chao.py`).
+
 ### Padrão das maquetas (12 nov. 2026)
 
 - Pedra, telha e rocha dos monumentos com `textura_foto`: `stone_brick_wall_001` para silhares (torres, portas), `old_stone_wall` para alvenaria (cercas, muralhas), `castle_wall_slates` para xisto, `roof_09` para telha, `rock_01` para granito à vista. Fiadas com o tamanho das fotos do monumento (c. 0,3–0,5 m).
