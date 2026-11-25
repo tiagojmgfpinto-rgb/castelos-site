@@ -38,6 +38,12 @@ Valença 0.7 (`pipeline/maquetas/valenca/chao.py`) trouxe as maquetas grandes e 
 - `chao.malhas_adaptativas(classes, xs, ys, Z, dominio)`: para dezenas de hectares, uma só triangulação de Delaunay restrita (`mathutils.geometry.delaunay_2d_cdt`). Os pontos do relevo vêm de uma árvore quaternária (`chao.pontos_quadtree`: blocos de até 8 m enquanto a interpolação dos cantos não se afastar mais de 15 cm do MDT, medido no Z alisado para o ruído não partir os blocos planos), e as fronteiras das classes, do contorno e dos buracos (passagens das portas) são arestas obrigatórias. Cada triângulo fica com a classe do seu centro. Sem fendas e com o número de triângulos contido.
 - `chao.alinhar_osm(linha, chao.mascara_asfalto(pasta))`: em Valença o traçado das estradas do OSM chega a estar 10–20 m ao lado da faixa da ortofoto, e não sempre para o mesmo lado. Cada troço de 40 m procura o deslocamento com mais píxeis de asfalto ao sol (cinzentos, sem verde, não escuros: as sombras das muralhas também são cinzentas) e os deslocamentos alisam-se ao longo da linha. `pela_cor` ganhou `lum_max` e `abrir`.
 
+Peniche 0.8 (`pipeline/maquetas/peniche/chao.py`) trouxe o chão desenhado em cima de outras peças:
+
+- Quando a nuvem de pontos dá a fortaleza toda como edifício (classe 6), a `proposta` do kit enche-a com a classe vizinha e não serve: o `chao.py` de Peniche faz a sua proposta a 0,5 m com as mesmas peças do kit (`grelha`, `_orto`, `maioria`, `raster_para_poligonos`, `aplicar`), lendo a cor e a textura (desvio local da luminância: a rocha é áspera, as lajes e o saibro lisos) só onde fazem sentido.
+- `chao_blender.separar_faces(ob, indices, classes, paleta=...)`: tira de um objeto as faces com esses materiais (o topo das plataformas e dos terraplenos, os pátios) e fá-las objetos do chão por classes (`Chao_topo_<classe>`), com a classe do centro de cada face. `objetos` ganhou `prefixo`.
+- Nas arribas, as faces a pique saem para um objeto à parte com textura fotográfica e UV de caixa; a UV de cima do chão esticava-se na vertical.
+
 ### Padrão das maquetas (12 nov. 2026)
 
 - Pedra, telha e rocha dos monumentos com `textura_foto`: `stone_brick_wall_001` para silhares (torres, portas), `old_stone_wall` para alvenaria (cercas, muralhas), `castle_wall_slates` para xisto, `roof_09` para telha, `rock_01` para granito à vista. Fiadas com o tamanho das fotos do monumento (c. 0,3–0,5 m).

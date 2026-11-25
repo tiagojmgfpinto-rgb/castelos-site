@@ -137,8 +137,8 @@ def materiais(paleta=None, n=1024):
     return pal
 
 
-def objetos(pecas, pai=None, elemento="terreno", semente=3, paleta=None):
-    """Um objeto por classe ("Chao_<classe>"), com UV do mundo (a textura cobre `metros` m) e cor por vértice
+def objetos(pecas, pai=None, elemento="terreno", semente=3, paleta=None, prefixo="Chao"):
+    """Um objeto por classe ("<prefixo>_<classe>"), com UV do mundo (a textura cobre `metros` m) e cor por vértice
     com variação larga e suave. Devolve {classe: objeto}."""
     pal = materiais(paleta)
     out = {}
@@ -165,10 +165,70 @@ def objetos(pecas, pai=None, elemento="terreno", semente=3, paleta=None):
                             .astype(np.float32).ravel())
         me.color_attributes.active_color = ca
         me.shade_smooth()
-        ob = bpy.data.objects.new(f"Chao_{nome}", me)
+        ob = bpy.data.objects.new(f"{prefixo}_{nome}", me)
         bpy.context.scene.collection.objects.link(ob)
         if elemento:
             ob["elemento"] = elemento
         ob.parent = pai
         out[nome] = ob
     return out
+
+
+def separar_faces(ob, indices, classes, paleta=None, pai=None, elemento=None, prefixo="Chao_topo", omissao="calcada"):
+    """Tira de `ob` as faces com material_index em `indices` (o chão desenhado em cima de outras peças: o topo das
+    plataformas e dos terraplenos, os pátios) e fá-las objetos do chão por classes, com a classe de dados/chao.json
+    no centro de cada face (sem classe: a mais próxima, ou `omissao`). Devolve {classe: objeto}."""
+    import bmesh
+    import shapely
+    me = ob.data
+    nv = len(me.vertices)
+    co = np.empty(nv * 3)
+    me.vertices.foreach_get("co", co)
+    co = co.reshape(-1, 3)
+    npol = len(me.polygons)
+    mi = np.empty(npol, int)
+    me.polygons.foreach_get("material_index", mi)
+    ls = np.empty(npol, int)
+    me.polygons.foreach_get("loop_start", ls)
+    lt = np.empty(npol, int)
+    me.polygons.foreach_get("loop_total", lt)
+    lv = np.empty(len(me.loops), int)
+    me.loops.foreach_get("vertex_index", lv)
+    sel = np.nonzero(np.isin(mi, list(indices)))[0]
+    if not len(sel):
+        return {}
+    tris = []
+    for i in sel:
+        v = lv[ls[i]:ls[i] + lt[i]]
+        tris += [(v[0], v[k], v[k + 1]) for k in range(1, len(v) - 1)]
+    tris = np.array(tris)
+    cen = co[tris].mean(1)
+    nomes = [n for n in classes if not classes[n].is_empty]
+    lab = np.full(len(tris), -1)
+    for k, n in enumerate(nomes):
+        lab[(lab < 0) & shapely.contains_xy(classes[n], cen[:, 0], cen[:, 1])] = k
+    falta = lab < 0
+    if falta.any() and (~falta).any():
+        from scipy.spatial import cKDTree
+        _, j = cKDTree(cen[~falta, :2]).query(cen[falta, :2])
+        lab[falta] = lab[~falta][j]
+    elif falta.any():
+        nomes.append(omissao)
+        lab[:] = len(nomes) - 1
+    pecas = {}
+    for k, n in enumerate(nomes):
+        t = tris[lab == k]
+        if not len(t):
+            continue
+        u, inv = np.unique(t.ravel(), return_inverse=True)
+        pecas[n] = (co[u], inv.reshape(-1, 3))
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    bm.faces.ensure_lookup_table()
+    alvo = set(indices)
+    bmesh.ops.delete(bm, geom=[f for f in bm.faces if f.material_index in alvo], context="FACES")
+    bm.to_mesh(me)
+    bm.free()
+    me.update()
+    return objetos(pecas, pai=pai if pai is not None else ob.parent, elemento=elemento or ob.get("elemento"),
+                   paleta=paleta, prefixo=prefixo)
