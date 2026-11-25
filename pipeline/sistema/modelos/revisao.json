@@ -1,0 +1,16 @@
+{
+ "nota": "Modelo da revisão (revisor). Copiar para refs/<castelo>/volta<N>/revisao.json. Avaliar TODAS as condições congeladas, e só essas. Depois: python pipeline/sistema/nota.py calcular refs/<castelo>/condicoes.json refs/<castelo>/volta<N>/revisao.json (acrescenta 'resultado').",
+ "volta": 1,
+ "revisor": "revisor (sonnet), <data>",
+ "condicoes": [
+  { "id": "G01", "cumpre": true, "prova": "volta1/completa/laminas/V01.jpg", "nota": "contorno em cima da foto" },
+  { "id": "G02", "cumpre": false, "prova": "volta1/completa/laminas/V02_perto1.jpg", "nota": "folga sob o arco 2,9 m; a foto dá ~3,4 m" }
+ ],
+ "vistas_falhadas": [],
+ "regressoes": [],
+ "tecnico_aprovado": true,
+ "lista": [
+  { "n": 1, "condicao": "G02", "esta": "arco a 2,9 m, aduelas a direito", "devia": "folga ~3,4 m, arco quebrado com 13 aduelas", "correcao": "subir a imposta 0,5 m; arquitetura.arco_quebrado com 13 aduelas" }
+ ],
+ "observacoes": []
+}

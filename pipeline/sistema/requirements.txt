@@ -1,0 +1,8 @@
+# Ferramentas do sistema das maquetas (volta.py, tecnico.py, laminas.py, diferencas.py, nota.py).
+# O construir.py de cada maqueta precisa ainda do bpy: ver pipeline/kit/LEIAME.md.
+numpy
+scipy
+pillow
+trimesh
+networkx
+embreex

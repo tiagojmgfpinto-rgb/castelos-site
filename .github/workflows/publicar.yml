@@ -54,6 +54,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      - name: Regra da nota das maquetas
+        run: python pipeline/sistema/nota.py --teste
       - name: Compilar o site
         run: npm run build
         env:

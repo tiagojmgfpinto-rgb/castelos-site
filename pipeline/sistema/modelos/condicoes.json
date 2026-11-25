@@ -1,0 +1,54 @@
+{
+ "nota": "Modelo das condições (revisor). Copiar para refs/<castelo>/condicoes.json e preencher. Eixos do GLB: x este, y altitude, z sul (−z é norte), metros. Caixas em píxeis [x0, y0, x1, y1]. Fotos relativas a refs/<castelo>/. Depois de aprovado: python pipeline/sistema/nota.py congelar refs/<castelo>/condicoes.json. Ver encargos/revisor.md.",
+ "castelo": "exemplo",
+ "versao_alvo": "1.0",
+ "vistas": [
+  {
+   "id": "V01",
+   "nome": "Aérea de sudoeste (drone)",
+   "foto": "drone/f012.jpg",
+   "fonte": "YouTube, 'Castelo de … drone 4K', autor …, 1:12",
+   "camera": { "pos": [-180, 140, 150], "alvo": [0, 40, 0], "fov": 34, "w": 1200, "h": 675 },
+   "recorte": null,
+   "zooms": [[480, 200, 720, 360]],
+   "ocultar": []
+  },
+  {
+   "id": "V02",
+   "nome": "Porta da Vila, de fora",
+   "foto": "fotos/04-porta-vila.jpg",
+   "fonte": "Wikimedia Commons, autor …, CC BY-SA 4.0",
+   "camera": { "pos": [-12, 38, 30], "alvo": [-8, 41, 10], "fov": 50, "w": 1000, "h": 750 },
+   "zooms": []
+  }
+ ],
+ "materiais": [
+  {
+   "id": "M01",
+   "nome": "Silharia de granito da torre de menagem",
+   "cor_alvo": "#a59d8f",
+   "medido_em": [
+    { "foto": "fotos/04-porta-vila.jpg", "caixa": [410, 220, 470, 260] },
+    { "foto": "fotos/07-torre-sul.jpg", "caixa": [300, 180, 360, 230] }
+   ],
+   "peca_m": [0.45, 0.30],
+   "argamassa": "clara, 1 cm, rente",
+   "amostra_maqueta": { "vista": "V02", "caixa": [410, 220, 470, 260] },
+   "tolerancia_dE": 8
+  }
+ ],
+ "planta": {
+  "fonte": "ortofoto DGT 2025 + OSM; sem planta cotada publicada",
+  "medidas": [ { "o_que": "comprimento do pano sul, entre os eixos das torres", "valor_m": 42.0, "tolerancia_m": 1.0 } ]
+ },
+ "alturas": [
+  { "o_que": "topo dos merlões da torre de menagem (cota)", "valor_m": 313.0, "tolerancia_m": 0.5, "fonte": "MDS 50 cm 2024" }
+ ],
+ "condicoes": [
+  { "id": "G01", "tipo": "G", "fase": "forma", "texto": "Implantação: cerca com quatro torres nas posições da ortofoto (±1 m)", "vistas": ["V01"], "como_verificar": "contorno na lámina V01 e vista de topo contra a ortofoto" },
+  { "id": "G02", "tipo": "G", "fase": "forma", "texto": "Porta da Vila aberta, arco quebrado, folga sob o arco ~3,4 m, muralha não caída por cima", "vistas": ["V02"], "como_verificar": "lámina V02 e recorte de perto" },
+  { "id": "G03", "tipo": "G", "fase": "acabamento", "texto": "Cor da silharia M01 dentro da tolerância (ΔE2000 ≤ 8) na vitrina", "vistas": ["V02"], "como_verificar": "laminas/cores.json" },
+  { "id": "G04", "tipo": "G", "fase": "acabamento", "texto": "Casas da envolvente a cinzento neutro, volumes simples; nenhuma árvore a atravessar o monumento", "vistas": ["V01"], "como_verificar": "lámina V01 e tecnico.json" },
+  { "id": "L01", "tipo": "L", "fase": "acabamento", "texto": "Torre de menagem com 7 merlões na face sul, com capa", "vistas": ["V01"], "como_verificar": "recorte de perto de V01" }
+ ]
+}
