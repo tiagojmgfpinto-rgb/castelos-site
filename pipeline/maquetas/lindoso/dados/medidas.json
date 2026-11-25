@@ -814,40 +814,40 @@
  "chao": {
   "asfalto": {
    "area_m2": 252.3,
-   "triangulos": 188
+   "triangulos": 183
   },
   "calcada": {
-   "area_m2": 5842.4,
-   "triangulos": 9068
+   "area_m2": 5901.7,
+   "triangulos": 9047
   },
   "saibro": {
-   "area_m2": 97.2,
-   "triangulos": 155
+   "area_m2": 110.1,
+   "triangulos": 192
   },
   "terra": {
    "area_m2": 195.7,
-   "triangulos": 391
+   "triangulos": 392
   },
   "rocha": {
-   "area_m2": 2748.1,
-   "triangulos": 9969
+   "area_m2": 2923.2,
+   "triangulos": 10240
   },
   "relva": {
-   "area_m2": 4946.0,
-   "triangulos": 7340
+   "area_m2": 4993.5,
+   "triangulos": 7855
   },
   "erva": {
-   "area_m2": 23108.4,
-   "triangulos": 35074
+   "area_m2": 22862.3,
+   "triangulos": 35161
   },
   "mato": {
-   "area_m2": 6370.2,
-   "triangulos": 17477
+   "area_m2": 6321.3,
+   "triangulos": 17716
   }
  },
  "terreno": {
   "plataformas_m2": 102,
-  "triangulos": 79662
+  "triangulos": 80786
  },
  "casas": {
   "total": 57,

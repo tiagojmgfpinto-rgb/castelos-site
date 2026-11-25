@@ -66,7 +66,10 @@ def afloramentos(cl):
     copa = (lid["classe"] >= 3) & (lid["classe"] <= 5) & (lid["mds"] - lid["mdt"] > 120)
     m = ((rel > 0.22) | (cinza & (rel > 0.04))) & ~copa & (lid["classe"] != 6)
     m = ndi.binary_opening(ndi.binary_closing(m, iterations=1), iterations=1)
-    g = chao.raster_para_poligonos(np.where(m, 0, -1), xs[0], ys[0], passo, ["rocha"], area_min=3.0, alisar=0.5)
+    # alisada (gaussiano de 0,5 m) e com os cantos redondos: os penedos não têm a escadinha da grelha de 0,5 m
+    m = ndi.gaussian_filter(m.astype(float), 1.0) > 0.5
+    g = chao.raster_para_poligonos(np.where(m, 0, -1), xs[0], ys[0], passo, ["rocha"], area_min=3.0, alisar=0.6,
+                                   simplificar=0.15, junta="round")
     return g.get("rocha", shapely.Polygon()).difference(shapely.union_all(CASAS).buffer(1.0))
 
 
@@ -126,7 +129,8 @@ CORRECOES = [
 
 
 def main():
-    cl, _ = chao.proposta(AQUI, claro=(0.62, 0.10), casa_folga=2.0, sombra=0.25, area_min=8.0)
+    cl, _ = chao.proposta(AQUI, claro=(0.62, 0.10), casa_folga=2.0, sombra=0.25, area_min=8.0, simplificar=0.2,
+                          junta="round")
     cl = chao.aplicar(cl, CORRECOES, CAIXA)
     chao.gravar(AQUI / "dados" / "chao.json", cl, {"fonte": "cor do ortofotomapa DGT 2021 + classes e MDT do LiDAR "
                                                             "2025 + correções à mão",

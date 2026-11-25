@@ -67,11 +67,13 @@ def preencher(classes, dentro, omissao="terra"):
     return {n: _so_poligonos(g) for n, g in out.items()}
 
 
-def raster_para_poligonos(rot, x0, y0, passo, nomes, area_min=2.0, simplificar=0.3, alisar=0.4):
+def raster_para_poligonos(rot, x0, y0, passo, nomes, area_min=2.0, simplificar=0.3, alisar=0.4, junta="mitre"):
     """Passa um raster de rótulos (linha 0 = sul, como as grelhas do LiDAR) a polígonos por classe.
 
     `rot[r, c]` é o índice em `nomes` (ou -1); a célula (r, c) cobre x0 + c·passo ± passo/2. Os degraus do raster
-    alisam-se com um buffer de ida e volta e uma simplificação de `simplificar` m."""
+    alisam-se com um buffer de ida e volta e uma simplificação de `simplificar` m. junta="mitre" guarda os cantos
+    retos (e os degraus de 0,5 m nas diagonais); "round" arredonda-os, para manchas naturais (lajes de granito, erva)
+    sem a escadinha da grelha."""
     from rasterio import features
     from rasterio.transform import Affine
     tr = Affine(passo, 0, x0 - passo / 2, 0, passo, y0 - passo / 2)
@@ -83,7 +85,7 @@ def raster_para_poligonos(rot, x0, y0, passo, nomes, area_min=2.0, simplificar=0
         ps = [shapely.geometry.shape(g) for g, v in features.shapes(m, mask=m.astype(bool), transform=tr) if v == 1]
         g = shapely.union_all(ps)
         if alisar:
-            g = g.buffer(alisar, join_style="mitre").buffer(-2 * alisar, join_style="mitre").buffer(alisar, join_style="mitre")
+            g = g.buffer(alisar, join_style=junta).buffer(-2 * alisar, join_style=junta).buffer(alisar, join_style=junta)
         g = g.simplify(simplificar)
         g = _so_poligonos(g)
         g = shapely.MultiPolygon([p for p in g.geoms if p.area >= area_min]) if not g.is_empty else g
@@ -152,7 +154,7 @@ NATURAIS = ["asfalto", "calcada", "terra", "relva", "mato", "rocha", "erva", "sa
 
 
 def proposta(pasta, verde_min=0.025, claro=(0.58, 0.09), rocha_decl=48.0, saibro=True, maioria_raio=3,
-             area_min=8.0, simplificar=0.5, alisar=1.0, casa_folga=4.0, sombra=None, copa="mato"):
+             area_min=8.0, simplificar=0.5, alisar=1.0, casa_folga=4.0, sombra=None, copa="mato", junta="mitre"):
     """Proposta automática para o chão natural, a partir de dados/lidar.npz (MDT, MDS e classes a `passo` m, linha
     0 = sul, ±meio m à volta da origem da cena) e de dados/orto.jpg (a mesma área, norte em cima).
 
@@ -200,7 +202,7 @@ def proposta(pasta, verde_min=0.025, claro=(0.58, 0.09), rocha_decl=48.0, saibro
     rot = maioria(rot, len(NATURAIS), raio=1)
     dom = float(lid["meio"]) if "meio" in lid.files else shapely.box(xs[0], ys[0], xs[-1], ys[-1])
     return raster_para_poligonos(rot, xs[0], ys[0], passo, NATURAIS, area_min=area_min, simplificar=simplificar,
-                                 alisar=alisar), dom
+                                 alisar=alisar, junta=junta), dom
 
 
 def aplicar(classes, correcoes, dominio):
