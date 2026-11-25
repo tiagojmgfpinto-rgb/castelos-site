@@ -2,8 +2,8 @@
   "monumento": "valenca",
   "titulo": "Fortaleza de Valença",
   "variante": "estado-atual",
-  "versao": "0.6 provisória",
-  "data": "2026-11-16",
+  "versao": "0.7 provisória",
+  "data": "2026-11-25",
   "origem": {
     "lat": 42.030224,
     "lon": -8.645232,
@@ -15,7 +15,7 @@
       "url": "https://cdd.dgterritorio.gov.pt"
     },
     "orto": {
-      "titulo": "Ortoimagem de 50 cm feita com a cor dos pontos do LiDAR 2025 da DGT (CC BY 4.0). Cor do chão, dos fossos e dos taludes.",
+      "titulo": "Ortoimagem de 50 cm feita com a cor dos pontos do LiDAR 2025 da DGT (CC BY 4.0). Serve só para traçar as fronteiras das classes do chão (erva, relva, mato, saibro, calçada, asfalto); não entra como textura.",
       "url": "https://cdd.dgterritorio.gov.pt"
     },
     "osm": {
@@ -37,7 +37,7 @@
     "As igrejas e capelas têm a pegada (OSM), as cumeeiras e a altura das torres medidas no MDS de 50 cm; as fachadas de Santo Estêvão, da Misericórdia, de Santa Maria dos Anjos e do Bom Jesus seguem fotografias, com medidas de vãos e cantarias aproximadas. A capela do Senhor do Encontro não tem fotografia e a fachada é uma hipótese.",
     "O casario é feito de volumes simples: os quarteirões do OpenStreetMap partidos em casas de c. 7,5 m de frente, com a altura medida no MDS e telhado de quatro águas; as cores das paredes são sorteadas. Não se representam o Paiol do Açougue, os quartéis, a Casa do Governador nem outros edifícios militares como peças próprias.",
     "A estátua de São Teotónio é esquemática (vulto de hábito, capa, mitra e báculo sobre o pedestal); a posição é a do OpenStreetMap.",
-    "O terreno é o MDT simplificado para 300 mil triângulos; junto ao pé das escarpas foi rebaixado ao plano da face, para o pano ficar à vista. As árvores estão nas posições e alturas medidas na nuvem de pontos, com forma esquemática. A maqueta abrange a fortaleza e os fossos, com 30,8 ha; a cidade nova e o rio Minho ficam de fora."
+    "O terreno é o MDT de 50 cm numa malha adaptativa (pontos a 8 m no plano e a 0,5 m nas escarpas e nos taludes); junto ao pé das escarpas foi rebaixado ao plano da face, para o pano ficar à vista. O chão é feito de classes nítidas (erva seca, relva, mato, saibro, calçada nas vilas, asfalto nas estradas de fora) traçadas sobre a ortoimagem e o LiDAR, com materiais próprios: a ortoimagem já não se cola como textura. As fronteiras das vilas foram traçadas à mão e a calçada de granito das ruas não foi confirmada rua a rua. As árvores estão nas posições e alturas medidas na nuvem de pontos, com forma esquemática. A maqueta abrange a fortaleza e os fossos, com 30,8 ha; a cidade nova e o rio Minho ficam de fora."
   ],
   "distancia": 1050,
   "placas": [
@@ -339,8 +339,8 @@
       "grupo": "Envolvente",
       "estado": "estado-atual",
       "confianca": "alta",
-      "descricao": "O monte da fortaleza, com os fossos secos e as esplanadas de terra à volta das muralhas, tirado do modelo digital do terreno.",
-      "medidas": "30,8 ha, MDT de 50 cm simplificado (LiDAR).",
+      "descricao": "O monte da fortaleza, com os fossos secos e as esplanadas de erva à volta das muralhas, tirado do modelo digital do terreno. O chão é feito de classes nítidas: erva seca dourada, relva, mato debaixo das copas, saibro dos terreiros e carreiros, calçada de granito nas ruas das vilas e asfalto nas estradas de fora.",
+      "medidas": "30,8 ha, MDT de 50 cm em malha adaptativa (LiDAR); classes do chão traçadas na ortoimagem e no LiDAR.",
       "fontes": [
         "lidar",
         "orto"
