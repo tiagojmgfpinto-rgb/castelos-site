@@ -20,6 +20,7 @@ from pathlib import Path
 
 import bpy  # noqa: I001 (o bpy tem de vir antes do bmesh)
 import bmesh
+import mathutils
 import numpy as np
 import shapely
 from scipy import ndimage as ndi
@@ -301,29 +302,14 @@ def construir_terreno():
     mapa_i[I, J] = ingreme & perto
     mapa_i = ndi.binary_opening(ndi.binary_closing(mapa_i, np.ones((3, 3), bool)), np.ones((2, 2), bool))
     ingreme = mapa_i[I, J]
-    ocre = np.array([0.80, 0.70, 0.50]) * (0.9 + 0.2 * fbm(xv, yv, 4.0, 9)[:, None])
-    cinza = np.array([0.62, 0.61, 0.56]) * (0.9 + 0.2 * fbm(xv, yv, 4.0, 9)[:, None])
-    g_ = np.clip((np.hypot(xv - castelejo[:, 0].mean(), yv - castelejo[:, 1].mean()) - 14.0) / 6.0, 0, 1)[:, None]
-    cor_roc = cinza * (1 - g_) + ocre * g_
     ingreme_cel = ingreme.copy()
-    fr = faces[ingreme]
-    usa = np.unique(fr)
-    mapa = -np.ones(len(V), int)
-    mapa[usa] = np.arange(len(usa))
-    mr = bpy.data.meshes.new("rocha")
-    mr.from_pydata(V[usa].tolist(), [], mapa[fr].tolist())
-    mr.update()
-    car = mr.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
-    car.data.foreach_set("color", np.hstack([np.clip(cor_roc[usa], 0, 1) ** 2.2, np.ones((len(usa), 1))]).astype(np.float32).ravel())
-    mr.color_attributes.active_color = car
-    mr.shade_smooth()
-    obr = novo_objeto("Terreno_rocha", mr, "terreno", mat="rocha", pai=GRUPOS["Terreno"])
-    uv_mundo(obr, 4.0)
-    faces = faces[~ingreme]
-
-    # chão por classes, recortado onde ficam as falésias (as mesmas células, para não haver fendas)
+    # 0.9: a falésia passa a um polígono alisado (fecho de 1 m e simplificação de 0,3 m) em vez das células de 1 m;
+    # o chão e a rocha cortam-se pela mesma fronteira exata (chao.malhas), sem os dentes de serra da 0.8.
     falesia = shapely.union_all(shapely.box(X[I[ingreme_cel], J[ingreme_cel]], Y[I[ingreme_cel], J[ingreme_cel]],
                                             X[I[ingreme_cel], J[ingreme_cel]] + passo, Y[I[ingreme_cel], J[ingreme_cel]] + passo))
+    falesia = falesia.buffer(1.0).buffer(-1.6).buffer(0.6).simplify(0.3)
+    falesia = shapely.MultiPolygon([q for q in getattr(falesia, "geoms", [falesia]) if q.area > 6.0])
+
     classes = chao.ler(AQUI / "dados" / "chao.json")
     # ruas, calçadas e lajes não ondulam com o ruído do MDT (pedras, carros, muretes): alisa-se o Z debaixo delas
     Z = chao.aplanar(xs, Z, [classes.get(n) for n in ("asfalto", "calcada", "lajeado", "saibro")], sigma=1.2)
@@ -336,6 +322,21 @@ def construir_terreno():
     BRECHA_Q = shapely.Polygon([c_ - u_ * L_ / 2 - w_ * 5, c_ + u_ * L_ / 2 - w_ * 5, c_ + u_ * L_ / 2 + w_ * 5,
                                 c_ - u_ * L_ / 2 + w_ * 5])
     pecas = chao.malhas(classes, xs, Z, raio=RAIO, recorte=falesia.union(BRECHA_Q))
+    Vr, Fr = chao.malhas({"rocha": falesia}, xs, Z, raio=RAIO)["rocha"]
+    xr, yr = Vr[:, 0], Vr[:, 1]
+    ocre = np.array([0.80, 0.70, 0.50]) * (0.9 + 0.2 * fbm(xr, yr, 4.0, 9)[:, None])
+    cinza = np.array([0.62, 0.61, 0.56]) * (0.9 + 0.2 * fbm(xr, yr, 4.0, 9)[:, None])
+    g_ = np.clip((np.hypot(xr - castelejo[:, 0].mean(), yr - castelejo[:, 1].mean()) - 14.0) / 6.0, 0, 1)[:, None]
+    cor_roc = cinza * (1 - g_) + ocre * g_
+    mr = bpy.data.meshes.new("rocha")
+    mr.from_pydata(Vr.tolist(), [], Fr.tolist())
+    mr.update()
+    car = mr.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
+    car.data.foreach_set("color", np.hstack([np.clip(cor_roc, 0, 1) ** 2.2, np.ones((len(Vr), 1))]).astype(np.float32).ravel())
+    mr.color_attributes.active_color = car
+    mr.shade_smooth()
+    obr = novo_objeto("Terreno_rocha", mr, "terreno", mat="rocha", pai=GRUPOS["Terreno"])
+    uv_mundo(obr, 8.0)  # 0.9: 8 m por imagem (mosaico de recortes de 2 m da foto)
     obs = chao_blender.objetos(pecas, pai=GRUPOS["Terreno"], paleta=PALETA_CHAO)
     ob_b = chao_blender.objetos(chao.malhas({"calcada": BRECHA_Q}, xs, Z, recorte=falesia), pai=GRUPOS["Brecha_Desaparecidas"],
                                 elemento="brecha", paleta=PALETA_CHAO)["calcada"]
@@ -433,7 +434,7 @@ class Malha:
         q = [c - u * hl - w * hp, c + u * hl - w * hp, c + u * hl + w * hp, c - u * hl + w * hp]
         self.prisma(q, z0, z1, mat, topo=True, fundo=False)
 
-    def objeto(self, nome, elemento, mats, pai=None, uv=3.0, liso=False):
+    def objeto(self, nome, elemento, mats, pai=None, uv="pedra", liso=False):
         me = bpy.data.meshes.new(nome)
         me.from_pydata(self.v, [], self.f)
         me.update()
@@ -454,7 +455,7 @@ class Malha:
             ob["elemento"] = elemento
         ob.parent = pai or RAIZ_OB
         if uv:
-            uv_mundo(ob, uv)
+            uv_mundo(ob, M_PEDRA if uv == "pedra" else uv)
         return ob
 
 
@@ -861,11 +862,14 @@ for g in ["Terreno", "Muralhas", "Castelejo", "Torreoes", "Porta_Vila", "Porta_T
 # Pedra fotografada (kit.fotos, foto CC0 da Poly Haven; créditos em medidas.json "texturas_foto"): alvenaria
 # irregular em fiadas baixas, recolorida para o calcário/arenito ocre-bege das fotografias de Penela (3 m por
 # imagem, o que os UV de 3 m cobrem), com relevo nas juntas.
-_TEX_P, _ALT_P = textura_foto("old_stone_wall", n=1024, metros=3.0, cor=(0.72, 0.64, 0.51), contraste=0.9,
-                              metros_foto=3.0, saturacao=0.7, liquen=0.04, semente=71)
+# Desde a 0.9 (modelo do castillos.site): a imagem cobre 7,2 m (2048 px, 284 px/m: de perto, 1024 ficava mole) e é um mosaico de recortes da foto em
+# células de 1,2 m, para a mesma pedra não voltar a aparecer a cada 3 m; as pedras ficam com o tamanho real.
+M_PEDRA = 7.2
+_TEX_P, _ALT_P = textura_foto("old_stone_wall", n=2048, metros=M_PEDRA, cor=(0.72, 0.64, 0.51), contraste=0.9,
+                              metros_foto=3.0, saturacao=0.7, liquen=0.04, semente=71, mosaico=1.2, variacao=0.16)
 pedra = imagem("pedra", _TEX_P)
 grao = imagem("grao", textura_grao())
-MATS["pedra"] = material_kit("pedra", (1, 1, 1), 0.92, pedra, normal=imagem("pedra_n", normais(_ALT_P, 3.0)), forca=0.8)
+MATS["pedra"] = material_kit("pedra", (1, 1, 1), 0.92, pedra, normal=imagem("pedra_n", normais(_ALT_P, M_PEDRA)), forca=0.8, vcor=True)
 material("sombra", (0.13, 0.11, 0.09), 1.0)
 material("cal", (0.94, 0.93, 0.89), 0.85)
 material("moldura_ocre", (0.79, 0.66, 0.42), 0.8)  # molduras das janelas da casa paroquial (#c9a86a)
@@ -878,16 +882,19 @@ material("telha", (0.68, 0.35, 0.22), 0.8)
 material("cantaria", (0.82, 0.79, 0.72), 0.9)
 # silharia da torre-porta: fiadas regulares de silhares de 30-40 cm, mais clara e lisa do que a alvenaria dos
 # panos (foto 05 da revisão; cor #b8ab8e). A foto cobre 2,5 m, como os UV deste objeto.
-_TEX_S, _ALT_S = textura_foto("stone_brick_wall_001", n=1024, metros=2.5, cor=(0.72, 0.67, 0.56), contraste=0.8,
-                              metros_foto=2.5, saturacao=0.5, liquen=0.03, semente=72)
+M_SILH = 5.0  # 0.9: 5 m por imagem, mosaico só na horizontal (as fiadas mantêm a cota)
+_TEX_S, _ALT_S = textura_foto("stone_brick_wall_001", n=1024, metros=M_SILH, cor=(0.72, 0.67, 0.56), contraste=0.8,
+                              metros_foto=2.5, saturacao=0.5, liquen=0.03, semente=72, mosaico=1.25, mosaico_vertical=False,
+                              variacao=0.14)
 MATS["silharia"] = material_kit("silharia", (1, 1, 1), 0.88, imagem("silharia", _TEX_S),
-                                normal=imagem("silharia_n", normais(_ALT_S, 2.5)), forca=0.7)
+                                normal=imagem("silharia_n", normais(_ALT_S, M_SILH)), forca=0.7, vcor=True)
 material("calcada", (0.71, 0.69, 0.65), 0.95)
 material("terreno", (1, 1, 1), 0.97, grao, vcor=True)
 # falésias de arenito e calcário: foto de arriba em estratos (CC0), clara e neutra; a cor vem dos vértices
-_TEX_R, _ALT_R = textura_foto("cliff_side", n=1024, metros=4.0, cor=(0.93, 0.92, 0.90), contraste=0.8, saturacao=0.3, semente=73)
+_TEX_R, _ALT_R = textura_foto("cliff_side", n=1024, metros=8.0, cor=(0.93, 0.92, 0.90), contraste=0.8, saturacao=0.3, semente=73,
+                              metros_foto=4.0, mosaico=2.0, mosaico_borda=0.25)
 MATS["rocha"] = material_kit("rocha", (1, 1, 1), 0.93, imagem("rocha", _TEX_R), vcor=True,
-                             normal=imagem("rocha_n", normais(_ALT_R, 3.0)), forca=1.0)
+                             normal=imagem("rocha_n", normais(_ALT_R, 8.0)), forca=1.0)
 # casas da vila: um só cinzento claro, paredes e telhados, para o destaque ficar no castelo e na igreja
 material("cinza_viz", (0.74, 0.74, 0.73), 0.9)
 material("base", (0.33, 0.26, 0.20), 0.95)
@@ -948,7 +955,13 @@ def assentar_na_rocha():
     r0, r1 = np.searchsorted(LXS, [y0, y1])
     k = shapely.contains_xy(cast_in, _LX[r0:r1 + 1, c0:c1 + 1], _LY[r0:r1 + 1, c0:c1 + 1])
     blk = MDT[r0:r1 + 1, c0:c1 + 1]
-    blk[k] = np.maximum(blk[k], plat[r0:r1 + 1, c0:c1 + 1][k])
+    pl = plat[r0:r1 + 1, c0:c1 + 1]
+    chao_cast = float(np.median(np.maximum(blk[k], pl[k])))
+    # 0.9: junto aos panos (1,5 m por dentro de cast_in) a mediana de 4,5 m ainda apanha o topo dos muros e o chão
+    # subia em bicos até aos merlões (grandes planos da 0.9); aí a plataforma fica no máximo 1,2 m acima da mediana
+    borda = k & ~shapely.contains_xy(cast_in.buffer(-1.5), _LX[r0:r1 + 1, c0:c1 + 1], _LY[r0:r1 + 1, c0:c1 + 1])
+    pl = np.where(borda, np.minimum(pl, chao_cast + 1.2), pl)
+    blk[k] = np.maximum(blk[k], pl[k])
     chao_cast = float(np.median(blk[k]))
     # à frente dos panos (o exterior é fora do perímetro; no castelejo, fora dele)
     for linha, esp, fech, fora_de in [(l_, MUR["espessura"], False, PERIM_POLY) for l_ in SECTORES.values()] + [(castelejo, 1.8, True, CAST_POLY)]:
@@ -1188,7 +1201,7 @@ base_d = np.array([pv_xy(ra, rc), pv_xy(rb, rc), pv_xy(rb, rd), pv_xy(ra, rd)])
 base_d = base_d if area(base_d) > 0 else base_d[::-1]
 topo_d = medir(desvio(base_d, 0.3, True), q=95)
 torre(m, base_d, float(np.min(cota(*base_d.T))), topo_d)
-m.objeto("Torre_Porta_Vila", "porta_vila", ["silharia", "cantaria", "calcada"], GRUPOS["Porta_Vila"], uv=2.5)
+m.objeto("Torre_Porta_Vila", "porta_vila", ["silharia", "cantaria", "calcada"], GRUPOS["Porta_Vila"], uv=M_SILH)
 
 # do lado de dentro, à esquerda de quem sai, o muro de suporte do terraço que ladeia a rua da porta (classe 6 do
 # LiDAR, 5-6 m acima do chão da rua; foto 06 da revisão, com hera no topo)
@@ -1517,6 +1530,60 @@ ca.data.foreach_set("color", np.hstack([cl, np.ones((len(cl), 1))]).astype(np.fl
 me.color_attributes.active_color = ca
 novo_objeto("Vegetacao", me, "vegetacao", mat="arvore", pai=GRUPOS["Vegetacao"])
 
+
+# ---------------------------------------------------------------- sujidade nos panos (modelo do castillos.site)
+# Como nas maquetas do castillos.site (cor por vértice nos panos principais): a pedra escurece no pé (humidade
+# que sobe do chão e salpicos, c. 1 m), e manchas largas e suaves de tom ao longo dos panos. Os panos altos
+# partem-se em faixas de 1,2 m para a faixa do pé não se esticar até ao topo.
+
+
+def sujidade(ob, passo=0.6, amp=0.0):  # amp=0: a forma das muralhas fica igual à 0.8 (Tiago, 25 nov.)
+    """Sujidade dos panos (0.9, modelo do castillos.site): as faces partem-se numa grelha de c. 0,6 m só para levar
+    cor por vértice (pé mais escuro, manchas). Com amp=0 nenhum vértice sai do sítio: a forma é a da 0.8."""
+    me = ob.data
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    for _ in range(2):
+        longas = [e for e in bm.edges if e.calc_length() > passo * 1.2]
+        grupos = {}
+        for e in longas:
+            grupos.setdefault(min(int(np.ceil(e.calc_length() / passo)) - 1, 24), []).append(e)
+        for k, grupo in sorted(grupos.items()):
+            grupo = [e for e in grupo if e.is_valid]
+            if grupo and k > 0:
+                bmesh.ops.subdivide_edges(bm, edges=grupo, cuts=k, use_grid_fill=True)
+    bmesh.ops.triangulate(bm, faces=[f for f in bm.faces if len(f.verts) > 4])
+    bm.normal_update()
+    V = np.array([v.co[:] for v in bm.verts])
+    N = np.array([v.normal[:] for v in bm.verts])
+    x, y, z = V.T
+    d = (amp * 0.7 * np.sin(x * 2.3 + 1.7 * np.sin(y * 1.9 + z * 1.3)) * np.sin(y * 2.1 + z * 2.7 + 0.4)
+         + amp * 0.3 * np.sin(x * 15.7 + y * 3.1 + z * 11.3) * np.sin(y * 13.9 - z * 9.7 + x * 2.9))
+    for v, dv, nv in zip(bm.verts, d, N):
+        v.co += mathutils.Vector(nv * dv)
+    bm.normal_update()
+    bm.to_mesh(me)
+    bm.free()
+    co = np.empty(len(me.vertices) * 3)
+    me.vertices.foreach_get("co", co)
+    co = co.reshape(-1, 3)
+    h = np.maximum(co[:, 2] - cota(co[:, 0], co[:, 1]), 0.0)
+    pe = 1 - 0.20 * np.exp(-h / 0.8)
+    x, y, z = co.T
+    manchas = 1 + 0.07 * (np.sin(x * 0.53 + 1.3 * np.sin(y * 0.31)) * np.sin(y * 0.47 + z * 0.29 + 0.7) + 0.5 * np.sin((x + y) * 1.7 + z * 0.9) * np.sin(x * 1.1 - y * 1.3))
+    v = np.clip(pe * manchas, 0, 1.1)
+    ca = me.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
+    ca.data.foreach_set("color", np.column_stack([np.repeat((v ** 2.2)[:, None], 3, 1), np.ones(len(v))]).astype(np.float32).ravel())
+    me.color_attributes.active_color = ca
+    return len(me.polygons)
+
+
+_COM_PEDRA = {"pedra", "silharia"}
+_n_suj = 0
+for ob in list(bpy.data.objects):
+    if ob.type == "MESH" and any(ms and ms.name in _COM_PEDRA for ms in ob.data.materials) and not ob.data.color_attributes:
+        _n_suj += sujidade(ob)
+print("sujidade nos panos:", _n_suj, "faces")
 
 (AQUI / "saida").mkdir(exist_ok=True)
 np.savez(AQUI / "saida" / "perfis.npz", **PERFIS)

@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import * as THREE from "three";
 import { MeshBVH, acceleratedRaycast } from "three-mesh-bvh";
 import { BASE } from "../../lib/base";
+import { aplicarGrao, COM_GRAO, type OpcoesGrao } from "./detalheChao";
 import { CAMADAS_TERRENO, ESTADOS, elementosComPlaca, vistaEpoca, type DadosMaqueta, type ElementoMaqueta, type EpocaMaqueta } from "./dados";
 import { alturaLinha, disporPlacas, type Caixa, type OpcoesDisposicao } from "./placas";
 import { Ambiente, Desenho, LUZ, aplicarTom, ecraTatil } from "./Luz";
@@ -251,6 +252,7 @@ export default function Maqueta({ url, capa, dados, provisoria, onVoltarMapa }: 
               direcao={dados.direcao}
               sol={dados.sol}
               distanciaMinima={dados.distanciaMinima ?? 22}
+              detalheChao={dados.detalheChao}
               camadaPlacas={camadaPlacas}
               pausa={pausa}
               terreno={terreno}
@@ -400,7 +402,7 @@ function FichaElemento({ e, dados, onFechar }: { e: ElementoMaqueta; dados: Dado
   );
 }
 
-function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia: distanciaDados, direcao, sol, distanciaMinima, camadaPlacas, pausa, terreno, ocultos = NENHUM, pedidoEnquadrar, bussola, escala, escalaTexto, teclas, tatil, onCarregada }: {
+function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia: distanciaDados, direcao, sol, distanciaMinima, detalheChao, camadaPlacas, pausa, terreno, ocultos = NENHUM, pedidoEnquadrar, bussola, escala, escalaTexto, teclas, tatil, onCarregada }: {
   url: string;
   elementos: Map<string, ElementoMaqueta>;
   sel: string | null;
@@ -412,6 +414,7 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia: d
   direcao?: [number, number, number];
   sol?: [number, number, number];
   distanciaMinima: number;
+  detalheChao?: boolean | OpcoesGrao;
   camadaPlacas: React.RefObject<HTMLDivElement | null>;
   pausa: React.RefObject<boolean>;
   terreno: boolean;
@@ -453,6 +456,10 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia: d
       m.castShadow = !terrenoBase;
       if (terrenoBase) chao.push(m);
       m.receiveShadow = true;
+      if (detalheChao) {
+        const aniso = gl.capabilities.getMaxAnisotropy();
+        for (const x of Array.isArray(m.material) ? m.material : [m.material]) if (COM_GRAO(x.name)) aplicarGrao(x, aniso, typeof detalheChao === "object" ? detalheChao : {});
+      }
       let p: THREE.Object3D | null = m;
       while (p && !p.userData.elemento) p = p.parent;
       const id = p?.userData.elemento as string | undefined;
@@ -507,7 +514,7 @@ function Cena({ url, elementos, sel, setSel, giro, rotulos, placas, distancia: d
       m.raycast = acceleratedRaycast;
     }
     return { alvos, centro, pontos, terreno, chao, porElemento, malhas, idDe };
-  }, [scene, placas]);
+  }, [scene, placas, detalheChao, gl]);
 
   // Ponto de cada placa: o indicado nos dados ou o topo do elemento junto ao centro da sua planta
   const ancoras = useMemo(() => {
