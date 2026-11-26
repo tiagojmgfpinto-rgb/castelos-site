@@ -238,7 +238,9 @@ def analisar(caminho):
     for k in range(1, len(comps)):
         c = comps[k]
         if max(c.extents) < 0.6: continue
-        vv = c.vertices[::max(1, len(c.vertices) // 40)]
+        # amostra a passo fixo mais o vértice mais alto: num pano com 4 vértices novos por segmento (2 no pé, 2 no
+        # adarve) o passo par apanhava só os do pé, 1,5 m abaixo do chão, e dava o pano inteiro como enterrado
+        vv = np.vstack([c.vertices[::max(1, len(c.vertices) // 40)], c.vertices[[int(np.argmax(c.vertices[:, 1]))]]])
         hv = altura(rs, vv[:, [0, 2]])
         ok = ~np.isnan(hv)
         if ok.sum() > 3 and np.all(vv[ok, 1] < hv[ok] - 0.05):

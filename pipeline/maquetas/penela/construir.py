@@ -265,6 +265,9 @@ def construir_terreno():
     S_, D_ = pv_sd(X, Y)
     tun = (np.abs(S_) < PV["vao"] / 2 + 1.0) & (D_ > PV["d0"] - 1.2) & (D_ < PV["d1"] + 1.2)
     Z = np.where(tun, np.minimum(Z, pv_chao(D_) - 0.05), Z)
+    # a câmara da Porta da Traição fica aberta: o terreno desce abaixo do chão dela (e das soleiras das portas)
+    cam_pt = shapely.Polygon(PT["camara"]).buffer(0.5)
+    Z = np.where(shapely.contains_xy(cam_pt, X, Y), np.minimum(Z, PT["zf"] - 0.45), Z)
     gy, gx = np.gradient(Z, passo)
     decl = np.degrees(np.arctan(np.hypot(gx, gy)))
 
@@ -301,6 +304,9 @@ def construir_terreno():
     mapa_i[I, J] = ingreme & perto
     mapa_i = ndi.binary_opening(ndi.binary_closing(mapa_i, np.ones((3, 3), bool)), np.ones((2, 2), bool))
     ingreme = mapa_i[I, J]
+    # debaixo do rochedo do castelejo não há falésia do MDT (a célula que toca a pegada passa a chão, recortado)
+    toca = shapely.intersects(ROCHEDO["pegada"], shapely.box(X[I, J], Y[I, J], X[I, J] + passo, Y[I, J] + passo))
+    ingreme &= ~toca
     ocre = np.array([0.80, 0.70, 0.50]) * (0.9 + 0.2 * fbm(xv, yv, 4.0, 9)[:, None])
     cinza = np.array([0.62, 0.61, 0.56]) * (0.9 + 0.2 * fbm(xv, yv, 4.0, 9)[:, None])
     g_ = np.clip((np.hypot(xv - castelejo[:, 0].mean(), yv - castelejo[:, 1].mean()) - 14.0) / 6.0, 0, 1)[:, None]
@@ -335,7 +341,7 @@ def construir_terreno():
     L_ = np.linalg.norm(b_ - a_)
     BRECHA_Q = shapely.Polygon([c_ - u_ * L_ / 2 - w_ * 5, c_ + u_ * L_ / 2 - w_ * 5, c_ + u_ * L_ / 2 + w_ * 5,
                                 c_ - u_ * L_ / 2 + w_ * 5])
-    pecas = chao.malhas(classes, xs, Z, raio=RAIO, recorte=falesia.union(BRECHA_Q))
+    pecas = chao.malhas(classes, xs, Z, raio=RAIO, recorte=falesia.union(BRECHA_Q).union(ROCHEDO["pegada"]))
     obs = chao_blender.objetos(pecas, pai=GRUPOS["Terreno"], paleta=PALETA_CHAO)
     ob_b = chao_blender.objetos(chao.malhas({"calcada": BRECHA_Q}, xs, Z, recorte=falesia), pai=GRUPOS["Brecha_Desaparecidas"],
                                 elemento="brecha", paleta=PALETA_CHAO)["calcada"]
@@ -564,6 +570,27 @@ def torre(m, base, pe, topo, mat=0):
     ameias_ao_longo(m, desvio(base, 0.3, True), terraco + PARAPEITO, True, mat)
 
 
+def torre_ruina(m, b, pe, topo):
+    """Torre quinária (condição G07; Commons Castelo de Penela (31) e (32), Brecha 01): massa maciça de alvenaria sem
+    ameias, com a crista de ruína inclinada e irregular. A crista mede-se no MDS ao longo da planta (percentil 90 num
+    raio de 0,9 m, 0,6 m para dentro), entre o topo e 4,5 m abaixo dele."""
+    rr = np.random.default_rng(1310)
+    bd = densificar(b, 0.8, True)
+    c = b.mean(0)
+    zc = np.array([medir(centro=p_ + unit(c - p_) * 0.6, raio=0.9, q=90) for p_ in bd])
+    zc = np.where(np.isnan(zc), topo - 2.0, zc)
+    zc = np.clip(mediana_movel(zc, 3, True), topo - 4.5, topo) + rr.uniform(-0.25, 0.1, len(zc))
+    zc[int(np.argmax(zc))] = topo
+    n = len(bd)
+    for i in range(n):
+        j = (i + 1) % n
+        m.face([(*bd[i], pe - 1.5), (*bd[j], pe - 1.5), (*bd[j], zc[j]), (*bd[i], zc[i])], 0)
+    zm = float(np.median(zc)) - 0.3
+    for i in range(n):
+        j = (i + 1) % n
+        m.face([(*bd[i], zc[i]), (*bd[j], zc[j]), (*c, zm)], 0)
+
+
 # ---------------------------------------------------------------- edifícios
 
 
@@ -727,10 +754,25 @@ def igreja():
         m.prisma([cc_ + np.array([math.cos(k * math.pi / 2 + math.pi / 4), math.sin(k * math.pi / 2 + math.pi / 4)]) * 0.16 for k in range(4)],
                  zz + 0.5, zz + 0.6, 3)
         piramide(m, cc_, 0.15, zz + 0.6, zz + 1.5, 3)
+    # Frontão (volta 1 da 1.0, condição G08; foto Castelo de penela (57)): o corpo central da fachada sobe acima do
+    # friso num pano de c. 0,6 da largura com cornija e frontão triangular de cantaria, pináculos nos dois cantos e a
+    # cruz no vértice, um pouco acima da cumeeira; os lados ficam com o beirado e os pináculos dos cunhais.
+    wc = min(0.62 * larg, 9.0)
+    c0f, c1f = v_cume - wc / 2, v_cume + wc / 2
+    zf0, zf1, zap = adro + 6.35, cume - 2.3, cume + 0.35
+    extrudir(m, [(c0f, zf0), (c1f, zf0), (c1f, zf1), (v_cume, zap), (c0f, zf1)], fa + nf * 0.22, v, -nf, 0.22, 0)
+    m.caixa(fa + v * v_cume + nf * 0.3, v, wc + 0.4, 0.3, zf1 - 0.25, zf1, 3)  # cornija do frontão
+    for (va, za), (vb, zb_) in (((c0f - 0.2, zf1), (v_cume, zap + 0.2)), ((v_cume, zap + 0.2), (c1f + 0.2, zf1))):
+        barra(m, np.array([*(fa + v * va + nf * 0.3), za]), np.array([*(fa + v * vb + nf * 0.3), zb_]), 0.13, 3)
+    for vv in (c0f, c1f):  # pilastras e pináculos
+        m.caixa(fa + v * vv + nf * 0.3, v, 0.45, 0.2, zf0, zf1, 3)
+        cc_ = fa + v * vv + nf * 0.3
+        m.caixa(cc_, v, 0.32, 0.32, zf1, zf1 + 0.3, 3)
+        piramide(m, cc_, 0.13, zf1 + 0.3, zf1 + 1.2, 3)
     # cruz no vértice do frontão
-    topo = pc + nf * 0.1
-    m.caixa(topo, v, 0.18, 0.18, cume, cume + 1.3, 3)
-    m.caixa(topo, v, 0.75, 0.18, cume + 0.75, cume + 0.93, 3)
+    topo = fa + v * v_cume + nf * 0.2
+    m.caixa(topo, v, 0.18, 0.18, zap, zap + 1.3, 3)
+    m.caixa(topo, v, 0.75, 0.18, zap + 0.75, zap + 0.93, 3)
 
     # Torre sineira (planta OSM). No MDS o topo das paredes é um patamar e o vértice do coruchéu o
     # ponto mais alto; sineiras, relógio, janela, pináculos e cata-vento pela fotografia da fachada.
@@ -751,8 +793,14 @@ def igreja():
     out = unit(np.array([(b - a)[1], -(b - a)[0]]))
     mid = (a + b) / 2
     alt_t = cornija - adro
-    for dx in (-0.8, 0.8):  # duas sineiras lado a lado
+    for dx in (-0.8, 0.8):  # duas sineiras lado a lado, cada uma com o seu sino (G08)
         arco(m, mid + ft * dx, ft, out, 0.9, adro + 0.48 * alt_t, 0.9, 0.1, 2)
+        zs_ = adro + 0.48 * alt_t + 0.35
+        cs_ = mid + ft * dx + out * 0.05
+        for k_ in range(6):
+            r0_, r1_ = 0.32 - 0.025 * k_, 0.32 - 0.025 * (k_ + 1)
+            m.prisma([cs_ + ft * r0_ * math.cos(a_) + out * 0.1 * math.sin(a_) for a_ in np.linspace(0, math.pi, 7)],
+                     zs_ + 0.09 * k_, zs_ + 0.09 * (k_ + 1), 4)
     arco(m, mid, ft, out, 0.5, adro + 0.66 * alt_t, 0.6, 0.1, 2)  # janela pequena
     cc = mid + out * 0.04
     zr = cornija - 0.06 * alt_t - 0.1
@@ -912,6 +960,9 @@ _LX, _LY = np.meshgrid(LXS, LXS)
 
 TALUDE_ROCHA = 2.5  # declive da falésia que desce do pé da alvenaria até encontrar o MDT (c. 68°)
 PERIM_POLY = shapely.Polygon(perimetro)
+# nem à volta do 1.º torreão à direita da porta (ponto de controlo da volta 1, V02: a rocha subida ao pé dele
+# ficava como uma laje bege à frente do pano; nas fotos Porta da vila 02 e Vistas 08 é calçada até à alvenaria)
+SEM_ROCHA_PV = shapely.Polygon(torres["torreao_poente_2"]).buffer(7.0)
 CAST_POLY = shapely.Polygon(castelejo)
 
 
@@ -930,7 +981,8 @@ def subir_ao_pe(linha, pe, fora_de, alcance=12.0, patamar=0.6):
     alvo = np.interp(shapely.line_locate_point(ln, pts), s_lin, pe) - TALUDE_ROCHA * np.clip(d - patamar, 0, None)
     S_, D_ = pv_sd(sx, sy)
     k = (d < alcance) & ~shapely.contains_xy(fora_de, sx, sy) \
-        & ~((np.abs(S_) < PV["vao"] / 2 + 3.5) & (D_ > PV["d0"] - 4.0) & (D_ < PV["d1"] + 4.0))
+        & ~((S_ > PV["s0"] - 6.0) & (S_ < PV["direita"][1] + 4.5) & (D_ > PV["d0"] - 4.0) & (D_ < PV["d1"] + 8.0))\
+        & ~shapely.contains_xy(SEM_ROCHA_PV, sx, sy)
     blk = MDT[r0:r1 + 1, c0:c1 + 1]
     n = int((k & (blk < alvo)).sum())
     blk[k] = np.maximum(blk[k], alvo[k])
@@ -939,19 +991,43 @@ def subir_ao_pe(linha, pe, fora_de, alcance=12.0, patamar=0.6):
 
 def assentar_na_rocha():
     sub = 0
-    # o castelejo: plataforma de rocha (MDS filtrado, sem a faixa dos muros)
-    cast_in = CAST_POLY.buffer(-1.6)
-    plat = ndi.median_filter(np.where(VEG, np.nan, MDS), size=9, mode="nearest")
-    plat = np.where(np.isnan(plat), MDT, plat)
-    x0, y0, x1, y1 = cast_in.bounds
-    c0, c1 = np.searchsorted(LXS, [x0, x1])
-    r0, r1 = np.searchsorted(LXS, [y0, y1])
-    k = shapely.contains_xy(cast_in, _LX[r0:r1 + 1, c0:c1 + 1], _LY[r0:r1 + 1, c0:c1 + 1])
+    # Porta da Vila (ponto de controlo da volta 1, G05/V02): à direita da torre o MDT sobe em rampa por baixo do
+    # 1.º torreão (o LiDAR dá-o como edifício maior do que a planta do OSM e o MDT interpola-o), e a rampa ficava
+    # fora da obra como uma laje de rocha à frente do pano. Na foto, a calçada e o saibro chegam à alvenaria: fora
+    # dos panos e das torres, a menos de 16 m da porta, o chão desce ao mínimo local (3,5 m) do MDT.
+    r_pv = 16.0
+    c0, c1 = np.searchsorted(LXS, [PORTA_VILA[0] - r_pv - 4, PORTA_VILA[0] + r_pv + 4])
+    r0, r1 = np.searchsorted(LXS, [PORTA_VILA[1] - r_pv - 4, PORTA_VILA[1] + r_pv + 4])
+    sx, sy = _LX[r0:r1 + 1, c0:c1 + 1], _LY[r0:r1 + 1, c0:c1 + 1]
+    obra = PERIM_POLY.union(shapely.union_all([shapely.Polygon(b).buffer(0) for b in torres.values()])).buffer(1.2)
+    _, D_ = pv_sd(sx, sy)
+    zona = (np.hypot(sx - PORTA_VILA[0], sy - PORTA_VILA[1]) < r_pv) & ~shapely.contains_xy(obra, sx, sy) \
+        & (D_ > PV["d1"] - 0.5)
     blk = MDT[r0:r1 + 1, c0:c1 + 1]
-    blk[k] = np.maximum(blk[k], plat[r0:r1 + 1, c0:c1 + 1][k])
+    baixo = ndi.minimum_filter(blk, size=7)
+    blk[zona] = np.minimum(blk[zona], baixo[zona] + 0.25)
+    # O castelejo (volta 1 da 1.0, condições G01/G02): o chão de dentro é a rocha nua inclinada que o MDS mede
+    # (fotosferas sv04 a sv07: c. 301 m, 3 a 4 m abaixo dos merlões). O LiDAR dá o castelejo todo como edifício e o
+    # MDT interpola-o a c. 294 m, por isso dentro da linha do muro (a do OSM encostada à crista do MDS) o chão passa a
+    # ser o MDS das células longe dos muros, estendido até eles e alisado. Por fora já não se sobe o MDT: o rochedo
+    # é uma malha própria (rochedo_castelejo).
+    lin_c, _ = ajustar(castelejo, True)
+    cast_in = shapely.Polygon(lin_c).buffer(-0.4)
+    nucleo = shapely.Polygon(lin_c).buffer(-1.9)  # sem as células dos muros (1,8 m) nem das ameias
+    x0, y0, x1, y1 = cast_in.bounds
+    c0, c1 = np.searchsorted(LXS, [x0 - 2, x1 + 2])
+    r0, r1 = np.searchsorted(LXS, [y0 - 2, y1 + 2])
+    sx, sy = _LX[r0:r1 + 1, c0:c1 + 1], _LY[r0:r1 + 1, c0:c1 + 1]
+    nuc = shapely.contains_xy(nucleo, sx, sy) & ~VEG[r0:r1 + 1, c0:c1 + 1]
+    _, (ri, ci) = ndi.distance_transform_edt(~nuc, return_indices=True)
+    plat = ndi.gaussian_filter(MDS[r0:r1 + 1, c0:c1 + 1][ri, ci], 1.2)
+    k = shapely.contains_xy(cast_in, sx, sy)
+    blk = MDT[r0:r1 + 1, c0:c1 + 1]
+    blk[k] = plat[k]
     chao_cast = float(np.median(blk[k]))
-    # à frente dos panos (o exterior é fora do perímetro; no castelejo, fora dele)
-    for linha, esp, fech, fora_de in [(l_, MUR["espessura"], False, PERIM_POLY) for l_ in SECTORES.values()] + [(castelejo, 1.8, True, CAST_POLY)]:
+    # à frente dos panos (o exterior é fora do perímetro). Ao pé da Porta da Vila e do pano a cada lado não há rocha
+    # (Commons Porta da vila 02 e Vistas 08: calçada e saibro até à silharia; a rocha só começa depois do 2.º torreão)
+    for linha, esp, fech, fora_de in [(l_, MUR["espessura"], False, PERIM_POLY) for l_ in SECTORES.values()]:
         lin, topo, _, _ = perfil(linha, esp, fechada=fech)
         if fech:
             lin, topo = np.vstack([lin, lin[:1]]), np.append(topo, topo[0])
@@ -967,7 +1043,316 @@ def assentar_na_rocha():
                         "chao_castelejo": round(chao_cast + ZREF, 1)}
 
 
+def rochedo_castelejo():
+    """Rochedo de arenito do castelejo (condição G01; fotos Commons H(15), H(17), H(21), H(25), H(38) e Street View
+    sv08). A muralha com os merlões fica só na coroa: por baixo dela é rocha nua até ao chão, com bancadas
+    horizontais, fendas verticais e lobos arredondados que se debruçam para fora, e a sul uma plataforma com 7 degraus
+    largos talhados na rocha e um penedo enorme encostado. A alvenaria tem 3,5 m de altura no bico sul (H15: só as
+    ameias e o parapeito) e cresce para norte até 5,7 m (H21, H25: no canto nordeste o muro é mais alto do que a
+    rocha). A malha sai da linha do muro (a do OSM encostada à crista do MDS) em raios para fora, a descer até ao MDT.
+    Devolve a cota da rocha debaixo do muro em cada vértice da linha (o muro acaba aí) e a pegada a tirar ao chão."""
+    lin, topo, _, _ = perfil(castelejo, 1.8, fechada=True)
+    if area(lin) < 0:
+        raise SystemExit("castelejo devia estar no sentido anti-horário")
+    tns = (lin[:, 1] - lin[:, 1].min()) / np.ptp(lin[:, 1])
+    # ponto de controlo da volta 1: a rocha ocupa mais de metade da altura (H15, H38); a alvenaria fica nos 3,0 m
+    # de cima no bico sul e cresce para norte até 4,5 m (só o parapeito e as ameias têm 1,95 m)
+    alv = 3.0 + 1.5 * tns
+    # penedo enorme da face sul-poente (H15: massa arredondada e lisa, com uma fenda vertical, que sobe até perto
+    # dos merlões): faz parte do rochedo, a c. 4 m do bico sul para poente; por cima dele só parapeito e ameias
+    fl = np.vstack([lin, lin[:1]])
+    sl_ = np.concatenate([[0], np.cumsum(np.linalg.norm(np.diff(fl, axis=0), axis=1))])
+    L_ = sl_[-1]
+    s_bico = sl_[int(np.argmin(lin[:, 1]))]
+    s_pen = (s_bico - 4.0) % L_
+
+    def junto_penedo(s_, larg=3.5):
+        dd = np.abs(s_ - s_pen)
+        dd = np.minimum(dd, L_ - dd)
+        return np.exp(-(dd / larg) ** 2)
+
+    alv = alv - (alv - 2.2) * junto_penedo(sl_[:-1])
+    # linha fina (0,33 m) para as fendas e as bancadas
+    fech = np.vstack([lin, lin[:1]])
+    sl = np.concatenate([[0], np.cumsum(np.linalg.norm(np.diff(fech, axis=0), axis=1))])
+    ss = np.arange(0, sl[-1], 0.33)
+    lf = np.stack([np.interp(ss, sl, fech[:, 0]), np.interp(ss, sl, fech[:, 1])], 1)
+    ztop_f = np.interp(ss, sl, np.append(topo - alv, topo[0] - alv[0]))
+    nf = len(lf)
+    # normais para fora, alisadas ao longo de c. 2 m (nas esquinas reentrantes os raios não se cruzam)
+    nr = lf - desvio(lf, 1.0, True)
+    ker = np.ones(7) / 7
+    nr = np.stack([np.convolve(np.pad(nr[:, k], 3, mode="wrap"), ker, mode="valid") for k in range(2)], 1)
+    nr /= np.linalg.norm(nr, axis=1)[:, None]
+    # chão por fora: o mais baixo do MDT entre 1,2 e 4 m da linha
+    g = np.min([cota(*(lf + nr * r).T) for r in np.arange(1.2, 4.01, 0.4)], axis=0)
+    H = np.clip(ztop_f - g, 0, None)
+    # a rocha sai 1 a 2,4 m para fora da linha do muro (ponto de controlo: a massa avança sobre o pé)
+    B = np.clip(0.8 + 0.15 * H, 1.0, 2.4)
+    pen = junto_penedo(ss)
+    # fendas verticais (a cada 4-8 m, 0,4-0,9 m de fundo): as fotos mostram poucas e fundas, entre massas lisas
+    r_ = np.random.default_rng(1087)
+    fenda = np.zeros(nf)
+    s_k = 0.0
+    while s_k < sl[-1]:
+        s_k += r_.uniform(4.0, 8.0)
+        dd = np.minimum(np.abs(ss - s_k), sl[-1] - np.abs(ss - s_k))
+        fenda = np.maximum(fenda, r_.uniform(0.4, 0.9) * np.exp(-(dd / 0.45) ** 2))
+    # a fenda vertical do penedo do bico (H15), entre ele e o resto do rochedo
+    dd = np.abs(ss - (s_pen + 2.6) % sl[-1])
+    dd = np.minimum(dd, sl[-1] - dd)
+    fenda = np.maximum(fenda, 0.9 * np.exp(-(dd / 0.4) ** 2))
+    K = 44
+    t = np.linspace(0, 1, K)
+    R = np.zeros((nf, K))
+    Zr = np.zeros((nf, K))
+    for it in range(2):  # o pé do rochedo procura o MDT onde a rocha acaba
+        gz = g if it == 0 else cota(*(lf + nr * R[:, -1:]).T)
+        Zr = ztop_f[:, None] - t[None, :] * np.clip(ztop_f - gz, 0, None)[:, None]
+        S2 = ss[:, None] + 0 * t
+        # massas arredondadas (ruído 2D de c. 4 m: não colunas), bancadas finas e irregulares (0,4-0,8 m)
+        lobo = 0.75 + 0.6 * fbm(S2, Zr * 1.3, 4.5, 41)
+        banc = 0.07 * (0.5 + 0.5 * np.cos(2 * math.pi * Zr / 0.6 + 3.0 * fbm(S2, Zr, 3.0, 43))) ** 4 * (fbm(S2, Zr, 2.0, 47) > 0.45)
+        R = (1.05 + B[:, None] * lobo * 1.15 * np.sin(math.pi * 0.62 * t)[None, :] - banc
+             - fenda[:, None] * np.clip(t / 0.12, 0, 1)[None, :] + 0.12 * fbm(ss[:, None] + 0 * t, Zr, 1.2, 44)
+             + 1.6 * pen[:, None] * np.sin(math.pi * np.clip(t / 0.95, 0, 1))[None, :] ** 0.6)
+        R[:, 0] = 1.05
+    # anéis: rebordo debaixo do muro (0,5 m: fica dentro da alvenaria), rocha e saia 0,7 m abaixo do chão
+    r_saia = R[:, -1] + 0.5
+    z_saia = cota(*(lf + nr * r_saia[:, None]).T) - 0.7
+    R = np.hstack([np.full((nf, 1), 0.5), R, r_saia[:, None]])
+    Zr = np.hstack([ztop_f[:, None], Zr, z_saia[:, None]])
+    Kt = R.shape[1]
+    V = np.concatenate([lf[:, None, :] + nr[:, None, :] * R[..., None], Zr[..., None]], 2).reshape(-1, 3)
+    idx = np.arange(nf * Kt).reshape(nf, Kt)
+    fs = []
+    for i in range(nf):
+        j = (i + 1) % nf
+        for k in range(Kt - 1):
+            fs.append([idx[i, k], idx[i, k + 1], idx[j, k + 1], idx[j, k]])
+    # cor de arenito (M03, #988774), mais escura nas fendas, nas bancadas e para baixo; manchas de líquen
+    tt = np.hstack([np.zeros((nf, 1)), np.tile(t, (nf, 1)), np.ones((nf, 1))]).ravel()
+    sv = np.repeat(ss, Kt)
+    escuro = (1 - 0.45 * np.repeat(fenda / 0.7, Kt) * (tt > 0.05)) * (0.95 - 0.2 * tt)
+    liq = 0.78 + 0.32 * fbm(sv, V[:, 2], 2.5, 45)
+    cor = np.array([0.66, 0.58, 0.48])[None, :] * (escuro * liq)[:, None]
+    # degraus talhados a sul (H15: 6 a 7 degraus largos, 0,3-0,4 m de alto e 1-1,5 m de piso), da plataforma ao pé
+    # do rochedo, e o penedo enorme encostado ao bico sul
+    m = Malha()
+    i_s = int(np.argmin(lf[:, 1]))
+    bico = lf[i_s]
+    eixo = np.array([0.15, 1.0]) / np.hypot(0.15, 1.0)
+    ld = np.array([eixo[1], -eixo[0]])
+    pe0 = bico - eixo * 9.0
+    z0 = float(cota(*pe0))
+    degraus = []
+
+    def bancada(q, base, ztop, chanfro=0.12):
+        """Bancada talhada na rocha: contorno irregular (anti-horário), aresta de cima gasta (chanfro)."""
+        qi = desvio(q, chanfro * 1.6, True)
+        n_ = len(q)
+        for i in range(n_):
+            j = (i + 1) % n_
+            m.face([(*q[i], base), (*q[j], base), (*q[j], ztop - chanfro), (*q[i], ztop - chanfro)])
+            m.face([(*q[i], ztop - chanfro), (*q[j], ztop - chanfro), (*qi[j], ztop), (*qi[i], ztop)])
+        m.face([(*p_, ztop) for p_ in qi])
+        degraus.append(shapely.Polygon(q))
+
+    def contorno(c, u, larg, prof, rr):
+        """Retângulo de cantos cortados e bordos tortos (c. 14 pontos), como as bancadas cortadas na rocha."""
+        w = np.array([-u[1], u[0]])
+        pts = []
+        for fx, fy in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
+            corte = rr.uniform(0.15, 0.45)
+            a_ = c + u * fx * larg / 2 + w * fy * prof / 2
+            pts += [a_ - u * fx * corte if fy == -1 else a_ - w * fy * corte,
+                    a_ - w * fy * corte if fy == -1 else a_ - u * fx * corte]
+        q = np.array(pts)
+        # ordem anti-horária e pontos a meio dos lados compridos, tortos
+        q = q[np.argsort(np.arctan2(*(q - c).T[::-1]))]
+        mid = []
+        for i in range(len(q)):
+            mid.append(q[i])
+            j = (i + 1) % len(q)
+            if np.linalg.norm(q[j] - q[i]) > 1.5:
+                mid.append((q[i] + q[j]) / 2 + rr.normal(0, 0.1, 2))
+        q = np.array(mid) + rr.normal(0, 0.05, (len(mid), 2))
+        return q if area(q) > 0 else q[::-1]
+
+    s_ = 0.0
+    zk = z0
+    for k in range(7):
+        piso = r_.uniform(0.95, 1.55)
+        alto = r_.uniform(0.28, 0.44)
+        larg = 6.6 - 0.3 * k + r_.uniform(-0.6, 0.6)
+        ang = r_.uniform(-0.12, 0.12)
+        u_ = np.array([math.cos(ang) * ld[0] - math.sin(ang) * ld[1], math.sin(ang) * ld[0] + math.cos(ang) * ld[1]])
+        c_ = pe0 + eixo * (s_ + piso / 2) + ld * r_.uniform(-0.4, 0.4)
+        zk += alto
+        q = contorno(c_, u_, larg, piso + 0.5, r_)
+        bancada(q, float(np.min(cota(*q.T))) - 0.6, zk)
+        s_ += piso
+    # plataforma de cima, entre o último degrau e o pé do rochedo
+    zp = zk
+    c_ = pe0 + eixo * (s_ + 1.4)
+    q = contorno(c_, ld, 6.2, 3.0, r_)
+    bancada(q, float(np.min(cota(*q.T))) - 0.6, zp, chanfro=0.18)
+
+    def penedo(c, rx, ry, rz, zb, semente, rot=0.0):
+        """Penedo arredondado: esfera deformada pelo ruído, assente (e 0,5 m metida) no chão em zb."""
+        rr = np.random.default_rng(semente)
+        nu, nv = 28, 16
+        ca, sa = math.cos(rot), math.sin(rot)
+        pts = []
+        for iv in range(nv + 1):
+            v = -0.35 * math.pi / 2 + (math.pi / 2 * 1.30) * iv / nv
+            for iu in range(nu):
+                u = 2 * math.pi * iu / nu
+                f = 1 + 0.07 * math.sin(2 * u + 1.3) + 0.05 * math.sin(5 * u + 0.4 * iv) + rr.normal(0, 0.012)
+                x, y = rx * math.cos(v) * math.cos(u) * f, ry * math.cos(v) * math.sin(u) * f
+                pts.append((c[0] + ca * x - sa * y, c[1] + sa * x + ca * y, zb - 0.5 + rz * (math.sin(v) + 0.35) / 1.35))
+        for iv in range(nv):
+            for iu in range(nu):
+                a, b = iv * nu + iu, iv * nu + (iu + 1) % nu
+                m.face([pts[a], pts[b], pts[b + nu], pts[a + nu]])
+        m.face([pts[nv * nu + iu] for iu in range(nu)])
+        m.face([pts[iu] for iu in range(nu)][::-1])
+        return shapely.Polygon([(c[0] + ca * rx * math.cos(2 * math.pi * k / 16) * 0.8 - sa * ry * math.sin(2 * math.pi * k / 16) * 0.8,
+                                 c[1] + sa * rx * math.cos(2 * math.pi * k / 16) * 0.8 + ca * ry * math.sin(2 * math.pi * k / 16) * 0.8) for k in range(16)])
+
+    n_degraus = len(m.f)
+    # o penedo enorme do bico sul já não é uma esfera à parte: é um lobo do próprio rochedo (junto_penedo)
+    # dois penedos soltos dentro do castelejo (sv04 a sv07), no chão de rocha
+    cen = lin.mean(0)
+    for k, (dy, rx, ry, rz) in enumerate(((-4.5, 2.4, 1.6, 1.1), (3.5, 1.8, 1.2, 0.8))):  # lajes baixas (sv da V10)
+        p_ = cen + np.array([0.0, dy])
+        if shapely.Polygon(lin).buffer(-2.4).contains(shapely.Point(p_)):
+            penedo(p_, rx, ry, rz, float(cota(*p_)), 52 + k, rot=0.5 * k)
+    v2 = np.array(m.v)
+    n_saia = len(fs)
+    base_i = len(V)
+    V = np.vstack([V, v2])
+    fs += [[base_i + i for i in f] for f in m.f]
+    zrel = (v2[:, 2] - v2[:, 2].min()) / max(np.ptp(v2[:, 2]), 1)
+    cor2 = np.array([0.66, 0.58, 0.48])[None, :] * (0.8 + 0.3 * fbm(v2[:, 0], v2[:, 1] + v2[:, 2], 2.0, 46))[:, None] * (0.85 + 0.15 * zrel)[:, None]
+    cor = np.vstack([cor, cor2])
+    me = bpy.data.meshes.new("rochedo_castelejo")
+    me.from_pydata(V.tolist(), [], fs)
+    me.update()
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(me)
+    bm.free()
+    liso = np.ones(len(fs), bool)
+    liso[n_saia:n_saia + n_degraus] = False  # degraus e plataforma com arestas vivas; rocha e penedos lisos
+    me.polygons.foreach_set("use_smooth", liso)
+    ca_ = me.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
+    ca_.data.foreach_set("color", np.hstack([np.clip(cor, 0, 1) ** 2.2, np.ones((len(cor), 1))]).astype(np.float32).ravel())
+    me.color_attributes.active_color = ca_
+    ob = novo_objeto("Rochedos_Castelejo", me, "castelejo", mat="rocha", pai=GRUPOS["Castelejo"])
+    uv_mundo(ob, 4.0)
+    # pegada a tirar ao chão: o anel do pé do rochedo, sem o miolo (o chão de dentro fica), e os degraus
+    pe_anel = shapely.Polygon(lf + nr * R[:, -2:-1]).buffer(0)
+    pegada = pe_anel.difference(shapely.Polygon(desvio(lin, 0.5, True)).buffer(0)).union(shapely.union_all(degraus))
+    zt_lin = topo - alv
+    g_lin = np.interp(sl[:-1], ss, g, period=sl[-1])
+    MEDIDAS["rochedo_castelejo"] = {"alvenaria_sobre_a_rocha": [round(float(alv.min()), 1), round(float(alv.max()), 1)],
+                                    "rocha_topo": [round(float(zt_lin.min()) + ZREF, 1), round(float(zt_lin.max()) + ZREF, 1)],
+                                    "rocha_altura": [round(float(np.percentile(H, 10)), 1), round(float(np.percentile(H, 90)), 1)],
+                                    "degraus": 7, "degrau_alto": 0.36}
+    # o contorno mais saliente da rocha (as massas debruçam-se para fora do pé): é onde os panos acabam
+    saliente = shapely.Polygon(lf + nr * R[:, 1:-1].max(axis=1)[:, None]).buffer(0)
+    return {"lin": lin, "z_rocha": np.maximum(zt_lin, g_lin), "pegada": pegada, "corpo": pe_anel, "saliente": saliente}
+
+
+def porta_traicao_geo():
+    """Porta da Traição (condição G06; Commons Porta da Traição 03, 04 e 06): torre quadrangular de c. 4 x 4 m com a
+    passagem em cotovelo aberta ao nível do caminho: arco quebrado na face de fora (nordeste), câmara abobadada
+    e segundo arco na face de dentro (sueste). Até à 0.8 era uma torre maciça com dois vãos pretos em arco pleno
+    (e as duas peças do arco ficavam enterradas). Planta: o retângulo mínimo da planta do OSM."""
+    b = torres["porta_traicao"]
+    q = np.array(shapely.Polygon(b).minimum_rotated_rectangle.exterior.coords)[:4]
+    if area(q) < 0:
+        q = q[::-1]
+    lados = [(q[i], q[(i + 1) % 4]) for i in range(4)]
+    nrm = [unit(np.array([(b_ - a)[1], -(b_ - a)[0]])) for a, b_ in lados]
+    i_ext = int(np.argmax([n @ unit(np.array([0.7, 0.7])) for n in nrm]))
+    i_int = int(np.argmax([n @ unit(np.array([0.7, -0.7])) for n in nrm]))
+    sol = {}
+    for i in (i_ext, i_int):
+        a, b_ = lados[i]
+        sol[i] = float(np.median(cota(*np.array([(a + b_) / 2 + nrm[i] * d for d in (0.8, 1.2, 1.6)]).T)))
+    zf = min(sol.values())
+    cam = desvio(q, 0.85, True)  # câmara (paredes de 0,85 m)
+    return {"q": q, "lados": lados, "nrm": nrm, "i_ext": i_ext, "i_int": i_int, "sol": sol, "zf": zf, "camara": cam,
+            "vao": 1.4, "arranque": 1.7, "esp": 0.85}
+
+
+def extrudir(m, P, origem, t, n_in, esp, mat=0, mat_lado=None):
+    """Prisma de contorno P (pontos (s, z)) no plano da face (origem + t·s, z), com espessura esp para n_in.
+    mat_lado: material das faces de lado (o intradorso de um arco), se for outro."""
+    A = [(*(origem + t * s_), z) for s_, z in P]
+    B = [(*(origem + t * s_ + n_in * esp), z) for s_, z in P]
+    m.face(A, mat)
+    m.face(B[::-1], mat)
+    for i in range(len(P)):
+        j = (i + 1) % len(P)
+        m.face([A[i], A[j], B[j], B[i]], mat if mat_lado is None else mat_lado)
+
+
+def torre_porta_traicao(m, pe, topo):
+    g = PT
+    q, esp, hv = g["q"], g["esp"], g["vao"] / 2
+    zf = g["zf"]
+    terraco = topo - PARAPEITO - MERLAO["altura"]
+    za_max = max(g["sol"].values())
+    zv = za_max + g["arranque"] + 0.8 * g["vao"] + 0.9  # tecto da câmara, acima do fecho mais alto
+    zb = pe - 1.5
+    m.prisma(q, zv, terraco, 0, topo=True, fundo=True)  # corpo maciço por cima da câmara
+    m.prisma(g["camara"], zf - 0.4, zf, 0)  # chão da câmara (lajeado)
+    for i, (a, b_) in enumerate(g["lados"]):
+        L = float(np.linalg.norm(b_ - a))
+        t = unit(b_ - a)
+        n_in = -g["nrm"][i]
+        if i not in g["sol"]:
+            extrudir(m, [(0, zb), (L, zb), (L, zv), (0, zv)], a, t, n_in, esp)
+            continue
+        sc, zs = L / 2, g["sol"][i]
+        arco_ = ogiva(sc, g["vao"], zs, g["arranque"], k=8)
+        extrudir(m, [(0, zb), (sc - hv, zb), (sc - hv, zv), (0, zv)], a, t, n_in, esp)
+        extrudir(m, [(sc + hv, zb), (L, zb), (L, zv), (sc + hv, zv)], a, t, n_in, esp)
+        extrudir(m, [(sc - hv, zb), (sc + hv, zb), (sc + hv, zs), (sc - hv, zs)], a, t, n_in, esp)  # soleira
+        # pano por cima do vão, com o intradorso em arco quebrado (aduelas em sombra, material 1)
+        extrudir(m, list(arco_[2:]) + [(sc - hv, zv), (sc + hv, zv)], a, t, n_in, esp, 0, 1)
+        if zs > zf + 0.15:  # degrau para o chão da câmara
+            c_ = a + t * sc + n_in * (esp + 0.35)
+            m.caixa(c_, t, g["vao"], 0.7, zf - 0.2, zs - 0.18 if zs - zf > 0.4 else zs, 0)
+        g.setdefault("portas", []).append((a + t * sc, -n_in, zs))
+        if i == g["i_ext"]:  # passadiço de tábuas até à porta de fora (Commons Porta da Traição 06)
+            pc, out = a + t * sc, -n_in
+            for k_ in range(10):
+                q_ = pc + out * (0.2 + 0.3 * k_ + 0.15)
+                zk = max(zs - 0.05, float(cota(*q_)) + 0.08)
+                m.caixa(q_, t, 1.5, 0.28, zk - 0.3, zk, 2)
+    # parapeito e 5 merlões por face (Commons Porta da Traição 06), os dos cantos partilhados
+    interior = desvio(q, 0.6, True)
+    for i in range(4):
+        j = (i + 1) % 4
+        m.prisma([q[i], q[j], interior[j], interior[i]], terraco, terraco + PARAPEITO, 0)
+    linha = desvio(q, 0.3, True)
+    for i in range(4):
+        a, b_ = linha[i], linha[(i + 1) % 4]
+        t = unit(b_ - a)
+        L = float(np.linalg.norm(b_ - a))
+        for k in range(4):
+            c_ = a + t * (0.05 + (L - 0.1) * k / 4)
+            m.caixa(c_, t, 0.55, 0.6, terraco + PARAPEITO, terraco + PARAPEITO + MERLAO["altura"], 0)
+
+
 assentar_na_rocha()
+ROCHEDO = rochedo_castelejo()
+PT = porta_traicao_geo()
 print("terreno…")
 construir_terreno()
 for ob in bpy.data.objects:
@@ -1006,9 +1391,48 @@ def cortar_na_porta(lin, *vals, folga=0.6):
 
 
 print("muralhas…")
+def aparar_no_rochedo(lin, topo, fora, dentro_, baixar=False):
+    """Os panos que chegam ao castelejo acabam na face do rochedo (ponto de controlo da volta 1, V05/V11): a linha do
+    OSM seguia até ao muro do castelejo e o pano, com o topo medido no MDS do castelejo, subia por cima da rocha nova
+    e lia-se como uma cúpula de blocos. O pano acaba 0,2 m antes do contorno mais saliente da rocha (por baixo da
+    rocha debruçada o parapeito ficava enterrado).
+    Com baixar (pano nascente, foto H15: chega baixo à rocha, com a escada ao lado), o topo até 6 m da rocha não
+    passa o do pano de 6 a 14 m dela (+0,5 m), porque o MDS ali é o do rochedo."""
+    lim = ROCHEDO["saliente"].buffer(0.2)  # o pé da rocha fica a 7 % do contorno mais saliente: sem frincha
+    dentro_r = shapely.contains_xy(lim, lin[:, 0], lin[:, 1])
+    if dentro_r.any() and not dentro_r.all():
+        if dentro_r[-1]:
+            k = int(np.argmax(dentro_r))  # primeiro vértice dentro; o pano acaba entre k-1 e k
+            a_, b_, sel = k - 1, k, slice(0, k)
+        else:
+            k = len(lin) - 1 - int(np.argmax(dentro_r[::-1]))  # último vértice dentro
+            a_, b_, sel = k + 1, k, slice(k + 1, None)
+        t0, t1 = 0.0, 1.0  # bissecção: o ponto do segmento (fora -> dentro) que cai no contorno
+        for _ in range(20):
+            tm = (t0 + t1) / 2
+            q_ = lin[a_] + (lin[b_] - lin[a_]) * tm
+            t0, t1 = (t0, tm) if lim.contains(shapely.Point(q_)) else (tm, t1)
+        ponta = [lin[a_] + (lin[b_] - lin[a_]) * t0]
+        vals = [np.array([v[a_] + (v[b_] - v[a_]) * t0]) for v in (topo, fora, dentro_)]
+        if dentro_r[-1]:
+            lin = np.vstack([lin[sel], ponta])
+            topo, fora, dentro_ = [np.concatenate([v[sel], w]) for v, w in zip((topo, fora, dentro_), vals)]
+        else:
+            lin = np.vstack([ponta, lin[sel]])
+            topo, fora, dentro_ = [np.concatenate([w, v[sel]]) for v, w in zip((topo, fora, dentro_), vals)]
+    topo = topo.copy()
+    if baixar:
+        dist = shapely.distance(ROCHEDO["corpo"], shapely.points(lin))
+        ref = topo[(dist > 6) & (dist < 14)]
+        if len(ref):
+            perto = dist < 6
+            topo[perto] = np.minimum(topo[perto], float(np.median(ref)) + 0.5)
+    return lin, topo, fora, dentro_
+
+
 for s_, linha in SECTORES.items():
     m = Malha()
-    lin, topo, fora, dentro_ = perfil(linha, MUR["espessura"])
+    lin, topo, fora, dentro_ = aparar_no_rochedo(*perfil(linha, MUR["espessura"]), baixar=s_ == "pano_nascente")
     if s_ == "pano_poente":
         # o pano interrompe-se dentro da torre-porta (as pontas ficam 0,6 m para dentro das faces da torre)
         for troco in cortar_na_porta(lin, topo, fora, dentro_):
@@ -1025,6 +1449,8 @@ for s_, linha in SECTORES.items():
 print("castelejo…")
 m = Malha()
 lin, topo, fora, dentro_ = perfil(castelejo, 1.8, fechada=True)
+# a alvenaria por fora acaba na rocha (rochedo_castelejo): só a coroa é muro
+fora = ROCHEDO["z_rocha"]
 muralha(m, lin, 1.8, topo, fora, dentro_, fechada=True)
 PERFIS["castelejo"] = np.stack([lin[:, 0], lin[:, 1], topo, fora, dentro_], 1)
 m.objeto("Castelejo", "castelejo", ["pedra", "sombra"], GRUPOS["Castelejo"])
@@ -1075,39 +1501,15 @@ for tid, base in torres.items():
     b = base if area(base) > 0 else base[::-1]
     topo = medir(desvio(b, 0.3, True) if abs(area(b)) > 6 else b, q=95)
     pe = float(np.min(cota(*densificar(desvio(b, -1.0, True), 1.0, True).T)))
-    torre(m, b, pe, topo)
+    if tid == "porta_traicao":
+        torre_porta_traicao(m, pe, topo)
+    elif tid == "torre_quinaria":
+        torre_ruina(m, b, pe, topo)
+    else:
+        torre(m, b, pe, topo)
     PERFIS["torre_" + tid] = b
     MEDIDAS[tid] = {"topo": topo + ZREF, "pe": pe + ZREF, "altura_exterior": topo - pe}
     if tid == "porta_traicao":
-        # porta em cotovelo: abertura exterior na face virada a nordeste e interior na face virada a sueste
-        faces = [(b[i], b[(i + 1) % len(b)]) for i in range(len(b))]
-        def face_para(direcao):
-            return max(faces, key=lambda f: unit(np.array([(f[1] - f[0])[1], -(f[1] - f[0])[0]])) @ direcao * min(1, np.linalg.norm(f[1] - f[0]) / 2))
-        for dirc in (np.array([0.7, 0.7]), np.array([0.7, -0.7])):
-            a, c = face_para(dirc)
-            u = unit(c - a)
-            out = np.array([u[1], -u[0]])
-            sole = float(cota(*((a + c) / 2 + out * 0.8)))
-            # arco aduelado de 13 aduelas de 0,45 m sobre um vão de 1,4 × 2,6 m (revisão do perito, 16 nov.;
-            # Commons «Porta da Traição do Castelo de Penela 06»)
-            pc = (a + c) / 2
-            arco(m, pc, u, out, 1.4, sole, 1.9, 0.1, 1)
-            zn_ = sole + 1.9
-            for k_ in range(13):
-                t0, t1 = math.pi * k_ / 13 + 0.008, math.pi * (k_ + 1) / 13 - 0.008
-                qa = lambda r_, t_, d_: (*(pc + u * r_ * math.cos(t_) + out * d_), zn_ + r_ * math.sin(t_))
-                m.face([qa(0.7, t0, 0.05), qa(0.7, t1, 0.05), qa(1.15, t1, 0.05), qa(1.15, t0, 0.05)], 0)
-                m.face([qa(1.15, t0, 0.0), qa(1.15, t0, 0.05), qa(1.15, t1, 0.05), qa(1.15, t1, 0.0)], 0)
-            for sg in (-1, 1):  # ombreiras de silhares
-                m.caixa(pc + u * sg * 0.92 + out * 0.025, u, 0.44, 0.05, sole, zn_, 0)
-            if dirc[1] > 0:  # passadiço de tábuas de 1,5 m até à porta de fora
-                zp = sole - 0.05
-                for k_ in range(10):  # tábuas um pouco acima do chão, que sobe à frente da porta
-                    q_ = pc + out * (0.2 + 0.3 * k_ + 0.15)
-                    zk = max(zp, float(cota(*q_)) + 0.08)
-                    m.caixa(q_, u, 1.5, 0.28, zk - 0.3, zk, 2)
-                for sg in (-1, 1):
-                    m.caixa(pc + out * 1.7 + u * sg * 0.6, u, 0.12, 3.0, min(zp - 0.3, float(cota(*(pc + out * 2.5))) - 0.3), zp - 0.06, 2)
         nome, grupo = "Porta_Traicao", GRUPOS["Porta_Traicao"]
     elif tid == "torre_quinaria":
         nome, grupo = "Torre_Quinaria", GRUPOS["Torreoes"]
@@ -1251,7 +1653,7 @@ pq = pc_ if area(pc_) > 0 else pc_[::-1]
 arestas = [(pq[i], pq[(i + 1) % len(pq)]) for i in range(len(pq))]
 fora_ = lambda a, b: np.array([(b - a)[1], -(b - a)[0]]) / max(np.linalg.norm(b - a), 1e-9)
 sul = [e for e in arestas if fora_(*e) @ np.array([0, -1.0]) > 0.3]
-principal = max(sul or arestas, key=lambda e: np.linalg.norm(e[1] - e[0]))
+fachada_cp = max(sul or arestas, key=lambda e: np.linalg.norm(e[1] - e[0]))
 n_jan = 0
 for a, b in arestas:
     L = float(np.linalg.norm(b - a))
@@ -1259,7 +1661,7 @@ for a, b in arestas:
         continue
     u, n_ = unit(b - a), fora_(a, b)
     zg = float(np.median(cota(*np.array([a + (b - a) * f + n_ * 1.0 for f in (0.2, 0.5, 0.8)]).T)))
-    e_princ = a is principal[0]
+    e_princ = a is fachada_cp[0]
     k = 5 if e_princ else max(1, int((L - 1.0) // 3.2))
     zpala = min(zg + 2.5, z1 - 2.95)  # onde o terreno sobe à frente, a pala desce para caber o andar de cima
     zsup = z1 - 2.6 if e_princ else max(z1 - 2.6, zg + 2.95)  # janelas de cima: abaixo do beiral
@@ -1461,6 +1863,8 @@ def folga_obra(pts):
     return min([x for x in d if x is not None] or [99.0])
 
 
+PEGADAS = [shapely.Polygon(p_) for p_ in pegadas]
+PEG_ARV = shapely.STRtree(PEGADAS)
 ARV = LID["arvores"]
 n_arv = 0
 n_afastadas = {"encolhidas": 0, "retiradas": 0}
@@ -1472,6 +1876,14 @@ for x, y, topo, _, r in ARV:
     if h < 2.0:
         continue
     r = float(np.clip(r, 1.0, 6.0))
+    # a copa (lobos até c. 1,25 r) fica dentro da peana e fora das casas da vila (tecnico.py da 0.8: uma copa
+    # 2,2 m fora da peana e uma árvore metida numa casa)
+    r = min(r, (RAIO - 0.4 - float(np.hypot(x, y))) / 1.25)
+    d_casa = float(PEGADAS[PEG_ARV.nearest(shapely.Point(x, y))].distance(shapely.Point(x, y)))
+    r = min(r, (d_casa - 0.3) / 1.25)
+    if r < 0.9:
+        n_afastadas["retiradas"] += 1
+        continue
     alt = float(np.clip(h * 0.62, 1.4, 2.6 * r))
     tronco_ = max(h - alt, 0.6)
     if folga_obra([(x, y, z + k) for k in (0.5, tronco_ * 0.5, tronco_)]) < 0.35:
